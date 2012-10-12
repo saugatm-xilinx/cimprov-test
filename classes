@@ -1,0 +1,13 @@
+SF_SoftwareIdentity
+SF_ConcreteJob
+SF_InstalledSoftwareIdentity
+SF_BundleComponent
+SF_ComputerSystem
+SF_NICCard
+SF_PhysicalConnector
+SF_ConnectorOnNIC
+SF_EthernetPort
+SF_PortController
+SF_SystemDevice
+SF_ConnectorRealizesPort
+SF_LANEndpoint

@@ -1,0 +1,56 @@
+
+
+class SF_SoftwareIdentity : CIM_SoftwareIdentity {
+};
+
+class SF_ConcreteJob : CIM_ConcreteJob {
+};
+
+[Association]
+class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
+};
+
+[Association]
+class SF_BundleComponent : CIM_OrderedComponent {
+};
+
+class SF_ComputerSystem : CIM_ComputerSystem {
+};
+
+class SF_NICCard : CIM_Card {
+};
+
+class SF_PhysicalConnector : CIM_PhysicalConnector {
+};
+
+[Association]
+class SF_ConnectorOnNIC : CIM_ConnectorOnPackage {
+};
+
+class SF_EthernetPort : CIM_EthernetPort {
+};
+
+class SF_PortController : CIM_PortController {
+};
+
+[Association]
+class SF_SystemDevice : CIM_SystemDevice {
+};
+
+[Association]
+class SF_ConnectorRealizesPort : CIM_Realizes {
+};
+
+class SF_LANEndpoint : CIM_LANEndpoint {
+};
+
+[Association]
+class SF_NICSAPImplementation : CIM_DeviceSAPImplementation {
+};
+
+
+
+
+
+
+
