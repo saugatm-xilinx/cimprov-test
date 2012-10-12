@@ -113,7 +113,7 @@ namespace solarflare
                 !(releaseDate == Datetime()));
     }
 
-    class Thread : public solarflare::Thread {
+    class Thread : public cimple::Thread {
     public:
         enum State {
             NotRun,
