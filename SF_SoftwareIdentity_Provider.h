@@ -15,12 +15,12 @@ class SF_SoftwareIdentity_Provider
     static void addPackageType(SF_SoftwareIdentity *id);
     static SF_SoftwareIdentity *hostSoftware(const solarflare::SWElement& ve);
 
-    class SWEnum : public solarflare::SystemElement::ConstEnum {
+    class SWEnum : public solarflare::ConstSoftwareEnumerator {
         Enum_Instances_Handler<SF_SoftwareIdentity>* const handler;
     public:
         SWEnum(Enum_Instances_Handler<SF_SoftwareIdentity>* h) :
             handler(h) {};
-        virtual bool process(const solarflare::SystemElement& se);
+        virtual bool process(const solarflare::SWElement& se);
     };
 public:
 

@@ -4,6 +4,7 @@
 #include <cimple/cimple.h>
 #include <cimple/Buffer.h>
 
+/// @brief Namespace for system abstraction classes
 namespace solarflare 
 {
     using cimple::Buffer;
@@ -11,108 +12,97 @@ namespace solarflare
     using cimple::Datetime;
     using cimple::uint64;
     using cimple::Mutex;
-    
+
+    /// @brief The root class for all managed objects
     class SystemElement {
-        const SystemElement * parent;
-        unsigned idx;
-        unsigned nChildren;
-        SystemElement *children;
-        SystemElement *next;
         String descr;
-        void makePath(Buffer& buf) const;
-    protected:
-        void push(SystemElement *child);
-        virtual const String& baseId() const = 0;
-        virtual bool singleton() const { return false; }
-        virtual void pushed() {};
-        void rootElement() { idx = 0; }
      public:
         SystemElement(const String& d) :
-            parent(NULL), idx(unsigned(-1)), 
-            nChildren(0), children(NULL), next(NULL), descr(d) {}
-        void reset();
-        virtual ~SystemElement() { reset(); }
+            descr(d) {}
+        virtual ~SystemElement() {}
             
         const String& description() const { return descr; }
-        unsigned elementId() const { return idx; }
-        virtual String name() const;
-        String path() const;
-
-        class Enum {
-        public:
-            virtual bool process(SystemElement& e) = 0;
-        };
-        class ConstEnum {
-        public:
-            virtual bool process(const SystemElement& e) = 0;
-        };
-        void enumerate(Enum& en);
-        void enumerate(ConstEnum& en) const;
-
-        enum Class {
-            ClassSystem,
-            ClassNIC,
-            ClassPort,
-            ClassDriver,
-            ClassLibrary,
-            ClassTool,
-            ClassBundle,
-            ClassFirmware
-        };
-        virtual Class classify() const = 0;
-        bool isSoftware() const;
-        const SystemElement *container() const { return parent; }
-        SystemElement *nextComponent() { return next; }
-        const SystemElement *nextComponent() const { return next; } 
-        SystemElement *firstComponent() { return children; }
-        const SystemElement *firstComponent() const { return children; }
-        SystemElement *component(unsigned i);
-        const SystemElement *component(unsigned i) const;
+        virtual unsigned elementId() const { return 0; }
+        /// Run-time initialization for things that are unsafe
+        /// to do from constructors (including calling virtual methods).
+        /// CIM provider will call these method for topmost System object
+        /// and the later will create other objects and create this method
+        /// for them.
+        virtual void initialize() = 0;
+        /// @return a generic name of an entity (e.g. 'Ethernet Adaptor')
+        virtual const String& className() const = 0;
     };
 
-    inline bool SystemElement::isSoftware() const
-    {
-        switch (classify())
-        {
-            case ClassSystem:
-            case ClassNIC:
-            case ClassPort:
-                return false;
-            default:
-                return true;
-        }
-    }
-
-    struct VersionInfo {
-        unsigned vmajor;
-        unsigned vminor;
-        unsigned revision;
-        unsigned buildNo;
-        String versionStr;
-        Datetime releaseDate;
-        VersionInfo(unsigned mj, unsigned mn, unsigned rev, unsigned bno,
-                    const String& vstr, const Datetime& release) :
-            vmajor(mj), vminor(mn), revision(rev), buildNo(bno),
+    /// @brief Detailed version info for SW elements
+    class VersionInfo {
+        unsigned vmajor; //< Major version
+        unsigned vminor; //< Minor version
+        unsigned revisionNo; //< Revision number
+        unsigned buildNo; //< Build number
+        String versionStr; //< Version string
+        Datetime dateReleased; //< Release date
+    public:
+        /// A value for missing version component
+        static const unsigned unknown;
+        VersionInfo(unsigned mj, unsigned mn, 
+                    unsigned rev = unknown, 
+                    unsigned bno = unknown,
+                    const String& vstr = "", const Datetime& rd = Datetime()) :
+            vmajor(mj), vminor(mn), revisionNo(rev), buildNo(bno),
             versionStr(vstr), 
-            releaseDate(release) {}
+            dateReleased(rd) {}
         VersionInfo() :
-            vmajor(0), vminor(0), revision(unsigned(-1)), 
-            buildNo(unsigned(-1)) {}
+            vmajor(unknown), vminor(unknown), revisionNo(unknown), 
+            buildNo(unknown) {}
+        /// Construct version data by parsing a version string.
+        /// It must have the form 'major.minor[.revision[.build]] rest'.
+        /// Missing fields (incl. release date) are set to unknown.
+        /// The versionStr field itself is set to @p s
         VersionInfo(const char *s);
-        String buildVersionStr() const;
-        static VersionInfo versionFromCmd(const char *cmd);
-        bool isInstalled() const;
+        bool operator == (const VersionInfo& v) const;
+        bool operator != (const VersionInfo& v) const
+        {
+            return !(*this == v);
+        }
+        unsigned major() const { return vmajor; }
+        unsigned minor() const { return vminor; }
+        unsigned revision() const { return revisionNo; }
+        unsigned build() const{ return buildNo; }
+        /// @return String rep of the version info
+        /// If versionStr is non-empty, it is simply returned, otherwise
+        /// the returned string is 'major.minor[.revision[.build]]'
+        String string() const;
+        Datetime releaseDate() const {  return dateReleased; }
+        /// Test whether any field has a 'known' value
+        bool isUnknown() const;
     };
 
-    inline bool VersionInfo::isInstalled() const
+    inline bool VersionInfo::operator == (const VersionInfo& v) const
     {
-        return (vmajor != 0 || vminor != 0 ||
-                (revision != unsigned(-1) && revision != 0) ||
-                (buildNo != unsigned(-1) && buildNo != 0) ||
-                versionStr.size() > 0 ||
-                !(releaseDate == Datetime()));
+        return (vmajor == v.vmajor &&
+                vminor == v.vminor &&
+                revisionNo == v.revisionNo &&
+                buildNo == v.buildNo &&
+                versionStr == v.versionStr &&
+                dateReleased == v.dateReleased);
     }
 
+    inline bool VersionInfo::isUnknown() const
+    {
+        return (vmajor == unknown &&
+                vminor == unknown &&
+                revisionNo == unknown &&
+                buildNo == unknown &&
+                versionStr.size() == 0 &&
+                dateReleased == Datetime());
+    }
+
+    /// @brief Thread abstraction
+    /// Unlike CIMPLE's own class, this class shall be
+    /// subclassed, as the thread encapsulates its behaviour
+    /// via threadProc() method.
+    /// The class also supports querying thread state and 
+    /// stopping the thread
     class Thread : public cimple::Thread {
     public:
         enum State {
@@ -125,274 +115,404 @@ namespace solarflare
     private:
         Mutex stateLock;
         State state;
+        /// An adaptor between cimple::Thread interface and threadProc()
         static void *doThread(void *self);
     protected:
+        /// The actual thread routine
+        /// @return true for successful termination (state := Succeeded) 
+        ///         false for failure (state := failed)
         virtual bool threadProc() = 0;
     public:
         Thread() : state(NotRun) {}
         State currentState() const;
+        /// Makes the thread running
         void start();
-        virtual void stop();
+        /// Attempts to stop the thread.
+        /// It is not guaranteed that this method actually has any effect;
+        /// caller must poll currentState() for state change.
+        /// As there is no cross-platform universal way to stop threads,
+        /// this needs co-operation from threadProc(), so the method shall
+        /// be overridden in subclasses
+        virtual void stop() {};
     };
 
+    /// @brief Abstract class for software components
     class SWElement : public SystemElement {
-        VersionInfo versionInfo;
         String sysname;
-    protected:
-        virtual VersionInfo detectVersionInfo() const = 0;
-        void updateVersionInfo(const VersionInfo& nv) {  versionInfo = nv; }
-        virtual bool singleton() const { return true; }
-        virtual void pushed() { syncVersion(); }
     public:
         SWElement(const String& d, const String& sn) :
             SystemElement(d), sysname(sn) {}
-        const VersionInfo& version() const { return versionInfo; }
-        virtual bool install(const char *filename) = 0;
-        void syncVersion() { updateVersionInfo(detectVersionInfo()); };
+        /// @return version of the installed component
+        /// Platform-specific subclasses shall implement the actual behaviour
+        virtual VersionInfo version() const = 0;
+        /// Updates a software component from @p filename.
+        /// Platform-specific subclasses shall implement the actual behaviour
+        /// If @p sync is false, a separate thread shall be created and true
+        /// be returned. The corresponding thread may be then obtained by 
+        /// calling installThread()
+        virtual bool install(const char *filename, bool sync = true) = 0;
         const String& sysName() const { return sysname; }
+        enum SWClass {
+            SWDriver,
+            SWTool,
+            SWLibrary,
+            SWPackage,
+            SWFirmware,
+            SWDiagnostics
+        };
+        virtual SWClass classify() const = 0;
+        /// @return true iff the software element is an actual host-running
+        /// software (i.e. a driver, a library or a tool, but not firmware
+        /// or a software package)
+        /// Effectively, if isHostSw() is true, the object may be safely
+        /// cast to HostSWElement
+        virtual bool isHostSw() const = 0;
+        /// @return an installation asynchronous thread
+        /// If no thread is currently running, the implementation is
+        /// allowed to return NULL or an inactive Thread object.
+        /// The returned object is logically owned by the object, so the
+        /// caller must never delete the thread, nor use it after the object
+        /// is deleted
+        virtual Thread *installThread() { return NULL; }
+    };
+
+    /// @brief PCI address
+    /// If deviceId is set to a known value, the address
+    /// is a conventional PCI address; otherwise it is assumed
+    /// to be an ARI-style address.
+    /// fnId is set to unknown for slot addresses
+    class PCIAddress {
+        unsigned pciDomain;
+        unsigned pciBus;
+        unsigned deviceId;
+        unsigned fnId;
+    public:
+        static const unsigned unknown;
+        PCIAddress(unsigned dom, unsigned b, 
+                   unsigned dev = unknown, unsigned fn = unknown) :
+            pciDomain(dom), pciBus(b), deviceId(dev), fnId(fn) {}
+        unsigned domain() const { return pciDomain; }
+        unsigned bus() const { return pciBus; }
+        unsigned device() const { return deviceId; }
+        unsigned fn() const { return fnId; }
+        bool isARI() const { return deviceId == unknown && fnId != unknown; }
+        bool isSlot() const { return fnId == unknown; }
+        /// Return a new  PCI address with a function id set to @p f
+        /// Useful to construct device PCI address from slot address
+        PCIAddress fn(unsigned f) const
+        {
+            return PCIAddress(pciDomain, pciBus, deviceId, f);
+        }
+        
+    };
+
+    /// @brief Abstract class for hardware components (currently, NICs and Ports)
+    /// A hardware element always has an ordinal number inside its parent
+    /// object, and a PCI bus address
+    class HWElement : public SystemElement {
+        unsigned idx;
+    public:
+        HWElement(const String& d, unsigned i) :
+            SystemElement(d), idx(i) {}
+        virtual unsigned elementId() const { return idx; }
+        virtual PCIAddress pciAddress() const = 0;
     };
 
     struct MACAddress {
         unsigned char address[6];
+        /// We need this because C++ (prior to 2011 edition)
+        /// does not allow compound initializers in many contexts
+        MACAddress(unsigned a0, unsigned a1, unsigned a2,
+                   unsigned a3, unsigned a4, unsigned a5);
     };
 
-    class Port : public SystemElement {
-        static const String portDescription;
-        static const String portBaseId;
-    protected:
-        virtual const String& baseId() const { return portBaseId; }
-    public:
-        Port() : SystemElement(portDescription) {};
-        virtual Class classify() const { return ClassPort; }
-        bool linkStatus() const;
-        void enable(bool status);
-        uint64 linkSpeed() const;
-        uint64 maxLinkSpeed() const;
-        void linkSpeed(uint64 speed);
-        String ifName() const;
-        MACAddress permanentMAC() const;
-        MACAddress currentMAC() const;
-        void currentMAC(const MACAddress& mac);
-        
-    };
-
-    class Firmware : public SWElement {
-    public:
-        Firmware(const String& d) : SWElement(d, "") {};
-        virtual Class classify() const { return ClassFirmware; }
-    };
+    MACAddress::MACAddress(unsigned a0, unsigned a1, unsigned a2,
+                           unsigned a3, unsigned a4, unsigned a5)
+    {
+        address[0] = a0;
+        address[1] = a1;
+        address[2] = a2;
+        address[3] = a3;
+        address[4] = a4;
+        address[5] = a5;
+    }
 
     class NIC;
+
+    /// @brief Abstract mix-in for NIC associated elements (ports and firmware)
+    class NICElement {
+    public:
+        virtual const NIC *nic() const = 0;
+    };
+
+    /// @brief Abstract class for ports
+    /// Implementors shall subclass it for platform-specific port representation
+    class Port : public HWElement, public NICElement {
+        static const String portName;
+        static const String portDescription;
+    public:
+        Port(unsigned i) : HWElement(portDescription, i) {}
+        /// @return link status
+        virtual bool linkStatus() const = 0;
+        /// @return changing the interface state up/down
+        virtual void enable(bool status) = 0;
+        /// @return current link speed
+        virtual uint64 linkSpeed() const = 0;
+        /// @return change link speed to @p speed
+        virtual void linkSpeed(uint64 speed) = 0;
+        /// @return full-duplex state
+        virtual bool fullDuplex() const = 0;
+        /// enable or disable full-duplex mode depending on @p fd
+        virtual void fullDuplex(bool fd) = 0;
+        /// @return true iff autonegotiation is available
+        virtual bool autoneg() const = 0;
+        /// enable/disable autonegotiation according to @p an
+        virtual void autoneg(bool an) = 0;
+        /// causes a renegotiation like 'ethtool -r'
+        virtual void renegotiate() = 0;
+        /// @return current MTU
+        virtual uint64 mtu() const = 0;
+        /// change MTU to @p u
+        virtual void mtu(uint64 u) = 0;
+        /// @return system interface name (e.g. ethX for Linux)
+        virtual String ifName() const = 0;
+        /// @return Manufacturer-supplied MAC address
+        virtual MACAddress permanentMAC() const = 0;
+        /// @return MAC address actually in use
+        virtual MACAddress currentMAC() const = 0;
+        /// Change the current MAC address to @p mac
+        virtual void currentMAC(const MACAddress& mac) = 0;
+        virtual const String& className() const { return portName; }
+    };
+
+    /// @brief Abstract class for firmware elements
+    class Firmware : public SWElement, public NICElement {
+    public:
+        Firmware(const String& d, const String& sn) : SWElement(d, sn) {};
+        virtual SWClass classify() const { return SWFirmware; }
+        virtual bool isHostSw() const { return false; }
+    };
+
+    /// @brief Abstract class for MC firmware
+    /// Implementors shall subclass it for platform-specific behaviour
     class NICFirmware : public Firmware {
-        static const String fwBaseId;
-        static const String fwDescr;
-    protected:
-        virtual VersionInfo detectVersionInfo() const;
-        virtual const String& baseId() const { return fwBaseId; }
+        static const String fwName;
+        static const String fwDescription;
+        static const String fwSysname;
     public:
-        NICFirmware() : Firmware(fwDescr) {};
-        virtual bool install(const char *file);
+        NICFirmware() : Firmware(fwDescription, fwSysname) {};
+        virtual const String& className() const { return fwName; }
     };
 
+    /// @brief Abstract class for BootROM
+    /// Implementors shall subclass it for platform-specific behaviour
     class BootROM : public Firmware {
-        static const String romBaseId;
-        static const String romDescr;
-    protected:
-        virtual VersionInfo detectVersionInfo() const;
-        virtual const String& baseId() const { return romBaseId; }
+        static const String romName;
+        static const String romDescription;
+        static const String romSysname;
     public:
-        BootROM() : Firmware(romDescr) {};
-        virtual bool install(const char *file);
+        BootROM() : Firmware(romDescription, romSysname) {};
+        virtual const String& className() const { return romName; }
     };
 
-    struct VitalProductData {
+    /// @brief NIC's vital product data (VPD) representation
+    /// The set of fields is defined according to SF-108427-TC-2
+    /// (IBM's requirements)
+    class VitalProductData {
         String uuid;
-        String manufacturer;
+        String manufac;
         String serialNo;
         String partNo;
-        String model;
-        String fruNumber;
+        String modelId;
+        String fruNo;
+    public:
         VitalProductData(const String& id, const String& manf, 
                          const String& sno, const String& pno,
                          const String& m, const String& fru) :
-            uuid(id), manufacturer(manf), serialNo(sno), partNo(pno),
-            model(m), fruNumber(fru) {}
+            uuid(id), manufac(manf), serialNo(sno), partNo(pno),
+            modelId(m), fruNo(fru) {}
         VitalProductData() {}
+        const String& id() const { return uuid; }
+        /// @return manufacturer field, or calls
+        /// System::target.manufacturer() if the former is empty
+        const String& manufacturer() const;
+        const String& serial() const { return serialNo; }
+        const String& part() const { return partNo; }
+        const String& model() const { return modelId; }
+        const String& fru() const { return fruNo; }
     };
 
-    class NIC : public SystemElement {
-        static const String nicDescription;
-        static const String nicBaseId;
-        VitalProductData vpd;
-        void updateVPD();
-    protected:
-        virtual const String& baseId() const { return nicBaseId; }
-        virtual void pushed();
+    /// @brief abstract mutating enumerator for ports
+    class PortEnumerator {
     public:
-        NIC() : SystemElement(nicDescription) {};
-        virtual Class classify() const { return ClassNIC; }
-        const VitalProductData& vitalProductData() const { return vpd; }
-        VersionInfo fwVersion() const;
-        VersionInfo romVersion() const;
+        virtual bool process(Port& p) = 0;
+    };
+
+    /// @brief abstract constant enumerator for ports
+    class ConstPortEnumerator {
+    public:
+        virtual bool process(const Port& p) = 0;
+    };
+
+    class SoftwareEnumerator {
+    public:
+        virtual bool process(SWElement& sw) = 0;
+    };
+
+    class ConstSoftwareEnumerator {
+    public:
+        virtual bool process(const SWElement& sw) = 0;
+    };
+
+    /// @brief An abstract mix-in for software containing elements (NIC, Package and System)
+    class SoftwareContainer {
+    public:
+        virtual bool forAllSoftware(SoftwareEnumerator& en) = 0;
+        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const = 0;
+    };
+
+
+    /// @brief An abstract mix-in for port containing elements (NIC, System)
+    class PortContainer {
+    public:
+        virtual bool forAllPorts(PortEnumerator& en) = 0;
+        virtual bool forAllPorts(ConstPortEnumerator& en) const = 0;
+    };
+
+    /// @brief An abstract class for NIC elements
+    /// Implementors shall subclass it for platform-specific behaviour
+    class NIC : public HWElement, public SoftwareContainer, public PortContainer {
+        static const String nicDescription;
+        static const String nicName;
+    protected:
+        /// Create all necessary internal structures for physical ports
+        /// (typically, that would imply creating instance of Port subclass
+        /// and calling initialize() on it
+        virtual void setupPorts() = 0;
+        /// Create all necessary internal structures for present firmware
+        virtual void setupFirmware() = 0;
+    public:
+        NIC(unsigned i) : HWElement(nicDescription, i) {};
+        virtual VitalProductData vitalProductData() const = 0;
         enum Connector {
             RJ45,
             SFPPlus,
             Mezzanine
         };
-        Connector connector() const;
-        String manufacturer() const;
-        virtual String name() const;
+        /// @return physical connector type
+        virtual Connector connector() const = 0;
+        /// @return maximum link speed (defaults to 10G)
+        virtual uint64 maxLinkSpeed() const { return uint64(10) * 1024 * 1024 * 1024; }
+        /// @return largest possible MTU for the NIC
+        virtual uint64 supportedMtu() const = 0;
+        virtual const String& className() const { return nicName; }
+        virtual void initialize()
+        {
+            setupPorts();
+            setupFirmware();
+        }
+        /// Apply @p en to all firmware of the NIC
+        virtual bool forAllFw(SoftwareEnumerator& en) = 0;
+        /// Apply @p en to all firmware of the NIC (non-destructive)
+        virtual bool forAllFw(ConstSoftwareEnumerator& en) const = 0;
+        virtual bool forAllSoftware(SoftwareEnumerator& en) { return forAllFw(en); }
+        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const { return forAllFw(en); }
     };
 
-    class Bundle;
-    
-    class Driver : public SWElement {
-    protected:
-        virtual VersionInfo detectVersionInfo() const;
+
+    class Package;
+
+    /// @brief An abstract member of a software package
+    class HostSWElement : public SWElement {
+    public:
+        virtual const Package *package() const = 0;
+        HostSWElement(const String& d, const String& sn) :
+            SWElement(d, sn) {};
+        virtual bool isHostSw() const { return true; }
+    };
+
+    /// @brief An abstract driver class
+    class Driver : public HostSWElement {
     public:
         Driver(const String& d, const String& sn) :
-            SWElement(d, sn) {};
-        virtual bool install(const char *name);
-        virtual Class classify() const { return ClassDriver; }
+            HostSWElement(d, sn) {};
+        virtual SWClass classify() const { return SWDriver; }
     };
 
-    class NetDriver : public Driver {
-        static const String drvDescription;
-        static const String drvBaseId;
-        static const String drvName;
-    protected:
-        virtual const String& baseId() const { return drvBaseId; }
+    /// @brief An abstract userspace library class
+    class Library : public HostSWElement {
     public:
-        NetDriver() : Driver(drvDescription, drvName) {};
+        Library(const String& d, const String& sn) :
+            HostSWElement(d, sn) {};
+        virtual SWClass classify() const { return SWLibrary; }
     };
 
-    class OnloadDriver : public Driver {
-        static const String drvDescription;
-        static const String drvBaseId;
-        static const String drvName;
-    protected:
-        virtual const String& baseId() const { return drvBaseId; }
+    /// @brief An abstract userspace tool class
+    class Tool : public HostSWElement {
     public:
-        OnloadDriver() : Driver(drvDescription, drvName) {};
+        Tool(const String& d, const String& sn) :
+            HostSWElement(d, sn) {};
+        virtual SWClass classify() const { return SWTool; }
     };
+
     
-    class Tool : public SWElement {
+    /// @brief An abstract class for software packages (RPM, MSI, ...)
+    /// Implentors shall subclass it for platform-specific behaviour
+    class Package : public SWElement, public SoftwareContainer {
     protected:
-        virtual VersionInfo detectVersionInfo() const;
+        /// Creates internal structures representing package members
+        /// (usually as instances of SWElememt subclasses)
+        virtual void setupContents() = 0;
     public:
-        Tool(const String& descr, const String& sn) :
-            SWElement(descr, sn) {}
-        virtual bool install(const char *name);
-        virtual Class classify() const { return ClassTool; }
-    };
-
-    class UpdateTool : public Tool {
-        static const String toolDescription;
-        static const String toolBaseId;
-        static const String toolName;
-    protected:
-        virtual const String& baseId() const { return toolBaseId; }
-    public:
-        UpdateTool() : Tool(toolDescription, toolName) {};
-    };
-
-    class Library : public SWElement {
-    protected:
-        virtual VersionInfo detectVersionInfo() const;
-    public:
-        Library(const String& descr, const String& sn) :
-            SWElement(descr, sn) {}
-        virtual bool install(const char *name);
-        virtual Class classify() const { return ClassLibrary; }
-    };
-
-    class OnloadLibrary : public Library {
-        static const String libDescription;
-        static const String libBaseId;
-        static const String libName;
-    protected:
-        virtual const String& baseId() const { return libBaseId; }
-    public:
-        OnloadLibrary() : Library(libDescription, libName) {}
-    };
-
-    class CIMProviderLibrary : public Library {
-        static const String libDescription;
-        static const String libBaseId;
-        static const String libName;
-    protected:
-        virtual const String& baseId() const { return libBaseId; }
-    public:
-        CIMProviderLibrary() : Library(libDescription, libName) {}
-    };
-
-    class Bundle : public SWElement {
-        class BundleUpdater : public Enum {
-        public:
-            virtual bool process(SystemElement& se);
-        };
-        virtual VersionInfo detectVersionInfo() const;
-    public:
-        Bundle(const String& descr, const String& pkg) :
+        Package(const String& descr, const String& pkg) :
             SWElement(descr, pkg) {}
-        virtual bool install(const char *name);
-        virtual Class classify() const { return ClassBundle; }
+        virtual SWClass classify() const { return SWPackage; }
+        virtual void initialize() { setupContents(); }
+        enum PkgType {
+            RPM,
+            Deb,
+            Tarball,
+            MSI
+        };
+        virtual PkgType type() const = 0;
+        virtual bool isHostSw() const { return false; }
     };
 
-    class KernelBundle : public Bundle {
-        static const String kbBaseId;
-        static const String kbDescription;
-        static const String& kbName();
-    protected:
-        virtual const String& baseId() const { return kbBaseId; }
-        virtual void pushed();
+    class NICEnumerator {
     public:
-        KernelBundle() : Bundle(kbDescription, kbName()) {}
+        virtual bool process(NIC& p) = 0;
     };
 
-    class UserspaceBundle : public Bundle {
-        static const String ubBaseId;
-        static const String ubDescription;
-        static const String& ubName();
-    protected:
-        virtual const String& baseId() const { return ubBaseId; }
-        virtual void pushed();
+    class ConstNICEnumerator {
     public:
-        UserspaceBundle() : Bundle(ubDescription, ubName()) {}
+        virtual bool process(const NIC& p) = 0;
     };
 
-    class ManagementBundle : public Bundle {
-        static const String mgmtBaseId;
-        static const String mgmtDescription;
-        static const String& mgmtName();
-    protected:
-        virtual const String& baseId() const { return mgmtBaseId; }
-        virtual void pushed();
-    public:
-        ManagementBundle() : Bundle(mgmtDescription, mgmtName()) {};
-    };
-
-    class System : public SystemElement {
+    /// @brief An abstract topmost class
+    /// Implementors must subclass it to define a specific platform
+    /// All others abstract classes above will usually need to be subclassed too
+    class System : public SystemElement, public SoftwareContainer, public PortContainer {
         System(const System&);
         const System& operator = (const System&);
         static const String manfId;
-        static const String idPfx;
-        static const String systemBaseId;
         static const String systemDescr;
-        System() : 
-            SystemElement(systemDescr) 
-        { 
-            rootElement();
-            rescan(); 
-        }
+        static const String systemName;
+        bool initialized;
     protected:
-        virtual bool singleton() const { return true; }
-        virtual const String& baseId() const { return systemBaseId; }
+        System() : 
+            SystemElement(systemDescr), initialized(false) {}
+        /// Detect all Solarflare NICs in the system and make corresponding
+        /// internal structures
+        virtual void setupNICs() = 0;
+        /// Detect all Solarflare software packages in the system and make corresponding
+        /// internal structures
+        virtual void setupPackages() = 0;
     public:
-        static System target;
+        /// The root object. It is defined as a reference, so a hidden
+        /// concrete instance of a platform-specific subclass may be created
+        static System& target;
         const String& manufacturer() const { return manfId; };
-        const String& idPrefix() const { return idPfx; };
-        bool is64bit() const;
+        virtual bool is64bit() const = 0;
         enum OSType {
             WindowsServer2003,
             WindowsServer2008,
@@ -405,9 +525,28 @@ namespace solarflare
             GenericLinux,
             VMWareESXi
         };
-        OSType osType() const;
-        virtual Class classify() const { return ClassSystem; }
-        void rescan();
+        virtual OSType osType() const = 0;
+        virtual void initialize() 
+        {
+            if (!initialized)
+            {
+                initialized = true;
+                setupNICs();
+                setupPackages();
+            }
+        }
+
+        virtual bool forAllNICs(ConstNICEnumerator& en) const = 0;
+        virtual bool forAllNICs(NICEnumerator& en) = 0;
+        virtual bool forAllPackages(ConstSoftwareEnumerator& en) const = 0;
+        virtual bool forAllPackages(SoftwareEnumerator& en) = 0;
+
+        virtual bool forAllPorts(ConstPortEnumerator& en) const;
+        virtual bool forAllPorts(PortEnumerator& en);
+        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const;
+        virtual bool forAllSoftware(SoftwareEnumerator& en);
+        
+        virtual const String& className() const { return systemName; }
     };
 
 }

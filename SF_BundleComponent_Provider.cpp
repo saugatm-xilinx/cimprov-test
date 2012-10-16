@@ -5,15 +5,13 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_BundleComponent_Provider::ConstEnum::process(const solarflare::SystemElement& e)
+bool SF_BundleComponent_Provider::ConstEnum::process(const solarflare::SWElement& e)
 {
-    if (e.isSoftware() && 
-        e.container() != NULL && 
-        e.container()->classify() == solarflare::SystemElement::ClassBundle)
+    if (e.isHostSw())
     {
         SF_BundleComponent *link = SF_BundleComponent::create(true);
         link->GroupComponent = 
-        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(*static_cast<const solarflare::SWElement *>(e.container())));
+        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(*static_cast<const solarflare::SWElement *>(e.())));
         link->PartComponent =
         cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(*static_cast<const solarflare::SWElement *>(&e)));
         link->AssignedSequence.set(e.elementId());
