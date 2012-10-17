@@ -13,7 +13,7 @@ class SF_InstalledSoftwareIdentity_Provider
 {
     Ref<CIM_ComputerSystem> cimSystem;
     const CIM_ComputerSystem *findSystem();
-    class ConstEnum : public solarflare::SystemElement::ConstEnum
+    class ConstEnum : public solarflare::ConstSoftwareEnumerator
     {
         const CIM_ComputerSystem *from;
         Enum_Instances_Handler<SF_InstalledSoftwareIdentity>* handler;
@@ -21,7 +21,7 @@ class SF_InstalledSoftwareIdentity_Provider
         ConstEnum(const CIM_ComputerSystem *f,
                   Enum_Instances_Handler<SF_InstalledSoftwareIdentity>* h) :
             from(f), handler(h) {};
-        virtual bool process(const solarflare::SystemElement& e);
+        virtual bool process(const solarflare::SWElement& e);
     };
 public:
 

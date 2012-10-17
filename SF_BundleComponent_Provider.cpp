@@ -9,12 +9,23 @@ bool SF_BundleComponent_Provider::ConstEnum::process(const solarflare::SWElement
 {
     if (e.isHostSw())
     {
+        const solarflare::HostSWElement& he = static_cast<const solarflare::HostSWElement&>(e);
+        
         SF_BundleComponent *link = SF_BundleComponent::create(true);
         link->GroupComponent = 
-        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(*static_cast<const solarflare::SWElement *>(e.())));
+        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(*he.package()));
         link->PartComponent =
-        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(*static_cast<const solarflare::SWElement *>(&e)));
-        link->AssignedSequence.set(e.elementId());
+        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(e));
+        if (he.package() != master)
+        {
+            master = he.package();
+            idx = 0;
+        }
+        else
+        {
+            idx++;
+        }
+        link->AssignedSequence.set(idx);
         handler->handle(link);
     }
     return true;
@@ -51,7 +62,7 @@ Enum_Instances_Status SF_BundleComponent_Provider::enum_instances(
 {
     ConstEnum processor(handler);
     
-    solarflare::System::target.enumerate(processor);
+    solarflare::System::target.forAllSoftware(processor);
     
     return ENUM_INSTANCES_OK;
 }

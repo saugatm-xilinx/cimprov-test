@@ -10,13 +10,13 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_PhysicalConnector_Provider
 {
-    class ConstEnum : public solarflare::SystemElement::ConstEnum 
+    class ConstEnum : public solarflare::ConstPortEnumerator 
     {
         Enum_Instances_Handler<SF_PhysicalConnector>* handler;
     public:
         ConstEnum(Enum_Instances_Handler<SF_PhysicalConnector>* h) :
             handler(h) {}
-        virtual bool process (const solarflare::SystemElement& se);
+        virtual bool process (const solarflare::Port& se);
     };
 public:
 

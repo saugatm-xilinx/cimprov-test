@@ -12,9 +12,9 @@ SF_SoftwareIdentity *
 SF_SoftwareIdentity_Provider::makeReference(const solarflare::SWElement& se)
 {
     SF_SoftwareIdentity *identity = SF_SoftwareIdentity::create(true);
-    identity->InstanceID.set(System::target.idPrefix());
+    identity->InstanceID.set(System::target.prefix());
     identity->InstanceID.value.append(":");
-    identity->InstanceID.value.append(se.path());
+    identity->InstanceID.value.append(se.name());
     return identity;
 }
 
@@ -36,17 +36,17 @@ SF_SoftwareIdentity_Provider::swElement(const SWElement& se)
     identity->IsEntity.set(true);
     identity->ElementName.set(se.sysName());
     identity->Name.set(se.name());
-    identity->MajorVersion.set(se.version().vmajor);
-    identity->MinorVersion.set(se.version().vminor);
-    if (se.version().revision != unsigned(-1))
-        identity->RevisionNumber.set(se.version().revision);
-    if (se.version().buildNo != unsigned(-1))
+    identity->MajorVersion.set(se.version().major());
+    identity->MinorVersion.set(se.version().minor());
+    if (se.version().revision() != solarflare::VersionInfo::unknown)
+        identity->RevisionNumber.set(se.version().revision());
+    if (se.version().build() != solarflare::VersionInfo::unknown)
     {
-        identity->LargeBuildNumber.set(se.version().buildNo);
+        identity->LargeBuildNumber.set(se.version().build());
         identity->IsLargeBuildNumber.set(true);
     }
-    identity->VersionString.set(se.version().buildVersionStr());
-    identity->ReleaseDate.set(se.version().releaseDate);
+    identity->VersionString.set(se.version().string());
+    identity->ReleaseDate.set(se.version().releaseDate());
     identity->Description.set(se.description());
 
     identity->Manufacturer.set(System::target.manufacturer());
@@ -56,7 +56,7 @@ SF_SoftwareIdentity_Provider::swElement(const SWElement& se)
     identity->IdentityInfoType.value.append("SoftwareStatus");
     
     identity->IdentityInfoValue.null = false;
-    identity->IdentityInfoValue.value.append(se.path());
+    identity->IdentityInfoValue.value.append(se.name());
     identity->IdentityInfoValue.value.append("Default");    
 
     identity->Classifications.null = false;
@@ -115,24 +115,29 @@ void SF_SoftwareIdentity_Provider::addTargetOS(SF_SoftwareIdentity *identity)
     identity->TargetOSTypes.value.append(cimType[type][is64]);
 }
 
-void SF_SoftwareIdentity_Provider::addPackageType(SF_SoftwareIdentity *identity)
+void SF_SoftwareIdentity_Provider::addPackageType(SF_SoftwareIdentity *identity,
+                                                  solarflare::Package::PkgType type)
 {
     unsigned pkgType = 0;
-    switch (System::target.osType())
+    
+    using solarflare::Package;
+    switch (type)
     {
-        case System::Debian:
+        case Package::Deb:
             pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Debian_linux_Package;
             break;
-        case System::RHEL:
-        case System::SLES:
-        case System::CentOS:
-        case System::OracleEL:
+        case Package::RPM:
             pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Linux_RPM;
             break;
-        case System::WindowsServer2003:
-        case System::WindowsServer2008:
-        case System::WindowsServer2008R2:
+        case Package::MSI:
             pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Windows_MSI;
+            break;
+        case Package::VSphereBundle:
+            pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_VMware_vSphere_Installation_Bundle;
+            break;
+        case Package::Tarball:
+            pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Other;
+            identity->OtherExtendedResourceTypeDescription.set("TAR archive");
             break;
         default:
             pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Unknown;
@@ -152,9 +157,9 @@ SF_SoftwareIdentity_Provider::hostSoftware(const SWElement& se)
     SF_SoftwareIdentity *identity = swElement(se);
     
     addTargetOS(identity);
-    if (se.classify() == SystemElement::ClassBundle)
+    if (se.classify() == SWElement::SWPackage)
     {
-        addPackageType(identity);
+        addPackageType(identity, static_cast<const Package&>(se).type());
     }
 
     return identity;
@@ -185,15 +190,13 @@ Get_Instance_Status SF_SoftwareIdentity_Provider::get_instance(
     return GET_INSTANCE_UNSUPPORTED;
 }
 
-bool SF_SoftwareIdentity_Provider::SWEnum::process(const solarflare::SystemElement& se)
+bool SF_SoftwareIdentity_Provider::SWEnum::process(const solarflare::SWElement& se)
 {
     SF_SoftwareIdentity *identity = NULL;
 
-    if (se.isSoftware()) {
-        const SWElement *swelem = static_cast<const SWElement *>(&se);
-        identity = hostSoftware(*swelem);
-        handler->handle(identity);
-    }
+    identity = hostSoftware(se);
+    handler->handle(identity);
+
     return true;
 }
 
@@ -206,7 +209,7 @@ Enum_Instances_Status SF_SoftwareIdentity_Provider::enum_instances(
     
 
     CIMPLE_DBG(("enumerating objects"));
-    System::target.enumerate(instances);
+    System::target.forAllSoftware(instances);
 
     return ENUM_INSTANCES_OK;
 }

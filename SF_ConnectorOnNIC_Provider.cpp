@@ -6,16 +6,14 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ConnectorOnNIC_Provider::ConstEnum::process(const solarflare::SystemElement& e)
+bool SF_ConnectorOnNIC_Provider::ConstEnum::process(const solarflare::Port& e)
 {
-    if (e.classify() != solarflare::SystemElement::ClassPort)
-        return true;
-
     SF_ConnectorOnNIC *link = SF_ConnectorOnNIC::create(true);
     link->GroupComponent = 
-    cast<CIM_PhysicalPackage *>(SF_NICCard_Provider::makeReference(*static_cast<const solarflare::NIC *>(e.container())));
+    cast<CIM_PhysicalPackage *>(SF_NICCard_Provider::makeReference(*e.nic()));
     link->PartComponent =
-    cast<CIM_PhysicalConnector *>(SF_PhysicalConnector_Provider::makeReference(*static_cast<const solarflare::Port *>(&e)));
+    cast<CIM_PhysicalConnector *>(SF_PhysicalConnector_Provider::makeReference(e));
+    
     handler->handle(link);
     
     return true;
@@ -53,7 +51,7 @@ Enum_Instances_Status SF_ConnectorOnNIC_Provider::enum_instances(
 {
     ConstEnum processor(handler);
     
-    solarflare::System::target.enumerate(processor);
+    solarflare::System::target.forAllPorts(processor);
     
     return ENUM_INSTANCES_OK;
 }

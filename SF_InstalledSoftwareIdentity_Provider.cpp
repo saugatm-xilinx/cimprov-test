@@ -63,19 +63,15 @@ Get_Instance_Status SF_InstalledSoftwareIdentity_Provider::get_instance(
     return GET_INSTANCE_UNSUPPORTED;
 }
 
-bool SF_InstalledSoftwareIdentity_Provider::ConstEnum::process(const solarflare::SystemElement& se)
+bool SF_InstalledSoftwareIdentity_Provider::ConstEnum::process(const solarflare::SWElement& sw)
 {
-    if (!se.isSoftware())
-        return true;
-    
-    const solarflare::SWElement *sw = static_cast<const solarflare::SWElement *>(&se);
-    if (!sw->version().isInstalled())
+    if (sw.version().isUnknown())
         return true;
     
     SF_InstalledSoftwareIdentity *link = SF_InstalledSoftwareIdentity::create(true);
 
     link->System = cast<CIM_System *>(from->clone());
-    SF_SoftwareIdentity *sfid = SF_SoftwareIdentity_Provider::makeReference(*sw);
+    SF_SoftwareIdentity *sfid = SF_SoftwareIdentity_Provider::makeReference(sw);
     link->InstalledSoftware = cast<CIM_SoftwareIdentity *>(sfid);
 
     handler->handle(link);
@@ -97,7 +93,7 @@ Enum_Instances_Status SF_InstalledSoftwareIdentity_Provider::enum_instances(
 
     CIMPLE_DBG(("### cimSystem refcnt = %u", cimSystem.count()));    
     ConstEnum installed(cs, handler);
-    solarflare::System::target.enumerate(installed);
+    solarflare::System::target.forAllSoftware(installed);
 
     return ENUM_INSTANCES_OK;
 }

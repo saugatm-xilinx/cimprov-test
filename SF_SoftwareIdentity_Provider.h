@@ -12,7 +12,7 @@ class SF_SoftwareIdentity_Provider
 {
     static SF_SoftwareIdentity *swElement(const solarflare::SWElement& ve);
     static void addTargetOS(SF_SoftwareIdentity *id);
-    static void addPackageType(SF_SoftwareIdentity *id);
+    static void addPackageType(SF_SoftwareIdentity *id, solarflare::Package::PkgType type);
     static SF_SoftwareIdentity *hostSoftware(const solarflare::SWElement& ve);
 
     class SWEnum : public solarflare::ConstSoftwareEnumerator {

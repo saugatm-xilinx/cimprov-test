@@ -9,37 +9,34 @@ SF_NICCard *SF_NICCard_Provider::makeReference(const solarflare::NIC& nic)
     SF_NICCard *card = SF_NICCard::create(true);
 
     card->CreationClassName.set("SF_NICCard");
-    card->Tag.set(nic.vitalProductData().uuid);
+    card->Tag.set(nic.vitalProductData().id());
 
     return card;
 }
 
 
-bool SF_NICCard_Provider::NICEnum::process(const solarflare::SystemElement& se)
+bool SF_NICCard_Provider::NICEnum::process(const solarflare::NIC& nic)
 {
-    if (se.classify() != solarflare::SystemElement::ClassNIC)
-        return true;
-    const solarflare::NIC *nic = static_cast<const solarflare::NIC *>(&se);
     SF_NICCard *card = SF_NICCard::create(true);
-    solarflare::VitalProductData vpd = nic->vitalProductData();
+    solarflare::VitalProductData vpd = nic.vitalProductData();
     
-    card->InstanceID.set(solarflare::System::target.idPrefix());
+    card->InstanceID.set(solarflare::System::target.prefix());
     card->InstanceID.value.append(":");
-    card->InstanceID.value.append(se.path());
+    card->InstanceID.value.append(nic.name());
     card->CreationClassName.set("SF_NICCard");
-    card->Tag.set(vpd.uuid);
-    card->Name.set(se.name());
-    card->Description.set(se.description());
-    card->Manufacturer.set(nic->manufacturer());
-    card->SerialNumber.set(vpd.serialNo);
-    card->PartNumber.set(vpd.partNo);
-    card->Model.set(vpd.model);
-    card->SKU.set(vpd.fruNumber);
+    card->Tag.set(vpd.id());
+    card->Name.set(nic.name());
+    card->Description.set(nic.description());
+    card->Manufacturer.set(vpd.manufacturer());
+    card->SerialNumber.set(vpd.serial());
+    card->PartNumber.set(vpd.part());
+    card->Model.set(vpd.model());
+    card->SKU.set(vpd.fru());
     card->PackageType.null = false;
     card->PackageType.value = SF_NICCard::_PackageType::enum_Module_Card;
     card->HostingBoard.set(false);
     card->PoweredOn.set(true);
-    card->ElementName.set(se.name());
+    card->ElementName.set(nic.name());
     
 
     handler->handle(card);
@@ -77,7 +74,7 @@ Enum_Instances_Status SF_NICCard_Provider::enum_instances(
     Enum_Instances_Handler<SF_NICCard>* handler)
 {
     NICEnum nics(handler);
-    solarflare::System::target.enumerate(nics);
+    solarflare::System::target.forAllNICs(nics);
     return ENUM_INSTANCES_OK;
 }
 

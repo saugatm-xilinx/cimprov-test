@@ -7,11 +7,10 @@ CIMPLE_NAMESPACE_BEGIN
 SF_PhysicalConnector *SF_PhysicalConnector_Provider::makeReference(const solarflare::Port& p)
 {
     SF_PhysicalConnector *phc = SF_PhysicalConnector::create(true);
-    const solarflare::NIC *nic = static_cast<const solarflare::NIC *>(p.container());
 
     phc->CreationClassName.set("SF_NICCard");
     Buffer buf;
-    buf.appends(nic->vitalProductData().uuid.c_str());
+    buf.appends(p.nic()->vitalProductData().id().c_str());
     buf.append(':');
     buf.append_uint16(p.elementId());
     phc->Tag.set(buf.data());
@@ -19,32 +18,27 @@ SF_PhysicalConnector *SF_PhysicalConnector_Provider::makeReference(const solarfl
     return phc;
 }
 
-bool SF_PhysicalConnector_Provider::ConstEnum::process (const solarflare::SystemElement& se)
+bool SF_PhysicalConnector_Provider::ConstEnum::process (const solarflare::Port& p)
 {
-    if (se.classify() != solarflare::SystemElement::ClassPort)
-        return true;
-
-    const solarflare::NIC *nic = static_cast<const solarflare::NIC *>(se.container());
-    
     SF_PhysicalConnector *phc = SF_PhysicalConnector::create(true);
-    solarflare::VitalProductData vpd = nic->vitalProductData();
+    solarflare::VitalProductData vpd = p.nic()->vitalProductData();
     
-    phc->InstanceID.set(solarflare::System::target.idPrefix());
+    phc->InstanceID.set(solarflare::System::target.prefix());
     phc->InstanceID.value.append(":");
-    phc->InstanceID.value.append(se.path());
+    phc->InstanceID.value.append(p.name());
     phc->CreationClassName.set("SF_NICCard");
     Buffer buf;
-    buf.appends(vpd.uuid.c_str());
+    buf.appends(vpd.id().c_str());
     buf.append(':');
-    buf.append_uint16(se.elementId());
+    buf.append_uint16(p.elementId());
     phc->Tag.set(buf.data());
-    phc->Name.set(se.name());
-    phc->ElementName.set(se.name());
-    phc->Description.set(se.description());
+    phc->Name.set(p.name());
+    phc->ElementName.set(p.name());
+    phc->Description.set(p.description());
 
     phc->ConnectorType.null = false;
     phc->ConnectorLayout.null = false;
-    switch (nic->connector()) 
+    switch (p.nic()->connector()) 
     {
         case solarflare::NIC::RJ45:
             phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_RJ45);
@@ -97,7 +91,7 @@ Enum_Instances_Status SF_PhysicalConnector_Provider::enum_instances(
     Enum_Instances_Handler<SF_PhysicalConnector>* handler)
 {
     ConstEnum connectors(handler);
-    solarflare::System::target.enumerate(connectors);
+    solarflare::System::target.forAllPorts(connectors);
     return ENUM_INSTANCES_OK;
 }
 

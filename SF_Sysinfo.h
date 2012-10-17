@@ -31,6 +31,10 @@ namespace solarflare
         virtual void initialize() = 0;
         /// @return a generic name of an entity (e.g. 'Ethernet Adaptor')
         virtual const String& className() const = 0;
+
+        /// @return a name possibly suffixed with an element index
+        /// (like. 'Ethernet Adaptor 1')
+        virtual String name() const { return className(); }
     };
 
     /// @brief Detailed version info for SW elements
@@ -216,6 +220,7 @@ namespace solarflare
             SystemElement(d), idx(i) {}
         virtual unsigned elementId() const { return idx; }
         virtual PCIAddress pciAddress() const = 0;
+        virtual String name() const;
     };
 
     struct MACAddress {
@@ -226,7 +231,7 @@ namespace solarflare
                    unsigned a3, unsigned a4, unsigned a5);
     };
 
-    MACAddress::MACAddress(unsigned a0, unsigned a1, unsigned a2,
+    inline MACAddress::MACAddress(unsigned a0, unsigned a1, unsigned a2,
                            unsigned a3, unsigned a4, unsigned a5)
     {
         address[0] = a0;
@@ -472,7 +477,8 @@ namespace solarflare
             RPM,
             Deb,
             Tarball,
-            MSI
+            MSI,
+            VSphereBundle
         };
         virtual PkgType type() const = 0;
         virtual bool isHostSw() const { return false; }
@@ -495,6 +501,7 @@ namespace solarflare
         System(const System&);
         const System& operator = (const System&);
         static const String manfId;
+        static const String nsPrefix;
         static const String systemDescr;
         static const String systemName;
         bool initialized;
@@ -512,6 +519,9 @@ namespace solarflare
         /// concrete instance of a platform-specific subclass may be created
         static System& target;
         const String& manufacturer() const { return manfId; };
+        /// @return a shortened vendor name to use as a prefix for
+        /// namespaces etc
+        const String& prefix() const { return nsPrefix; }
         virtual bool is64bit() const = 0;
         enum OSType {
             WindowsServer2003,

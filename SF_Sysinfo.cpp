@@ -58,6 +58,15 @@ namespace solarflare
 
     const unsigned PCIAddress::unknown = unsigned(-1);
 
+    String HWElement::name() const
+    {
+        Buffer buf;
+        buf.appends(SystemElement::name().c_str());
+        buf.append(' ');
+        buf.append_uint16(elementId());
+        return buf.data();
+    }
+
     const String Port::portName("Ethernet Port");
     const String Port::portDescription("NIC Ethernet Port");
 
@@ -79,6 +88,7 @@ namespace solarflare
     const String NIC::nicName = "Ethernet Adapter";
 
     const String System::manfId = "Solarflare Inc.";
+    const String System::nsPrefix = "Solarflare";
     const String System::systemDescr = "Solarflare-enabled host";
     const String System::systemName = "System";
 
@@ -109,6 +119,8 @@ namespace solarflare
         PackageContentsEnumerator(SoftwareEnumerator& e) : en(e) {}
         virtual bool process(SWElement& se) 
         {
+            if (!en.process(se))
+                return false;
             return static_cast<Package&>(se).forAllSoftware(en);
         }
     };
@@ -119,6 +131,8 @@ namespace solarflare
         ConstPackageContentsEnumerator(ConstSoftwareEnumerator& e) : en(e) {}
         virtual bool process(const SWElement& se) 
         {
+            if (!en.process(se))
+                return false;
             return static_cast<const Package&>(se).forAllSoftware(en);
         }
     };
@@ -142,8 +156,6 @@ namespace solarflare
             return n.forAllFw(en);
         }
     };
-
-
 
     bool System::forAllPorts(ConstPortEnumerator& en) const
     {
@@ -223,7 +235,7 @@ namespace solarflare
         /// @return system interface name (e.g. ethX for Linux)
         virtual String ifName() const;
         /// @return Manufacturer-supplied MAC address
-        virtual MACAddress permanentMAC() const;
+        virtual MACAddress permanentMAC() const { return MACAddress(0, 1, 2, 3, 4, 5); };
         /// @return MAC address actually in use
         virtual MACAddress currentMAC() const { return current; }        
         /// Change the current MAC address to @p mac
@@ -238,6 +250,13 @@ namespace solarflare
         virtual void initialize() {};
     };
 
+
+    String SamplePort::ifName() const
+    {
+        char buf[] = "eth1";
+        buf[sizeof(buf) - 1] += elementId();
+        return buf;
+    }
 
     class SampleNICFirmware : public NICFirmware {
         const NIC *owner;
