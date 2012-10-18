@@ -11,6 +11,7 @@ namespace solarflare
     using cimple::Log_Call_Frame;
     using cimple::_log_enabled_state;
     using cimple::LL_DBG;
+    using cimple::Auto_Mutex;
 
     const unsigned VersionInfo::unknown = unsigned(-1);
 
@@ -56,6 +57,52 @@ namespace solarflare
         return result.data();
     }
 
+    void *Thread::doThread(void *self)
+    {
+        bool status;
+        Thread *object = static_cast<Thread *>(self);
+
+        status = object->threadProc();
+
+        object->stateLock.lock();
+        if (object->state == Aborting)
+            object->state = Aborted;
+        else
+            object->state = status ? Succeeded : Failed;
+        object->stateLock.unlock();
+        exit(NULL);
+        return NULL;
+    }
+
+    Thread::State Thread::currentState() const
+    {
+        State s;
+        stateLock.lock();
+        s = state;
+        stateLock.unlock();
+        return s;
+    }
+    
+    void Thread::start()
+    {
+        Auto_Mutex autolock(stateLock);
+        if (state == Running || state == Aborting)
+            return;
+        state = Running;
+        if (!Thread::create_detached(*this, doThread, this))
+            state = Aborted;
+    }
+
+    void Thread::stop()
+    {
+        Auto_Mutex autolock(stateLock);
+
+        if (state != Running)
+            return;
+        state = Aborting;
+        terminate();
+    }
+
     const unsigned PCIAddress::unknown = unsigned(-1);
 
     String HWElement::name() const
@@ -65,6 +112,15 @@ namespace solarflare
         buf.append(' ');
         buf.append_uint16(elementId());
         return buf.data();
+    }
+
+    String MACAddress::string() const
+    {
+        char str[sizeof(address) * 2 + 1];
+        sprintf(str, "%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x",
+                address[0], address[1], address[2],
+                address[3], address[4], address[5]);
+        return str;
     }
 
     const String Port::portName("Ethernet Port");
@@ -212,7 +268,8 @@ namespace solarflare
             currentMtu(up->supportedMtu()),
             current(0, 1, 2, 3, 4, 5)
         { current.address[5] += i; }
-        virtual bool linkStatus() const { return status; }
+        virtual bool linkStatus() const { return true; }
+        virtual bool ifStatus() const { return status; }
         virtual void enable(bool st) { status = st; }
         virtual uint64 linkSpeed() const { return speed; }            
         virtual void linkSpeed(uint64 sp) { speed = sp; }
