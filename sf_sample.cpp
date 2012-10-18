@@ -1,4 +1,4 @@
-#include "SF_Sysinfo.h"
+#include "sf_platform.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 

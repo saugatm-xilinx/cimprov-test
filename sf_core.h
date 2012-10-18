@@ -4,6 +4,9 @@
 #include <cimple/cimple.h>
 #include <cimple/Buffer.h>
 
+#include "sf_utils.h"
+#include "sf_threads.h"
+
 // Platform-independent classes.
 
 namespace solarflare 

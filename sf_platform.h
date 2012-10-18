@@ -4,6 +4,8 @@
 #include <cimple/cimple.h>
 #include <cimple/Buffer.h>
 
+#include "sf_core.h"
+
 // Classes that should be subclassed for specific platform
 
 /// @brief Namespace for OS & Driver abstraction classes.
