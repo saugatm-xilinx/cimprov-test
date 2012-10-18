@@ -108,6 +108,17 @@ namespace solarflare
         /// @note We can not have virtual fields, so we have to use virtual
         /// method that should be overridden in each subclass and should
         /// return constant value.
+        ///
+        /// @note Ideally, we should use RTTI to determine whether
+        /// it is safe to cast a pointer/reference to object from
+        /// a base class to a given subclass. Unfortunately, RTTI may
+        /// be just not present in a given implementation (e.g. -fno-rtti
+        /// flag passed to gcc). Besides that, RTTI is not very handy
+        /// when it comes to a small known set of subclasses (one cannot
+        /// do a switch in this case and is urged to use if-cascade with
+        /// dynamic_casts. Therefore, we implement a tiny replacement
+        /// for full-fledged RTTI that just allows us to determine the
+        /// actual subclass of a SWElement.
         virtual SWClass classify() const = 0;
 
         /// Returns true iff the software element is an actual host-running
