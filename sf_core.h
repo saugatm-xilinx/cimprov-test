@@ -52,16 +52,32 @@ namespace solarflare
         virtual String name() const { return genericName(); }
     };
 
+
     /// @brief Abstract class for software components.
     class SWElement : public SystemElement {
         String sysname;
+        class InstallThread : public Thread {
+            SWElement *owner;
+            String filename;
+        protected:
+            virtual bool threadProc();
+        public:
+            InstallThread(SWElement *own) : 
+                owner(own) {}
+            void setFilename(const char *f)
+            {
+                filename = f;
+            }
+        };
+        InstallThread installer;
+        
     public:
         //// Constructor
         ////
         //// @param d     Description
         //// @param sn    System name
         SWElement(const String& d, const String& sn) :
-            SystemElement(d), sysname(sn) {}
+            SystemElement(d), sysname(sn), installer(this) {}
 
         /// Returns version of the installed component. Platform-specific
         /// subclasses shall implement the actual behaviour and retrieve the
@@ -72,8 +88,8 @@ namespace solarflare
         virtual VersionInfo version() const = 0;
 
         /// Updates a software component from @p filename.
-        /// Platform-specific subclasses shall implement the actual
-        /// behaviour
+        /// This method is only responsible for proper handling of
+        /// asynchronous call; all real work is done in syncInstall()
         ///
         /// @param filename Filename with new SW version 
         /// @param sync If @p sync is false, a separate thread shall be
@@ -83,7 +99,15 @@ namespace solarflare
         ///
         /// @return FALSE if the installation failed, TRUE if it succeeds or
         /// we're in async mode.
-        virtual bool install(const char *filename, bool sync = true) = 0;
+        bool install(const char *filename, bool sync = true);
+
+        /// Actually updates a software component from @p filename.
+        /// The method shall be overriden in platform-specific subclasses.
+        ///
+        /// @note It's not intended to be called directly; it is made public
+        /// because it shall be callable from InstallThread. 
+        /// But it shall do no harm if called from some other context.
+        virtual bool syncInstall(const char *filename) = 0;
 
         /// Method returns system name of the component (e.g. object's file
         /// name, rpm name etc.). This is required so that we can relate to
@@ -137,7 +161,7 @@ namespace solarflare
         /// is deleted
         ///
         /// @return Thread or (NULL or inactive Thread object)
-        virtual Thread *installThread() { return NULL; }
+        virtual Thread *installThread() { return &installer; }
     };
 
     /// @brief Abstract class for bus components (currently, NICs and

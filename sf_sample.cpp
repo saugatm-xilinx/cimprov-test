@@ -99,28 +99,20 @@ namespace solarflare
         return buf;
     }
 
-    class SampleFwFlashThread : public Thread {
-    protected:
-        virtual bool threadProc() { return true; }
-    };
     
     class SampleNICFirmware : public NICFirmware {
         const NIC *owner;
         VersionInfo vers;
-        SampleFwFlashThread thread;
     public:
         SampleNICFirmware(const NIC *o, const VersionInfo &v) :
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const { return vers; }
-        virtual bool install(const char *, bool async)
+        virtual bool syncInstall(const char *)
         {
-            if (async)
-                thread.start();
             return true;
         }
         virtual void initialize() {};
-        virtual Thread *installThread() { return &thread; }
     };
 
     class SampleBootROM : public BootROM {
@@ -131,7 +123,7 @@ namespace solarflare
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const { return vers; }
-        virtual bool install(const char *, bool) { return true; }
+        virtual bool syncInstall(const char *) { return true; }
         virtual void initialize() {};
     };
 
@@ -230,7 +222,7 @@ namespace solarflare
             Driver(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool install(const char *, bool) { return false; }
+        virtual bool syncInstall(const char *) { return false; }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
@@ -245,7 +237,7 @@ namespace solarflare
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool install(const char *, bool) { return false; }
+        virtual bool syncInstall(const char *) { return false; }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
@@ -263,7 +255,7 @@ namespace solarflare
             kernelDriver(this, "NET Driver", "sfc", "3.3") {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("3.3"); }
-        virtual bool install(const char *, bool) { return true; }
+        virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(SoftwareEnumerator& en)
         {
             return en.process(kernelDriver);
@@ -287,7 +279,7 @@ namespace solarflare
             providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("0.1"); }
-        virtual bool install(const char *, bool) { return true; }
+        virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(SoftwareEnumerator& en)
         {
             return en.process(providerLibrary);
