@@ -22,6 +22,10 @@ namespace solarflare
         virtual ~SystemElement() {}
             
         const String& description() const { return descr; }
+        /// The ordinal number of the element inside its parent.
+        /// That is relevant for 'homogenenous' elements such as 
+        /// NICs or ports. Software elements are all different in some sense,
+        /// so zero value is expected for them.
         virtual unsigned elementId() const { return 0; }
         /// Run-time initialization for things that are unsafe
         /// to do from constructors (including calling virtual methods).
@@ -48,6 +52,7 @@ namespace solarflare
     public:
         /// A value for missing version component
         static const unsigned unknown;
+        /// Construct version data from components
         VersionInfo(unsigned mj, unsigned mn, 
                     unsigned rev = unknown, 
                     unsigned bno = unknown,
@@ -55,6 +60,7 @@ namespace solarflare
             vmajor(mj), vminor(mn), revisionNo(rev), buildNo(bno),
             versionStr(vstr), 
             dateReleased(rd) {}
+        /// Construct version data with all fields set to unknown values
         VersionInfo() :
             vmajor(unknown), vminor(unknown), revisionNo(unknown), 
             buildNo(unknown) {}
@@ -63,21 +69,28 @@ namespace solarflare
         /// Missing fields (incl. release date) are set to unknown.
         /// The versionStr field itself is set to @p s
         VersionInfo(const char *s);
+        /// @return true iff two version data are equivalent
         bool operator == (const VersionInfo& v) const;
+        /// @return true iff two version data are not equivalent
         bool operator != (const VersionInfo& v) const
         {
             return !(*this == v);
         }
+        /// @return major version number
         unsigned major() const { return vmajor; }
+        /// @return minor version number
         unsigned minor() const { return vminor; }
+        /// @return revision number (3rd numeric version component)
         unsigned revision() const { return revisionNo; }
+        /// @return build number (4th numeric version component)
         unsigned build() const{ return buildNo; }
         /// @return String rep of the version info
         /// If versionStr is non-empty, it is simply returned, otherwise
         /// the returned string is 'major.minor[.revision[.build]]'
         String string() const;
+        /// @return the release date (zero point if not known)
         Datetime releaseDate() const {  return dateReleased; }
-        /// Test whether any field has a 'known' value
+        /// @return true iff all fields are set to 'unknown' values
         bool isUnknown() const;
     };
 
@@ -109,15 +122,19 @@ namespace solarflare
     /// stopping the thread
     class Thread : public cimple::Thread {
     public:
+        /// Thread run state
         enum State {
-            NotRun,
-            Running,
-            Succeeded,
-            Failed,
-            Aborted
+            NotRun,    //< have never been run
+            Running,   //< running now
+            Succeeded, //< finished with success
+            Failed,    //< finished with failure
+            Aborting,  //< external termination requested but not yet completed
+            Aborted    //< externally terminated
         };
     private:
-        Mutex stateLock;
+        /// state change lock
+        mutable Mutex stateLock;
+        /// actual thread run state
         State state;
         /// An adaptor between cimple::Thread interface and threadProc()
         static void *doThread(void *self);
@@ -126,18 +143,23 @@ namespace solarflare
         /// @return true for successful termination (state := Succeeded) 
         ///         false for failure (state := failed)
         virtual bool threadProc() = 0;
+        /// The helper to make threadProc() terminate.
+        /// Shall be overriden if threadProc() in the subclass actually
+        /// supports unsolicited termination.
+        /// The method is always called under stateLock
+        virtual void terminate() {}
     public:
         Thread() : state(NotRun) {}
+        /// @return current thread run state
         State currentState() const;
         /// Makes the thread running
         void start();
         /// Attempts to stop the thread.
         /// It is not guaranteed that this method actually has any effect;
         /// caller must poll currentState() for state change.
-        /// As there is no cross-platform universal way to stop threads,
-        /// this needs co-operation from threadProc(), so the method shall
-        /// be overridden in subclasses
-        virtual void stop() {};
+        /// As there is no cross-platform universal way to stop threads
+        /// this needs co-operation from threadProc() with the help of terminate()
+        void stop();
     };
 
     /// @brief Abstract class for software components
@@ -155,6 +177,7 @@ namespace solarflare
         /// be returned. The corresponding thread may be then obtained by 
         /// calling installThread()
         virtual bool install(const char *filename, bool sync = true) = 0;
+        /// @return system name of the component (e.g. object's file name)
         const String& sysName() const { return sysname; }
         enum SWClass {
             SWDriver,
@@ -229,6 +252,7 @@ namespace solarflare
         /// does not allow compound initializers in many contexts
         MACAddress(unsigned a0, unsigned a1, unsigned a2,
                    unsigned a3, unsigned a4, unsigned a5);
+        String string() const;
     };
 
     inline MACAddress::MACAddress(unsigned a0, unsigned a1, unsigned a2,
@@ -259,6 +283,8 @@ namespace solarflare
         Port(unsigned i) : HWElement(portDescription, i) {}
         /// @return link status
         virtual bool linkStatus() const = 0;
+        /// @return interface status
+        virtual bool ifStatus() const = 0;
         /// @return changing the interface state up/down
         virtual void enable(bool status) = 0;
         /// @return current link speed
@@ -398,7 +424,9 @@ namespace solarflare
         virtual void setupFirmware() = 0;
     public:
         NIC(unsigned i) : HWElement(nicDescription, i) {};
+        /// @return NIC vital data
         virtual VitalProductData vitalProductData() const = 0;
+        /// Network connector type
         enum Connector {
             RJ45,
             SFPPlus,
@@ -473,6 +501,7 @@ namespace solarflare
             SWElement(descr, pkg) {}
         virtual SWClass classify() const { return SWPackage; }
         virtual void initialize() { setupContents(); }
+        /// Packaging type
         enum PkgType {
             RPM,
             Deb,
@@ -480,6 +509,7 @@ namespace solarflare
             MSI,
             VSphereBundle
         };
+        /// @return type of the package
         virtual PkgType type() const = 0;
         virtual bool isHostSw() const { return false; }
     };
@@ -518,11 +548,14 @@ namespace solarflare
         /// The root object. It is defined as a reference, so a hidden
         /// concrete instance of a platform-specific subclass may be created
         static System& target;
+        /// @return global vendor id
         const String& manufacturer() const { return manfId; };
         /// @return a shortened vendor name to use as a prefix for
         /// namespaces etc
         const String& prefix() const { return nsPrefix; }
+        /// @return true iff the host system is 64-bit
         virtual bool is64bit() const = 0;
+        /// Installed OS type
         enum OSType {
             WindowsServer2003,
             WindowsServer2008,
@@ -535,6 +568,7 @@ namespace solarflare
             GenericLinux,
             VMWareESXi
         };
+        /// @return host OS type
         virtual OSType osType() const = 0;
         virtual void initialize() 
         {
@@ -546,9 +580,13 @@ namespace solarflare
             }
         }
 
+        /// apply en to all NICs in the system (non-destructively)
         virtual bool forAllNICs(ConstNICEnumerator& en) const = 0;
+        /// apply en to all NICs in the system
         virtual bool forAllNICs(NICEnumerator& en) = 0;
+        /// apply en to all softwre packages in the system (non-destructively)
         virtual bool forAllPackages(ConstSoftwareEnumerator& en) const = 0;
+        /// apply en to all softwre packages in the system 
         virtual bool forAllPackages(SoftwareEnumerator& en) = 0;
 
         virtual bool forAllPorts(ConstPortEnumerator& en) const;
