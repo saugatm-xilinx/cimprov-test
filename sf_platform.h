@@ -29,25 +29,25 @@ namespace solarflare
 
     /// @brief Abstract class for ports. Implementors shall subclass it for
     /// platform-specific port representation.
-    class Port : public HWElement, public NICElement {
+    class Port : public SystemElement, public NICElement {
         /// Class-wide name of the port to be passed into constructor
         static const String portName;
         /// Class-wide description of the port to be passed into constructor
         static const String portDescription;
+
+        /// Index of the port on this particular NIC.
+        ///
+        /// fixme: may be it's better to create another hierarchy level like
+        /// OrderedSystemElement.
+        unsigned portIndex;
     public:
         /// Constructor
         ///
         /// @param i  Index of the port (0, 1)
-        Port(unsigned i) : HWElement(portDescription, i) {}
+        Port(unsigned i) : SystemElement(portDescription), portIndex(i) {}
 
         /// @return link status
         virtual bool linkStatus() const = 0;
-
-        /// @return interface status; fixme
-        virtual bool ifStatus() const = 0;
-
-        /// @return changing the interface state up/down; fixme
-        virtual void enable(bool status) = 0;
 
         /// @return current link speed
         virtual uint64 linkSpeed() const = 0;
@@ -70,17 +70,46 @@ namespace solarflare
         /// Causes a renegotiation like 'ethtool -r'.
         virtual void renegotiate() = 0;
 
+        /// @return Manufacturer-supplied MAC address.
+        /// fixme: it's not clear if it should be here or in Interface
+        virtual MACAddress permanentMAC() const = 0;
+
+        /// We're a port.
+        virtual const String& genericName() const { return portName; }
+        virtual unsigned elementId() const { return portIndex; }
+    };
+
+    class Interface : public HWElement, public NICElement {
+        // Class-wide name (unrelated to OS ifname) and description.
+        static const String  ifGenName;
+        static const String  ifGenDescription;
+    public:
+        /// Constructor
+        ///
+        /// @param i Index of the interface among all SF interfaces on
+        ///          particular NIC (not system-wide).
+        ///          fixme: or on all NICs?
+        Interface(unsigned i) : HWElement(ifGenDescription, i) {}
+
+        /// Function port.
+        virtual Port *port() = 0;
+        /// Function port in case we don't plan to modify it.
+        virtual const Port *port() const = 0;
+        
+        /// @return interface status; fixme
+        virtual bool ifStatus() const = 0;
+
+        /// @return changing the interface state up/down; fixme
+        virtual void enable(bool status) = 0;
+
+        /// @return system interface name (e.g. ethX for Linux); fixme
+        virtual String ifName() const = 0;
+
         /// @return current MTU
         virtual uint64 mtu() const = 0;
 
         /// Change MTU to @p u
         virtual void mtu(uint64 u) = 0;
-
-        /// @return system interface name (e.g. ethX for Linux); fixme
-        virtual String ifName() const = 0;
-
-        /// @return Manufacturer-supplied MAC address
-        virtual MACAddress permanentMAC() const = 0;
 
         /// @return MAC address actually in use
         virtual MACAddress currentMAC() const = 0;
@@ -88,9 +117,9 @@ namespace solarflare
         /// Change the current MAC address to @p mac.
         virtual void currentMAC(const MACAddress& mac) = 0;
 
-        /// We're a port.
-        virtual const String& genericName() const { return portName; }
+        virtual const String& genericName() const { return ifGenName; }
     };
+
 
     /// @brief Abstract class for MC firmware. Implementors shall subclass
     /// it for platform-specific behaviour.
@@ -129,7 +158,8 @@ namespace solarflare
     /// Implementors shall subclass it for platform-specific behaviour
     class NIC : public HWElement,
                 public SoftwareContainer,
-                public PortContainer {
+                public PortContainer,
+                public InterfaceContainer {
         // Same name and description for all class instances.
         static const String nicDescription;
         static const String nicName;
@@ -138,6 +168,9 @@ namespace solarflare
         /// (typically, that would imply creating instance of Port subclass
         /// and calling initialize() on it
         virtual void setupPorts() = 0;
+
+        /// Same as setupPorts but for interfaces.
+        virtual void setupInterfaces() = 0;
 
         /// Create all necessary internal structures for present firmware
         virtual void setupFirmware() = 0;
@@ -166,7 +199,9 @@ namespace solarflare
 
         /// @return maximum link speed (defaults to 10G)
         /// fixme: enum
-        virtual uint64 maxLinkSpeed() const { return uint64(10) * 1024 * 1024 * 1024; }
+        virtual uint64 maxLinkSpeed() const {
+            return uint64(10) * 1024 * 1024 * 1024;
+        }
 
         /// @return largest possible MTU for the NIC
         virtual uint64 supportedMTU() const = 0;
@@ -174,6 +209,7 @@ namespace solarflare
         virtual void initialize()
         {
             setupPorts();
+            setupInterfaces();
             setupFirmware();
         }
         /// Apply @p en to all firmware of the NIC
@@ -182,8 +218,12 @@ namespace solarflare
         virtual bool forAllFw(ConstSoftwareEnumerator& en) const = 0;
 
         // Inherited methods
-        virtual bool forAllSoftware(SoftwareEnumerator& en) { return forAllFw(en); }
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const { return forAllFw(en); }
+        virtual bool forAllSoftware(SoftwareEnumerator& en) {
+            return forAllFw(en);
+        }
+        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const {
+            return forAllFw(en);
+        }
     };
 
     /// @brief An abstract driver class.
@@ -254,10 +294,13 @@ namespace solarflare
         virtual bool isHostSw() const { return false; }
     };
 
-    /// @brief An abstract topmost class
-    /// Implementors must subclass it to define a specific platform
-    /// All others abstract classes above will usually need to be subclassed too
-    class System : public SystemElement, public SoftwareContainer, public PortContainer {
+    /// @brief An abstract topmost class. Implementors must subclass it to
+    /// define a specific platform All others abstract classes above will
+    /// usually need to be subclassed too
+    class System : public SystemElement,
+                   public SoftwareContainer,
+                   public PortContainer,
+                   public InterfaceContainer {
         /// Singleton
         System(const System&);
         const System& operator = (const System&);
@@ -282,8 +325,8 @@ namespace solarflare
         /// internal structures (including FW instances creation).
         virtual void setupNICs() = 0;
 
-        /// Detect all Solarflare software packages in the system and make corresponding
-        /// internal structures.
+        /// Detect all Solarflare software packages in the system and make
+        /// corresponding internal structures.
         virtual void setupPackages() = 0;
     public:
         /// The root object. It is defined as a reference, so a hidden
@@ -334,13 +377,16 @@ namespace solarflare
         virtual bool forAllNICs(ConstNICEnumerator& en) const = 0;
         /// Apply en to all NICs in the system
         virtual bool forAllNICs(NICEnumerator& en) = 0;
-        /// Apply en to all softwre packages in the system (non-destructively)
+        /// Apply en to all softwre packages in the system
+        /// (non-destructively)
         virtual bool forAllPackages(ConstSoftwareEnumerator& en) const = 0;
         /// Apply en to all softwre packages in the system 
         virtual bool forAllPackages(SoftwareEnumerator& en) = 0;
 
         virtual bool forAllPorts(ConstPortEnumerator& en) const;
         virtual bool forAllPorts(PortEnumerator& en);
+        virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const;
+        virtual bool forAllInterfaces(InterfaceEnumerator& en);
         virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const;
         virtual bool forAllSoftware(SoftwareEnumerator& en);
         

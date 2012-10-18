@@ -201,6 +201,18 @@ namespace solarflare
         virtual bool process(const Port& p) = 0;
     };
 
+    /// @brief Abstract mutating enumerator for ports
+    class InterfaceEnumerator {
+    public:
+        virtual bool process(Interface& p) = 0;
+    };
+
+    /// @brief Abstract constant enumerator for ports
+    class ConstInterfaceEnumerator {
+    public:
+        virtual bool process(const Interface& p) = 0;
+    };
+
     /// @brief Abstract mutating enumerator for SW
     class SoftwareEnumerator {
     public:
@@ -213,7 +225,8 @@ namespace solarflare
         virtual bool process(const SWElement& sw) = 0;
     };
 
-    /// @brief An abstract mix-in for software containing elements (NIC, Package and System)
+    /// @brief An abstract mix-in for software containing elements (NIC,
+    /// Package and System)
     class SoftwareContainer {
     public:
         virtual bool forAllSoftware(SoftwareEnumerator& en) = 0;
@@ -225,6 +238,13 @@ namespace solarflare
     public:
         virtual bool forAllPorts(PortEnumerator& en) = 0;
         virtual bool forAllPorts(ConstPortEnumerator& en) const = 0;
+    };
+
+    /// @brief An abstract mix-in for port containing elements (NIC, System)
+    class InterfaceContainer {
+    public:
+        virtual bool forAllInterfaces(InterfaceEnumerator& en) = 0;
+        virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const = 0;
     };
 
     class NICEnumerator {
