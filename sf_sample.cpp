@@ -8,261 +8,6 @@
 
 namespace solarflare 
 {
-    using cimple::Log_Call_Frame;
-    using cimple::_log_enabled_state;
-    using cimple::LL_DBG;
-    using cimple::Auto_Mutex;
-
-    const unsigned VersionInfo::unknown = unsigned(-1);
-
-    VersionInfo::VersionInfo(const char *s) :
-        vmajor(0), vminor(0), revisionNo(unknown), buildNo(unknown)
-    {
-        char *s0 = const_cast<char *>(s);
-        vmajor = strtoul(s0, &s0, 10);
-        if (*s0 == '.')
-        {
-            vminor = strtoul(s0 + 1, &s0, 10);
-            if (*s0 == '.' || *s0 == '-')
-            {
-                revisionNo = strtoul(s0 + 1, &s0, 10);
-                if (*s0 == '.' || *s0 == '-')
-                    buildNo = strtoul(s0 + 1, NULL, 10);
-            }
-        }
-        versionStr = String(s);
-    }
-    
-
-    String VersionInfo::string() const
-    {
-        if (versionStr.size() > 0)
-            return versionStr;
-        
-        Buffer result;
-        
-        result.append_uint32(vmajor);
-        result.append('.');
-        result.append_uint32(vminor);
-        if (revisionNo != unknown)
-        {
-            result.append('.');
-            result.append_uint32(revisionNo);
-        }
-        if (buildNo != unknown)
-        {
-            result.append('.');
-            result.append_uint32(buildNo);
-        }
-        return result.data();
-    }
-
-    void *Thread::doThread(void *self)
-    {
-        bool status;
-        Thread *object = static_cast<Thread *>(self);
-
-        status = object->threadProc();
-
-        object->stateLock.lock();
-        if (object->state == Aborting)
-            object->state = Aborted;
-        else
-            object->state = status ? Succeeded : Failed;
-        object->stateLock.unlock();
-        exit(NULL);
-        return NULL;
-    }
-
-    Thread::State Thread::currentState() const
-    {
-        State s;
-        stateLock.lock();
-        s = state;
-        stateLock.unlock();
-        return s;
-    }
-    
-    void Thread::start()
-    {
-        Auto_Mutex autolock(stateLock);
-        if (state == Running || state == Aborting)
-            return;
-        state = Running;
-        if (!Thread::create_detached(*this, doThread, this))
-            state = Aborted;
-    }
-
-    void Thread::stop()
-    {
-        Auto_Mutex autolock(stateLock);
-
-        if (state != Running)
-            return;
-        state = Aborting;
-        terminate();
-    }
-
-    unsigned Thread::percentage() const
-    {
-        switch (currentState())
-        {
-            case Running:
-                return 50;
-            case Succeeded:
-                return 100;
-            default:
-                return 0;
-        }
-    }
-
-    const unsigned PCIAddress::unknown = unsigned(-1);
-
-    String HWElement::name() const
-    {
-        Buffer buf;
-        buf.appends(SystemElement::name().c_str());
-        buf.append(' ');
-        buf.append_uint16(elementId());
-        return buf.data();
-    }
-
-    String MACAddress::string() const
-    {
-        char str[sizeof(address) * 2 + 1];
-        sprintf(str, "%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x",
-                address[0], address[1], address[2],
-                address[3], address[4], address[5]);
-        return str;
-    }
-
-    const String Port::portName("Ethernet Port");
-    const String Port::portDescription("NIC Ethernet Port");
-
-    const String NICFirmware::fwName("Firmware");
-    const String NICFirmware::fwDescription("NIC MC Firmware");
-    const String NICFirmware::fwSysname("");
-
-    const String BootROM::romName("BootROM");
-    const String BootROM::romDescription("NIC BootROM");
-    const String BootROM::romSysname("");
-
-    const String& VitalProductData::manufacturer() const 
-    {
-        return (manufac.size() > 0 ? manufac : 
-                System::target.manufacturer());
-    }
-
-    const String NIC::nicDescription = "Solarflare NIC";
-    const String NIC::nicName = "Ethernet Adapter";
-
-    const String System::manfId = "Solarflare Inc.";
-    const String System::nsPrefix = "Solarflare";
-    const String System::systemDescr = "Solarflare-enabled host";
-    const String System::systemName = "System";
-
-    class NICPortEnumerator : public NICEnumerator {
-        PortEnumerator& en;
-    public:
-        NICPortEnumerator(PortEnumerator& e) : en(e) {}
-        virtual bool process(NIC& n) 
-        {
-            return n.forAllPorts(en);
-        }
-    };
-
-    class ConstNICPortEnumerator : public ConstNICEnumerator {
-        ConstPortEnumerator& en;
-    public:
-        ConstNICPortEnumerator(ConstPortEnumerator& e) : en(e) {}
-        virtual bool process(const NIC& n) 
-        {
-            return n.forAllPorts(en);
-        }
-    };
-
-
-    class PackageContentsEnumerator : public SoftwareEnumerator {
-        SoftwareEnumerator& en;
-    public:
-        PackageContentsEnumerator(SoftwareEnumerator& e) : en(e) {}
-        virtual bool process(SWElement& se) 
-        {
-            if (!en.process(se))
-                return false;
-            return static_cast<Package&>(se).forAllSoftware(en);
-        }
-    };
-
-    class ConstPackageContentsEnumerator : public ConstSoftwareEnumerator {
-        ConstSoftwareEnumerator& en;
-    public:
-        ConstPackageContentsEnumerator(ConstSoftwareEnumerator& e) : en(e) {}
-        virtual bool process(const SWElement& se) 
-        {
-            if (!en.process(se))
-                return false;
-            return static_cast<const Package&>(se).forAllSoftware(en);
-        }
-    };
-
-    class NICFwEnumerator : public NICEnumerator {
-        SoftwareEnumerator& en;
-    public:
-        NICFwEnumerator(SoftwareEnumerator& e) : en(e) {}
-        virtual bool process(NIC& n) 
-        {
-            return n.forAllFw(en);
-        }
-    };
-
-    class ConstNICFwEnumerator : public ConstNICEnumerator {
-        ConstSoftwareEnumerator& en;
-    public:
-        ConstNICFwEnumerator(ConstSoftwareEnumerator& e) : en(e) {}
-        virtual bool process(const NIC& n) 
-        {
-            return n.forAllFw(en);
-        }
-    };
-
-    bool System::forAllPorts(ConstPortEnumerator& en) const
-    {
-        ConstNICPortEnumerator embed(en);
-        return forAllNICs(embed);
-    }
-
-    bool System::forAllPorts(PortEnumerator& en)
-    {
-        NICPortEnumerator embed(en);
-        return forAllNICs(embed);
-    }
-
-    bool System::forAllSoftware(ConstSoftwareEnumerator& en) const
-    {
-        ConstPackageContentsEnumerator embed(en);
-        if (!forAllPackages(embed))
-            return false;
-        
-        ConstNICFwEnumerator embedfw(en);
-        if (!forAllNICs(embedfw))
-            return false;
-
-        return true;
-    }
-
-    bool System::forAllSoftware(SoftwareEnumerator& en)
-    {
-        PackageContentsEnumerator embed(en);
-        if (!forAllPackages(embed))
-            return false;
-        
-        NICFwEnumerator embedfw(en);
-        if (!forAllNICs(embedfw))
-            return false;
-        return true;
-    }
-
     class SamplePort : public Port {
         const NIC *owner;
         bool status;
@@ -278,7 +23,7 @@ namespace solarflare
             status(false), 
             speed(up->maxLinkSpeed()),
             duplex(true), automode(true),
-            currentMtu(up->supportedMtu()),
+            currentMtu(up->supportedMTU()),
             current(0, 1, 2, 3, 4, 5)
         { current.address[5] += i; }
         virtual bool linkStatus() const { return true; }
@@ -299,9 +44,9 @@ namespace solarflare
         /// causes a renegotiation like 'ethtool -r'
         virtual void renegotiate() {};
         /// @return current MTU
-        virtual uint64 mtu() const { return currentMtu; }            
+        virtual uint64 mtu() const { return currentMTU; }            
         /// change MTU to @p u
-        virtual void mtu(uint64 u) { currentMtu = u; };
+        virtual void mtu(uint64 u) { currentMTU = u; };
         /// @return system interface name (e.g. ethX for Linux)
         virtual String ifName() const;
         /// @return Manufacturer-supplied MAC address
@@ -394,7 +139,7 @@ namespace solarflare
                                     "SFC00000", "333333");
         }
         Connector connector() const { return RJ45; }
-        uint64 supportedMtu() const { return 9000; }
+        uint64 supportedMTU() const { return 9000; }
         virtual bool forAllFw(SoftwareEnumerator& en)
         {
             if(!en.process(nicFw))
@@ -436,7 +181,7 @@ namespace solarflare
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
         virtual bool install(const char *, bool) { return false; }
-        virtual const String& className() const { return description(); }
+        virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
 
@@ -451,7 +196,7 @@ namespace solarflare
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
         virtual bool install(const char *, bool) { return false; }
-        virtual const String& className() const { return description(); }
+        virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
 
@@ -477,7 +222,7 @@ namespace solarflare
         {
             return en.process(kernelDriver);
         }
-        virtual const String& className() const { return description(); }
+        virtual const String& genericName() const { return description(); }
     };
 
     /// @brief stub-only implementation of a software package
@@ -501,7 +246,7 @@ namespace solarflare
         {
             return en.process(providerLibrary);
         }
-        virtual const String& className() const { return description(); }
+        virtual const String& genericName() const { return description(); }
     };
 
     /// @brief stub-only System implementation

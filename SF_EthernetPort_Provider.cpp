@@ -72,7 +72,7 @@ bool SF_EthernetPort_Provider::PortEnum::process(const solarflare::Port& p)
     newPort->NetworkAddresses.value.append(p.currentMAC().string());
     newPort->FullDuplex.set(p.fullDuplex());
     newPort->AutoSense.set(p.autoneg());
-    newPort->SupportedMaximumTransmissionUnit.set(p.nic()->supportedMtu());
+    newPort->SupportedMaximumTransmissionUnit.set(p.nic()->supportedMTU());
     newPort->ActiveMaximumTransmissionUnit.set(p.mtu());
     newPort->Speed.set(p.linkSpeed());
     newPort->MaxSpeed.set(p.nic()->maxLinkSpeed());
