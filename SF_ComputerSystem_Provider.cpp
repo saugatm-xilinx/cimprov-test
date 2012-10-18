@@ -3,6 +3,42 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+Ref<CIM_ComputerSystem> SF_ComputerSystem_Provider::cimSystem;
+
+const CIM_ComputerSystem *SF_ComputerSystem_Provider::findSystem()
+{
+    static const char * const namespaces[] = 
+    {"root/ibmse", "root/cimv2", "root/solarflare"};
+    
+    if (cimSystem)
+        return cast<CIM_ComputerSystem *>(cimSystem.ptr());
+
+    Ref<CIM_ComputerSystem> system = CIM_ComputerSystem::create();
+    Ref<Instance> sysInstance;
+    
+    for (const char * const *ns = namespaces; *ns != NULL; ns++)
+    {
+        Instance_Enumerator ie;
+
+        CIMPLE_DBG(("enumerating in %s", *ns));
+        if (cimom::enum_instances(*ns, system.ptr(), ie) != 0)
+            continue;
+
+        sysInstance = ie();
+        if (sysInstance)
+        {
+            break;
+        }
+    }
+    if (sysInstance)
+    {
+        cimSystem.reset(cast<CIM_ComputerSystem *>(sysInstance.ptr()));
+        CIMPLE_DBG(("cimSystem refcnt = %u", cimSystem.count()));
+    }
+    return cimSystem.ptr();
+}
+
+
 SF_ComputerSystem_Provider::SF_ComputerSystem_Provider()
 {
 }

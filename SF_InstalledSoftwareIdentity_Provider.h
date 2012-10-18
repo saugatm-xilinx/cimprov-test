@@ -11,8 +11,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_InstalledSoftwareIdentity_Provider
 {
-    Ref<CIM_ComputerSystem> cimSystem;
-    const CIM_ComputerSystem *findSystem();
     class ConstEnum : public solarflare::ConstSoftwareEnumerator
     {
         const CIM_ComputerSystem *from;

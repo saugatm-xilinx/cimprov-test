@@ -2,6 +2,7 @@
 #include "SF_InstalledSoftwareIdentity_Provider.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_SoftwareIdentity_Provider.h"
+#include "SF_ComputerSystem_Provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -21,39 +22,6 @@ Load_Status SF_InstalledSoftwareIdentity_Provider::load()
 Unload_Status SF_InstalledSoftwareIdentity_Provider::unload()
 {
     return UNLOAD_OK;
-}
-
-const CIM_ComputerSystem *SF_InstalledSoftwareIdentity_Provider::findSystem()
-{
-    static const char * const namespaces[] = 
-    {"root/ibmse", "root/cimv2", "root/solarflare"};
-    
-    if (cimSystem)
-        return cast<CIM_ComputerSystem *>(cimSystem.ptr());
-
-    Ref<CIM_ComputerSystem> system = CIM_ComputerSystem::create();
-    Ref<Instance> sysInstance;
-    
-    for (const char * const *ns = namespaces; *ns != NULL; ns++)
-    {
-        Instance_Enumerator ie;
-
-        CIMPLE_DBG(("enumerating in %s", *ns));
-        if (cimom::enum_instances(*ns, system.ptr(), ie) != 0)
-            continue;
-
-        sysInstance = ie();
-        if (sysInstance)
-        {
-            break;
-        }
-    }
-    if (sysInstance)
-    {
-        cimSystem.reset(cast<CIM_ComputerSystem *>(sysInstance.ptr()));
-        CIMPLE_DBG(("cimSystem refcnt = %u", cimSystem.count()));
-    }
-    return cimSystem.ptr();
 }
 
 Get_Instance_Status SF_InstalledSoftwareIdentity_Provider::get_instance(
@@ -83,7 +51,7 @@ Enum_Instances_Status SF_InstalledSoftwareIdentity_Provider::enum_instances(
     const SF_InstalledSoftwareIdentity* model,
     Enum_Instances_Handler<SF_InstalledSoftwareIdentity>* handler)
 {
-    const CIM_ComputerSystem *cs = findSystem();
+    const CIM_ComputerSystem *cs = SF_ComputerSystem_Provider::findSystem();
     
     if (cs == NULL)
     {
@@ -91,7 +59,6 @@ Enum_Instances_Status SF_InstalledSoftwareIdentity_Provider::enum_instances(
         return ENUM_INSTANCES_FAILED;
     }
 
-    CIMPLE_DBG(("### cimSystem refcnt = %u", cimSystem.count()));    
     ConstEnum installed(cs, handler);
     solarflare::System::target.forAllSoftware(installed);
 

@@ -4,12 +4,22 @@
 
 #include <cimple/cimple.h>
 #include "SF_EthernetPort.h"
+#include "SF_Sysinfo.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_EthernetPort_Provider
 {
+    class PortEnum : public solarflare::ConstPortEnumerator {
+        Enum_Instances_Handler<SF_EthernetPort>* handler;
+    public:
+        PortEnum(Enum_Instances_Handler<SF_EthernetPort>* h) :
+            handler(h) {};
+        virtual bool process(const solarflare::Port& p);
+    };
 public:
+
+    static SF_EthernetPort *makeReference(const solarflare::Port& p);
 
     typedef SF_EthernetPort Class;
 
