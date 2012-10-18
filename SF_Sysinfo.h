@@ -160,6 +160,10 @@ namespace solarflare
         /// As there is no cross-platform universal way to stop threads
         /// this needs co-operation from threadProc() with the help of terminate()
         void stop();
+        /// @return percentage of task completion
+        /// The default implementation depends on the current state and
+        /// conforms to Job Control Profile 7.1.3
+        virtual unsigned percentage() const;
     };
 
     /// @brief Abstract class for software components

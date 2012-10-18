@@ -4,12 +4,20 @@
 
 #include <cimple/cimple.h>
 #include "SF_ConcreteJob.h"
+#include "SF_Sysinfo.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_ConcreteJob_Provider
 {
-    SF_ConcreteJob *job;
+    class ThreadEnum : public solarflare::SoftwareEnumerator {
+        Enum_Instances_Handler<SF_ConcreteJob>* handler;
+    public:
+        ThreadEnum(Enum_Instances_Handler<SF_ConcreteJob>* h) :
+            handler(h) {}
+        virtual bool process(solarflare::SWElement& sw);
+    };
+    
 public:
 
     typedef SF_ConcreteJob Class;

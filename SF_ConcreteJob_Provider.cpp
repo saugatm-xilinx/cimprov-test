@@ -3,6 +3,54 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::SWElement& sw)
+{
+    solarflare::Thread *th = sw.installThread();
+    if (th != NULL)
+    {
+        SF_ConcreteJob *job = SF_ConcreteJob::create(true);
+        job->InstanceID.set(solarflare::System::target.prefix());
+        job->InstanceID.value.append(":");
+        job->InstanceID.value.append(sw.name());
+        job->InstanceID.value.append(":installThread");
+        job->OperationalStatus.null = false;
+        job->JobState.null = false;
+        switch (th->currentState())
+        {
+            case solarflare::Thread::NotRun:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Dormant);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_New;
+                break;
+            case solarflare::Thread::Running:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_OK);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Running;
+                break;
+            case solarflare::Thread::Succeeded:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_OK);
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Completed);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Completed;
+                break;
+            case solarflare::Thread::Failed:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Completed);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Exception;
+                break;
+            case solarflare::Thread::Aborting:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Shutting_Down;
+                break;
+            case solarflare::Thread::Aborted:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Killed;
+                break;
+        }
+        job->PercentComplete.set(th->percentage());
+        job->DeleteOnCompletion.set(false);
+        handler->handle(job);
+    }
+    return true;
+}
+
 SF_ConcreteJob_Provider::SF_ConcreteJob_Provider()
 {
 }
@@ -13,15 +61,11 @@ SF_ConcreteJob_Provider::~SF_ConcreteJob_Provider()
 
 Load_Status SF_ConcreteJob_Provider::load()
 {
-    job = SF_ConcreteJob::create(true);
-    job->InstanceID.set("Solarflare:Job0");
     return LOAD_OK;
 }
 
 Unload_Status SF_ConcreteJob_Provider::unload()
 {
-    SF_ConcreteJob::destroy(job);
-    job = NULL;
     return UNLOAD_OK;
 }
 
@@ -36,7 +80,9 @@ Enum_Instances_Status SF_ConcreteJob_Provider::enum_instances(
     const SF_ConcreteJob* model,
     Enum_Instances_Handler<SF_ConcreteJob>* handler)
 {
-      handler->handle(job->clone());
+    ThreadEnum threads(handler);
+    solarflare::System::target.forAllSoftware(threads);
+    
     return ENUM_INSTANCES_OK;
 }
 
@@ -73,7 +119,6 @@ Invoke_Method_Status SF_ConcreteJob_Provider::RequestStateChange(
     const Property<Datetime>& TimeoutPeriod,
     Property<uint32>& return_value)
 {
-    return_value.set(0);
     return INVOKE_METHOD_OK;
 }
 

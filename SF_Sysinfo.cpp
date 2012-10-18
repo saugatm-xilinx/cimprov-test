@@ -103,6 +103,19 @@ namespace solarflare
         terminate();
     }
 
+    unsigned Thread::percentage() const
+    {
+        switch (currentState())
+        {
+            case Running:
+                return 50;
+            case Succeeded:
+                return 100;
+            default:
+                return 0;
+        }
+    }
+
     const unsigned PCIAddress::unknown = unsigned(-1);
 
     String HWElement::name() const
@@ -311,20 +324,32 @@ namespace solarflare
     String SamplePort::ifName() const
     {
         char buf[] = "eth1";
-        buf[sizeof(buf) - 1] += elementId();
+        buf[sizeof(buf) - 2] += elementId();
         return buf;
     }
 
+    class SampleFwFlashThread : public Thread {
+    protected:
+        virtual bool threadProc() { return true; }
+    };
+    
     class SampleNICFirmware : public NICFirmware {
         const NIC *owner;
         VersionInfo vers;
+        SampleFwFlashThread thread;
     public:
         SampleNICFirmware(const NIC *o, const VersionInfo &v) :
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const { return vers; }
-        virtual bool install(const char *, bool) { return true; }
+        virtual bool install(const char *, bool async)
+        {
+            if (async)
+                thread.start();
+            return true;
+        }
         virtual void initialize() {};
+        virtual Thread *installThread() { return &thread; }
     };
 
     class SampleBootROM : public BootROM {
