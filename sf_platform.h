@@ -33,7 +33,7 @@ namespace solarflare
         /// Class-wide name of the port to be passed into constructor
         static const String portName;
         /// Class-wide description of the port to be passed into constructor
-        static const String portDescription;
+        static const char portDescription[];
 
         /// Index of the port on this particular NIC.
         ///
@@ -81,8 +81,8 @@ namespace solarflare
 
     class Interface : public BusElement, public NICElement {
         // Class-wide name (unrelated to OS ifname) and description.
-        static const String  ifGenName;
-        static const String  ifGenDescription;
+        static const String ifGenName;
+        static const char ifGenDescription[];
     public:
         /// Constructor
         ///
@@ -127,10 +127,10 @@ namespace solarflare
         // Class-wide name and description for all firmware instances; to be
         // passed into superclass.
         static const String fwName;
-        static const String fwDescription;
+        static const char fwDescription[];
         // fixme: fwSysname meaning is not fully clear, for now it's the
         // same for all class instances.
-        static const String fwSysname;
+        static const char fwSysname[];
     public:
         /// Constructor
         NICFirmware() : Firmware(fwDescription, fwSysname) {};
@@ -144,9 +144,9 @@ namespace solarflare
         // Class-wide name and description for all BootROM instances; to be
         // passed into superclass.
         static const String romName;
-        static const String romDescription;
+        static const char romDescription[];
         // fixme: same as FW
-        static const String romSysname;
+        static const char romSysname[];
     public:
         /// Constructor
         BootROM() : Firmware(romDescription, romSysname) {};
@@ -161,7 +161,7 @@ namespace solarflare
                 public PortContainer,
                 public InterfaceContainer {
         // Same name and description for all class instances.
-        static const String nicDescription;
+        static const char nicDescription[];
         static const String nicName;
     protected:
         /// Create all necessary internal structures for physical ports
@@ -312,7 +312,7 @@ namespace solarflare
         static const String nsPrefix;
 
         // Class-wide name and description
-        static const String systemDescr;
+        static const char systemDescr[];
         static const String systemName;
 
         /// True if initialization was performed

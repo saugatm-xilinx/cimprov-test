@@ -6,26 +6,26 @@
 
 namespace solarflare 
 {
-    const String Port::portName("Ethernet Port");
-    const String Port::portDescription("NIC Ethernet Port");
+    const String Port::portName = "Ethernet Port";
+    const char Port::portDescription[] = "NIC Ethernet Port";
 
-    const String Interface::ifGenName("Ethernet Interface");
-    const String Interface::ifGenDescription("NIC Ethernet Interface");
+    const String Interface::ifGenName = "Ethernet Interface";
+    const char Interface::ifGenDescription[] = "NIC Ethernet Interface";
 
-    const String NICFirmware::fwName("Firmware");
-    const String NICFirmware::fwDescription("NIC MC Firmware");
-    const String NICFirmware::fwSysname("");
+    const String NICFirmware::fwName = "Firmware";
+    const char NICFirmware::fwDescription[] = "NIC MC Firmware";
+    const char NICFirmware::fwSysname[] = "";
 
-    const String BootROM::romName("BootROM");
-    const String BootROM::romDescription("NIC BootROM");
-    const String BootROM::romSysname("");
+    const String BootROM::romName = "BootROM";
+    const char BootROM::romDescription[] = "NIC BootROM";
+    const char BootROM::romSysname[] = "";
 
-    const String NIC::nicDescription = "Solarflare NIC";
+    const char NIC::nicDescription[] = "Solarflare NIC";
     const String NIC::nicName = "Ethernet Adapter";
 
     const String System::manfId = "Solarflare Inc.";
     const String System::nsPrefix = "Solarflare";
-    const String System::systemDescr = "Solarflare-enabled host";
+    const char System::systemDescr[] = "Solarflare-enabled host";
     const String System::systemName = "System";
 
     class NICPortEnumerator : public NICEnumerator {
