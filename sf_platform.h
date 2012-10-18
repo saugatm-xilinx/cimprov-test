@@ -27,6 +27,57 @@ namespace solarflare
 
     class NIC;
 
+    /// @brief Abstract class for diagnostics. Implementors shall subclass it for
+    /// platform-specific port representation.
+    class Diagnostic : public SystemElement, public NICElement {
+        //// Private subclass of Thread to run diagnostics asynchronously
+        class DiagnosticThread : public Thread {
+            Diagnostic *owner;
+        protected:
+            virtual bool threadProc()
+            {
+                return owner->syncTest();
+            }
+            virtual void terminate()
+            {
+                owner->stop();
+            };
+        public:
+            DiagnosticThread(Diagnostic *own) : 
+                owner(own) {}
+            virtual unsigned percentage() const 
+            { 
+                return owner->percentage();
+            };
+        };
+        /// Diagnostic thread object
+        DiagnosticThread diagThread;
+
+    public:
+        /// Constructor
+        ///
+        /// @param d    Description
+        Diagnostic(const String& d) : 
+            SystemElement(d), diagThread(this) {}
+
+        /// Runs the diagnostic either synchronously or not
+        void run(bool sync = true);
+        /// The actual test routine (made public solely because
+        /// of DiagnosticThread).
+        /// It must be overridden in all actual diagnostic subclasses
+        virtual bool syncTest() = 0;
+        /// Return the percent of done work
+        virtual unsigned percentage() const { return 0; }
+        /// Attempt to stop hardware testing
+        virtual void stop() {};
+        /// @return Result of the latest diagnostic run
+        virtual bool result() const = 0;
+        /// Thread object to control over asynchronous tests
+        Thread *asyncThread() { return &diagThread; }
+        //// @return an associated software element or NULL
+        virtual const SWElement *diagnosticTool() { return NULL; }
+    };
+
     /// @brief Abstract class for ports. Implementors shall subclass it for
     /// platform-specific port representation.
     class Port : public SystemElement, public NICElement {

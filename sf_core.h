@@ -56,6 +56,7 @@ namespace solarflare
     /// @brief Abstract class for software components.
     class SWElement : public SystemElement {
         String sysname;
+        /// A private subclass of Thread to do asynchronous install
         class InstallThread : public Thread {
             SWElement *owner;
             String filename;

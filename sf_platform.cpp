@@ -6,6 +6,16 @@
 
 namespace solarflare 
 {
+    
+    void Diagnostic::run(bool sync)
+    {
+        if (sync)
+            syncTest();
+        else
+            diagThread.start();
+    }
+    
+
     const String Port::portName = "Ethernet Port";
     const char Port::portDescription[] = "NIC Ethernet Port";
 
