@@ -10,25 +10,17 @@ namespace solarflare
 {
     class SamplePort : public Port {
         const NIC *owner;
-        bool status;
         uint64 speed;
         bool duplex;
         bool automode;
-        uint64 currentMtu;
-        MACAddress current;
     public:
         SamplePort(const NIC *up, unsigned i) : 
             Port(i), 
             owner(up), 
-            status(false), 
             speed(up->maxLinkSpeed()),
-            duplex(true), automode(true),
-            currentMtu(up->supportedMTU()),
-            current(0, 1, 2, 3, 4, 5)
-        { current.address[5] += i; }
+            duplex(true), automode(true) {}
+        
         virtual bool linkStatus() const { return true; }
-        virtual bool ifStatus() const { return status; }
-        virtual void enable(bool st) { status = st; }
         virtual uint64 linkSpeed() const { return speed; }            
         virtual void linkSpeed(uint64 sp) { speed = sp; }
             
@@ -43,14 +35,43 @@ namespace solarflare
         
         /// causes a renegotiation like 'ethtool -r'
         virtual void renegotiate() {};
+
+        /// @return Manufacturer-supplied MAC address
+        virtual MACAddress permanentMAC() const { return MACAddress(0, 1, 2, 3, 4, 5); };
+
+        virtual const NIC *nic() const { return owner; }
+        virtual PCIAddress pciAddress() const
+        {
+            return owner->pciAddress().fn(elementId());
+        }
+
+        virtual void initialize() {};
+    };
+
+    class SampleInterface : public Interface {
+        const NIC *owner;
+        bool status;
+        uint64 currentMTU;
+        MACAddress current;
+        Port *boundPort;
+    public:
+        SampleInterface(const NIC *up, unsigned i) : 
+            Interface(i), 
+            owner(up), 
+            status(false), 
+            currentMTU(up->supportedMTU()),
+            current(0, 1, 2, 3, 4, 5),
+            boundPort(NULL)
+        { current.address[5] += i; }
+        virtual bool ifStatus() const { return status; }
+        virtual void enable(bool st) { status = st; }
+
         /// @return current MTU
         virtual uint64 mtu() const { return currentMTU; }            
         /// change MTU to @p u
         virtual void mtu(uint64 u) { currentMTU = u; };
         /// @return system interface name (e.g. ethX for Linux)
         virtual String ifName() const;
-        /// @return Manufacturer-supplied MAC address
-        virtual MACAddress permanentMAC() const { return MACAddress(0, 1, 2, 3, 4, 5); };
         /// @return MAC address actually in use
         virtual MACAddress currentMAC() const { return current; }        
         /// Change the current MAC address to @p mac
@@ -62,11 +83,16 @@ namespace solarflare
             return owner->pciAddress().fn(elementId());
         }
 
+        virtual Port *port() { return boundPort; }
+        virtual const Port *port() const { return boundPort; }
+
+        void bindToPort(Port *p) { boundPort = p; }
+            
         virtual void initialize() {};
     };
 
 
-    String SamplePort::ifName() const
+    String SampleInterface::ifName() const
     {
         char buf[] = "eth1";
         buf[sizeof(buf) - 2] += elementId();
@@ -112,6 +138,8 @@ namespace solarflare
     class SampleNIC : public NIC {
         SamplePort port0;
         SamplePort port1;
+        SampleInterface intf0;
+        SampleInterface intf1;
         SampleNICFirmware nicFw;
         SampleBootROM rom;
     protected:
@@ -119,6 +147,13 @@ namespace solarflare
         {
             port0.initialize();
             port1.initialize();
+        }
+        virtual void setupInterfaces()
+        {
+            intf0.initialize();
+            intf1.initialize();
+            intf0.bindToPort(&port0);
+            intf1.bindToPort(&port1);
         }
         virtual void setupFirmware()
         {
@@ -129,6 +164,7 @@ namespace solarflare
         SampleNIC(unsigned idx) :
             NIC(idx),
             port0(this, 0), port1(this, 1),
+            intf0(this, 0), intf1(this, 1),
             nicFw(this, VersionInfo("1.2.3")),
             rom(this, VersionInfo("2.3.4"))
         {}
@@ -164,6 +200,20 @@ namespace solarflare
             if(!en.process(port0))
                 return false;
             return en.process(port1);
+        }
+
+        virtual bool forAllInterfaces(InterfaceEnumerator& en)
+        {
+            if(!en.process(intf0))
+                return false;
+            return en.process(intf1);
+        }
+        
+        virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const
+        {
+            if(!en.process(intf0))
+                return false;
+            return en.process(intf1);
         }
 
         virtual PCIAddress pciAddress() const { return PCIAddress(0, 1, 2); }

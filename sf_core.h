@@ -200,6 +200,8 @@ namespace solarflare
     };
 
 
+    class Port;
+    
     /// @brief Abstract mutating enumerator for ports
     class PortEnumerator {
     public:
@@ -212,6 +214,8 @@ namespace solarflare
         virtual bool process(const Port& p) = 0;
     };
 
+    class Interface;
+    
     /// @brief Abstract mutating enumerator for ports
     class InterfaceEnumerator {
     public:

@@ -9,6 +9,9 @@ namespace solarflare
     const String Port::portName("Ethernet Port");
     const String Port::portDescription("NIC Ethernet Port");
 
+    const String Interface::ifGenName("Ethernet Interface");
+    const String Interface::ifGenDescription("NIC Ethernet Interface");
+
     const String NICFirmware::fwName("Firmware");
     const String NICFirmware::fwDescription("NIC MC Firmware");
     const String NICFirmware::fwSysname("");
@@ -42,6 +45,26 @@ namespace solarflare
         virtual bool process(const NIC& n) 
         {
             return n.forAllPorts(en);
+        }
+    };
+
+    class NICInterfaceEnumerator : public NICEnumerator {
+        InterfaceEnumerator& en;
+    public:
+        NICInterfaceEnumerator(InterfaceEnumerator& e) : en(e) {}
+        virtual bool process(NIC& n) 
+        {
+            return n.forAllInterfaces(en);
+        }
+    };
+
+    class ConstNICInterfaceEnumerator : public ConstNICEnumerator {
+        ConstInterfaceEnumerator& en;
+    public:
+        ConstNICInterfaceEnumerator(ConstInterfaceEnumerator& e) : en(e) {}
+        virtual bool process(const NIC& n) 
+        {
+            return n.forAllInterfaces(en);
         }
     };
 
@@ -101,6 +124,19 @@ namespace solarflare
         NICPortEnumerator embed(en);
         return forAllNICs(embed);
     }
+
+    bool System::forAllInterfaces(ConstInterfaceEnumerator& en) const
+    {
+        ConstNICInterfaceEnumerator embed(en);
+        return forAllNICs(embed);
+    }
+
+    bool System::forAllInterfaces(InterfaceEnumerator& en)
+    {
+        NICInterfaceEnumerator embed(en);
+        return forAllNICs(embed);
+    }
+
 
     bool System::forAllSoftware(ConstSoftwareEnumerator& en) const
     {

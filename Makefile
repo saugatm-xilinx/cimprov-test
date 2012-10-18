@@ -72,11 +72,15 @@ SOURCES += SF_PortController.cpp
 SOURCES += SF_PortController_Provider.cpp
 SOURCES += SF_SoftwareIdentity.cpp
 SOURCES += SF_SoftwareIdentity_Provider.cpp
-SOURCES += SF_Sysinfo.cpp
 SOURCES += SF_SystemDevice.cpp
 SOURCES += SF_SystemDevice_Provider.cpp
 SOURCES += module.cpp
 SOURCES += repository.cpp
+SOURCES += sf_core.cpp
+SOURCES += sf_platform.cpp
+SOURCES += sf_sample.cpp
+SOURCES += sf_threads.cpp
+SOURCES += sf_utils.cpp
 
 ##
 ## Module defined as Pegasus C++ interface

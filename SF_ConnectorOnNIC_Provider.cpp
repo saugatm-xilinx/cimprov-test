@@ -2,7 +2,7 @@
 #include "SF_ConnectorOnNIC_Provider.h"
 #include "SF_PhysicalConnector_Provider.h"
 #include "SF_NICCard_Provider.h"
-#include "SF_Sysinfo.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

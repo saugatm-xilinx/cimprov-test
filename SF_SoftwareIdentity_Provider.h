@@ -4,7 +4,7 @@
 
 #include <cimple/cimple.h>
 #include "SF_SoftwareIdentity.h"
-#include "SF_Sysinfo.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
