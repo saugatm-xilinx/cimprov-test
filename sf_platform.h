@@ -96,13 +96,13 @@ namespace solarflare
         /// Function port in case we don't plan to modify it.
         virtual const Port *port() const = 0;
         
-        /// @return interface status; fixme
+        /// @return interface status.
         virtual bool ifStatus() const = 0;
 
-        /// @return changing the interface state up/down; fixme
+        /// @return changing the interface state up/down.
         virtual void enable(bool status) = 0;
 
-        /// @return system interface name (e.g. ethX for Linux); fixme
+        /// @return system interface name (e.g. ethX for Linux).
         virtual String ifName() const = 0;
 
         /// @return current MTU
