@@ -79,7 +79,7 @@ namespace solarflare
         virtual unsigned elementId() const { return portIndex; }
     };
 
-    class Interface : public HWElement, public NICElement {
+    class Interface : public BusElement, public NICElement {
         // Class-wide name (unrelated to OS ifname) and description.
         static const String  ifGenName;
         static const String  ifGenDescription;
@@ -89,7 +89,7 @@ namespace solarflare
         /// @param i Index of the interface among all SF interfaces on
         ///          particular NIC (not system-wide).
         ///          fixme: or on all NICs?
-        Interface(unsigned i) : HWElement(ifGenDescription, i) {}
+        Interface(unsigned i) : BusElement(ifGenDescription, i) {}
 
         /// Function port.
         virtual Port *port() = 0;
@@ -156,7 +156,7 @@ namespace solarflare
 
     /// @brief An abstract class for NIC elements
     /// Implementors shall subclass it for platform-specific behaviour
-    class NIC : public HWElement,
+    class NIC : public BusElement,
                 public SoftwareContainer,
                 public PortContainer,
                 public InterfaceContainer {
@@ -182,7 +182,7 @@ namespace solarflare
         /// @param i Index that uniqely identifies this particular instance
         ///          of SF NIC among other SF NICs in the system. Starts
         ///          from zero.
-        NIC(unsigned i) : HWElement(nicDescription, i) {};
+        NIC(unsigned i) : BusElement(nicDescription, i) {};
 
         /// @return NIC VPD
         virtual VitalProductData vitalProductData() const = 0;

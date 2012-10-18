@@ -140,17 +140,17 @@ namespace solarflare
         virtual Thread *installThread() { return NULL; }
     };
 
-    /// @brief Abstract class for hardware components (currently, NICs and
+    /// @brief Abstract class for bus components (currently, NICs and
     /// Ports).  A hardware element always has an ordinal number inside its
     /// parent object, and a PCI bus address.
-    class HWElement : public SystemElement {
+    class BusElement : public SystemElement {
         unsigned idx;
     public:
         /// Constructor
         ///
         /// @param d  Description
         /// @param i  Index in parent object
-        HWElement(const String& d, unsigned i) :
+        BusElement(const String& d, unsigned i) :
             SystemElement(d), idx(i) {}
 
         /// @return Element index

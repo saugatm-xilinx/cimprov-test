@@ -6,7 +6,7 @@
 
 namespace solarflare 
 {
-    String HWElement::name() const
+    String BusElement::name() const
     {
         Buffer buf;
         buf.appends(SystemElement::name().c_str());
