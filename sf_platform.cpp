@@ -19,7 +19,6 @@ namespace solarflare
                 return 0;
         }
     }
-    
 
     void Diagnostic::run(bool sync)
     {
@@ -27,6 +26,15 @@ namespace solarflare
             syncTest();
         else
             diagThread.start();
+    }
+
+    String Diagnostic::name() const 
+    {
+        String n = nic()->name();
+        
+        n.append(" ");
+        n.append(genericName());
+        return n;
     }
 
     const String Port::portName = "Ethernet Port";

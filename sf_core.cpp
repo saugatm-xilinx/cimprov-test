@@ -1,4 +1,4 @@
-#include "sf_core.h"
+#include "sf_platform.h"
 
 #if defined(linux)
 #include <unistd.h>
@@ -22,7 +22,6 @@ namespace solarflare
         installer.start();
         return true;
     }
-    
 
     String BusElement::name() const
     {
@@ -32,5 +31,15 @@ namespace solarflare
         buf.append_uint16(elementId());
         return buf.data();
     }
+
+    String Firmware::name() const 
+    {
+        String n = nic()->name();
+        
+        n.append(" ");
+        n.append(genericName());
+        return n;
+    }
+    
 } // namespace
 

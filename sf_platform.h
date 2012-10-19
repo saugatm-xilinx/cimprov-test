@@ -81,8 +81,11 @@ namespace solarflare
         virtual Result result() const = 0;
         /// Thread object to control over asynchronous tests
         Thread *asyncThread() { return &diagThread; }
-        //// @return an associated software element or NULL
+        /// @return an associated software element or NULL
         virtual const SWElement *diagnosticTool() { return NULL; }
+
+        /// @return a name prefixed with NIC name
+        virtual String name() const;
     };
 
     /// @brief Abstract class for ports. Implementors shall subclass it for

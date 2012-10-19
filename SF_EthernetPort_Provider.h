@@ -20,6 +20,7 @@ class SF_EthernetPort_Provider
 public:
 
     static SF_EthernetPort *makeReference(const solarflare::Interface& intf);
+    static solarflare::Interface *findByInstance(const SF_EthernetPort& port);
 
     typedef SF_EthernetPort Class;
 

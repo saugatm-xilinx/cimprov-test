@@ -210,6 +210,8 @@ namespace solarflare
         virtual SWClass classify() const { return SWFirmware; }
         /// @return We're NIC-side SW
         virtual bool isHostSw() const { return false; }
+        /// @return Name of the firmware image prefixed with NIC name
+        virtual String name() const;
     };
 
     class Package;
