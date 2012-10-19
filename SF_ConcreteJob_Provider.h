@@ -25,6 +25,21 @@ class SF_ConcreteJob_Provider
     
 public:
 
+    class JobFinder : public solarflare::SoftwareEnumerator,
+                      public solarflare::DiagnosticEnumerator
+    {
+        solarflare::Thread *th;
+        String jobId;
+    public:
+        JobFinder(const String& id) :
+            th(NULL), jobId(id) {};
+        virtual bool process(solarflare::SWElement& sw);
+        virtual bool process(solarflare::Diagnostic& diag);
+        solarflare::Thread *found() const { return th; }
+            
+    };
+    static solarflare::Thread *findByInstance(const SF_ConcreteJob& job);
+
     typedef SF_ConcreteJob Class;
 
     SF_ConcreteJob_Provider();
