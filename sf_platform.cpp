@@ -6,7 +6,21 @@
 
 namespace solarflare 
 {
+    unsigned Diagnostic::DiagnosticThread::percentage() const
+    {
+        switch (currentState())
+        {
+            case Running:
+                return owner->percentage();
+            case Succeeded:
+            case Failed:
+                return 100;
+            default:
+                return 0;
+        }
+    }
     
+
     void Diagnostic::run(bool sync)
     {
         if (sync)
@@ -14,7 +28,6 @@ namespace solarflare
         else
             diagThread.start();
     }
-    
 
     const String Port::portName = "Ethernet Port";
     const char Port::portDescription[] = "NIC Ethernet Port";

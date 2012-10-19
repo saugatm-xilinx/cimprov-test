@@ -45,10 +45,7 @@ namespace solarflare
         public:
             DiagnosticThread(Diagnostic *own) : 
                 owner(own) {}
-            virtual unsigned percentage() const 
-            { 
-                return owner->percentage();
-            };
+            virtual unsigned percentage() const;
         };
         /// Diagnostic thread object
         DiagnosticThread diagThread;
