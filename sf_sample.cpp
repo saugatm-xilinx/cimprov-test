@@ -10,7 +10,7 @@ namespace solarflare
 {
     class SamplePort : public Port {
         const NIC *owner;
-        uint64 speed;
+        Speed speed;
         bool duplex;
         bool automode;
     public:
@@ -21,8 +21,8 @@ namespace solarflare
             duplex(true), automode(true) {}
         
         virtual bool linkStatus() const { return true; }
-        virtual uint64 linkSpeed() const { return speed; }            
-        virtual void linkSpeed(uint64 sp) { speed = sp; }
+        virtual Speed linkSpeed() const { return speed; }            
+        virtual void linkSpeed(Speed sp) { speed = sp; }
             
         /// @return full-duplex state
         virtual bool fullDuplex() const { return duplex; }

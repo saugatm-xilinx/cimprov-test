@@ -13,7 +13,7 @@ SF_EthernetPort *SF_EthernetPort_Provider::makeReference(const solarflare::Inter
     newPort->CreationClassName.set("SF_EthernetPort");
     newPort->DeviceID.set(intf.ifName());
     newPort->SystemCreationClassName.set(system->CreationClassName.value);
-    newPort->SystemName.set(system->CreationClassName.value);
+    newPort->SystemName.set(system->Name.value);
     return newPort;
 }
 
@@ -74,12 +74,37 @@ bool SF_EthernetPort_Provider::InterfaceEnum::process(const solarflare::Interfac
     newPort->AutoSense.set(intf.port()->autoneg());
     newPort->SupportedMaximumTransmissionUnit.set(intf.nic()->supportedMTU());
     newPort->ActiveMaximumTransmissionUnit.set(intf.mtu());
-    newPort->Speed.set(intf.port()->linkSpeed());
-    newPort->MaxSpeed.set(intf.nic()->maxLinkSpeed());
+    newPort->Speed.set(solarflare::Port::speedBPS(intf.port()->linkSpeed()));
+    newPort->MaxSpeed.set(solarflare::Port::speedBPS(intf.nic()->maxLinkSpeed()));
 
     handler->handle(newPort);
     
     return true;
+}
+
+bool SF_EthernetPort_Provider::InterfaceFinder::process(solarflare::Interface& intf)
+{
+    if (intf.ifName() == devId)
+    {
+        obj = &intf;
+        return false;
+    }
+    return true;
+}
+
+solarflare::Interface *SF_EthernetPort_Provider::findByInstance(const SF_EthernetPort& p)
+{
+    if (p.CreationClassName.null || p.DeviceID.null || 
+        p.CreationClassName.value != "SF_EthernetPort" ||
+        p.SystemCreationClassName.null || p.SystemName.null)
+        return NULL;
+    const CIM_ComputerSystem *system = SF_ComputerSystem_Provider::findSystem();
+    if (system->CreationClassName.value != p.SystemCreationClassName.value ||
+        system->Name.value != p.SystemName.value)
+        return NULL;
+    InterfaceFinder finder(p.DeviceID.value);
+    solarflare::System::target.forAllInterfaces(finder);
+    return finder.found();
 }
 
 SF_EthernetPort_Provider::SF_EthernetPort_Provider()
@@ -133,7 +158,24 @@ Modify_Instance_Status SF_EthernetPort_Provider::modify_instance(
     const SF_EthernetPort* model,
     const SF_EthernetPort* instance)
 {
-    return MODIFY_INSTANCE_UNSUPPORTED;
+    solarflare::Interface *intf = findByInstance(*model);
+
+    if (intf == NULL)
+        return MODIFY_INSTANCE_NOT_FOUND;
+    
+    if (!instance->RequestedSpeed.null)
+    {
+        solarflare::Port::Speed sp = 
+        solarflare::Port::speedValue(instance->RequestedSpeed.value);
+        
+        if (sp == solarflare::Port::SpeedUnknown ||
+            sp > intf->nic()->maxLinkSpeed())
+            return MODIFY_INSTANCE_INVALID_PARAMETER;
+
+        intf->port()->linkSpeed(sp);
+    }
+
+    return MODIFY_INSTANCE_OK;
 }
 
 Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
@@ -143,7 +185,47 @@ Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
     const Property<Datetime>& TimeoutPeriod,
     Property<uint32>& return_value)
 {
-    return INVOKE_METHOD_UNSUPPORTED;
+    /// CIMPLE is unable to generate enums for method parameters
+    enum ReturnValue 
+    {
+        OK = 0,
+        Error = 2,
+        InvalidParameter = 5,
+        BadTimeout = 4098,
+    };
+    solarflare::Interface *intf = findByInstance(*self);
+    if (intf == NULL || RequestedState.null)
+    {
+        return_value.set(InvalidParameter);
+    }
+    else if (!TimeoutPeriod.null && !(TimeoutPeriod.value == Datetime()))
+    {
+        return_value.set(BadTimeout);
+    }
+    else
+    {
+        return_value.set(OK);
+        switch (RequestedState.value)
+        {
+            case SF_EthernetPort::_RequestedState::enum_Enabled:
+                intf->enable(true);
+                break;
+            case SF_EthernetPort::_RequestedState::enum_Disabled:
+                intf->enable(false);
+                break;
+            case SF_EthernetPort::_RequestedState::enum_Reset:
+                if (intf->ifStatus())
+                {
+                    intf->enable(false);
+                    intf->enable(true);
+                }
+                break;
+            default:
+                return_value.set(InvalidParameter);
+        }
+    }
+
+    return INVOKE_METHOD_OK;
 }
 
 Invoke_Method_Status SF_EthernetPort_Provider::SetPowerState(

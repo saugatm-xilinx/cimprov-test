@@ -17,7 +17,20 @@ class SF_EthernetPort_Provider
             handler(h) {};
         virtual bool process(const solarflare::Interface& inrf);
     };
+
 public:
+
+    class InterfaceFinder : public solarflare::InterfaceEnumerator 
+    {
+        solarflare::Interface *obj;
+        String devId;
+    public:
+        InterfaceFinder(const String& id) :
+            obj(NULL), devId(id) {};
+        virtual bool process(solarflare::Interface& inrf);
+        solarflare::Interface *found() const { return obj; }
+            
+    };
 
     static SF_EthernetPort *makeReference(const solarflare::Interface& intf);
     static solarflare::Interface *findByInstance(const SF_EthernetPort& port);

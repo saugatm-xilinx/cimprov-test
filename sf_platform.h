@@ -110,11 +110,23 @@ namespace solarflare
         /// @return link status
         virtual bool linkStatus() const = 0;
 
+        /// link speed possible values
+        enum Speed {
+            SpeedUnknown,
+            Speed10M,
+            Speed100M,
+            Speed1G,
+            Speed10G,
+            Speed40G
+        };
+        static uint64 speedBPS(Speed sp);
+        static Speed speedValue(uint64 sp);
+
         /// @return current link speed
-        virtual uint64 linkSpeed() const = 0;
+        virtual Speed linkSpeed() const = 0;
 
         /// @return change link speed to @p speed
-        virtual void linkSpeed(uint64 speed) = 0;
+        virtual void linkSpeed(Speed speed) = 0;
 
         /// @return full-duplex state
         virtual bool fullDuplex() const = 0;
@@ -139,6 +151,51 @@ namespace solarflare
         virtual const String& genericName() const { return portName; }
         virtual unsigned elementId() const { return portIndex; }
     };
+
+            
+    inline uint64 Port::speedBPS(Speed sp)
+    {
+        switch (sp)
+        {
+            case Speed10M:
+                return uint64(10) * 1000 * 1000; //10M
+            case Speed100M:
+                return uint64(100) * 1000 * 1000; //100M
+            case Speed1G:
+                return uint64(1000) * 1000 * 1000; // 1g
+            case Speed10G:
+                return uint64(10000) * 1000 * 1000; // 10g
+            case Speed40G:
+                return uint64(40000) * 1000 * 1000; // 40g
+            default:
+                return 0;
+        }
+    }
+        
+    inline Port::Speed Port::speedValue(uint64 sp)
+    {
+        switch (sp)
+        {
+            case uint64(10) * 1000 * 1000:
+            case uint64(10) * 1024 * 1024:
+                return Speed10M;
+            case uint64(100) * 1000 * 1000:
+            case uint64(100) * 1024 * 1024:
+                return Speed100M;
+            case uint64(1000) * 1000 * 1000:
+            case uint64(1000) * 1024 * 1024:
+                return Speed1G;
+            case uint64(10000) * 1000 * 1000:
+            case uint64(10000) * 1024 * 1024:
+                return Speed10G;
+            case uint64(40000) * 1000 * 1000:
+            case uint64(40000) * 1024 * 1024:
+                return Speed40G;
+            default:
+                return SpeedUnknown;
+        }
+    }
+
 
     class Interface : public BusElement, public NICElement {
         // Class-wide name (unrelated to OS ifname) and description.
@@ -263,8 +320,8 @@ namespace solarflare
 
         /// @return maximum link speed (defaults to 10G)
         /// fixme: enum
-        virtual uint64 maxLinkSpeed() const {
-            return uint64(10) * 1024 * 1024 * 1024;
+        virtual Port::Speed maxLinkSpeed() const {
+            return Port::Speed10G;
         }
 
         /// @return largest possible MTU for the NIC
