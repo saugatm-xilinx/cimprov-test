@@ -92,6 +92,7 @@ SF_EthernetPort_Provider::~SF_EthernetPort_Provider()
 
 Load_Status SF_EthernetPort_Provider::load()
 {
+    solarflare::System::target.initialize();
     return LOAD_OK;
 }
 
