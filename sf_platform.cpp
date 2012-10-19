@@ -92,6 +92,27 @@ namespace solarflare
     };
 
 
+    class NICDiagnosticEnumerator : public NICEnumerator {
+        DiagnosticEnumerator& en;
+    public:
+        NICDiagnosticEnumerator(DiagnosticEnumerator& e) : en(e) {}
+        virtual bool process(NIC& n) 
+        {
+            return n.forAllDiagnostics(en);
+        }
+    };
+
+    class ConstNICDiagnosticEnumerator : public ConstNICEnumerator {
+        ConstDiagnosticEnumerator& en;
+    public:
+        ConstNICDiagnosticEnumerator(ConstDiagnosticEnumerator& e) : en(e) {}
+        virtual bool process(const NIC& n) 
+        {
+            return n.forAllDiagnostics(en);
+        }
+    };
+
+
     class PackageContentsEnumerator : public SoftwareEnumerator {
         SoftwareEnumerator& en;
     public:
@@ -159,6 +180,19 @@ namespace solarflare
         NICInterfaceEnumerator embed(en);
         return forAllNICs(embed);
     }
+
+    bool System::forAllDiagnostics(ConstDiagnosticEnumerator& en) const
+    {
+        ConstNICDiagnosticEnumerator embed(en);
+        return forAllNICs(embed);
+    }
+
+    bool System::forAllDiagnostics(DiagnosticEnumerator& en)
+    {
+        NICDiagnosticEnumerator embed(en);
+        return forAllNICs(embed);
+    }
+
 
 
     bool System::forAllSoftware(ConstSoftwareEnumerator& en) const

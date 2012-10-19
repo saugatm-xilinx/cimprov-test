@@ -259,6 +259,21 @@ namespace solarflare
         virtual bool process(SWElement& sw) = 0;
     };
 
+    class Diagnostic;
+    
+    /// @brief Abstract mutating enumerator for diagnostics
+    class DiagnosticEnumerator {
+    public:
+        virtual bool process(Diagnostic& p) = 0;
+    };
+
+    /// @brief Abstract constant enumerator for diagnostics
+    class ConstDiagnosticEnumerator {
+    public:
+        virtual bool process(const Diagnostic& p) = 0;
+    };
+
+
     /// @brief Abstract constant enumerator for SW
     class ConstSoftwareEnumerator {
     public:
@@ -286,6 +301,14 @@ namespace solarflare
         virtual bool forAllInterfaces(InterfaceEnumerator& en) = 0;
         virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const = 0;
     };
+
+    /// @brief An abstract mix-in for diagnostic containing elements (NIC, System)
+    class DiagnosticContainer {
+    public:
+        virtual bool forAllDiagnostics(DiagnosticEnumerator& en) = 0;
+        virtual bool forAllDiagnostics(ConstDiagnosticEnumerator& en) const = 0;
+    };
+
 
     class NICEnumerator {
     public:

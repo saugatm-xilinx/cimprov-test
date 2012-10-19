@@ -59,16 +59,26 @@ namespace solarflare
 
         /// Runs the diagnostic either synchronously or not
         void run(bool sync = true);
+
+        /// Three-state test result
+        enum Result {
+            Passed,   //< test passed
+            Failed,   //< test failed
+            NotKnown  //< test result not known (i.e. test not yet run)
+        };
+
+
         /// The actual test routine (made public solely because
         /// of DiagnosticThread).
         /// It must be overridden in all actual diagnostic subclasses
-        virtual bool syncTest() = 0;
+        virtual Result syncTest() = 0;
         /// Return the percent of done work
         virtual unsigned percentage() const { return 0; }
         /// Attempt to stop hardware testing
         virtual void stop() {};
+        
         /// @return Result of the latest diagnostic run
-        virtual bool result() const = 0;
+        virtual Result result() const = 0;
         /// Thread object to control over asynchronous tests
         Thread *asyncThread() { return &diagThread; }
         //// @return an associated software element or NULL
@@ -207,7 +217,8 @@ namespace solarflare
     class NIC : public BusElement,
                 public SoftwareContainer,
                 public PortContainer,
-                public InterfaceContainer {
+                public InterfaceContainer,
+                public DiagnosticContainer {
         // Same name and description for all class instances.
         static const char nicDescription[];
         static const String nicName;
@@ -223,7 +234,9 @@ namespace solarflare
         /// Create all necessary internal structures for present firmware
         virtual void setupFirmware() = 0;
 
-        /// fixme: setup interfaces
+        /// Create all necessary internal structures for all diagnostic tests
+        virtual void setupDiagnostics() = 0;
+
     public:
         /// Constructor
         ///
@@ -259,6 +272,7 @@ namespace solarflare
             setupPorts();
             setupInterfaces();
             setupFirmware();
+            setupDiagnostics();
         }
         /// Apply @p en to all firmware of the NIC
         virtual bool forAllFw(SoftwareEnumerator& en) = 0;
@@ -348,7 +362,8 @@ namespace solarflare
     class System : public SystemElement,
                    public SoftwareContainer,
                    public PortContainer,
-                   public InterfaceContainer {
+                   public InterfaceContainer,
+                   public DiagnosticContainer {
         /// Singleton
         System(const System&);
         const System& operator = (const System&);
@@ -416,8 +431,8 @@ namespace solarflare
             if (!initialized)
             {
                 initialized = true;
-                setupNICs();
                 setupPackages();
+                setupNICs();
             }
         }
 
@@ -435,6 +450,8 @@ namespace solarflare
         virtual bool forAllPorts(PortEnumerator& en);
         virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const;
         virtual bool forAllInterfaces(InterfaceEnumerator& en);
+        virtual bool forAllDiagnostics(ConstDiagnosticEnumerator& en) const;
+        virtual bool forAllDiagnostics(DiagnosticEnumerator& en);
         virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const;
         virtual bool forAllSoftware(SoftwareEnumerator& en);
         

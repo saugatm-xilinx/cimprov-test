@@ -127,6 +127,28 @@ namespace solarflare
         virtual void initialize() {};
     };
 
+    class SampleDiagnostic : public Diagnostic {
+        const NIC *owner;
+        Result testPassed;
+        static const char sampleDescr[];
+        static const String diagGenName;
+    public:
+        SampleDiagnostic(const NIC *o) :
+            Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
+        virtual Result syncTest() 
+        {
+            testPassed = Passed;
+            return Passed;
+        }
+        virtual Result result() const { return testPassed; }
+        virtual const NIC *nic() const { return owner; }
+        virtual void initialize() {};
+        virtual const String& genericName() const { return diagGenName; }
+    };
+
+    const char SampleDiagnostic::sampleDescr[] = "Sample Diagnostic";
+    const String SampleDiagnostic::diagGenName = "Diagnostic";
+
     class SampleNIC : public NIC {
         SamplePort port0;
         SamplePort port1;
@@ -134,6 +156,7 @@ namespace solarflare
         SampleInterface intf1;
         SampleNICFirmware nicFw;
         SampleBootROM rom;
+        SampleDiagnostic diag;
     protected:
         virtual void setupPorts()
         {
@@ -152,13 +175,18 @@ namespace solarflare
             nicFw.initialize();
             rom.initialize();
         }
+        virtual void setupDiagnostics()
+        {
+            diag.initialize();
+        }
     public:
         SampleNIC(unsigned idx) :
             NIC(idx),
             port0(this, 0), port1(this, 1),
             intf0(this, 0), intf1(this, 1),
             nicFw(this, VersionInfo("1.2.3")),
-            rom(this, VersionInfo("2.3.4"))
+            rom(this, VersionInfo("2.3.4")),
+            diag(this)
         {}
         virtual VitalProductData vitalProductData() const 
         {
@@ -206,6 +234,15 @@ namespace solarflare
             if(!en.process(intf0))
                 return false;
             return en.process(intf1);
+        }
+        virtual bool forAllDiagnostics(DiagnosticEnumerator& en)
+        {
+            return en.process(diag);
+        }
+        
+        virtual bool forAllDiagnostics(ConstDiagnosticEnumerator& en) const
+        {
+            return en.process(diag);
         }
 
         virtual PCIAddress pciAddress() const { return PCIAddress(0, 1, 2); }

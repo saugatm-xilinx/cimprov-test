@@ -10,12 +10,17 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ConcreteJob_Provider
 {
-    class ThreadEnum : public solarflare::SoftwareEnumerator {
+    class ThreadEnum : public solarflare::SoftwareEnumerator,
+                       public solarflare::DiagnosticEnumerator {
         Enum_Instances_Handler<SF_ConcreteJob>* handler;
+        void processThread(solarflare::Thread *th, 
+                           const solarflare::SystemElement& obj,
+                           const char *suffix) const;
     public:
         ThreadEnum(Enum_Instances_Handler<SF_ConcreteJob>* h) :
             handler(h) {}
         virtual bool process(solarflare::SWElement& sw);
+        virtual bool process(solarflare::Diagnostic& diag);
     };
     
 public:

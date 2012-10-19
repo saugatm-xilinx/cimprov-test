@@ -3,20 +3,20 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::SWElement& sw)
+void SF_ConcreteJob_Provider::ThreadEnum::processThread(solarflare::Thread *th,
+                                                        const solarflare::SystemElement& obj,
+                                                        const char *suffix) const 
 {
-    solarflare::Thread *th = sw.installThread();
-    if (th != NULL)
+    SF_ConcreteJob *job = SF_ConcreteJob::create(true);
+    job->InstanceID.set(solarflare::System::target.prefix());
+    job->InstanceID.value.append(":");
+    job->InstanceID.value.append(obj.name());
+    job->InstanceID.value.append(":");
+    job->InstanceID.value.append(suffix);
+    job->OperationalStatus.null = false;
+    job->JobState.null = false;
+    switch (th->currentState())
     {
-        SF_ConcreteJob *job = SF_ConcreteJob::create(true);
-        job->InstanceID.set(solarflare::System::target.prefix());
-        job->InstanceID.value.append(":");
-        job->InstanceID.value.append(sw.name());
-        job->InstanceID.value.append(":installThread");
-        job->OperationalStatus.null = false;
-        job->JobState.null = false;
-        switch (th->currentState())
-        {
             case solarflare::Thread::NotRun:
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Dormant);
                 job->JobState.value = SF_ConcreteJob::_JobState::enum_New;
@@ -48,6 +48,20 @@ bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::SWElement& sw)
         job->DeleteOnCompletion.set(false);
         handler->handle(job);
     }
+
+bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::SWElement& sw)
+{
+    solarflare::Thread *th = sw.installThread();
+    if (th != NULL)
+        processThread(th, sw, "installThread");
+    return true;
+}
+
+bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::Diagnostic& diag)
+{
+    solarflare::Thread *th = diag.asyncThread();
+    if (th != NULL)
+        processThread(th, diag, "diagThread");
     return true;
 }
 
@@ -82,6 +96,7 @@ Enum_Instances_Status SF_ConcreteJob_Provider::enum_instances(
 {
     ThreadEnum threads(handler);
     solarflare::System::target.forAllSoftware(threads);
+    solarflare::System::target.forAllDiagnostics(threads);
     
     return ENUM_INSTANCES_OK;
 }
