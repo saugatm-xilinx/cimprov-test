@@ -4,11 +4,22 @@
 
 #include <cimple/cimple.h>
 #include "SF_SystemDevice.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_SystemDevice_Provider
 {
+    class NICIntfEnum : public solarflare::ConstNICEnumerator,
+                        public solarflare::ConstInterfaceEnumerator
+    {
+        Enum_Instances_Handler<SF_SystemDevice>* handler;
+    public:
+        NICIntfEnum(Enum_Instances_Handler<SF_SystemDevice>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::NIC& nic);
+        virtual bool process(const solarflare::Interface& intf);
+    };
 public:
 
     typedef SF_SystemDevice Class;
