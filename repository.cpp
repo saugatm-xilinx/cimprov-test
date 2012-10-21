@@ -25,6 +25,9 @@ static const Meta_Class* _meta_classes[] =
     &CIM_System::static_meta_class,
     &CIM_InstalledSoftwareIdentity::static_meta_class,
     &SF_InstalledSoftwareIdentity::static_meta_class,
+    &CIM_Dependency::static_meta_class,
+    &CIM_ElementSoftwareIdentity::static_meta_class,
+    &SF_ElementSoftwareIdentity::static_meta_class,
     &CIM_Component::static_meta_class,
     &CIM_OrderedComponent::static_meta_class,
     &SF_BundleComponent::static_meta_class,
@@ -50,13 +53,14 @@ static const Meta_Class* _meta_classes[] =
     &CIM_SystemComponent::static_meta_class,
     &CIM_SystemDevice::static_meta_class,
     &SF_SystemDevice::static_meta_class,
-    &CIM_Dependency::static_meta_class,
     &CIM_Realizes::static_meta_class,
     &SF_ConnectorRealizesPort::static_meta_class,
     &CIM_ServiceAccessPoint::static_meta_class,
     &CIM_ProtocolEndpoint::static_meta_class,
     &CIM_LANEndpoint::static_meta_class,
     &SF_LANEndpoint::static_meta_class,
+    &CIM_DeviceSAPImplementation::static_meta_class,
+    &SF_NICSAPImplementation::static_meta_class,
     &CIM_Service::static_meta_class,
     &CIM_Collection::static_meta_class,
     &CIM_SoftwareInstallationService::static_meta_class,
@@ -64,14 +68,21 @@ static const Meta_Class* _meta_classes[] =
     &CIM_Capabilities::static_meta_class,
     &CIM_SoftwareInstallationServiceCapabilities::static_meta_class,
     &SF_SoftwareInstallationServiceCapabilities::static_meta_class,
+    &CIM_ElementCapabilities::static_meta_class,
+    &SF_ElementCapabilities::static_meta_class,
+    &CIM_ServiceAffectsElement::static_meta_class,
+    &SF_ServiceAffectsElement::static_meta_class,
+    &CIM_HostedDependency::static_meta_class,
+    &CIM_HostedService::static_meta_class,
+    &SF_HostedService::static_meta_class,
 };
 
 static const size_t _num_meta_classes = CIMPLE_ARRAY_SIZE(_meta_classes);
 
-extern const Meta_Repository __meta_repository_25890684DE9F1ED99AF8E12287919123;
+extern const Meta_Repository __meta_repository_56785F289C641B39983CABAFB114CB61;
 
 /*[2844]*/
-const Meta_Repository __meta_repository_25890684DE9F1ED99AF8E12287919123 =
+const Meta_Repository __meta_repository_56785F289C641B39983CABAFB114CB61 =
 {
     _meta_classes,
     _num_meta_classes,

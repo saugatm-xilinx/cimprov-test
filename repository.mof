@@ -11,6 +11,11 @@ class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 };
 
 [Association]
+class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
+};
+
+
+[Association]
 class SF_BundleComponent : CIM_OrderedComponent {
 };
 
@@ -53,6 +58,20 @@ class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
 
 class SF_SoftwareInstallationServiceCapabilities : CIM_SoftwareInstallationServiceCapabilities {
 };
+
+[Association]
+class SF_ElementCapabilities : CIM_ElementCapabilities {
+};
+
+[Association]
+class SF_ServiceAffectsElement : CIM_ServiceAffectsElement {
+};
+
+[Association]
+class SF_HostedService : CIM_HostedService {
+};
+
+
 
 
 

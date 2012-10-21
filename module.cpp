@@ -9,6 +9,7 @@
 #include "SF_SoftwareIdentity_Provider.h"
 #include "SF_ConcreteJob_Provider.h"
 #include "SF_InstalledSoftwareIdentity_Provider.h"
+#include "SF_ElementSoftwareIdentity_Provider.h"
 #include "SF_BundleComponent_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_NICCard_Provider.h"
@@ -19,8 +20,12 @@
 #include "SF_SystemDevice_Provider.h"
 #include "SF_ConnectorRealizesPort_Provider.h"
 #include "SF_LANEndpoint_Provider.h"
+#include "SF_NICSAPImplementation_Provider.h"
 #include "SF_SoftwareInstallationService_Provider.h"
 #include "SF_SoftwareInstallationServiceCapabilities_Provider.h"
+#include "SF_ElementCapabilities_Provider.h"
+#include "SF_ServiceAffectsElement_Provider.h"
+#include "SF_HostedService_Provider.h"
 
 using namespace cimple;
 
@@ -121,6 +126,32 @@ static int __cimple_SF_InstalledSoftwareIdentity_Provider_proc(
 {
     typedef SF_InstalledSoftwareIdentity Class;
     typedef SF_InstalledSoftwareIdentity_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_ElementSoftwareIdentity_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_ElementSoftwareIdentity Class;
+    typedef SF_ElementSoftwareIdentity_Provider Provider;
 
     if (operation != OPERATION_INVOKE_METHOD)
         return Association_Provider_Proc_T<Provider>::proc(registration,
@@ -609,6 +640,32 @@ static int __cimple_SF_LANEndpoint_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_NICSAPImplementation_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_NICSAPImplementation Class;
+    typedef SF_NICSAPImplementation_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 static int __cimple_SF_SoftwareInstallationService_Provider_proc(
     const Registration* registration,
     int operation,
@@ -733,10 +790,89 @@ static int __cimple_SF_SoftwareInstallationServiceCapabilities_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_ElementCapabilities_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_ElementCapabilities Class;
+    typedef SF_ElementCapabilities_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_ServiceAffectsElement_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_ServiceAffectsElement Class;
+    typedef SF_ServiceAffectsElement_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_HostedService_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_HostedService Class;
+    typedef SF_HostedService_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 CIMPLE_MODULE(Solarflare_Module);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareIdentity_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ConcreteJob_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_InstalledSoftwareIdentity_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_ElementSoftwareIdentity_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_BundleComponent_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ComputerSystem_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_NICCard_Provider);
@@ -747,8 +883,12 @@ CIMPLE_INSTANCE_PROVIDER(SF_PortController_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_SystemDevice_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ConnectorRealizesPort_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_LANEndpoint_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_NICSAPImplementation_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareInstallationService_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareInstallationServiceCapabilities_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_ElementCapabilities_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_ServiceAffectsElement_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_HostedService_Provider);
 
 #ifdef CIMPLE_PEGASUS_MODULE
   CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;
@@ -762,6 +902,8 @@ CIMPLE_INSTANCE_PROVIDER(SF_SoftwareInstallationServiceCapabilities_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_ConcreteJob_Provider, SF_ConcreteJob);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_InstalledSoftwareIdentity_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_InstalledSoftwareIdentity_Provider, SF_InstalledSoftwareIdentity);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ElementSoftwareIdentity_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ElementSoftwareIdentity_Provider, SF_ElementSoftwareIdentity);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_BundleComponent_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_BundleComponent_Provider, SF_BundleComponent);
   CIMPLE_CMPI_INSTANCE_PROVIDER(SF_ComputerSystem_Provider);
@@ -782,10 +924,18 @@ CIMPLE_INSTANCE_PROVIDER(SF_SoftwareInstallationServiceCapabilities_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ConnectorRealizesPort_Provider, SF_ConnectorRealizesPort);
   CIMPLE_CMPI_INSTANCE_PROVIDER(SF_LANEndpoint_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_LANEndpoint_Provider, SF_LANEndpoint);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_NICSAPImplementation_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_NICSAPImplementation_Provider, SF_NICSAPImplementation);
   CIMPLE_CMPI_INSTANCE_PROVIDER(SF_SoftwareInstallationService_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_SoftwareInstallationService_Provider, SF_SoftwareInstallationService);
   CIMPLE_CMPI_INSTANCE_PROVIDER(SF_SoftwareInstallationServiceCapabilities_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_SoftwareInstallationServiceCapabilities_Provider, SF_SoftwareInstallationServiceCapabilities);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ElementCapabilities_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ElementCapabilities_Provider, SF_ElementCapabilities);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ServiceAffectsElement_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ServiceAffectsElement_Provider, SF_ServiceAffectsElement);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_HostedService_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_HostedService_Provider, SF_HostedService);
 # define __CIMPLE_FOUND_ENTRY_POINT
 #endif
 

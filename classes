@@ -1,6 +1,7 @@
 SF_SoftwareIdentity
 SF_ConcreteJob
 SF_InstalledSoftwareIdentity
+SF_ElementSoftwareIdentity
 SF_BundleComponent
 SF_ComputerSystem
 SF_NICCard
@@ -11,5 +12,9 @@ SF_PortController
 SF_SystemDevice
 SF_ConnectorRealizesPort
 SF_LANEndpoint
+SF_NICSAPImplementation
 SF_SoftwareInstallationService
 SF_SoftwareInstallationServiceCapabilities
+SF_ElementCapabilities
+SF_ServiceAffectsElement
+SF_HostedService
