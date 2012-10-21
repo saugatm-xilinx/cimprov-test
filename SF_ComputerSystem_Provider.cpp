@@ -38,6 +38,23 @@ const CIM_ComputerSystem *SF_ComputerSystem_Provider::findSystem()
     return cimSystem.ptr();
 }
 
+bool SF_ComputerSystem_Provider::isOurSystem(const CIM_ComputerSystem* sys)
+{
+    const CIM_ComputerSystem* ourSys = findSystem();
+    
+    return (ourSys->CreationClassName.value == sys->CreationClassName.value &&
+            ourSys->Name.value == sys->Name.value);
+}
+
+bool SF_ComputerSystem_Provider::isOurSystem(const String& sysclass, 
+                                             const String& sysname)
+{
+    const CIM_ComputerSystem* ourSys = findSystem();
+    
+    return (ourSys->CreationClassName.value == sysclass &&
+            ourSys->Name.value == sysname);
+}
+
 
 SF_ComputerSystem_Provider::SF_ComputerSystem_Provider()
 {

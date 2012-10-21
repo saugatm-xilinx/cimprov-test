@@ -53,6 +53,13 @@
 #include "CIM_ProtocolEndpoint.h"
 #include "CIM_LANEndpoint.h"
 #include "SF_LANEndpoint.h"
+#include "CIM_Service.h"
+#include "CIM_Collection.h"
+#include "CIM_SoftwareInstallationService.h"
+#include "SF_SoftwareInstallationService.h"
+#include "CIM_Capabilities.h"
+#include "CIM_SoftwareInstallationServiceCapabilities.h"
+#include "SF_SoftwareInstallationServiceCapabilities.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

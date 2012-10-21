@@ -24,6 +24,17 @@ class SF_SoftwareIdentity_Provider
     };
 public:
 
+    class SoftwareFinder : public solarflare::SoftwareEnumerator
+    {
+        solarflare::SWElement *obj;
+        String name;
+    public:
+        SoftwareFinder(const String& id) :
+            obj(NULL), name(id) {};
+        virtual bool process(solarflare::SWElement& sw);
+        solarflare::SWElement *found() const { return obj; }
+    };
+
     static SF_SoftwareIdentity *makeReference(const solarflare::SWElement& ve);
 
     typedef SF_SoftwareIdentity Class;

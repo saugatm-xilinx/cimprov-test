@@ -44,6 +44,27 @@ bool SF_NICCard_Provider::NICEnum::process(const solarflare::NIC& nic)
     return false;
 }
 
+bool SF_NICCard_Provider::NICFinder::process(solarflare::NIC& nic)
+{
+    if (nic.vitalProductData().id() == devId)
+    {
+        obj = &nic;
+        return false;
+    }
+    return true;
+}
+
+solarflare::NIC *SF_NICCard_Provider::findByInstance(const CIM_Card& nic)
+{
+    if (nic.CreationClassName.null || nic.Tag.null || 
+        nic.CreationClassName.value != "SF_NICCard")
+        return NULL;
+    NICFinder finder(nic.Tag.value);
+    solarflare::System::target.forAllNICs(finder);
+    return finder.found();
+}
+
+
 SF_NICCard_Provider::SF_NICCard_Provider()
 {
 }

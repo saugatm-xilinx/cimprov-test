@@ -19,6 +19,8 @@
 #include "SF_SystemDevice_Provider.h"
 #include "SF_ConnectorRealizesPort_Provider.h"
 #include "SF_LANEndpoint_Provider.h"
+#include "SF_SoftwareInstallationService_Provider.h"
+#include "SF_SoftwareInstallationServiceCapabilities_Provider.h"
 
 using namespace cimple;
 
@@ -607,6 +609,130 @@ static int __cimple_SF_LANEndpoint_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_SoftwareInstallationService_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_SoftwareInstallationService Class;
+    typedef SF_SoftwareInstallationService_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    if (strcasecmp(meth_name, "RequestStateChange") == 0)
+    {
+        typedef SF_SoftwareInstallationService_RequestStateChange_method Method;
+        Method* method = (Method*)arg2;
+        return provider->RequestStateChange(
+            self,
+            method->RequestedState,
+            method->Job,
+            method->TimeoutPeriod,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "StartService") == 0)
+    {
+        typedef SF_SoftwareInstallationService_StartService_method Method;
+        Method* method = (Method*)arg2;
+        return provider->StartService(
+            self,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "StopService") == 0)
+    {
+        typedef SF_SoftwareInstallationService_StopService_method Method;
+        Method* method = (Method*)arg2;
+        return provider->StopService(
+            self,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "CheckSoftwareIdentity") == 0)
+    {
+        typedef SF_SoftwareInstallationService_CheckSoftwareIdentity_method Method;
+        Method* method = (Method*)arg2;
+        return provider->CheckSoftwareIdentity(
+            self,
+            method->Source,
+            method->Target,
+            method->Collection,
+            method->InstallCharacteristics,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "InstallFromSoftwareIdentity") == 0)
+    {
+        typedef SF_SoftwareInstallationService_InstallFromSoftwareIdentity_method Method;
+        Method* method = (Method*)arg2;
+        return provider->InstallFromSoftwareIdentity(
+            self,
+            method->Job,
+            method->InstallOptions,
+            method->InstallOptionsValues,
+            method->Source,
+            method->Target,
+            method->Collection,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "InstallFromURI") == 0)
+    {
+        typedef SF_SoftwareInstallationService_InstallFromURI_method Method;
+        Method* method = (Method*)arg2;
+        return provider->InstallFromURI(
+            self,
+            method->Job,
+            method->URI,
+            method->Target,
+            method->InstallOptions,
+            method->InstallOptionsValues,
+            method->return_value);
+    }
+
+    return -1;
+}
+
+static int __cimple_SF_SoftwareInstallationServiceCapabilities_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_SoftwareInstallationServiceCapabilities Class;
+    typedef SF_SoftwareInstallationServiceCapabilities_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 CIMPLE_MODULE(Solarflare_Module);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareIdentity_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ConcreteJob_Provider);
@@ -621,6 +747,8 @@ CIMPLE_INSTANCE_PROVIDER(SF_PortController_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_SystemDevice_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ConnectorRealizesPort_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_LANEndpoint_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_SoftwareInstallationService_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_SoftwareInstallationServiceCapabilities_Provider);
 
 #ifdef CIMPLE_PEGASUS_MODULE
   CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;
@@ -654,6 +782,10 @@ CIMPLE_INSTANCE_PROVIDER(SF_LANEndpoint_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ConnectorRealizesPort_Provider, SF_ConnectorRealizesPort);
   CIMPLE_CMPI_INSTANCE_PROVIDER(SF_LANEndpoint_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_LANEndpoint_Provider, SF_LANEndpoint);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_SoftwareInstallationService_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_SoftwareInstallationService_Provider, SF_SoftwareInstallationService);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_SoftwareInstallationServiceCapabilities_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_SoftwareInstallationServiceCapabilities_Provider, SF_SoftwareInstallationServiceCapabilities);
 # define __CIMPLE_FOUND_ENTRY_POINT
 #endif
 

@@ -48,6 +48,12 @@ class SF_LANEndpoint : CIM_LANEndpoint {
 class SF_NICSAPImplementation : CIM_DeviceSAPImplementation {
 };
 
+class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
+};
+
+class SF_SoftwareInstallationServiceCapabilities : CIM_SoftwareInstallationServiceCapabilities {
+};
+
 
 
 

@@ -11,3 +11,5 @@ SF_PortController
 SF_SystemDevice
 SF_ConnectorRealizesPort
 SF_LANEndpoint
+SF_SoftwareInstallationService
+SF_SoftwareInstallationServiceCapabilities

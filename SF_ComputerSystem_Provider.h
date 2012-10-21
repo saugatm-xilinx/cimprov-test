@@ -13,6 +13,8 @@ class SF_ComputerSystem_Provider
 public:
 
     static const CIM_ComputerSystem *findSystem();
+    static bool isOurSystem(const CIM_ComputerSystem* sys);
+    static bool isOurSystem(const String& sysclass, const String& sysname);
 
     typedef SF_ComputerSystem Class;
 

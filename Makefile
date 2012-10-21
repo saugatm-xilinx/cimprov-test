@@ -15,7 +15,9 @@ SHARED_LIBRARY=Solarflare
 ## Define source files for compile and link
 ##
 
+SOURCES += CIM_Capabilities.cpp
 SOURCES += CIM_Card.cpp
+SOURCES += CIM_Collection.cpp
 SOURCES += CIM_Component.cpp
 SOURCES += CIM_ComputerSystem.cpp
 SOURCES += CIM_ConcreteJob.cpp
@@ -43,8 +45,11 @@ SOURCES += CIM_PhysicalPackage.cpp
 SOURCES += CIM_PortController.cpp
 SOURCES += CIM_ProtocolEndpoint.cpp
 SOURCES += CIM_Realizes.cpp
+SOURCES += CIM_Service.cpp
 SOURCES += CIM_ServiceAccessPoint.cpp
 SOURCES += CIM_SoftwareIdentity.cpp
+SOURCES += CIM_SoftwareInstallationService.cpp
+SOURCES += CIM_SoftwareInstallationServiceCapabilities.cpp
 SOURCES += CIM_System.cpp
 SOURCES += CIM_SystemComponent.cpp
 SOURCES += CIM_SystemDevice.cpp
@@ -72,6 +77,10 @@ SOURCES += SF_PortController.cpp
 SOURCES += SF_PortController_Provider.cpp
 SOURCES += SF_SoftwareIdentity.cpp
 SOURCES += SF_SoftwareIdentity_Provider.cpp
+SOURCES += SF_SoftwareInstallationService.cpp
+SOURCES += SF_SoftwareInstallationServiceCapabilities.cpp
+SOURCES += SF_SoftwareInstallationServiceCapabilities_Provider.cpp
+SOURCES += SF_SoftwareInstallationService_Provider.cpp
 SOURCES += SF_SystemDevice.cpp
 SOURCES += SF_SystemDevice_Provider.cpp
 SOURCES += module.cpp

@@ -98,10 +98,10 @@ solarflare::Interface *SF_EthernetPort_Provider::findByInstance(const SF_Etherne
         p.CreationClassName.value != "SF_EthernetPort" ||
         p.SystemCreationClassName.null || p.SystemName.null)
         return NULL;
-    const CIM_ComputerSystem *system = SF_ComputerSystem_Provider::findSystem();
-    if (system->CreationClassName.value != p.SystemCreationClassName.value ||
-        system->Name.value != p.SystemName.value)
+    if (!SF_ComputerSystem_Provider::isOurSystem(p.SystemCreationClassName.value,
+                                                 p.SystemName.value))
         return NULL;
+    
     InterfaceFinder finder(p.DeviceID.value);
     solarflare::System::target.forAllInterfaces(finder);
     return finder.found();

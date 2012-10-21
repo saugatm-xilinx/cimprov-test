@@ -57,14 +57,21 @@ static const Meta_Class* _meta_classes[] =
     &CIM_ProtocolEndpoint::static_meta_class,
     &CIM_LANEndpoint::static_meta_class,
     &SF_LANEndpoint::static_meta_class,
+    &CIM_Service::static_meta_class,
+    &CIM_Collection::static_meta_class,
+    &CIM_SoftwareInstallationService::static_meta_class,
+    &SF_SoftwareInstallationService::static_meta_class,
+    &CIM_Capabilities::static_meta_class,
+    &CIM_SoftwareInstallationServiceCapabilities::static_meta_class,
+    &SF_SoftwareInstallationServiceCapabilities::static_meta_class,
 };
 
 static const size_t _num_meta_classes = CIMPLE_ARRAY_SIZE(_meta_classes);
 
-extern const Meta_Repository __meta_repository_CCA3FB4C49C51F2D868FF3E04426D671;
+extern const Meta_Repository __meta_repository_25890684DE9F1ED99AF8E12287919123;
 
 /*[2844]*/
-const Meta_Repository __meta_repository_CCA3FB4C49C51F2D868FF3E04426D671 =
+const Meta_Repository __meta_repository_25890684DE9F1ED99AF8E12287919123 =
 {
     _meta_classes,
     _num_meta_classes,

@@ -8,6 +8,17 @@ CIMPLE_NAMESPACE_BEGIN
 using solarflare::System;
 using solarflare::SWElement;
 
+bool SF_SoftwareIdentity_Provider::SoftwareFinder::process(solarflare::SWElement& sw)
+{
+    if (name == sw.name())
+    {
+        obj = &sw;
+        return false;
+    }
+    return true;
+}
+
+
 SF_SoftwareIdentity *
 SF_SoftwareIdentity_Provider::makeReference(const solarflare::SWElement& se)
 {
