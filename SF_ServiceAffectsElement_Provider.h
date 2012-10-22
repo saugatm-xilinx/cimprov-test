@@ -4,11 +4,21 @@
 
 #include <cimple/cimple.h>
 #include "SF_ServiceAffectsElement.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_ServiceAffectsElement_Provider
 {
+    class Enum : public solarflare::ConstSoftwareEnumerator
+    {
+        Enum_Instances_Handler<SF_ServiceAffectsElement> *handler;
+    public:
+        Enum(Enum_Instances_Handler<SF_ServiceAffectsElement> *h) :
+            handler(h) {};
+        virtual bool process(const solarflare::SWElement& sw);
+    };
+    
 public:
 
     typedef SF_ServiceAffectsElement Class;
