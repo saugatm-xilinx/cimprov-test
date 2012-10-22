@@ -29,6 +29,10 @@
 #include "SF_HostedService_Provider.h"
 #include "SF_ControlledBy_Provider.h"
 #include "SF_HostedAccessPoint_Provider.h"
+#include "SF_RecordLog_Provider.h"
+#include "SF_LogEntry_Provider.h"
+#include "SF_LogManagesRecord_Provider.h"
+#include "SF_UseOfLog_Provider.h"
 
 using namespace cimple;
 
@@ -949,6 +953,131 @@ static int __cimple_SF_HostedAccessPoint_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_RecordLog_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_RecordLog Class;
+    typedef SF_RecordLog_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    if (strcasecmp(meth_name, "RequestStateChange") == 0)
+    {
+        typedef SF_RecordLog_RequestStateChange_method Method;
+        Method* method = (Method*)arg2;
+        return provider->RequestStateChange(
+            self,
+            method->RequestedState,
+            method->Job,
+            method->TimeoutPeriod,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "ClearLog") == 0)
+    {
+        typedef SF_RecordLog_ClearLog_method Method;
+        Method* method = (Method*)arg2;
+        return provider->ClearLog(
+            self,
+            method->return_value);
+    }
+
+    return -1;
+}
+
+static int __cimple_SF_LogEntry_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_LogEntry Class;
+    typedef SF_LogEntry_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_LogManagesRecord_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_LogManagesRecord Class;
+    typedef SF_LogManagesRecord_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_UseOfLog_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_UseOfLog Class;
+    typedef SF_UseOfLog_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 CIMPLE_MODULE(Solarflare_Module);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareIdentity_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ConcreteJob_Provider);
@@ -973,6 +1102,10 @@ CIMPLE_ASSOCIATION_PROVIDER(SF_ServiceAffectsElement_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_HostedService_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ControlledBy_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_HostedAccessPoint_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_RecordLog_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_LogEntry_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_LogManagesRecord_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_UseOfLog_Provider);
 
 #ifdef CIMPLE_PEGASUS_MODULE
   CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;
@@ -1026,6 +1159,14 @@ CIMPLE_ASSOCIATION_PROVIDER(SF_HostedAccessPoint_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ControlledBy_Provider, SF_ControlledBy);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_HostedAccessPoint_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_HostedAccessPoint_Provider, SF_HostedAccessPoint);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_RecordLog_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_RecordLog_Provider, SF_RecordLog);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_LogEntry_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_LogEntry_Provider, SF_LogEntry);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_LogManagesRecord_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_LogManagesRecord_Provider, SF_LogManagesRecord);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_UseOfLog_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_UseOfLog_Provider, SF_UseOfLog);
 # define __CIMPLE_FOUND_ENTRY_POINT
 #endif
 

@@ -78,6 +78,16 @@
 #include "SF_ControlledBy.h"
 #include "CIM_HostedAccessPoint.h"
 #include "SF_HostedAccessPoint.h"
+#include "CIM_Log.h"
+#include "CIM_RecordLog.h"
+#include "SF_RecordLog.h"
+#include "CIM_RecordForLog.h"
+#include "CIM_LogEntry.h"
+#include "SF_LogEntry.h"
+#include "CIM_LogManagesRecord.h"
+#include "SF_LogManagesRecord.h"
+#include "CIM_UseOfLog.h"
+#include "SF_UseOfLog.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

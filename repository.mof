@@ -82,6 +82,19 @@ class SF_HostedAccessPoint : CIM_HostedAccessPoint {
 class SF_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities {
 };
 
+class SF_RecordLog : CIM_RecordLog {
+};
+
+class SF_LogEntry : CIM_LogEntry {
+};
+
+[Association]
+class SF_LogManagesRecord : CIM_LogManagesRecord {
+};
+
+[Association]
+class SF_UseOfLog : CIM_UseOfLog {
+};
 
 
 

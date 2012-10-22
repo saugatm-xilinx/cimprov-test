@@ -21,3 +21,7 @@ SF_ServiceAffectsElement
 SF_HostedService
 SF_ControlledBy
 SF_HostedAccessPoint
+SF_RecordLog
+SF_LogEntry
+SF_LogManagesRecord
+SF_UseOfLog
