@@ -79,6 +79,8 @@ class SF_ControlledBy : CIM_ControlledBy {
 class SF_HostedAccessPoint : CIM_HostedAccessPoint {
 };
 
+class SF_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities {
+};
 
 
 

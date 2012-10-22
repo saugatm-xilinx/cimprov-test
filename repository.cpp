@@ -50,6 +50,9 @@ static const Meta_Class* _meta_classes[] =
     &CIM_Controller::static_meta_class,
     &CIM_PortController::static_meta_class,
     &SF_PortController::static_meta_class,
+    &CIM_Capabilities::static_meta_class,
+    &CIM_EnabledLogicalElementCapabilities::static_meta_class,
+    &SF_EnabledLogicalElementCapabilities::static_meta_class,
     &CIM_SystemComponent::static_meta_class,
     &CIM_SystemDevice::static_meta_class,
     &SF_SystemDevice::static_meta_class,
@@ -65,7 +68,6 @@ static const Meta_Class* _meta_classes[] =
     &CIM_Collection::static_meta_class,
     &CIM_SoftwareInstallationService::static_meta_class,
     &SF_SoftwareInstallationService::static_meta_class,
-    &CIM_Capabilities::static_meta_class,
     &CIM_SoftwareInstallationServiceCapabilities::static_meta_class,
     &SF_SoftwareInstallationServiceCapabilities::static_meta_class,
     &CIM_ElementCapabilities::static_meta_class,
@@ -84,10 +86,10 @@ static const Meta_Class* _meta_classes[] =
 
 static const size_t _num_meta_classes = CIMPLE_ARRAY_SIZE(_meta_classes);
 
-extern const Meta_Repository __meta_repository_5122E1D89D3817F3AE783FBE02157763;
+extern const Meta_Repository __meta_repository_322BD996DC5A15A5B9D5D42DDD2F5A5E;
 
 /*[2844]*/
-const Meta_Repository __meta_repository_5122E1D89D3817F3AE783FBE02157763 =
+const Meta_Repository __meta_repository_322BD996DC5A15A5B9D5D42DDD2F5A5E =
 {
     _meta_classes,
     _num_meta_classes,

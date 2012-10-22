@@ -9,6 +9,7 @@ SF_PhysicalConnector
 SF_ConnectorOnNIC
 SF_EthernetPort
 SF_PortController
+SF_EnabledLogicalElementCapabilities
 SF_SystemDevice
 SF_ConnectorRealizesPort
 SF_LANEndpoint

@@ -17,6 +17,7 @@
 #include "SF_ConnectorOnNIC_Provider.h"
 #include "SF_EthernetPort_Provider.h"
 #include "SF_PortController_Provider.h"
+#include "SF_EnabledLogicalElementCapabilities_Provider.h"
 #include "SF_SystemDevice_Provider.h"
 #include "SF_ConnectorRealizesPort_Provider.h"
 #include "SF_LANEndpoint_Provider.h"
@@ -552,6 +553,32 @@ static int __cimple_SF_PortController_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_EnabledLogicalElementCapabilities_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_EnabledLogicalElementCapabilities Class;
+    typedef SF_EnabledLogicalElementCapabilities_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 static int __cimple_SF_SystemDevice_Provider_proc(
     const Registration* registration,
     int operation,
@@ -934,6 +961,7 @@ CIMPLE_INSTANCE_PROVIDER(SF_PhysicalConnector_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ConnectorOnNIC_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_EthernetPort_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_PortController_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_EnabledLogicalElementCapabilities_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_SystemDevice_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ConnectorRealizesPort_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_LANEndpoint_Provider);
@@ -974,6 +1002,8 @@ CIMPLE_ASSOCIATION_PROVIDER(SF_HostedAccessPoint_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_EthernetPort_Provider, SF_EthernetPort);
   CIMPLE_CMPI_INSTANCE_PROVIDER(SF_PortController_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_PortController_Provider, SF_PortController);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_EnabledLogicalElementCapabilities_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_EnabledLogicalElementCapabilities_Provider, SF_EnabledLogicalElementCapabilities);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_SystemDevice_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_SystemDevice_Provider, SF_SystemDevice);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ConnectorRealizesPort_Provider);
