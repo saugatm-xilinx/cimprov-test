@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_56785F289C641B39983CABAFB114CB61;
+extern const Meta_Repository __meta_repository_5122E1D89D3817F3AE783FBE02157763;
 
 /*[1568]*/
 extern const Meta_Property
@@ -410,7 +410,7 @@ const Meta_Class SF_EthernetPort::static_meta_class =
     _locals,
     &CIM_EthernetPort::static_meta_class,
     4, /* num_keys */
-    &__meta_repository_56785F289C641B39983CABAFB114CB61,
+    &__meta_repository_5122E1D89D3817F3AE783FBE02157763,
 };
 
 CIMPLE_NAMESPACE_END

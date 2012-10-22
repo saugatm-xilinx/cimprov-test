@@ -71,6 +71,13 @@ class SF_ServiceAffectsElement : CIM_ServiceAffectsElement {
 class SF_HostedService : CIM_HostedService {
 };
 
+[Association]
+class SF_ControlledBy : CIM_ControlledBy {
+};
+
+[Association]
+class SF_HostedAccessPoint : CIM_HostedAccessPoint {
+};
 
 
 

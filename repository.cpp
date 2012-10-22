@@ -75,14 +75,19 @@ static const Meta_Class* _meta_classes[] =
     &CIM_HostedDependency::static_meta_class,
     &CIM_HostedService::static_meta_class,
     &SF_HostedService::static_meta_class,
+    &CIM_DeviceConnection::static_meta_class,
+    &CIM_ControlledBy::static_meta_class,
+    &SF_ControlledBy::static_meta_class,
+    &CIM_HostedAccessPoint::static_meta_class,
+    &SF_HostedAccessPoint::static_meta_class,
 };
 
 static const size_t _num_meta_classes = CIMPLE_ARRAY_SIZE(_meta_classes);
 
-extern const Meta_Repository __meta_repository_56785F289C641B39983CABAFB114CB61;
+extern const Meta_Repository __meta_repository_5122E1D89D3817F3AE783FBE02157763;
 
 /*[2844]*/
-const Meta_Repository __meta_repository_56785F289C641B39983CABAFB114CB61 =
+const Meta_Repository __meta_repository_5122E1D89D3817F3AE783FBE02157763 =
 {
     _meta_classes,
     _num_meta_classes,

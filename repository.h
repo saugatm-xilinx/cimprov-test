@@ -71,6 +71,11 @@
 #include "CIM_HostedDependency.h"
 #include "CIM_HostedService.h"
 #include "SF_HostedService.h"
+#include "CIM_DeviceConnection.h"
+#include "CIM_ControlledBy.h"
+#include "SF_ControlledBy.h"
+#include "CIM_HostedAccessPoint.h"
+#include "SF_HostedAccessPoint.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

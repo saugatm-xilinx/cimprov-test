@@ -4,11 +4,19 @@
 
 #include <cimple/cimple.h>
 #include "SF_ConnectorRealizesPort.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_ConnectorRealizesPort_Provider
 {
+    class InterfaceEnum : public solarflare::ConstInterfaceEnumerator {
+        Enum_Instances_Handler<SF_ConnectorRealizesPort>* handler;
+    public:
+        InterfaceEnum(Enum_Instances_Handler<SF_ConnectorRealizesPort>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Interface& intf);
+    };
 public:
 
     typedef SF_ConnectorRealizesPort Class;

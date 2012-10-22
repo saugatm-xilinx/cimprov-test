@@ -26,6 +26,8 @@
 #include "SF_ElementCapabilities_Provider.h"
 #include "SF_ServiceAffectsElement_Provider.h"
 #include "SF_HostedService_Provider.h"
+#include "SF_ControlledBy_Provider.h"
+#include "SF_HostedAccessPoint_Provider.h"
 
 using namespace cimple;
 
@@ -868,6 +870,58 @@ static int __cimple_SF_HostedService_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_ControlledBy_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_ControlledBy Class;
+    typedef SF_ControlledBy_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_HostedAccessPoint_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_HostedAccessPoint Class;
+    typedef SF_HostedAccessPoint_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 CIMPLE_MODULE(Solarflare_Module);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareIdentity_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ConcreteJob_Provider);
@@ -889,6 +943,8 @@ CIMPLE_INSTANCE_PROVIDER(SF_SoftwareInstallationServiceCapabilities_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ElementCapabilities_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ServiceAffectsElement_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_HostedService_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_ControlledBy_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_HostedAccessPoint_Provider);
 
 #ifdef CIMPLE_PEGASUS_MODULE
   CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;
@@ -936,6 +992,10 @@ CIMPLE_ASSOCIATION_PROVIDER(SF_HostedService_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ServiceAffectsElement_Provider, SF_ServiceAffectsElement);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_HostedService_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_HostedService_Provider, SF_HostedService);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ControlledBy_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ControlledBy_Provider, SF_ControlledBy);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_HostedAccessPoint_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_HostedAccessPoint_Provider, SF_HostedAccessPoint);
 # define __CIMPLE_FOUND_ENTRY_POINT
 #endif
 

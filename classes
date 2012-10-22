@@ -18,3 +18,5 @@ SF_SoftwareInstallationServiceCapabilities
 SF_ElementCapabilities
 SF_ServiceAffectsElement
 SF_HostedService
+SF_ControlledBy
+SF_HostedAccessPoint
