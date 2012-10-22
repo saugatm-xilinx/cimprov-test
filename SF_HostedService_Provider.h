@@ -4,11 +4,20 @@
 
 #include <cimple/cimple.h>
 #include "SF_HostedService.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_HostedService_Provider
 {
+    class SWEnum : public solarflare::ConstSoftwareEnumerator 
+    {
+        Enum_Instances_Handler<SF_HostedService>* handler;
+    public:
+        SWEnum(Enum_Instances_Handler<SF_HostedService>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SWElement& sw);
+    };
 public:
 
     typedef SF_HostedService Class;
