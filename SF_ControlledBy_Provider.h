@@ -4,11 +4,20 @@
 
 #include <cimple/cimple.h>
 #include "SF_ControlledBy.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_ControlledBy_Provider
 {
+    class InterfaceEnum : public solarflare::ConstInterfaceEnumerator
+    {
+        Enum_Instances_Handler<SF_ControlledBy>* handler;
+    public:
+        InterfaceEnum(Enum_Instances_Handler<SF_ControlledBy>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Interface& intf);
+    };
 public:
 
     typedef SF_ControlledBy Class;

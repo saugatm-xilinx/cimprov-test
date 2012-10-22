@@ -4,11 +4,20 @@
 
 #include <cimple/cimple.h>
 #include "SF_HostedAccessPoint.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_HostedAccessPoint_Provider
 {
+    class InterfaceEnum : public solarflare::ConstInterfaceEnumerator
+    {
+        Enum_Instances_Handler<SF_HostedAccessPoint>* handler;
+    public:
+        InterfaceEnum(Enum_Instances_Handler<SF_HostedAccessPoint>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Interface& intf);
+    };
 public:
 
     typedef SF_HostedAccessPoint Class;
