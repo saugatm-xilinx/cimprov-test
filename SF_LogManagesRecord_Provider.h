@@ -4,11 +4,22 @@
 
 #include <cimple/cimple.h>
 #include "SF_LogManagesRecord.h"
+#include "sf_logging.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_LogManagesRecord_Provider
 {
+    class Enum : public solarflare::LogEntryIterator {
+        const solarflare::Logger *owner;
+        Enum_Instances_Handler<SF_LogManagesRecord>* handler;
+    public:
+        Enum(const solarflare::Logger *o,
+             Enum_Instances_Handler<SF_LogManagesRecord>* h) :
+            owner(o),
+            handler(h) {}
+        virtual bool process(const solarflare::LogEntry& e);
+    };
 public:
 
     typedef SF_LogManagesRecord Class;

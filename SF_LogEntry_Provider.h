@@ -4,12 +4,26 @@
 
 #include <cimple/cimple.h>
 #include "SF_LogEntry.h"
+#include "sf_logging.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_LogEntry_Provider
 {
+    class Enum : public solarflare::LogEntryIterator {
+        const solarflare::Logger *owner;
+        Enum_Instances_Handler<SF_LogEntry>* handler;
+    public:
+        Enum(const solarflare::Logger *o,
+             Enum_Instances_Handler<SF_LogEntry>* h) :
+            owner(o),
+            handler(h) {}
+        virtual bool process(const solarflare::LogEntry& e);
+    };
 public:
+
+    static SF_LogEntry *makeReference(const solarflare::Logger& parent,
+                                      const solarflare::LogEntry& entry);
 
     typedef SF_LogEntry Class;
 

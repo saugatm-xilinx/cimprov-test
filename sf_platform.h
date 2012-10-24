@@ -5,6 +5,7 @@
 #include <cimple/Buffer.h>
 
 #include "sf_core.h"
+#include "sf_logging.h"
 
 // Classes that should be subclassed for specific platform
 
@@ -490,6 +491,7 @@ namespace solarflare
         {
             if (!initialized)
             {
+                Logger::eventLog.log("startup");
                 initialized = true;
                 setupPackages();
                 setupNICs();

@@ -130,6 +130,7 @@ SOURCES += sf_platform.cpp
 SOURCES += sf_sample.cpp
 SOURCES += sf_threads.cpp
 SOURCES += sf_utils.cpp
+SOURCES += sf_logging.cpp
 
 ##
 ## Module defined as Pegasus C++ interface
