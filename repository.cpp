@@ -94,14 +94,42 @@ static const Meta_Class* _meta_classes[] =
     &SF_UseOfLog::static_meta_class,
     &CIM_DiagnosticLog::static_meta_class,
     &SF_DiagnosticLog::static_meta_class,
+    &CIM_DiagnosticRecord::static_meta_class,
+    &CIM_DiagnosticServiceRecord::static_meta_class,
+    &CIM_DiagnosticCompletionRecord::static_meta_class,
+    &SF_DiagnosticCompletionRecord::static_meta_class,
+    &CIM_CollectionOfMSEs::static_meta_class,
+    &CIM_Setting::static_meta_class,
+    &CIM_DiagnosticSetting::static_meta_class,
+    &CIM_SettingData::static_meta_class,
+    &CIM_JobSettingData::static_meta_class,
+    &CIM_DiagnosticSettingData::static_meta_class,
+    &CIM_DiagnosticService::static_meta_class,
+    &CIM_DiagnosticResult::static_meta_class,
+    &CIM_DiagnosticTest::static_meta_class,
+    &SF_DiagnosticTest::static_meta_class,
+    &CIM_DiagnosticServiceCapabilities::static_meta_class,
+    &SF_DiagnosticServiceCapabilities::static_meta_class,
+    &CIM_RecordAppliesToElement::static_meta_class,
+    &SF_RecordAppliesToElement::static_meta_class,
+    &CIM_OwningJobElement::static_meta_class,
+    &SF_OwningJobElement::static_meta_class,
+    &CIM_AffectedJobElement::static_meta_class,
+    &SF_AffectedJobElement::static_meta_class,
+    &CIM_ServiceAvailableToElement::static_meta_class,
+    &CIM_AvailableDiagnosticService::static_meta_class,
+    &SF_AvailableDiagnosticService::static_meta_class,
+    &SF_DiagnosticSettingData::static_meta_class,
+    &CIM_ElementSettingData::static_meta_class,
+    &SF_ElementSettingData::static_meta_class,
 };
 
 static const size_t _num_meta_classes = CIMPLE_ARRAY_SIZE(_meta_classes);
 
-extern const Meta_Repository __meta_repository_7D6DA94023C0157F82D3A7310346C853;
+extern const Meta_Repository __meta_repository_480038F9449B17AC9E2210119CF38AF2;
 
 /*[2844]*/
-const Meta_Repository __meta_repository_7D6DA94023C0157F82D3A7310346C853 =
+const Meta_Repository __meta_repository_480038F9449B17AC9E2210119CF38AF2 =
 {
     _meta_classes,
     _num_meta_classes,

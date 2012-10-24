@@ -26,3 +26,12 @@ SF_LogEntry
 SF_LogManagesRecord
 SF_UseOfLog
 SF_DiagnosticLog
+SF_DiagnosticCompletionRecord
+SF_DiagnosticTest
+SF_DiagnosticServiceCapabilities
+SF_RecordAppliesToElement
+SF_OwningJobElement
+SF_AffectedJobElement
+SF_AvailableDiagnosticService
+SF_DiagnosticSettingData
+SF_ElementSettingData

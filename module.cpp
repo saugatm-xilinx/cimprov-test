@@ -34,6 +34,15 @@
 #include "SF_LogManagesRecord_Provider.h"
 #include "SF_UseOfLog_Provider.h"
 #include "SF_DiagnosticLog_Provider.h"
+#include "SF_DiagnosticCompletionRecord_Provider.h"
+#include "SF_DiagnosticTest_Provider.h"
+#include "SF_DiagnosticServiceCapabilities_Provider.h"
+#include "SF_RecordAppliesToElement_Provider.h"
+#include "SF_OwningJobElement_Provider.h"
+#include "SF_AffectedJobElement_Provider.h"
+#include "SF_AvailableDiagnosticService_Provider.h"
+#include "SF_DiagnosticSettingData_Provider.h"
+#include "SF_ElementSettingData_Provider.h"
 
 using namespace cimple;
 
@@ -1126,6 +1135,331 @@ static int __cimple_SF_DiagnosticLog_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_DiagnosticCompletionRecord_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_DiagnosticCompletionRecord Class;
+    typedef SF_DiagnosticCompletionRecord_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_DiagnosticTest_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_DiagnosticTest Class;
+    typedef SF_DiagnosticTest_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    if (strcasecmp(meth_name, "RequestStateChange") == 0)
+    {
+        typedef SF_DiagnosticTest_RequestStateChange_method Method;
+        Method* method = (Method*)arg2;
+        return provider->RequestStateChange(
+            self,
+            method->RequestedState,
+            method->Job,
+            method->TimeoutPeriod,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "StartService") == 0)
+    {
+        typedef SF_DiagnosticTest_StartService_method Method;
+        Method* method = (Method*)arg2;
+        return provider->StartService(
+            self,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "StopService") == 0)
+    {
+        typedef SF_DiagnosticTest_StopService_method Method;
+        Method* method = (Method*)arg2;
+        return provider->StopService(
+            self,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "RunDiagnostic") == 0)
+    {
+        typedef SF_DiagnosticTest_RunDiagnostic_method Method;
+        Method* method = (Method*)arg2;
+        return provider->RunDiagnostic(
+            self,
+            method->ManagedElement,
+            method->DiagSetting,
+            method->JobSetting,
+            method->Job,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "RunDiagnosticService") == 0)
+    {
+        typedef SF_DiagnosticTest_RunDiagnosticService_method Method;
+        Method* method = (Method*)arg2;
+        return provider->RunDiagnosticService(
+            self,
+            method->ManagedElement,
+            method->DiagnosticSettings,
+            method->JobSettings,
+            method->Job,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "RunTest") == 0)
+    {
+        typedef SF_DiagnosticTest_RunTest_method Method;
+        Method* method = (Method*)arg2;
+        return provider->RunTest(
+            self,
+            method->SystemElement,
+            method->Setting,
+            method->Result,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "ClearResults") == 0)
+    {
+        typedef SF_DiagnosticTest_ClearResults_method Method;
+        Method* method = (Method*)arg2;
+        return provider->ClearResults(
+            self,
+            method->SystemElement,
+            method->ResultsNotCleared,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "DiscontinueTest") == 0)
+    {
+        typedef SF_DiagnosticTest_DiscontinueTest_method Method;
+        Method* method = (Method*)arg2;
+        return provider->DiscontinueTest(
+            self,
+            method->SystemElement,
+            method->Result,
+            method->TestingStopped,
+            method->return_value);
+    }
+
+    return -1;
+}
+
+static int __cimple_SF_DiagnosticServiceCapabilities_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_DiagnosticServiceCapabilities Class;
+    typedef SF_DiagnosticServiceCapabilities_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_RecordAppliesToElement_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_RecordAppliesToElement Class;
+    typedef SF_RecordAppliesToElement_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_OwningJobElement_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_OwningJobElement Class;
+    typedef SF_OwningJobElement_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_AffectedJobElement_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_AffectedJobElement Class;
+    typedef SF_AffectedJobElement_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_AvailableDiagnosticService_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_AvailableDiagnosticService Class;
+    typedef SF_AvailableDiagnosticService_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_DiagnosticSettingData_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_DiagnosticSettingData Class;
+    typedef SF_DiagnosticSettingData_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_ElementSettingData_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_ElementSettingData Class;
+    typedef SF_ElementSettingData_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 CIMPLE_MODULE(Solarflare_Module);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareIdentity_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ConcreteJob_Provider);
@@ -1155,6 +1489,15 @@ CIMPLE_INSTANCE_PROVIDER(SF_LogEntry_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_LogManagesRecord_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_UseOfLog_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticLog_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticCompletionRecord_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticTest_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticServiceCapabilities_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_RecordAppliesToElement_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_OwningJobElement_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_AffectedJobElement_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_AvailableDiagnosticService_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticSettingData_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_ElementSettingData_Provider);
 
 #ifdef CIMPLE_PEGASUS_MODULE
   CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;
@@ -1218,6 +1561,24 @@ CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticLog_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_UseOfLog_Provider, SF_UseOfLog);
   CIMPLE_CMPI_INSTANCE_PROVIDER(SF_DiagnosticLog_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_DiagnosticLog_Provider, SF_DiagnosticLog);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_DiagnosticCompletionRecord_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_DiagnosticCompletionRecord_Provider, SF_DiagnosticCompletionRecord);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_DiagnosticTest_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_DiagnosticTest_Provider, SF_DiagnosticTest);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_DiagnosticServiceCapabilities_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_DiagnosticServiceCapabilities_Provider, SF_DiagnosticServiceCapabilities);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_RecordAppliesToElement_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_RecordAppliesToElement_Provider, SF_RecordAppliesToElement);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_OwningJobElement_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_OwningJobElement_Provider, SF_OwningJobElement);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_AffectedJobElement_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_AffectedJobElement_Provider, SF_AffectedJobElement);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_AvailableDiagnosticService_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_AvailableDiagnosticService_Provider, SF_AvailableDiagnosticService);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_DiagnosticSettingData_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_DiagnosticSettingData_Provider, SF_DiagnosticSettingData);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ElementSettingData_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ElementSettingData_Provider, SF_ElementSettingData);
 # define __CIMPLE_FOUND_ENTRY_POINT
 #endif
 

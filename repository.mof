@@ -88,6 +88,9 @@ class SF_RecordLog : CIM_RecordLog {
 class SF_DiagnosticLog : CIM_DiagnosticLog {
 };
 
+class SF_DiagnosticCompletionRecord : CIM_DiagnosticCompletionRecord {
+};
+
 
 class SF_LogEntry : CIM_LogEntry {
 };
@@ -100,7 +103,34 @@ class SF_LogManagesRecord : CIM_LogManagesRecord {
 class SF_UseOfLog : CIM_UseOfLog {
 };
 
+class SF_DiagnosticTest : CIM_DiagnosticTest {
+};
 
+class SF_DiagnosticServiceCapabilities : CIM_DiagnosticServiceCapabilities {
+};
+
+[Association]
+class SF_RecordAppliesToElement : CIM_RecordAppliesToElement {
+};
+
+[Association]
+class SF_OwningJobElement : CIM_OwningJobElement {
+};
+
+[Association]
+class SF_AffectedJobElement : CIM_AffectedJobElement {
+};
+
+[Association]
+class SF_AvailableDiagnosticService : CIM_AvailableDiagnosticService {
+};
+
+class SF_DiagnosticSettingData : CIM_DiagnosticSettingData {
+};
+
+[Association]
+class SF_ElementSettingData : CIM_ElementSettingData {
+};
 
 
 
