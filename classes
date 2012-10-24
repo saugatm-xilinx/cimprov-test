@@ -25,3 +25,4 @@ SF_RecordLog
 SF_LogEntry
 SF_LogManagesRecord
 SF_UseOfLog
+SF_DiagnosticLog

@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_D1C632A09C56102581AE6FCCFC9FF5F6;
+extern const Meta_Repository __meta_repository_7D6DA94023C0157F82D3A7310346C853;
 
 /*[1568]*/
 extern const Meta_Property
@@ -475,7 +475,7 @@ const Meta_Class CIM_ConcreteJob::static_meta_class =
     _locals,
     &CIM_Job::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_D1C632A09C56102581AE6FCCFC9FF5F6,
+    &__meta_repository_7D6DA94023C0157F82D3A7310346C853,
 };
 
 CIMPLE_NAMESPACE_END

@@ -88,6 +88,8 @@
 #include "SF_LogManagesRecord.h"
 #include "CIM_UseOfLog.h"
 #include "SF_UseOfLog.h"
+#include "CIM_DiagnosticLog.h"
+#include "SF_DiagnosticLog.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

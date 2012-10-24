@@ -28,6 +28,7 @@ SOURCES += CIM_Controller.cpp
 SOURCES += CIM_Dependency.cpp
 SOURCES += CIM_DeviceConnection.cpp
 SOURCES += CIM_DeviceSAPImplementation.cpp
+SOURCES += CIM_DiagnosticLog.cpp
 SOURCES += CIM_ElementCapabilities.cpp
 SOURCES += CIM_ElementSoftwareIdentity.cpp
 SOURCES += CIM_EnabledLogicalElement.cpp
@@ -81,6 +82,8 @@ SOURCES += SF_ConnectorRealizesPort.cpp
 SOURCES += SF_ConnectorRealizesPort_Provider.cpp
 SOURCES += SF_ControlledBy.cpp
 SOURCES += SF_ControlledBy_Provider.cpp
+SOURCES += SF_DiagnosticLog.cpp
+SOURCES += SF_DiagnosticLog_Provider.cpp
 SOURCES += SF_ElementCapabilities.cpp
 SOURCES += SF_ElementCapabilities_Provider.cpp
 SOURCES += SF_ElementSoftwareIdentity.cpp
@@ -126,11 +129,11 @@ SOURCES += SF_UseOfLog_Provider.cpp
 SOURCES += module.cpp
 SOURCES += repository.cpp
 SOURCES += sf_core.cpp
+SOURCES += sf_logging.cpp
 SOURCES += sf_platform.cpp
 SOURCES += sf_sample.cpp
 SOURCES += sf_threads.cpp
 SOURCES += sf_utils.cpp
-SOURCES += sf_logging.cpp
 
 ##
 ## Module defined as Pegasus C++ interface

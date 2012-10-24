@@ -33,6 +33,7 @@
 #include "SF_LogEntry_Provider.h"
 #include "SF_LogManagesRecord_Provider.h"
 #include "SF_UseOfLog_Provider.h"
+#include "SF_DiagnosticLog_Provider.h"
 
 using namespace cimple;
 
@@ -1078,6 +1079,53 @@ static int __cimple_SF_UseOfLog_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_DiagnosticLog_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_DiagnosticLog Class;
+    typedef SF_DiagnosticLog_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    if (strcasecmp(meth_name, "RequestStateChange") == 0)
+    {
+        typedef SF_DiagnosticLog_RequestStateChange_method Method;
+        Method* method = (Method*)arg2;
+        return provider->RequestStateChange(
+            self,
+            method->RequestedState,
+            method->Job,
+            method->TimeoutPeriod,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "ClearLog") == 0)
+    {
+        typedef SF_DiagnosticLog_ClearLog_method Method;
+        Method* method = (Method*)arg2;
+        return provider->ClearLog(
+            self,
+            method->return_value);
+    }
+
+    return -1;
+}
+
 CIMPLE_MODULE(Solarflare_Module);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareIdentity_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ConcreteJob_Provider);
@@ -1106,6 +1154,7 @@ CIMPLE_INSTANCE_PROVIDER(SF_RecordLog_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_LogEntry_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_LogManagesRecord_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_UseOfLog_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticLog_Provider);
 
 #ifdef CIMPLE_PEGASUS_MODULE
   CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;
@@ -1167,6 +1216,8 @@ CIMPLE_ASSOCIATION_PROVIDER(SF_UseOfLog_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_LogManagesRecord_Provider, SF_LogManagesRecord);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_UseOfLog_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_UseOfLog_Provider, SF_UseOfLog);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_DiagnosticLog_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_DiagnosticLog_Provider, SF_DiagnosticLog);
 # define __CIMPLE_FOUND_ENTRY_POINT
 #endif
 

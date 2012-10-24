@@ -92,14 +92,16 @@ static const Meta_Class* _meta_classes[] =
     &SF_LogManagesRecord::static_meta_class,
     &CIM_UseOfLog::static_meta_class,
     &SF_UseOfLog::static_meta_class,
+    &CIM_DiagnosticLog::static_meta_class,
+    &SF_DiagnosticLog::static_meta_class,
 };
 
 static const size_t _num_meta_classes = CIMPLE_ARRAY_SIZE(_meta_classes);
 
-extern const Meta_Repository __meta_repository_D1C632A09C56102581AE6FCCFC9FF5F6;
+extern const Meta_Repository __meta_repository_7D6DA94023C0157F82D3A7310346C853;
 
 /*[2844]*/
-const Meta_Repository __meta_repository_D1C632A09C56102581AE6FCCFC9FF5F6 =
+const Meta_Repository __meta_repository_7D6DA94023C0157F82D3A7310346C853 =
 {
     _meta_classes,
     _num_meta_classes,

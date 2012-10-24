@@ -8,7 +8,7 @@
 #include <cimple/Meta_Class.h>
 #include <cimple/Meta_Property.h>
 #include <cimple/Meta_Reference.h>
-#include "SF_SoftwareInstallationService.h"
+#include "CIM_DiagnosticLog.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -18,7 +18,7 @@ extern const Meta_Repository __meta_repository_7D6DA94023C0157F82D3A7310346C853;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_ManagedElement_InstanceID;
+_CIM_RecordLog_InstanceID;
 
 /*[1568]*/
 extern const Meta_Property
@@ -38,7 +38,7 @@ _CIM_ManagedSystemElement_InstallDate;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_Service_Name;
+_CIM_ManagedSystemElement_Name;
 
 /*[1568]*/
 extern const Meta_Property
@@ -102,41 +102,29 @@ _CIM_EnabledLogicalElement_TransitioningToState;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_Service_SystemCreationClassName;
+_CIM_Log_MaxNumberOfRecords;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_Service_SystemName;
+_CIM_Log_CurrentNumberOfRecords;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_Service_CreationClassName;
+_CIM_Log_OverwritePolicy;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_Service_PrimaryOwnerName;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_Service_PrimaryOwnerContact;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_Service_StartMode;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_Service_Started;
+_CIM_Log_LogState;
 
 /*[2291]*/
-static Meta_Feature* _SF_SoftwareInstallationService_MFA[] =
+static Meta_Feature* _CIM_DiagnosticLog_MFA[] =
 {
-    (Meta_Feature*)(void*)&_CIM_ManagedElement_InstanceID,
+    (Meta_Feature*)(void*)&_CIM_RecordLog_InstanceID,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
-    (Meta_Feature*)(void*)&_CIM_Service_Name,
+    (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_Name,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_OperationalStatus,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_StatusDescriptions,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_Status,
@@ -153,18 +141,11 @@ static Meta_Feature* _SF_SoftwareInstallationService_MFA[] =
     (Meta_Feature*)(void*)&_CIM_EnabledLogicalElement_AvailableRequestedStates,
     (Meta_Feature*)(void*)&_CIM_EnabledLogicalElement_TransitioningToState,
     (Meta_Feature*)(void*)&CIM_EnabledLogicalElement_RequestStateChange_method::static_meta_class,
-    (Meta_Feature*)(void*)&_CIM_Service_SystemCreationClassName,
-    (Meta_Feature*)(void*)&_CIM_Service_SystemName,
-    (Meta_Feature*)(void*)&_CIM_Service_CreationClassName,
-    (Meta_Feature*)(void*)&_CIM_Service_PrimaryOwnerName,
-    (Meta_Feature*)(void*)&_CIM_Service_PrimaryOwnerContact,
-    (Meta_Feature*)(void*)&_CIM_Service_StartMode,
-    (Meta_Feature*)(void*)&_CIM_Service_Started,
-    (Meta_Feature*)(void*)&CIM_Service_StartService_method::static_meta_class,
-    (Meta_Feature*)(void*)&CIM_Service_StopService_method::static_meta_class,
-    (Meta_Feature*)(void*)&CIM_SoftwareInstallationService_CheckSoftwareIdentity_method::static_meta_class,
-    (Meta_Feature*)(void*)&CIM_SoftwareInstallationService_InstallFromSoftwareIdentity_method::static_meta_class,
-    (Meta_Feature*)(void*)&CIM_SoftwareInstallationService_InstallFromURI_method::static_meta_class,
+    (Meta_Feature*)(void*)&_CIM_Log_MaxNumberOfRecords,
+    (Meta_Feature*)(void*)&_CIM_Log_CurrentNumberOfRecords,
+    (Meta_Feature*)(void*)&_CIM_Log_OverwritePolicy,
+    (Meta_Feature*)(void*)&_CIM_Log_LogState,
+    (Meta_Feature*)(void*)&CIM_Log_ClearLog_method::static_meta_class,
 };
 
 /*[2338]*/
@@ -197,29 +178,22 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
 };
 
 /*[2358]*/
-const Meta_Class SF_SoftwareInstallationService::static_meta_class =
+const Meta_Class CIM_DiagnosticLog::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
     CIMPLE_FLAG_CLASS,
-    "SF_SoftwareInstallationService",
+    "CIM_DiagnosticLog",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
-    _SF_SoftwareInstallationService_MFA,
-    CIMPLE_ARRAY_SIZE(_SF_SoftwareInstallationService_MFA),
-    sizeof(SF_SoftwareInstallationService),
+    _CIM_DiagnosticLog_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_DiagnosticLog_MFA),
+    sizeof(CIM_DiagnosticLog),
     _locals,
-    &CIM_SoftwareInstallationService::static_meta_class,
-    4, /* num_keys */
+    &CIM_RecordLog::static_meta_class,
+    1, /* num_keys */
     &__meta_repository_7D6DA94023C0157F82D3A7310346C853,
 };
 
