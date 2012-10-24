@@ -25,6 +25,9 @@ class SF_ConcreteJob_Provider
     
 public:
 
+    static SF_ConcreteJob *makeReference(const solarflare::SystemElement& obj,
+                                         const char *suffix);
+
     class JobFinder : public solarflare::SoftwareEnumerator,
                       public solarflare::DiagnosticEnumerator
     {

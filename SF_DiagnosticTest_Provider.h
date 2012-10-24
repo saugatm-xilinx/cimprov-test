@@ -4,12 +4,35 @@
 
 #include <cimple/cimple.h>
 #include "SF_DiagnosticTest.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_DiagnosticTest_Provider
 {
+    class Enum : public solarflare::ConstDiagnosticEnumerator {
+        Enum_Instances_Handler<SF_DiagnosticTest>* handler;
+    public:
+        Enum(Enum_Instances_Handler<SF_DiagnosticTest>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Diagnostic& diag);
+    };
 public:
+    static SF_DiagnosticTest *makeReference(const solarflare::Diagnostic& diag);
+
+    class DiagnosticFinder : public solarflare::DiagnosticEnumerator 
+    {
+        solarflare::Diagnostic *obj;
+        String diagId;
+    public:
+        DiagnosticFinder(const String& id) :
+            obj(NULL), diagId(id) {};
+        virtual bool process(solarflare::Diagnostic& diag);
+        solarflare::Diagnostic *found() const { return obj; }
+            
+    };
+
+    static solarflare::Diagnostic *findByInstance(const SF_DiagnosticTest& instance);
 
     typedef SF_DiagnosticTest Class;
 

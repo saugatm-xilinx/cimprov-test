@@ -87,6 +87,23 @@ namespace solarflare
 
         /// @return a name prefixed with NIC name
         virtual String name() const;
+
+        // Following are test classifications
+
+        /// @return true if the test alters device state in an arbitrary manner
+        virtual bool isDestructive() const { return false; }
+        /// @return true iff only one instance of test may be run on a device
+        virtual bool isExclusive() const { return isDestructive(); }
+            
+        /// Diagnostic varieties
+        enum TestKind {
+            FunctionalTest, //< functional
+            StressTest,     //< stress
+            HealthCheckTest //< health check
+        };
+        /// @return the kind of the test
+        virtual TestKind testKind() const { return FunctionalTest; }
+            
     };
 
     /// @brief Abstract class for ports. Implementors shall subclass it for

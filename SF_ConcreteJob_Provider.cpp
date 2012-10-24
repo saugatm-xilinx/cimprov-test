@@ -3,9 +3,8 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-void SF_ConcreteJob_Provider::ThreadEnum::processThread(solarflare::Thread *th,
-                                                        const solarflare::SystemElement& obj,
-                                                        const char *suffix) const 
+SF_ConcreteJob *SF_ConcreteJob_Provider::makeReference(const solarflare::SystemElement& obj,
+                                                       const char *suffix)
 {
     SF_ConcreteJob *job = SF_ConcreteJob::create(true);
     job->InstanceID.set(solarflare::System::target.prefix());
@@ -13,6 +12,15 @@ void SF_ConcreteJob_Provider::ThreadEnum::processThread(solarflare::Thread *th,
     job->InstanceID.value.append(obj.name());
     job->InstanceID.value.append(":");
     job->InstanceID.value.append(suffix);
+    return job;
+}
+
+void SF_ConcreteJob_Provider::ThreadEnum::processThread(solarflare::Thread *th,
+                                                        const solarflare::SystemElement& obj,
+                                                        const char *suffix) const 
+{
+    SF_ConcreteJob *job = makeReference(obj, suffix);
+    
     job->OperationalStatus.null = false;
     job->JobState.null = false;
     switch (th->currentState())
