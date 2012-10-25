@@ -4,11 +4,31 @@
 
 #include <cimple/cimple.h>
 #include "SF_RecordAppliesToElement.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_RecordAppliesToElement_Provider
 {
+    class EntryEnum : public solarflare::LogEntryIterator {
+        const solarflare::Diagnostic *diag;
+        const solarflare::Logger *owner;
+        Enum_Instances_Handler<SF_RecordAppliesToElement>* handler;
+    public:
+        EntryEnum(const solarflare::Diagnostic *d,
+                  const solarflare::Logger *o,
+                  Enum_Instances_Handler<SF_RecordAppliesToElement>* h) :
+            diag(d), owner(o), handler(h) {}
+        virtual bool process(const solarflare::LogEntry& e);
+    };
+
+    class Enum : public solarflare::ConstDiagnosticEnumerator {
+        Enum_Instances_Handler<SF_RecordAppliesToElement>* handler;
+    public:
+        Enum(Enum_Instances_Handler<SF_RecordAppliesToElement>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Diagnostic& diag);
+    };
 public:
 
     typedef SF_RecordAppliesToElement Class;

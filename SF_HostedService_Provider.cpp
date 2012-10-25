@@ -2,6 +2,7 @@
 #include "SF_HostedService_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_SoftwareInstallationService_Provider.h"
+#include "SF_DiagnosticTest_Provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -24,6 +25,17 @@ SF_HostedService_Provider::SWEnum::process(const solarflare::SWElement& sw)
     handler->handle(link);
     return true;
 }
+
+bool 
+SF_HostedService_Provider::SWEnum::process(const solarflare::Diagnostic& diag)
+{
+    SF_HostedService *link = SF_HostedService::create(true);
+    link->Antecedent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
+    link->Dependent = cast<CIM_Service *>(SF_DiagnosticTest_Provider::makeReference(diag));
+    handler->handle(link);
+    return true;
+}
+
 
 SF_HostedService_Provider::SF_HostedService_Provider()
 {
@@ -56,6 +68,7 @@ Enum_Instances_Status SF_HostedService_Provider::enum_instances(
 {
     SWEnum services(handler);
     solarflare::System::target.forAllSoftware(services);
+    solarflare::System::target.forAllDiagnostics(services);
     return ENUM_INSTANCES_OK;
 }
 

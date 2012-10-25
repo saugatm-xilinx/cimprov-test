@@ -4,7 +4,7 @@
 
 #include <cimple/cimple.h>
 #include "SF_LogManagesRecord.h"
-#include "sf_logging.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -20,6 +20,30 @@ class SF_LogManagesRecord_Provider
             handler(h) {}
         virtual bool process(const solarflare::LogEntry& e);
     };
+
+    class DiagEntryEnum : public solarflare::LogEntryIterator {
+        const solarflare::Diagnostic *diag;
+        const solarflare::Logger *owner;
+        Enum_Instances_Handler<SF_LogManagesRecord>* handler;
+    public:
+        DiagEntryEnum(const solarflare::Diagnostic *d,
+                      const solarflare::Logger *o,
+                      Enum_Instances_Handler<SF_LogManagesRecord>* h) :
+            diag(d),
+            owner(o),
+            handler(h) {}
+        virtual bool process(const solarflare::LogEntry& e);
+    };
+
+
+    class DiagEnum : public solarflare::ConstDiagnosticEnumerator {
+        Enum_Instances_Handler<SF_LogManagesRecord>* handler;
+    public:
+        DiagEnum(Enum_Instances_Handler<SF_LogManagesRecord>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Diagnostic& diag);
+    };
+    
 public:
 
     typedef SF_LogManagesRecord Class;

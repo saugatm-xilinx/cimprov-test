@@ -15,9 +15,7 @@ namespace solarflare
             cimple::LL_DBG,
         };
         cimple::log(mapping[at],
-                    locFile ? locFile : __FILE__,
-                    locLine ? locLine : __LINE__,
-                    "%s", messageStr.c_str());
+                    "", errorCode, "%s", messageStr.c_str());
     }
 
     String Logger::doFormat(const char *fmt, va_list args)

@@ -3,6 +3,105 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+SF_DiagnosticLog *SF_DiagnosticLog_Provider::makeReference(const solarflare::Diagnostic& parent,
+                                                           const solarflare::Logger& log)
+{
+    SF_DiagnosticLog *newLog = SF_DiagnosticLog::create(true);
+    
+    newLog->InstanceID.set(solarflare::System::target.prefix());
+    newLog->InstanceID.value.append(":");
+    newLog->InstanceID.value.append(parent.name());
+    newLog->InstanceID.value.append(" ");
+    newLog->InstanceID.value.append(log.description());
+
+    return newLog;
+}
+
+SF_DiagnosticLog *SF_DiagnosticLog_Provider::makeInstance(const solarflare::Diagnostic& parent,
+                                                          const solarflare::Logger& log)
+{
+    SF_DiagnosticLog *newLog = makeReference(parent, log);
+
+    newLog->Name.set(parent.name());
+    newLog->Name.value.append(" ");
+    newLog->Name.value.append(log.description());
+    newLog->ElementName.set(log.description());
+    newLog->Description.set(log.description());
+    newLog->OperationalStatus.null = false;
+    newLog->OperationalStatus.value.append(SF_DiagnosticLog::_OperationalStatus::enum_OK);
+    newLog->HealthState.null = false;
+    newLog->HealthState.value = SF_DiagnosticLog::_HealthState::enum_OK;
+    newLog->EnabledState.null = false;
+    newLog->EnabledState.value = (log.isEnabled() ? 
+                                  SF_DiagnosticLog::_EnabledState::enum_Enabled :
+                                  SF_DiagnosticLog::_EnabledState::enum_Disabled);
+    newLog->RequestedState.null = false;
+    newLog->RequestedState.value = SF_DiagnosticLog::_RequestedState::enum_No_Change;
+    newLog->LogState.null = false;
+    newLog->LogState.value = (log.isEnabled() ?
+                              SF_DiagnosticLog::_LogState::enum_Normal :
+                              SF_DiagnosticLog::_LogState::enum_Not_Applicable);
+    newLog->OverwritePolicy.null = false;
+    newLog->OverwritePolicy.value = SF_DiagnosticLog::_OverwritePolicy::enum_Wraps_When_Full;
+    newLog->MaxNumberOfRecords.set(log.logSize());
+    newLog->CurrentNumberOfRecords.set(log.currentSize());
+
+    return newLog;
+}
+
+solarflare::Logger *SF_DiagnosticLog_Provider::findByInstance(const SF_DiagnosticLog& instance)
+{
+    String name;
+    size_t sep;
+    if (instance.InstanceID.null)
+        return NULL;
+
+    name = instance.InstanceID.value;
+    sep = name.find(':');
+    if (sep == size_t(-1))
+        return NULL;
+    if (name.substr(0, sep) != solarflare::System::target.prefix())
+        return NULL;
+    name.remove(0, sep + 1);
+
+    LogFinder finder(name);
+    solarflare::System::target.forAllDiagnostics(finder);
+
+    return finder.found();
+}
+
+bool SF_DiagnosticLog_Provider::Enum::process(const solarflare::Diagnostic& diag)
+{
+    handler->handle(makeInstance(diag, diag.errorLog()));
+    if (&diag.okLog() != &diag.errorLog())
+        handler->handle(makeInstance(diag, diag.okLog()));
+    return true;
+}
+
+bool SF_DiagnosticLog_Provider::LogFinder::process(solarflare::Diagnostic& diag)
+{
+    String n = diag.name();
+    n.append(" ");
+    n.append(diag.errorLog().description());
+    if (n == name)
+    {
+        obj = &diag.errorLog();
+        return false;
+    }
+    if (&diag.okLog() == &diag.errorLog())
+        return true;
+    
+    n = diag.name();
+    n.append(" ");
+    n.append(diag.okLog().description());
+    if (n == name)
+    {
+        obj = &diag.okLog();
+        return false;
+    }
+    return true;
+}
+
 SF_DiagnosticLog_Provider::SF_DiagnosticLog_Provider()
 {
 }
@@ -32,6 +131,8 @@ Enum_Instances_Status SF_DiagnosticLog_Provider::enum_instances(
     const SF_DiagnosticLog* model,
     Enum_Instances_Handler<SF_DiagnosticLog>* handler)
 {
+    Enum loggers(handler);
+    solarflare::System::target.forAllDiagnostics(loggers);
     return ENUM_INSTANCES_OK;
 }
 
@@ -61,14 +162,61 @@ Invoke_Method_Status SF_DiagnosticLog_Provider::RequestStateChange(
     const Property<Datetime>& TimeoutPeriod,
     Property<uint32>& return_value)
 {
-    return INVOKE_METHOD_UNSUPPORTED;
+    /// CIMPLE is unable to generate enums for method parameters
+    enum ReturnValue 
+    {
+        OK = 0,
+        Error = 2,
+        InvalidParameter = 5,
+        BadTimeout = 4098,
+    };
+    solarflare::Logger *log = findByInstance(*self);
+    if (log == NULL || RequestedState.null)
+    {
+        return_value.set(InvalidParameter);
+    }
+    else if (!TimeoutPeriod.null && !(TimeoutPeriod.value == Datetime()))
+    {
+        return_value.set(BadTimeout);
+    }
+    else
+    {
+        return_value.set(OK);
+        switch (RequestedState.value)
+        {
+            case SF_DiagnosticLog::_RequestedState::enum_Enabled:
+                log->enable(true);
+                break;
+            case SF_DiagnosticLog::_RequestedState::enum_Disabled:
+                log->enable(false);
+                break;
+            case SF_DiagnosticLog::_RequestedState::enum_Reset:
+                if (log->isEnabled())
+                {
+                    log->enable(false);
+                    log->enable(true);
+                }
+                break;
+            default:
+                return_value.set(InvalidParameter);
+        }
+    }
+    return INVOKE_METHOD_OK;
 }
 
 Invoke_Method_Status SF_DiagnosticLog_Provider::ClearLog(
     const SF_DiagnosticLog* self,
     Property<uint32>& return_value)
 {
-    return INVOKE_METHOD_UNSUPPORTED;
+    solarflare::Logger *log = findByInstance(*self);
+    if (log == NULL)
+        return_value.set(2); // Error
+    else
+    {
+        log->clear();
+        return_value.set(0); // OK
+    }
+    return INVOKE_METHOD_OK;
 }
 
 /*@END@*/

@@ -4,12 +4,36 @@
 
 #include <cimple/cimple.h>
 #include "SF_DiagnosticCompletionRecord.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_DiagnosticCompletionRecord_Provider
 {
+    class EntryEnum : public solarflare::LogEntryIterator {
+        const solarflare::Diagnostic *diag;
+        const solarflare::Logger *owner;
+        Enum_Instances_Handler<SF_DiagnosticCompletionRecord>* handler;
+    public:
+        EntryEnum(const solarflare::Diagnostic *d,
+                  const solarflare::Logger *o,
+                  Enum_Instances_Handler<SF_DiagnosticCompletionRecord>* h) :
+            diag(d), owner(o), handler(h) {}
+        virtual bool process(const solarflare::LogEntry& e);
+    };
+
+    class Enum : public solarflare::ConstDiagnosticEnumerator {
+        Enum_Instances_Handler<SF_DiagnosticCompletionRecord>* handler;
+    public:
+        Enum(Enum_Instances_Handler<SF_DiagnosticCompletionRecord>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Diagnostic& diag);
+    };
 public:
+
+    static SF_DiagnosticCompletionRecord *makeReference(const solarflare::Diagnostic& diag,
+                                                        const solarflare::Logger& parent,
+                                                        const solarflare::LogEntry& entry);
 
     typedef SF_DiagnosticCompletionRecord Class;
 

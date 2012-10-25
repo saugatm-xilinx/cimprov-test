@@ -3,6 +3,41 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+SF_DiagnosticServiceCapabilities *SF_DiagnosticServiceCapabilities_Provider::makeReference(const solarflare::Diagnostic& diag)
+{
+    SF_DiagnosticServiceCapabilities *newSvc = SF_DiagnosticServiceCapabilities::create(true);
+
+    newSvc->InstanceID.set(solarflare::System::target.prefix());
+    newSvc->InstanceID.value.append(":");
+    newSvc->InstanceID.value.append(diag.name());
+    newSvc->InstanceID.value.append(" Capabilities");
+
+    return newSvc;
+}
+
+bool SF_DiagnosticServiceCapabilities_Provider::Enum::process(const solarflare::Diagnostic& diag)
+{
+    SF_DiagnosticServiceCapabilities *newSvc = makeReference(diag);
+
+    newSvc->Description.set(diag.description());
+    newSvc->ElementName.set(diag.name());
+
+    newSvc->SupportedLogOptions.null = false;
+    newSvc->SupportedLogOptions.value.append(SF_DiagnosticServiceCapabilities::_SupportedLogOptions::enum_Results);
+
+    newSvc->SupportedLogStorage.null = false;
+    newSvc->SupportedLogStorage.value.append(SF_DiagnosticServiceCapabilities::_SupportedLogStorage::enum_DiagnosticRecordLog);
+    newSvc->SupportedLogStorage.value.append(SF_DiagnosticServiceCapabilities::_SupportedLogStorage::enum_File);
+    
+    newSvc->SupportedExecutionControls.null = false;
+    newSvc->SupportedExecutionControls.value.append(SF_DiagnosticServiceCapabilities::_SupportedExecutionControls::enum_Job_Creation);
+    newSvc->SupportedExecutionControls.value.append(SF_DiagnosticServiceCapabilities::_SupportedExecutionControls::enum_Terminate_Job);
+
+    handler->handle(newSvc);
+    return true;
+}
+
+
 SF_DiagnosticServiceCapabilities_Provider::SF_DiagnosticServiceCapabilities_Provider()
 {
 }
@@ -32,6 +67,8 @@ Enum_Instances_Status SF_DiagnosticServiceCapabilities_Provider::enum_instances(
     const SF_DiagnosticServiceCapabilities* model,
     Enum_Instances_Handler<SF_DiagnosticServiceCapabilities>* handler)
 {
+    Enum caps(handler);
+    solarflare::System::target.forAllDiagnostics(caps);
     return ENUM_INSTANCES_OK;
 }
 

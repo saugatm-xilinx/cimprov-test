@@ -3,6 +3,83 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+SF_DiagnosticCompletionRecord *
+SF_DiagnosticCompletionRecord_Provider::makeReference(const solarflare::Diagnostic& diag,
+                                                      const solarflare::Logger& parent,
+                                                      const solarflare::LogEntry& entry)
+{
+    Buffer buf;
+    SF_DiagnosticCompletionRecord *l = SF_DiagnosticCompletionRecord::create(true);
+    
+    buf.appends(solarflare::System::target.prefix().c_str());
+    buf.append(':');
+    buf.appends(diag.name().c_str());
+    buf.append(' ');
+    buf.appends(parent.description());
+    buf.append('#');
+    buf.append_uint64(entry.id());
+    l->InstanceID.set(buf.data());
+    return l;
+}
+
+bool SF_DiagnosticCompletionRecord_Provider::EntryEnum::process(const solarflare::LogEntry& entry)
+{
+    static unsigned const severityMap[] = {
+        SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Fatal_NonRecoverable,
+        SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Major,
+        SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Minor,
+        SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
+        SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
+    };
+
+    char id[32];
+    SF_DiagnosticCompletionRecord *le = makeReference(*diag, *owner, entry);
+    le->RecordFormat.set("");
+    le->RecordData.set(entry.message());
+    le->CreationTimeStamp.set(entry.stamp());
+    le->ServiceName.set(diag->name());
+    le->ManagedElementName.set(diag->nic()->name());
+    le->ExpirationDate.set(Datetime::now());
+    le->RecordType.null = false;
+    le->RecordType.value = SF_DiagnosticCompletionRecord::_RecordType::enum_Results;
+    
+    le->PerceivedSeverity.null = false;
+    le->PerceivedSeverity.value = severityMap[owner->severity()];
+
+    le->LoopsPassed.set(entry.passed());
+    le->LoopsFailed.set(entry.failed());
+    sprintf(id, "%8.8x", entry.error());
+    le->ErrorCode.null = false;
+    le->ErrorCode.value.append(String(id));
+    le->ErrorCount.null = false;
+    le->CompletionState.null = false;
+    if (entry.error() != 0 || entry.failed() != 0)
+    {
+        le->ErrorCount.value.append(entry.failed() ? entry.failed() : 1);
+        le->CompletionState.value = SF_DiagnosticCompletionRecord::_CompletionState::enum_Failed;
+    }
+    else
+    {
+        le->ErrorCount.value.append(0);
+        le->CompletionState.value = SF_DiagnosticCompletionRecord::_CompletionState::enum_OK;
+    }
+    
+    handler->handle(le);
+    return true;
+}
+
+bool SF_DiagnosticCompletionRecord_Provider::Enum::process(const solarflare::Diagnostic& diag)
+{
+    EntryEnum entries(&diag, &diag.errorLog(), handler);
+    diag.errorLog().forAllEntries(entries);
+    if (&diag.okLog() != &diag.errorLog())
+    {
+        EntryEnum okentries(&diag, &diag.okLog(), handler);
+        diag.okLog().forAllEntries(okentries);
+    }
+    return true;
+}
+
 SF_DiagnosticCompletionRecord_Provider::SF_DiagnosticCompletionRecord_Provider()
 {
 }
@@ -13,6 +90,7 @@ SF_DiagnosticCompletionRecord_Provider::~SF_DiagnosticCompletionRecord_Provider(
 
 Load_Status SF_DiagnosticCompletionRecord_Provider::load()
 {
+    solarflare::System::target.initialize();
     return LOAD_OK;
 }
 
@@ -32,6 +110,8 @@ Enum_Instances_Status SF_DiagnosticCompletionRecord_Provider::enum_instances(
     const SF_DiagnosticCompletionRecord* model,
     Enum_Instances_Handler<SF_DiagnosticCompletionRecord>* handler)
 {
+    Enum logs(handler);
+    solarflare::System::target.forAllDiagnostics(logs);
     return ENUM_INSTANCES_OK;
 }
 

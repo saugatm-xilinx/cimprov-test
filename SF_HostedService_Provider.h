@@ -10,13 +10,15 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_HostedService_Provider
 {
-    class SWEnum : public solarflare::ConstSoftwareEnumerator 
+    class SWEnum : public solarflare::ConstSoftwareEnumerator,
+                   public solarflare::ConstDiagnosticEnumerator
     {
         Enum_Instances_Handler<SF_HostedService>* handler;
     public:
         SWEnum(Enum_Instances_Handler<SF_HostedService>* h) :
             handler(h) {}
         virtual bool process(const solarflare::SWElement& sw);
+        virtual bool process(const solarflare::Diagnostic& diag);
     };
 public:
 

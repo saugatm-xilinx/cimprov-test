@@ -12,7 +12,8 @@ class SF_ElementCapabilities_Provider
 {
     class Enum : public solarflare::ConstNICEnumerator,
                  public solarflare::ConstInterfaceEnumerator,
-                 public solarflare::ConstSoftwareEnumerator
+                 public solarflare::ConstSoftwareEnumerator,
+                 public solarflare::ConstDiagnosticEnumerator
     {
         Enum_Instances_Handler<SF_ElementCapabilities>* handler;
     public:
@@ -21,6 +22,7 @@ class SF_ElementCapabilities_Provider
         virtual bool process(const solarflare::NIC& nic);
         virtual bool process(const solarflare::Interface& nic);
         virtual bool process(const solarflare::SWElement& sw);
+        virtual bool process(const solarflare::Diagnostic& diag);
     };
 public:
 

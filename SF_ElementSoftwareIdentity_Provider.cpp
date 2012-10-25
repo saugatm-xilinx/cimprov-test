@@ -3,6 +3,7 @@
 #include "SF_SoftwareIdentity_Provider.h"
 #include "SF_NICCard_Provider.h"
 #include "SF_PortController_Provider.h"
+#include "SF_DiagnosticTest_Provider.h"
 #include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
@@ -19,6 +20,26 @@ bool SF_ElementSoftwareIdentity_Provider::NICBinder::process(const solarflare::N
     item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
 
     handler->handle(item);
+    return true;
+}
+
+bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::Diagnostic& diag)
+{
+    const solarflare::SWElement *tool = diag.diagnosticTool();
+    
+    if (tool != NULL)
+    {
+        SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
+    
+        item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(*tool));
+        item->Dependent = cast<CIM_ManagedElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
+        item->ElementSoftwareStatus.null = false;
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
+
+        handler->handle(item);
+    }
     return true;
 }
 
@@ -85,6 +106,7 @@ Enum_Instances_Status SF_ElementSoftwareIdentity_Provider::enum_instances(
 {
     SWEnum instances(handler);
     solarflare::System::target.forAllSoftware(instances);
+    solarflare::System::target.forAllDiagnostics(instances);
     return ENUM_INSTANCES_OK;
 }
 

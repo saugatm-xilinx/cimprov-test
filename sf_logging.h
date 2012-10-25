@@ -23,27 +23,31 @@ namespace solarflare
         LogDebug
     };
 
+    class Diagnostic;
+
     /// @brief Log entry class
     class LogEntry {
         uint64 serial; //< Serial number of the message
         Datetime timestamp; //< Posting timestamp 
         String messageStr; //< Log message 
-        const char *locFile; //< Originating source file
-        int locLine; //< Originating source line
+        unsigned errorCode; //< Error code
+        unsigned nPassed; //< No of passed iterations
+        unsigned nFailed; //< No of failed iterations
     public:
         /// Constructor
         ///
         /// @param no     Serial number
         /// @param stamp  Timestamp
         /// @param msg    Log message
-        /// @param fname  Origin file name
-        /// @param lno    Origin line number
+        /// @param code   Error code
+        /// @param npass  No of passed iterations
+        /// @param nfail  No of failed iterations
         LogEntry(uint64 no, const Datetime& stamp, const String& msg, 
-                 const char *fname = NULL, int lno = 0) :
+                 unsigned code = 0, unsigned npass = 0, unsigned nfail = 0) :
             serial(no), timestamp(stamp), messageStr(msg), 
-            locFile(fname), locLine(lno) {}
+            errorCode(code), nPassed(npass), nFailed(nfail) {}
         /// Empty constructor
-        LogEntry() : serial(0), locFile(NULL), locLine(0) {}
+        LogEntry() : serial(0), errorCode(0), nPassed(0), nFailed(0) {}
         /// @return unique id of the entry (serial number)
         uint64 id() const { return serial; };
         /// sets the serial number to @a sno
@@ -52,10 +56,12 @@ namespace solarflare
         const Datetime& stamp() const { return timestamp; }
         /// @return message string
         const String& message() const { return messageStr; }
-        /// @return origin filename
-        const char *file() const { return locFile; }
-        /// @return origin line number
-        int line() const { return locLine; }
+        /// @return error code
+        unsigned error() const { return errorCode; }
+        /// @return No of passed iterations
+        unsigned passed() const { return nPassed; }
+        /// @return No of failed iterations
+        unsigned failed() const { return nFailed; }
         /// Print a log entry at level @p using CIMPLE logging
         void printLog(LogLevel at) const;
     };
@@ -95,6 +101,13 @@ namespace solarflare
         void log(const String& s)
         {
             put(LogEntry(0, Datetime::now(), s));
+        }
+
+        /// Log diagnostic status
+        void logStatus(const String& s, unsigned err = 0, 
+                       unsigned npass = 0, unsigned nfail = 0)
+        {
+            put(LogEntry(0, Datetime::now(), s, err, npass, nfail));
         }
 
         /// Format and log a printf-style message

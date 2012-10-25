@@ -2,8 +2,29 @@
 #include "SF_UseOfLog_Provider.h"
 #include "SF_RecordLog_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
+#include "SF_DiagnosticLog_Provider.h"
+#include "SF_DiagnosticTest_Provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
+
+bool SF_UseOfLog_Provider::Enum::process(const solarflare::Diagnostic& diag)
+{
+    SF_UseOfLog *link = SF_UseOfLog::create(true);
+
+    link->Antecedent = cast<CIM_Log *>(SF_DiagnosticLog_Provider::makeReference(diag, diag.errorLog()));
+    link->Dependent = cast<CIM_ManagedSystemElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
+    handler->handle(link);
+    
+    if (&diag.okLog() != &diag.errorLog())
+    {
+        link = SF_UseOfLog::create(true);
+        link->Antecedent = cast<CIM_Log *>(SF_DiagnosticLog_Provider::makeReference(diag, diag.okLog()));
+        link->Dependent = cast<CIM_ManagedSystemElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
+        handler->handle(link);
+    }
+    
+    return true;
+}
 
 SF_UseOfLog_Provider::SF_UseOfLog_Provider()
 {
@@ -15,6 +36,7 @@ SF_UseOfLog_Provider::~SF_UseOfLog_Provider()
 
 Load_Status SF_UseOfLog_Provider::load()
 {
+    solarflare::System::target.initialize();
     return LOAD_OK;
 }
 
@@ -44,6 +66,9 @@ Enum_Instances_Status SF_UseOfLog_Provider::enum_instances(
         link->Dependent = cast<CIM_ManagedSystemElement *>(sys);
         handler->handle(link);
     }
+    Enum diagLogs(handler);
+    solarflare::System::target.forAllDiagnostics(diagLogs);
+    
     return ENUM_INSTANCES_OK;
 }
 

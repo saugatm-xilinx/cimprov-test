@@ -4,12 +4,21 @@
 
 #include <cimple/cimple.h>
 #include "SF_DiagnosticServiceCapabilities.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_DiagnosticServiceCapabilities_Provider
 {
+    class Enum : public solarflare::ConstDiagnosticEnumerator {
+        Enum_Instances_Handler<SF_DiagnosticServiceCapabilities>* handler;
+    public:
+        Enum(Enum_Instances_Handler<SF_DiagnosticServiceCapabilities>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::Diagnostic& diag);
+    };
 public:
+    static SF_DiagnosticServiceCapabilities *makeReference(const solarflare::Diagnostic& diag);
 
     typedef SF_DiagnosticServiceCapabilities Class;
 

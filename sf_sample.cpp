@@ -138,6 +138,7 @@ namespace solarflare
         virtual Result syncTest() 
         {
             testPassed = Passed;
+            okLog().logStatus("passed");
             return Passed;
         }
         virtual Result result() const { return testPassed; }

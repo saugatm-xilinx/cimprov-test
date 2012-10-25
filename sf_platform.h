@@ -51,12 +51,24 @@ namespace solarflare
         /// Diagnostic thread object
         DiagnosticThread diagThread;
 
+        /// Number of success events stored
+        static const unsigned maxSuccessEvents;
+        /// Successful test log
+        Logger successLog;
+
+        /// Number of failure events stored
+        static const unsigned maxFailureEvents;
+        /// Failed test log
+        Logger failedLog;
     public:
         /// Constructor
         ///
         /// @param d    Description
         Diagnostic(const String& d) : 
-            SystemElement(d), diagThread(this) {}
+            SystemElement(d), diagThread(this),
+            successLog(LogInfo, maxSuccessEvents, "Success Log"),
+            failedLog(LogError, maxFailureEvents, "Failure Log")
+        {}
 
         /// Runs the diagnostic either synchronously or not
         void run(bool sync = true);
@@ -83,7 +95,7 @@ namespace solarflare
         /// Thread object to control over asynchronous tests
         Thread *asyncThread() { return &diagThread; }
         /// @return an associated software element or NULL
-        virtual const SWElement *diagnosticTool() { return NULL; }
+        virtual const SWElement *diagnosticTool() const { return NULL; }
 
         /// @return a name prefixed with NIC name
         virtual String name() const;
@@ -103,7 +115,16 @@ namespace solarflare
         };
         /// @return the kind of the test
         virtual TestKind testKind() const { return FunctionalTest; }
-            
+
+        /// @return associated error logger
+        Logger& errorLog() { return failedLog; }
+        /// @return associated error logger (immutable)
+        const Logger& errorLog() const { return failedLog; }
+
+        /// @return associated success logger
+        Logger& okLog() { return successLog; }
+        /// @return associated success logger (immutable)
+        const Logger& okLog() const  { return successLog; }
     };
 
     /// @brief Abstract class for ports. Implementors shall subclass it for

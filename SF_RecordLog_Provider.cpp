@@ -182,7 +182,7 @@ Invoke_Method_Status SF_RecordLog_Provider::ClearLog(
     else
     {
         log->clear();
-        return_value.set(0);
+        return_value.set(0); // OK
     }
     return INVOKE_METHOD_OK;
 }

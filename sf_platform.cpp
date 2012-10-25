@@ -6,6 +6,9 @@
 
 namespace solarflare 
 {
+    const unsigned Diagnostic::maxFailureEvents = 128;
+    const unsigned Diagnostic::maxSuccessEvents = 64;
+
     unsigned Diagnostic::DiagnosticThread::percentage() const
     {
         switch (currentState())

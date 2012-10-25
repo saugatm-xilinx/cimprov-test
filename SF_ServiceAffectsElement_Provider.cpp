@@ -4,6 +4,7 @@
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_SoftwareIdentity_Provider.h"
 #include "SF_NICCard_Provider.h"
+#include "SF_DiagnosticTest_Provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -60,6 +61,18 @@ bool SF_ServiceAffectsElement_Provider::Enum::process(const solarflare::SWElemen
     return true;
 }
 
+bool SF_ServiceAffectsElement_Provider::Enum::process(const solarflare::Diagnostic& diag)
+{
+    SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
+
+    link->AffectedElement = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*diag.nic()));
+    link->AffectingElement = cast<CIM_Service *>(SF_DiagnosticTest_Provider::makeReference(diag));
+
+    handler->handle(link);
+
+    return true;
+}
+
 SF_ServiceAffectsElement_Provider::SF_ServiceAffectsElement_Provider()
 {
 }
@@ -92,6 +105,7 @@ Enum_Instances_Status SF_ServiceAffectsElement_Provider::enum_instances(
 {
     Enum effects(handler);
     solarflare::System::target.forAllSoftware(effects);
+    solarflare::System::target.forAllDiagnostics(effects);
 
     return ENUM_INSTANCES_OK;
 }
