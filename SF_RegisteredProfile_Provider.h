@@ -11,6 +11,32 @@ class SF_RegisteredProfile_Provider
 {
 public:
 
+    struct DMTFProfileInfo {
+        const char *name;
+        const char *version;
+        const DMTFProfileInfo * const *referenced;
+    };
+private:
+    static const DMTFProfileInfo *const genericPrpRef[];
+    static const DMTFProfileInfo *const softwareUpdateRef[];
+    static const DMTFProfileInfo *const ethernetPortRef[];
+    static const DMTFProfileInfo *const hostLanPortRef[];
+    
+public:
+    static const DMTFProfileInfo ProfileRegistrationProfile;
+    static const DMTFProfileInfo DiagnosticsProfile;
+    static const DMTFProfileInfo RecordLogProfile;
+    static const DMTFProfileInfo PhysicalAssetProfile;
+    static const DMTFProfileInfo EthernetPortProfile;
+    static const DMTFProfileInfo SoftwareInventoryProfile;
+    static const DMTFProfileInfo SoftwareUpdateProfile;
+    static const DMTFProfileInfo HostLANNetworkPortProfile;
+    static const DMTFProfileInfo JobControlProfile;
+    
+    static const DMTFProfileInfo * const knownDMTFProfiles[];
+
+    static SF_RegisteredProfile *makeReference(const DMTFProfileInfo& profile);
+
     typedef SF_RegisteredProfile Class;
 
     SF_RegisteredProfile_Provider();

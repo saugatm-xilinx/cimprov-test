@@ -4,11 +4,36 @@
 
 #include <cimple/cimple.h>
 #include "SF_ElementConformsToProfile.h"
+#include "SF_RegisteredProfile_Provider.h"
+#include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_ElementConformsToProfile_Provider
 {
+    static const char *const implementationNamespace;
+    static const char *const interopNamespace;
+
+    class EnumAll : public solarflare::ConstSoftwareEnumerator,
+                    public solarflare::ConstNICEnumerator,
+                    public solarflare::ConstInterfaceEnumerator,
+                    public solarflare::ConstPortEnumerator,
+                    public solarflare::ConstDiagnosticEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
+    public:
+        EnumAll(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SWElement& sw);
+        virtual bool process(const solarflare::NIC& nic);
+        virtual bool process(const solarflare::Port& port);
+        virtual bool process(const solarflare::Interface& intf);
+        virtual bool process(const solarflare::Diagnostic& diag);
+    };
+
+    static SF_ElementConformsToProfile *makeLink(const SF_RegisteredProfile_Provider::DMTFProfileInfo &profile,
+                                                 Instance *obj);
+        
 public:
 
     typedef SF_ElementConformsToProfile Class;
