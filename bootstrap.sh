@@ -4,5 +4,5 @@ CLASSLIST=classes
 PRODUCTNAME=Solarflare
 
 genproj -e ${PRODUCTNAME} -F${CLASSLIST}
-genmak -f ${PRODUCTNAME} *.cpp
+#genmak -f ${PRODUCTNAME} *.cpp
 
