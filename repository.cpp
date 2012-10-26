@@ -122,14 +122,20 @@ static const Meta_Class* _meta_classes[] =
     &SF_DiagnosticSettingData::static_meta_class,
     &CIM_ElementSettingData::static_meta_class,
     &SF_ElementSettingData::static_meta_class,
+    &CIM_RegisteredProfile::static_meta_class,
+    &SF_RegisteredProfile::static_meta_class,
+    &CIM_ElementConformsToProfile::static_meta_class,
+    &SF_ElementConformsToProfile::static_meta_class,
+    &CIM_ReferencedProfile::static_meta_class,
+    &SF_ReferencedProfile::static_meta_class,
 };
 
 static const size_t _num_meta_classes = CIMPLE_ARRAY_SIZE(_meta_classes);
 
-extern const Meta_Repository __meta_repository_480038F9449B17AC9E2210119CF38AF2;
+extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
 
 /*[2844]*/
-const Meta_Repository __meta_repository_480038F9449B17AC9E2210119CF38AF2 =
+const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A =
 {
     _meta_classes,
     _num_meta_classes,

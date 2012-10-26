@@ -35,3 +35,6 @@ SF_AffectedJobElement
 SF_AvailableDiagnosticService
 SF_DiagnosticSettingData
 SF_ElementSettingData
+SF_RegisteredProfile
+SF_ElementConformsToProfile
+SF_ReferencedProfile

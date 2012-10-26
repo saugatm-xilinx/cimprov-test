@@ -118,6 +118,12 @@
 #include "SF_DiagnosticSettingData.h"
 #include "CIM_ElementSettingData.h"
 #include "SF_ElementSettingData.h"
+#include "CIM_RegisteredProfile.h"
+#include "SF_RegisteredProfile.h"
+#include "CIM_ElementConformsToProfile.h"
+#include "SF_ElementConformsToProfile.h"
+#include "CIM_ReferencedProfile.h"
+#include "SF_ReferencedProfile.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

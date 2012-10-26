@@ -132,6 +132,17 @@ class SF_DiagnosticSettingData : CIM_DiagnosticSettingData {
 class SF_ElementSettingData : CIM_ElementSettingData {
 };
 
+class SF_RegisteredProfile : CIM_RegisteredProfile {
+};
+
+[Association]
+class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
+};
+
+[Association]
+class SF_ReferencedProfile : CIM_ReferencedProfile {
+};
+
 
 
 

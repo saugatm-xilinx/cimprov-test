@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_480038F9449B17AC9E2210119CF38AF2;
+extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
 
 /*[1653]*/
 extern const Meta_Reference
@@ -52,7 +52,7 @@ const Meta_Class SF_NICSAPImplementation::static_meta_class =
     _locals,
     &CIM_DeviceSAPImplementation::static_meta_class,
     2, /* num_keys */
-    &__meta_repository_480038F9449B17AC9E2210119CF38AF2,
+    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
 };
 
 CIMPLE_NAMESPACE_END

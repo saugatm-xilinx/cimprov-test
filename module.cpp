@@ -43,6 +43,9 @@
 #include "SF_AvailableDiagnosticService_Provider.h"
 #include "SF_DiagnosticSettingData_Provider.h"
 #include "SF_ElementSettingData_Provider.h"
+#include "SF_RegisteredProfile_Provider.h"
+#include "SF_ElementConformsToProfile_Provider.h"
+#include "SF_ReferencedProfile_Provider.h"
 
 using namespace cimple;
 
@@ -1460,6 +1463,126 @@ static int __cimple_SF_ElementSettingData_Provider_proc(
     return -1;
 }
 
+static int __cimple_SF_RegisteredProfile_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_RegisteredProfile Class;
+    typedef SF_RegisteredProfile_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Instance_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    if (strcasecmp(meth_name, "CloseConformantInstances") == 0)
+    {
+        typedef SF_RegisteredProfile_CloseConformantInstances_method Method;
+        Method* method = (Method*)arg2;
+        return provider->CloseConformantInstances(
+            self,
+            method->EnumerationContext,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "OpenConformantInstances") == 0)
+    {
+        typedef SF_RegisteredProfile_OpenConformantInstances_method Method;
+        Method* method = (Method*)arg2;
+        return provider->OpenConformantInstances(
+            self,
+            method->ResultClass,
+            method->IncludedPropertyList,
+            method->OperationTimeout,
+            method->ContinueOnError,
+            method->MaxObjectCount,
+            method->EnumerationContext,
+            method->EndOfSequence,
+            method->InstanceType,
+            method->InstanceWithPathList,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "PullConformantInstances") == 0)
+    {
+        typedef SF_RegisteredProfile_PullConformantInstances_method Method;
+        Method* method = (Method*)arg2;
+        return provider->PullConformantInstances(
+            self,
+            method->MaxObjectCount,
+            method->EnumerationContext,
+            method->EndOfSequence,
+            method->InstanceType,
+            method->InstanceWithPathList,
+            method->return_value);
+    }
+
+    return -1;
+}
+
+static int __cimple_SF_ElementConformsToProfile_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_ElementConformsToProfile Class;
+    typedef SF_ElementConformsToProfile_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
+static int __cimple_SF_ReferencedProfile_Provider_proc(
+    const Registration* registration,
+    int operation,
+    void* arg0,
+    void* arg1,
+    void* arg2,
+    void* arg3,
+    void* arg4,
+    void* arg5,
+    void* arg6,
+    void* arg7)
+{
+    typedef SF_ReferencedProfile Class;
+    typedef SF_ReferencedProfile_Provider Provider;
+
+    if (operation != OPERATION_INVOKE_METHOD)
+        return Association_Provider_Proc_T<Provider>::proc(registration,
+            operation, arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+
+    Provider* provider = (Provider*)arg0;
+    const Class* self = (const Class*)arg1;
+    const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    return -1;
+}
+
 CIMPLE_MODULE(Solarflare_Module);
 CIMPLE_INSTANCE_PROVIDER(SF_SoftwareIdentity_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_ConcreteJob_Provider);
@@ -1498,6 +1621,9 @@ CIMPLE_ASSOCIATION_PROVIDER(SF_AffectedJobElement_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_AvailableDiagnosticService_Provider);
 CIMPLE_INSTANCE_PROVIDER(SF_DiagnosticSettingData_Provider);
 CIMPLE_ASSOCIATION_PROVIDER(SF_ElementSettingData_Provider);
+CIMPLE_INSTANCE_PROVIDER(SF_RegisteredProfile_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_ElementConformsToProfile_Provider);
+CIMPLE_ASSOCIATION_PROVIDER(SF_ReferencedProfile_Provider);
 
 #ifdef CIMPLE_PEGASUS_MODULE
   CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;
@@ -1579,6 +1705,12 @@ CIMPLE_ASSOCIATION_PROVIDER(SF_ElementSettingData_Provider);
   CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_DiagnosticSettingData_Provider, SF_DiagnosticSettingData);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ElementSettingData_Provider);
   CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ElementSettingData_Provider, SF_ElementSettingData);
+  CIMPLE_CMPI_INSTANCE_PROVIDER(SF_RegisteredProfile_Provider);
+  CIMPLE_CMPI_INSTANCE_PROVIDER2(SF_RegisteredProfile_Provider, SF_RegisteredProfile);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ElementConformsToProfile_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ElementConformsToProfile_Provider, SF_ElementConformsToProfile);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER(SF_ReferencedProfile_Provider);
+  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(SF_ReferencedProfile_Provider, SF_ReferencedProfile);
 # define __CIMPLE_FOUND_ENTRY_POINT
 #endif
 
