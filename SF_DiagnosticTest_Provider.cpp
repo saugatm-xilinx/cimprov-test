@@ -46,6 +46,11 @@ bool SF_DiagnosticTest_Provider::Enum::process(const solarflare::Diagnostic& dia
         case solarflare::Diagnostic::HealthCheckTest:
             newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Health_Check);
             break;
+        case solarflare::Diagnostic::MediaAccessTest:
+            newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Access_Test);
+            newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Media_Required);
+            newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Additional_Hardware_Required);
+            break;
     }
     handler->handle(newSvc);
     return true;

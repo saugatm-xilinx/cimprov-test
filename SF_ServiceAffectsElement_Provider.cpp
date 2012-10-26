@@ -3,6 +3,7 @@
 #include "SF_SoftwareInstallationService_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_SoftwareIdentity_Provider.h"
+#include "SF_PortController_Provider.h"
 #include "SF_NICCard_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
 
@@ -65,7 +66,7 @@ bool SF_ServiceAffectsElement_Provider::Enum::process(const solarflare::Diagnost
 {
     SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
 
-    link->AffectedElement = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*diag.nic()));
+    link->AffectedElement = cast<CIM_ManagedElement *>(SF_PortController_Provider::makeReference(*diag.nic()));
     link->AffectingElement = cast<CIM_Service *>(SF_DiagnosticTest_Provider::makeReference(diag));
 
     handler->handle(link);

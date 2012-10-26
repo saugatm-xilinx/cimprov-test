@@ -111,7 +111,8 @@ namespace solarflare
         enum TestKind {
             FunctionalTest, //< functional
             StressTest,     //< stress
-            HealthCheckTest //< health check
+            HealthCheckTest, //< health check
+            MediaAccessTest //< media access test
         };
         /// @return the kind of the test
         virtual TestKind testKind() const { return FunctionalTest; }
