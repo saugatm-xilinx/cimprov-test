@@ -51,12 +51,12 @@ namespace solarflare
         /// (like. 'Ethernet Adaptor 1')
         virtual String name() const { return genericName(); }
 
-        virtual cimple::Instance *cimInstance(const cimple::Meta_Class *cls) const { return NULL; };
-        virtual cimple::Instance *cimReference(const cimple::Meta_Class *cls) const
+        virtual cimple::Instance *cimInstance(const cimple::Meta_Class& cls) const { return NULL; };
+        virtual cimple::Instance *cimReference(const cimple::Meta_Class& cls) const
         {
             return cimReference(cls);
         }
-        virtual bool cimIsMe(const cimple::Instance *oj) const { return false; };
+        virtual bool cimIsMe(const cimple::Instance& obj) const { return false; };
     };
 
     /// @brief Abstract mutable enumerator for SystemObject

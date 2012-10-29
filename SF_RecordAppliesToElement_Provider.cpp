@@ -12,7 +12,7 @@ bool SF_RecordAppliesToElement_Provider::EntryEnum::process(const solarflare::Lo
     link->Antecedent = cast<CIM_RecordForLog *>(SF_DiagnosticCompletionRecord_Provider::makeReference(*diag,
                                                                                                       *owner,
                                                                                                       entry));
-    link->Dependent = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*diag->nic()));
+    link->Dependent = cast<CIM_ManagedElement *>(diag->nic()->cimReference(SF_NICCard::static_meta_class));
 
     handler->handle(link);
     return true;

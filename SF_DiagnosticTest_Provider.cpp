@@ -3,6 +3,7 @@
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_ConcreteJob_Provider.h"
 #include "SF_NICCard_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -201,7 +202,7 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
     {
         const CIM_Card *card = cast<CIM_Card *>(ManagedElement);
         
-        if (card == NULL || SF_NICCard_Provider::findByInstance(*card) != diag->nic())
+        if (card == NULL || solarflare::Lookup::findNIC(*card) != diag->nic())
         {
             return_value.set(InvalidParameter);
         }

@@ -4,6 +4,7 @@
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_NICCard_Provider.h"
 #include "SF_SoftwareInstallationServiceCapabilities.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -227,7 +228,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     }
     else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
     {
-        scope = SF_NICCard_Provider::findByInstance(*card);
+        scope = solarflare::Lookup::findNIC(*card);
         if (scope == NULL)
         {
             return_value.set(Error);

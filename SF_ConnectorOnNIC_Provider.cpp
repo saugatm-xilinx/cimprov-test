@@ -2,7 +2,7 @@
 #include "SF_ConnectorOnNIC_Provider.h"
 #include "SF_PhysicalConnector_Provider.h"
 #include "SF_NICCard_Provider.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -12,7 +12,7 @@ bool SF_ConnectorOnNIC_Provider::ConstEnum::process(const solarflare::SystemElem
     
     SF_ConnectorOnNIC *link = SF_ConnectorOnNIC::create(true);
     link->GroupComponent = 
-    cast<CIM_PhysicalPackage *>(SF_NICCard_Provider::makeReference(*e.nic()));
+    cast<CIM_PhysicalPackage *>(e.nic()->cimReference(SF_NICCard::static_meta_class));
     link->PartComponent =
     cast<CIM_PhysicalConnector *>(SF_PhysicalConnector_Provider::makeReference(e));
     

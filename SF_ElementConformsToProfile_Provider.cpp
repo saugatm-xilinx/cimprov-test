@@ -71,7 +71,7 @@ bool SF_ElementConformsToProfile_Provider::NICEnum::process(const solarflare::Sy
 {
     const solarflare::NIC &nic = static_cast<const solarflare::NIC &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::PhysicalAssetProfile, 
-                             SF_NICCard_Provider::makeReference(nic)));
+                             nic.cimReference(SF_NICCard::static_meta_class)));
     return true;
 }
 

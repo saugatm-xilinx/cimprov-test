@@ -22,7 +22,7 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
             const solarflare::Firmware& fw = static_cast<const solarflare::Firmware&>(sw);
             
             hwlink = SF_ServiceAffectsElement::create(true);
-            hwlink->AffectedElement = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*fw.nic()));
+            hwlink->AffectedElement = cast<CIM_ManagedElement *>(fw.nic()->cimReference(SF_NICCard::static_meta_class));
             hwlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
             handler->handle(hwlink);
 

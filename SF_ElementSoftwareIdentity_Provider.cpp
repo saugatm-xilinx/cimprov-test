@@ -56,7 +56,7 @@ bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::Syst
             SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
             
             item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(fw));
-            item->Dependent = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*fw.nic()));
+            item->Dependent = cast<CIM_ManagedElement *>(fw.nic()->cimReference(SF_NICCard::static_meta_class));
             item->ElementSoftwareStatus.null = false;
             item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
             item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);

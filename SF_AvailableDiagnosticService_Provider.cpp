@@ -11,7 +11,7 @@ bool SF_AvailableDiagnosticService_Provider::Enum::process(const solarflare::Sys
     SF_AvailableDiagnosticService *link = SF_AvailableDiagnosticService::create(true);
     
     link->ServiceProvided = cast<CIM_DiagnosticService *>(SF_DiagnosticTest_Provider::makeReference(diag));
-    link->UserOfService = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*diag.nic()));
+    link->UserOfService = cast<CIM_ManagedElement *>(diag.nic()->cimReference(SF_NICCard::static_meta_class));
 
     handler->handle(link);
 

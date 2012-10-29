@@ -386,6 +386,10 @@ namespace solarflare
         virtual bool forAllSoftware(ConstElementEnumerator& en) const {
             return forAllFw(en);
         }
+
+        virtual cimple::Instance *cimReference(const cimple::Meta_Class& kind) const;
+        virtual cimple::Instance *cimInstance(const cimple::Meta_Class& kind) const;
+        virtual bool cimIsMe(const cimple::Instance *obj) const;
     };
 
     /// @brief An abstract driver class.
