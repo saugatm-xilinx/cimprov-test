@@ -15,8 +15,9 @@ SF_DiagnosticServiceCapabilities *SF_DiagnosticServiceCapabilities_Provider::mak
     return newSvc;
 }
 
-bool SF_DiagnosticServiceCapabilities_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_DiagnosticServiceCapabilities_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_DiagnosticServiceCapabilities *newSvc = makeReference(diag);
 
     newSvc->Description.set(diag.description());

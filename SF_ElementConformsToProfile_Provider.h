@@ -14,21 +14,49 @@ class SF_ElementConformsToProfile_Provider
     static const char *const implementationNamespace;
     static const char *const interopNamespace;
 
-    class EnumAll : public solarflare::ConstSoftwareEnumerator,
-                    public solarflare::ConstNICEnumerator,
-                    public solarflare::ConstInterfaceEnumerator,
-                    public solarflare::ConstPortEnumerator,
-                    public solarflare::ConstDiagnosticEnumerator
+    class SWEnum : public solarflare::ConstElementEnumerator
     {
         Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
     public:
-        EnumAll(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
+        SWEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::SWElement& sw);
-        virtual bool process(const solarflare::NIC& nic);
-        virtual bool process(const solarflare::Port& port);
-        virtual bool process(const solarflare::Interface& intf);
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& sw);
+    };
+
+    class PortEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
+    public:
+        PortEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& sw);
+    };
+
+    class NICEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
+    public:
+        NICEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& sw);
+    };
+
+    class IntfEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
+    public:
+        IntfEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& sw);
+    };
+
+    class DiagEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
+    public:
+        DiagEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& sw);
     };
 
     static SF_ElementConformsToProfile *makeLink(const SF_RegisteredProfile_Provider::DMTFProfileInfo &profile,

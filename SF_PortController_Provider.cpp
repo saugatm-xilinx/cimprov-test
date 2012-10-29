@@ -16,8 +16,10 @@ SF_PortController *SF_PortController_Provider::makeReference(const solarflare::N
     return newPC;
 }
 
-bool SF_PortController_Provider::NICEnum::process(const solarflare::NIC& nic)
+bool SF_PortController_Provider::NICEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
+    
     SF_PortController *newPC = makeReference(nic);
     PortCounter counter;
     

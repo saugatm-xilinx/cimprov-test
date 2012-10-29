@@ -11,8 +11,9 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::NIC& nic)
+bool SF_ElementCapabilities_Provider::NICEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
     SF_PortController *pc = SF_PortController_Provider::makeReference(nic);
     SF_EnabledLogicalElementCapabilities *caps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Controller");
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
@@ -26,8 +27,9 @@ bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::NIC& nic)
     return true;
 }
 
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_ElementCapabilities_Provider::DiagEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_DiagnosticTest *test = SF_DiagnosticTest_Provider::makeReference(diag);
     SF_DiagnosticServiceCapabilities *caps = SF_DiagnosticServiceCapabilities_Provider::makeReference(diag);
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
@@ -42,8 +44,10 @@ bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::Diagnostic
 }
 
 
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::Interface& nic)
+bool SF_ElementCapabilities_Provider::IntfEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface& nic = static_cast<const solarflare::Interface&>(se);
+
     SF_EthernetPort *port = SF_EthernetPort_Provider::makeReference(nic);
     SF_LANEndpoint *endpoint = SF_LANEndpoint_Provider::makeReference(nic);
     SF_EnabledLogicalElementCapabilities *pcaps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Port");
@@ -66,8 +70,9 @@ bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::Interface&
     return true;
 }
 
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::SWElement& sw)
+bool SF_ElementCapabilities_Provider::SWEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
     switch (sw.classify())
     {
         case solarflare::SWElement::SWFirmware:
@@ -120,12 +125,15 @@ Enum_Instances_Status SF_ElementCapabilities_Provider::enum_instances(
     const SF_ElementCapabilities* model,
     Enum_Instances_Handler<SF_ElementCapabilities>* handler)
 {
-    Enum links(handler);
+    NICEnum niclinks(handler);
+    IntfEnum intflinks(handler);
+    SWEnum swlinks(handler);
+    DiagEnum dlinks(handler);
     
-    solarflare::System::target.forAllNICs(links);
-    solarflare::System::target.forAllInterfaces(links);
-    solarflare::System::target.forAllSoftware(links);
-    solarflare::System::target.forAllDiagnostics(links);
+    solarflare::System::target.forAllNICs(niclinks);
+    solarflare::System::target.forAllInterfaces(intflinks);
+    solarflare::System::target.forAllSoftware(swlinks);
+    solarflare::System::target.forAllDiagnostics(dlinks);
     return ENUM_INSTANCES_OK;
 }
 

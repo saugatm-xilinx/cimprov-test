@@ -15,23 +15,23 @@ class SF_SoftwareIdentity_Provider
     static void addPackageType(SF_SoftwareIdentity *id, solarflare::Package::PkgType type);
     static SF_SoftwareIdentity *hostSoftware(const solarflare::SWElement& ve);
 
-    class SWEnum : public solarflare::ConstSoftwareEnumerator {
+    class SWEnum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_SoftwareIdentity>* const handler;
     public:
         SWEnum(Enum_Instances_Handler<SF_SoftwareIdentity>* h) :
             handler(h) {};
-        virtual bool process(const solarflare::SWElement& se);
+        virtual bool process(const solarflare::SystemElement& se);
     };
 public:
 
-    class SoftwareFinder : public solarflare::SoftwareEnumerator
+    class SoftwareFinder : public solarflare::ElementEnumerator
     {
         solarflare::SWElement *obj;
         String name;
     public:
         SoftwareFinder(const String& id) :
             obj(NULL), name(id) {};
-        virtual bool process(solarflare::SWElement& sw);
+        virtual bool process(solarflare::SystemElement& sw);
         solarflare::SWElement *found() const { return obj; }
     };
 

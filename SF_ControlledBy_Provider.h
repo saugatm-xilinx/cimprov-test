@@ -10,13 +10,13 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ControlledBy_Provider
 {
-    class InterfaceEnum : public solarflare::ConstInterfaceEnumerator
+    class InterfaceEnum : public solarflare::ConstElementEnumerator
     {
         Enum_Instances_Handler<SF_ControlledBy>* handler;
     public:
         InterfaceEnum(Enum_Instances_Handler<SF_ControlledBy>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::Interface& intf);
+        virtual bool process(const solarflare::SystemElement& intf);
     };
 public:
 

@@ -18,8 +18,9 @@ SF_PhysicalConnector *SF_PhysicalConnector_Provider::makeReference(const solarfl
     return phc;
 }
 
-bool SF_PhysicalConnector_Provider::ConstEnum::process (const solarflare::Port& p)
+bool SF_PhysicalConnector_Provider::ConstEnum::process (const solarflare::SystemElement& se)
 {
+    const solarflare::Port& p = static_cast<const solarflare::Port&>(se);
     SF_PhysicalConnector *phc = SF_PhysicalConnector::create(true);
     solarflare::VitalProductData vpd = p.nic()->vitalProductData();
     

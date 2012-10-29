@@ -7,8 +7,10 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_UseOfLog_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_UseOfLog_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+    
     SF_UseOfLog *link = SF_UseOfLog::create(true);
 
     link->Antecedent = cast<CIM_Log *>(SF_DiagnosticLog_Provider::makeReference(diag, diag.errorLog()));

@@ -68,8 +68,10 @@ bool SF_DiagnosticCompletionRecord_Provider::EntryEnum::process(const solarflare
     return true;
 }
 
-bool SF_DiagnosticCompletionRecord_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_DiagnosticCompletionRecord_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+    
     EntryEnum entries(&diag, &diag.errorLog(), handler);
     diag.errorLog().forAllEntries(entries);
     if (&diag.okLog() != &diag.errorLog())

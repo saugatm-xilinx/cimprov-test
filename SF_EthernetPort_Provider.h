@@ -10,24 +10,24 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_EthernetPort_Provider
 {
-    class InterfaceEnum : public solarflare::ConstInterfaceEnumerator {
+    class InterfaceEnum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_EthernetPort>* handler;
     public:
         InterfaceEnum(Enum_Instances_Handler<SF_EthernetPort>* h) :
             handler(h) {};
-        virtual bool process(const solarflare::Interface& inrf);
+        virtual bool process(const solarflare::SystemElement& inrf);
     };
 
 public:
 
-    class InterfaceFinder : public solarflare::InterfaceEnumerator 
+    class InterfaceFinder : public solarflare::ElementEnumerator 
     {
         solarflare::Interface *obj;
         String devId;
     public:
         InterfaceFinder(const String& id) :
             obj(NULL), devId(id) {};
-        virtual bool process(solarflare::Interface& inrf);
+        virtual bool process(solarflare::SystemElement& inrf);
         solarflare::Interface *found() const { return obj; }
             
     };

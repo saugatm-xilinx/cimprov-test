@@ -50,6 +50,25 @@ namespace solarflare
         /// @return a name possibly suffixed with an element index
         /// (like. 'Ethernet Adaptor 1')
         virtual String name() const { return genericName(); }
+
+        virtual cimple::Instance *cimInstance(const cimple::Meta_Class *cls) const { return NULL; };
+        virtual cimple::Instance *cimReference(const cimple::Meta_Class *cls) const
+        {
+            return cimReference(cls);
+        }
+        virtual bool cimIsMe(const cimple::Instance *oj) const { return false; };
+    };
+
+    /// @brief Abstract mutable enumerator for SystemObject
+    class ElementEnumerator {
+    public:
+        virtual bool process(SystemElement& elem) = 0;
+    };
+
+    /// @brief Abstract immutable enumerator for SystemObject
+    class ConstElementEnumerator {
+    public:
+        virtual bool process(const SystemElement& elem) = 0;
     };
 
 
@@ -226,102 +245,35 @@ namespace solarflare
         virtual bool isHostSw() const { return true; }
     };
 
-
-    class Port;
-    
-    /// @brief Abstract mutating enumerator for ports
-    class PortEnumerator {
-    public:
-        virtual bool process(Port& p) = 0;
-    };
-
-    /// @brief Abstract constant enumerator for ports
-    class ConstPortEnumerator {
-    public:
-        virtual bool process(const Port& p) = 0;
-    };
-
-    class Interface;
-    
-    /// @brief Abstract mutating enumerator for ports
-    class InterfaceEnumerator {
-    public:
-        virtual bool process(Interface& p) = 0;
-    };
-
-    /// @brief Abstract constant enumerator for ports
-    class ConstInterfaceEnumerator {
-    public:
-        virtual bool process(const Interface& p) = 0;
-    };
-
-    /// @brief Abstract mutating enumerator for SW
-    class SoftwareEnumerator {
-    public:
-        virtual bool process(SWElement& sw) = 0;
-    };
-
-    class Diagnostic;
-    
-    /// @brief Abstract mutating enumerator for diagnostics
-    class DiagnosticEnumerator {
-    public:
-        virtual bool process(Diagnostic& p) = 0;
-    };
-
-    /// @brief Abstract constant enumerator for diagnostics
-    class ConstDiagnosticEnumerator {
-    public:
-        virtual bool process(const Diagnostic& p) = 0;
-    };
-
-
-    /// @brief Abstract constant enumerator for SW
-    class ConstSoftwareEnumerator {
-    public:
-        virtual bool process(const SWElement& sw) = 0;
-    };
-
     /// @brief An abstract mix-in for software containing elements (NIC,
     /// Package and System)
     class SoftwareContainer {
     public:
-        virtual bool forAllSoftware(SoftwareEnumerator& en) = 0;
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const = 0;
+        virtual bool forAllSoftware(ElementEnumerator& en) = 0;
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const = 0;
     };
 
     /// @brief An abstract mix-in for port containing elements (NIC, System)
     class PortContainer {
     public:
-        virtual bool forAllPorts(PortEnumerator& en) = 0;
-        virtual bool forAllPorts(ConstPortEnumerator& en) const = 0;
+        virtual bool forAllPorts(ElementEnumerator& en) = 0;
+        virtual bool forAllPorts(ConstElementEnumerator& en) const = 0;
     };
 
     /// @brief An abstract mix-in for port containing elements (NIC, System)
     class InterfaceContainer {
     public:
-        virtual bool forAllInterfaces(InterfaceEnumerator& en) = 0;
-        virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const = 0;
+        virtual bool forAllInterfaces(ElementEnumerator& en) = 0;
+        virtual bool forAllInterfaces(ConstElementEnumerator& en) const = 0;
     };
 
     /// @brief An abstract mix-in for diagnostic containing elements (NIC, System)
     class DiagnosticContainer {
     public:
-        virtual bool forAllDiagnostics(DiagnosticEnumerator& en) = 0;
-        virtual bool forAllDiagnostics(ConstDiagnosticEnumerator& en) const = 0;
+        virtual bool forAllDiagnostics(ElementEnumerator& en) = 0;
+        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const = 0;
     };
 
-
-    class NICEnumerator {
-    public:
-        virtual bool process(NIC& p) = 0;
-    };
-
-    class ConstNICEnumerator {
-    public:
-        virtual bool process(const NIC& p) = 0;
-    };
-    
 } // namespace
 
 #endif  // SOLARFLARE_SF_CORE_H

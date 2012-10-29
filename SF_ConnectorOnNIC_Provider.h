@@ -10,12 +10,12 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ConnectorOnNIC_Provider
 {
-    class ConstEnum : public solarflare::ConstPortEnumerator {
+    class ConstEnum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_ConnectorOnNIC>* handler;
     public:
         ConstEnum(Enum_Instances_Handler<SF_ConnectorOnNIC>* h) :
             handler(h) {};
-        virtual bool process(const solarflare::Port& e);
+        virtual bool process(const solarflare::SystemElement& e);
     };
 public:
 

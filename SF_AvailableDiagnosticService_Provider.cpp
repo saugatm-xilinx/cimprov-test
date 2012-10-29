@@ -5,8 +5,9 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_AvailableDiagnosticService_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_AvailableDiagnosticService_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_AvailableDiagnosticService *link = SF_AvailableDiagnosticService::create(true);
     
     link->ServiceProvided = cast<CIM_DiagnosticService *>(SF_DiagnosticTest_Provider::makeReference(diag));

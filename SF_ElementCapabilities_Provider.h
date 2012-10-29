@@ -10,20 +10,44 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ElementCapabilities_Provider
 {
-    class Enum : public solarflare::ConstNICEnumerator,
-                 public solarflare::ConstInterfaceEnumerator,
-                 public solarflare::ConstSoftwareEnumerator,
-                 public solarflare::ConstDiagnosticEnumerator
+    class NICEnum : public solarflare::ConstElementEnumerator
     {
         Enum_Instances_Handler<SF_ElementCapabilities>* handler;
     public:
-        Enum(Enum_Instances_Handler<SF_ElementCapabilities>* h) :
+        NICEnum(Enum_Instances_Handler<SF_ElementCapabilities>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::NIC& nic);
-        virtual bool process(const solarflare::Interface& nic);
-        virtual bool process(const solarflare::SWElement& sw);
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& se);
     };
+
+
+    class DiagEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementCapabilities>* handler;
+    public:
+        DiagEnum(Enum_Instances_Handler<SF_ElementCapabilities>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& se);
+    };
+
+    class IntfEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementCapabilities>* handler;
+    public:
+        IntfEnum(Enum_Instances_Handler<SF_ElementCapabilities>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& se);
+    };
+
+    class SWEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ElementCapabilities>* handler;
+    public:
+        SWEnum(Enum_Instances_Handler<SF_ElementCapabilities>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& se);
+    };
+
+
 public:
 
     typedef SF_ElementCapabilities Class;

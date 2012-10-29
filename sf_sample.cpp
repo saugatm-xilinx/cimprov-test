@@ -197,51 +197,51 @@ namespace solarflare
         }
         Connector connector() const { return RJ45; }
         uint64 supportedMTU() const { return 9000; }
-        virtual bool forAllFw(SoftwareEnumerator& en)
+        virtual bool forAllFw(ElementEnumerator& en)
         {
             if(!en.process(nicFw))
                 return false;
             return en.process(rom);
         }
-        virtual bool forAllFw(ConstSoftwareEnumerator& en) const
+        virtual bool forAllFw(ConstElementEnumerator& en) const
         {
             if(!en.process(nicFw))
                 return false;
             return en.process(rom);
         }
-        virtual bool forAllPorts(PortEnumerator& en)
+        virtual bool forAllPorts(ElementEnumerator& en)
         {
             if(!en.process(port0))
                 return false;
             return en.process(port1);
         }
         
-        virtual bool forAllPorts(ConstPortEnumerator& en) const
+        virtual bool forAllPorts(ConstElementEnumerator& en) const
         {
             if(!en.process(port0))
                 return false;
             return en.process(port1);
         }
 
-        virtual bool forAllInterfaces(InterfaceEnumerator& en)
+        virtual bool forAllInterfaces(ElementEnumerator& en)
         {
             if(!en.process(intf0))
                 return false;
             return en.process(intf1);
         }
         
-        virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const
+        virtual bool forAllInterfaces(ConstElementEnumerator& en) const
         {
             if(!en.process(intf0))
                 return false;
             return en.process(intf1);
         }
-        virtual bool forAllDiagnostics(DiagnosticEnumerator& en)
+        virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             return en.process(diag);
         }
         
-        virtual bool forAllDiagnostics(ConstDiagnosticEnumerator& en) const
+        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             return en.process(diag);
         }
@@ -294,11 +294,11 @@ namespace solarflare
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("3.3"); }
         virtual bool syncInstall(const char *) { return true; }
-        virtual bool forAllSoftware(SoftwareEnumerator& en)
+        virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(kernelDriver);
         }
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const 
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
         {
             return en.process(kernelDriver);
         }
@@ -318,11 +318,11 @@ namespace solarflare
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("0.1"); }
         virtual bool syncInstall(const char *) { return true; }
-        virtual bool forAllSoftware(SoftwareEnumerator& en)
+        virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(providerLibrary);
         }
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const 
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
         {
             return en.process(providerLibrary);
         }
@@ -348,30 +348,30 @@ namespace solarflare
         static SampleSystem target;
         bool is64bit() const { return true; }
         OSType osType() const { return RHEL; }
-        bool forAllNICs(ConstNICEnumerator& en) const;
-        bool forAllNICs(NICEnumerator& en);
-        bool forAllPackages(ConstSoftwareEnumerator& en) const;
-        bool forAllPackages(SoftwareEnumerator& en);
+        bool forAllNICs(ConstElementEnumerator& en) const;
+        bool forAllNICs(ElementEnumerator& en);
+        bool forAllPackages(ConstElementEnumerator& en) const;
+        bool forAllPackages(ElementEnumerator& en);
     };
 
-    bool SampleSystem::forAllNICs(ConstNICEnumerator& en) const
+    bool SampleSystem::forAllNICs(ConstElementEnumerator& en) const
     {
         return en.process(nic);
     }
 
-    bool SampleSystem::forAllNICs(NICEnumerator& en)
+    bool SampleSystem::forAllNICs(ElementEnumerator& en)
     {
         return en.process(nic);
     }
     
-    bool SampleSystem::forAllPackages(ConstSoftwareEnumerator& en) const
+    bool SampleSystem::forAllPackages(ConstElementEnumerator& en) const
     {
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
     }
     
-    bool SampleSystem::forAllPackages(SoftwareEnumerator& en)
+    bool SampleSystem::forAllPackages(ElementEnumerator& en)
     {
         if (!en.process(kernelPackage))
             return false;

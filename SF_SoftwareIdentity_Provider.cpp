@@ -8,11 +8,11 @@ CIMPLE_NAMESPACE_BEGIN
 using solarflare::System;
 using solarflare::SWElement;
 
-bool SF_SoftwareIdentity_Provider::SoftwareFinder::process(solarflare::SWElement& sw)
+bool SF_SoftwareIdentity_Provider::SoftwareFinder::process(solarflare::SystemElement& sw)
 {
     if (name == sw.name())
     {
-        obj = &sw;
+        obj = static_cast<solarflare::SWElement *>(&sw);
         return false;
     }
     return true;
@@ -201,11 +201,11 @@ Get_Instance_Status SF_SoftwareIdentity_Provider::get_instance(
     return GET_INSTANCE_UNSUPPORTED;
 }
 
-bool SF_SoftwareIdentity_Provider::SWEnum::process(const solarflare::SWElement& se)
+bool SF_SoftwareIdentity_Provider::SWEnum::process(const solarflare::SystemElement& se)
 {
     SF_SoftwareIdentity *identity = NULL;
 
-    identity = hostSoftware(se);
+    identity = hostSoftware(static_cast<const solarflare::SWElement&>(se));
     handler->handle(identity);
 
     return true;

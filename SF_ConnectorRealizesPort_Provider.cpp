@@ -5,8 +5,10 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ConnectorRealizesPort_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
+bool SF_ConnectorRealizesPort_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
+    
     const solarflare::Port *port = intf.port();
     if (port != NULL)
     {

@@ -5,8 +5,9 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ControlledBy_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
+bool SF_ControlledBy_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     SF_ControlledBy *link = SF_ControlledBy::create(true);
     
     link->Dependent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));

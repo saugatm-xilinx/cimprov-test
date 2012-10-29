@@ -69,6 +69,7 @@ namespace solarflare
     /// Abstract iterator of LogEntry instances
     class LogEntryIterator {
     public:
+        typedef LogEntry Class;
         virtual bool process(const LogEntry& le) = 0;
     };
 

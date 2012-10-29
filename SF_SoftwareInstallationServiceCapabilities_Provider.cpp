@@ -17,8 +17,9 @@ SF_SoftwareInstallationServiceCapabilities_Provider::makeReference(const solarfl
 }
 
 
-bool SF_SoftwareInstallationServiceCapabilities_Provider::SWEnum::process(const solarflare::SWElement& sw)
+bool SF_SoftwareInstallationServiceCapabilities_Provider::SWEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
     bool firmware = false;
     switch (sw.classify())
     {

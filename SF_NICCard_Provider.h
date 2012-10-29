@@ -10,23 +10,23 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_NICCard_Provider
 {
-    class NICEnum : public solarflare::ConstNICEnumerator {
+    class NICEnum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_NICCard>* handler;
     public:
         NICEnum(Enum_Instances_Handler<SF_NICCard>* h) :
             handler(h) {}
-        virtual bool process (const solarflare::NIC& se);
+        virtual bool process (const solarflare::SystemElement& se);
     };
 public:
 
-    class NICFinder : public solarflare::NICEnumerator 
+    class NICFinder : public solarflare::ElementEnumerator 
     {
         solarflare::NIC *obj;
         String devId;
     public:
         NICFinder(const String& id) :
             obj(NULL), devId(id) {};
-        virtual bool process(solarflare::NIC& nic);
+        virtual bool process(solarflare::SystemElement& nic);
         solarflare::NIC *found() const { return obj; }
             
     };

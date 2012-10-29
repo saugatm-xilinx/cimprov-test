@@ -18,8 +18,10 @@ SF_EthernetPort *SF_EthernetPort_Provider::makeReference(const solarflare::Inter
 }
 
 
-bool SF_EthernetPort_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
+bool SF_EthernetPort_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
+    
     SF_EthernetPort *newPort = makeReference(intf);
 
     newPort->Description.set(intf.description());
@@ -82,8 +84,10 @@ bool SF_EthernetPort_Provider::InterfaceEnum::process(const solarflare::Interfac
     return true;
 }
 
-bool SF_EthernetPort_Provider::InterfaceFinder::process(solarflare::Interface& intf)
+bool SF_EthernetPort_Provider::InterfaceFinder::process(solarflare::SystemElement& se)
 {
+    solarflare::Interface& intf = static_cast<solarflare::Interface&>(se);
+    
     if (intf.ifName() == devId)
     {
         obj = &intf;

@@ -375,15 +375,15 @@ namespace solarflare
             setupDiagnostics();
         }
         /// Apply @p en to all firmware of the NIC
-        virtual bool forAllFw(SoftwareEnumerator& en) = 0;
+        virtual bool forAllFw(ElementEnumerator& en) = 0;
         /// Apply @p en to all firmware of the NIC (non-destructive)
-        virtual bool forAllFw(ConstSoftwareEnumerator& en) const = 0;
+        virtual bool forAllFw(ConstElementEnumerator& en) const = 0;
 
         // Inherited methods
-        virtual bool forAllSoftware(SoftwareEnumerator& en) {
+        virtual bool forAllSoftware(ElementEnumerator& en) {
             return forAllFw(en);
         }
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const {
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const {
             return forAllFw(en);
         }
     };
@@ -538,23 +538,23 @@ namespace solarflare
         }
 
         /// Apply en to all NICs in the system (non-destructively)
-        virtual bool forAllNICs(ConstNICEnumerator& en) const = 0;
+        virtual bool forAllNICs(ConstElementEnumerator& en) const = 0;
         /// Apply en to all NICs in the system
-        virtual bool forAllNICs(NICEnumerator& en) = 0;
+        virtual bool forAllNICs(ElementEnumerator& en) = 0;
         /// Apply en to all softwre packages in the system
         /// (non-destructively)
-        virtual bool forAllPackages(ConstSoftwareEnumerator& en) const = 0;
+        virtual bool forAllPackages(ConstElementEnumerator& en) const = 0;
         /// Apply en to all softwre packages in the system 
-        virtual bool forAllPackages(SoftwareEnumerator& en) = 0;
+        virtual bool forAllPackages(ElementEnumerator& en) = 0;
 
-        virtual bool forAllPorts(ConstPortEnumerator& en) const;
-        virtual bool forAllPorts(PortEnumerator& en);
-        virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const;
-        virtual bool forAllInterfaces(InterfaceEnumerator& en);
-        virtual bool forAllDiagnostics(ConstDiagnosticEnumerator& en) const;
-        virtual bool forAllDiagnostics(DiagnosticEnumerator& en);
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const;
-        virtual bool forAllSoftware(SoftwareEnumerator& en);
+        virtual bool forAllPorts(ConstElementEnumerator& en) const;
+        virtual bool forAllPorts(ElementEnumerator& en);
+        virtual bool forAllInterfaces(ConstElementEnumerator& en) const;
+        virtual bool forAllInterfaces(ElementEnumerator& en);
+        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const;
+        virtual bool forAllDiagnostics(ElementEnumerator& en);
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const;
+        virtual bool forAllSoftware(ElementEnumerator& en);
         
         virtual const String& genericName() const { return systemName; }
     };

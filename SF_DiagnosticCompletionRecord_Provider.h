@@ -22,12 +22,12 @@ class SF_DiagnosticCompletionRecord_Provider
         virtual bool process(const solarflare::LogEntry& e);
     };
 
-    class Enum : public solarflare::ConstDiagnosticEnumerator {
+    class Enum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_DiagnosticCompletionRecord>* handler;
     public:
         Enum(Enum_Instances_Handler<SF_DiagnosticCompletionRecord>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& diag);
     };
 public:
 

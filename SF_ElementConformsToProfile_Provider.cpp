@@ -28,8 +28,9 @@ SF_ElementConformsToProfile *SF_ElementConformsToProfile_Provider::makeLink(cons
     return link;
 }
 
-bool SF_ElementConformsToProfile_Provider::EnumAll::process(const solarflare::SWElement& sw)
+bool SF_ElementConformsToProfile_Provider::SWEnum::process(const solarflare::SystemElement &se)
 {
+    const solarflare::SWElement &sw = static_cast<const solarflare::SWElement &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::SoftwareInventoryProfile, 
                              SF_SoftwareIdentity_Provider::makeReference(sw)));
     
@@ -52,8 +53,9 @@ bool SF_ElementConformsToProfile_Provider::EnumAll::process(const solarflare::SW
     return true;
 }
 
-bool SF_ElementConformsToProfile_Provider::EnumAll::process(const solarflare::Diagnostic& diag)
+bool SF_ElementConformsToProfile_Provider::DiagEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic &diag = static_cast<const solarflare::Diagnostic &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::DiagnosticsProfile, 
                              SF_DiagnosticTest_Provider::makeReference(diag)));
     if (const_cast<solarflare::Diagnostic&>(diag).asyncThread())
@@ -65,24 +67,27 @@ bool SF_ElementConformsToProfile_Provider::EnumAll::process(const solarflare::Di
 }
 
 
-bool SF_ElementConformsToProfile_Provider::EnumAll::process(const solarflare::NIC& nic)
+bool SF_ElementConformsToProfile_Provider::NICEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::NIC &nic = static_cast<const solarflare::NIC &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::PhysicalAssetProfile, 
                              SF_NICCard_Provider::makeReference(nic)));
     return true;
 }
 
 
-bool SF_ElementConformsToProfile_Provider::EnumAll::process(const solarflare::Port& port)
+bool SF_ElementConformsToProfile_Provider::PortEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Port &port = static_cast<const solarflare::Port &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::PhysicalAssetProfile, 
                              SF_PhysicalConnector_Provider::makeReference(port)));
     return true;
 }
 
 
-bool SF_ElementConformsToProfile_Provider::EnumAll::process(const solarflare::Interface& intf)
+bool SF_ElementConformsToProfile_Provider::IntfEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface &intf = static_cast<const solarflare::Interface &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::EthernetPortProfile, 
                              SF_EthernetPort_Provider::makeReference(intf)));
     handler->handle(makeLink(SF_RegisteredProfile_Provider::HostLANNetworkPortProfile, 
@@ -120,13 +125,17 @@ Enum_Instances_Status SF_ElementConformsToProfile_Provider::enum_instances(
     const SF_ElementConformsToProfile* model,
     Enum_Instances_Handler<SF_ElementConformsToProfile>* handler)
 {
-    EnumAll all(handler);
+    SWEnum swenum(handler);
+    NICEnum nicenum(handler);
+    PortEnum portenum(handler);
+    IntfEnum intfenum(handler);
+    DiagEnum denum(handler);
     
-    solarflare::System::target.forAllSoftware(all);
-    solarflare::System::target.forAllNICs(all);
-    solarflare::System::target.forAllPorts(all);
-    solarflare::System::target.forAllInterfaces(all);
-    solarflare::System::target.forAllDiagnostics(all);
+    solarflare::System::target.forAllSoftware(swenum);
+    solarflare::System::target.forAllNICs(nicenum);
+    solarflare::System::target.forAllPorts(portenum);
+    solarflare::System::target.forAllInterfaces(intfenum);
+    solarflare::System::target.forAllDiagnostics(denum);
 
     for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
     {

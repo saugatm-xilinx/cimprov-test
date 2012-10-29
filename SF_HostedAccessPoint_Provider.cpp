@@ -6,8 +6,9 @@
 CIMPLE_NAMESPACE_BEGIN
 
 bool 
-SF_HostedAccessPoint_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
+SF_HostedAccessPoint_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     SF_HostedAccessPoint *link = SF_HostedAccessPoint::create(true);
     link->Antecedent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
     link->Dependent = cast<CIM_ServiceAccessPoint *>(SF_LANEndpoint_Provider::makeReference(intf));

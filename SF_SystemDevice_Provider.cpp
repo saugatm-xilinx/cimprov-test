@@ -6,8 +6,9 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_SystemDevice_Provider::NICIntfEnum::process(const solarflare::NIC& nic)
+bool SF_SystemDevice_Provider::NICEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
     SF_SystemDevice *dev = SF_SystemDevice::create(true);
 
     dev->GroupComponent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
@@ -18,8 +19,9 @@ bool SF_SystemDevice_Provider::NICIntfEnum::process(const solarflare::NIC& nic)
     return true;
 }
 
-bool SF_SystemDevice_Provider::NICIntfEnum::process(const solarflare::Interface& intf)
+bool SF_SystemDevice_Provider::IntfEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     SF_SystemDevice *dev = SF_SystemDevice::create(true);
 
     dev->GroupComponent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
@@ -60,9 +62,10 @@ Enum_Instances_Status SF_SystemDevice_Provider::enum_instances(
     const SF_SystemDevice* model,
     Enum_Instances_Handler<SF_SystemDevice>* handler)
 {
-    NICIntfEnum devices(handler);
-    solarflare::System::target.forAllNICs(devices);
-    solarflare::System::target.forAllInterfaces(devices);
+    NICEnum nicdevices(handler);
+    IntfEnum idevices(handler);
+    solarflare::System::target.forAllNICs(nicdevices);
+    solarflare::System::target.forAllInterfaces(idevices);
     return ENUM_INSTANCES_OK;
 }
 

@@ -18,8 +18,10 @@ SF_LANEndpoint *SF_LANEndpoint_Provider::makeReference(const solarflare::Interfa
 }
 
 
-bool SF_LANEndpoint_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
+bool SF_LANEndpoint_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
+    
     SF_LANEndpoint *newEP = makeReference(intf);
 
     newEP->Description.set(intf.description());

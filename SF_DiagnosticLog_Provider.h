@@ -13,22 +13,22 @@ class SF_DiagnosticLog_Provider
     static SF_DiagnosticLog *makeInstance(const solarflare::Diagnostic& parent,
                                           const solarflare::Logger& log);
 
-    class Enum : public solarflare::ConstDiagnosticEnumerator {
+    class Enum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_DiagnosticLog>* handler;
     public:
         Enum(Enum_Instances_Handler<SF_DiagnosticLog>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& se);
     };
 
-    class LogFinder : public solarflare::DiagnosticEnumerator 
+    class LogFinder : public solarflare::ElementEnumerator 
     {
         solarflare::Logger *obj;
         String name;
     public:
         LogFinder(const String& n) :
             obj(NULL), name(n) {};
-        virtual bool process(solarflare::Diagnostic& nic);
+        virtual bool process(solarflare::SystemElement& se);
         solarflare::Logger *found() const { return obj; }
             
     };

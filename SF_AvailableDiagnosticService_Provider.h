@@ -10,13 +10,13 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_AvailableDiagnosticService_Provider
 {
-    class Enum : public solarflare::ConstDiagnosticEnumerator
+    class Enum : public solarflare::ConstElementEnumerator
     {
         Enum_Instances_Handler<SF_AvailableDiagnosticService> *handler;
     public:
         Enum(Enum_Instances_Handler<SF_AvailableDiagnosticService> *h) :
             handler(h) {};
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& diag);
     };
 
 public:

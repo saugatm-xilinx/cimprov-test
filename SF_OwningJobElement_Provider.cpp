@@ -5,8 +5,10 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_OwningJobElement_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_OwningJobElement_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+    
     SF_OwningJobElement *link = SF_OwningJobElement::create(true);
     
     link->OwningElement = cast<CIM_ManagedElement *>(SF_DiagnosticTest_Provider::makeReference(diag));

@@ -5,8 +5,10 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_BundleComponent_Provider::ConstEnum::process(const solarflare::SWElement& e)
+bool SF_BundleComponent_Provider::ConstEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::SWElement&e = static_cast<const solarflare::SWElement&>(se);
+    
     if (e.isHostSw())
     {
         const solarflare::HostSWElement& he = static_cast<const solarflare::HostSWElement&>(e);

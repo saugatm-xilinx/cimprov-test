@@ -31,8 +31,10 @@ Get_Instance_Status SF_InstalledSoftwareIdentity_Provider::get_instance(
     return GET_INSTANCE_UNSUPPORTED;
 }
 
-bool SF_InstalledSoftwareIdentity_Provider::ConstEnum::process(const solarflare::SWElement& sw)
+bool SF_InstalledSoftwareIdentity_Provider::ConstEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
+    
     if (sw.version().isUnknown())
         return true;
     

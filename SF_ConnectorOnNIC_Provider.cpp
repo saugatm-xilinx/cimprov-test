@@ -6,8 +6,10 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ConnectorOnNIC_Provider::ConstEnum::process(const solarflare::Port& e)
+bool SF_ConnectorOnNIC_Provider::ConstEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Port& e = static_cast<const solarflare::Port&>(se);
+    
     SF_ConnectorOnNIC *link = SF_ConnectorOnNIC::create(true);
     link->GroupComponent = 
     cast<CIM_PhysicalPackage *>(SF_NICCard_Provider::makeReference(*e.nic()));

@@ -19,8 +19,10 @@ SF_DiagnosticTest *SF_DiagnosticTest_Provider::makeReference(const solarflare::D
     return newSvc;
 }
 
-bool SF_DiagnosticTest_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_DiagnosticTest_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+    
     SF_DiagnosticTest *newSvc = makeReference(diag);
 
     newSvc->Description.set(diag.description());
@@ -56,8 +58,10 @@ bool SF_DiagnosticTest_Provider::Enum::process(const solarflare::Diagnostic& dia
     return true;
 }
 
-bool SF_DiagnosticTest_Provider::DiagnosticFinder::process(solarflare::Diagnostic& diag)
+bool SF_DiagnosticTest_Provider::DiagnosticFinder::process(solarflare::SystemElement& se)
 {
+    solarflare::Diagnostic& diag = static_cast<solarflare::Diagnostic&>(se);
+    
     if (diag.name() == diagId)
     {
         obj = &diag;

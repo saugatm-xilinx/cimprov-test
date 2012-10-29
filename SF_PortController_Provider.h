@@ -10,22 +10,22 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_PortController_Provider
 {
-    class NICEnum : public solarflare::ConstNICEnumerator
+    class NICEnum : public solarflare::ConstElementEnumerator
     {
         Enum_Instances_Handler<SF_PortController>* handler;
     public:
         NICEnum(Enum_Instances_Handler<SF_PortController>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::NIC& nic);
+        virtual bool process(const solarflare::SystemElement& nic);
     };
 
 
-    class PortCounter : public solarflare::ConstPortEnumerator
+    class PortCounter : public solarflare::ConstElementEnumerator
     {
         unsigned cnt;
     public:
         PortCounter() : cnt(0) {};
-        virtual bool process(const solarflare::Port&) { cnt++; return true; }
+        virtual bool process(const solarflare::SystemElement&) { cnt++; return true; }
         unsigned count() const { return cnt; }
     };
 public:

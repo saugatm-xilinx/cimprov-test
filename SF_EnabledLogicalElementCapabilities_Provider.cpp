@@ -37,15 +37,19 @@ SF_EnabledLogicalElementCapabilities_Provider::makeInstance(const solarflare::Sy
     return caps;
 }
 
-bool SF_EnabledLogicalElementCapabilities_Provider::NICIntfEnum::process(const solarflare::Interface& intf)
+bool SF_EnabledLogicalElementCapabilities_Provider::IntfEnum::process(const solarflare::SystemElement& el)
 {
+    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(el);
+    
     handler->handle(makeInstance(intf, "Port", true));
     handler->handle(makeInstance(intf, "Endpoint", false));
     return true;
 }
 
-bool SF_EnabledLogicalElementCapabilities_Provider::NICIntfEnum::process(const solarflare::NIC &nic)
+bool SF_EnabledLogicalElementCapabilities_Provider::NICEnum::process(const solarflare::SystemElement &el)
 {
+    const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(el);
+
     handler->handle(makeInstance(nic, "Controller", false));
     return true;
 }
@@ -79,10 +83,11 @@ Enum_Instances_Status SF_EnabledLogicalElementCapabilities_Provider::enum_instan
     const SF_EnabledLogicalElementCapabilities* model,
     Enum_Instances_Handler<SF_EnabledLogicalElementCapabilities>* handler)
 {
-    NICIntfEnum elements(handler);
+    NICEnum nicelements(handler);
+    IntfEnum intfelements(handler);
 
-    solarflare::System::target.forAllInterfaces(elements);
-    solarflare::System::target.forAllNICs(elements);
+    solarflare::System::target.forAllInterfaces(intfelements);
+    solarflare::System::target.forAllNICs(nicelements);
     return ENUM_INSTANCES_OK;
 }
 

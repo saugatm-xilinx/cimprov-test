@@ -10,12 +10,12 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_OwningJobElement_Provider
 {
-    class Enum : public solarflare::ConstDiagnosticEnumerator {
+    class Enum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_OwningJobElement>* handler;
     public:
         Enum(Enum_Instances_Handler<SF_OwningJobElement>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& diag);
     };
 public:
 

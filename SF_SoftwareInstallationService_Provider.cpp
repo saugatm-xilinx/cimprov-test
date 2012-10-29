@@ -20,8 +20,10 @@ SF_SoftwareInstallationService *SF_SoftwareInstallationService_Provider::makeRef
 }
 
 
-bool SF_SoftwareInstallationService_Provider::SWEnum::process(const solarflare::SWElement& sw)
+bool SF_SoftwareInstallationService_Provider::SWEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
+    
     switch (sw.classify())
     {
         case solarflare::SWElement::SWPackage:

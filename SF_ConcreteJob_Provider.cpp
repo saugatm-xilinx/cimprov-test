@@ -16,10 +16,9 @@ SF_ConcreteJob *SF_ConcreteJob_Provider::makeReference(const solarflare::SystemE
 }
 
 void SF_ConcreteJob_Provider::ThreadEnum::processThread(solarflare::Thread *th,
-                                                        const solarflare::SystemElement& obj,
-                                                        const char *suffix) const 
+                                                        const solarflare::SystemElement& obj) const 
 {
-    SF_ConcreteJob *job = makeReference(obj, suffix);
+    SF_ConcreteJob *job = makeReference(obj, isDiagnostic ? "diagThread" : "installThread");
     
     job->OperationalStatus.null = false;
     job->JobState.null = false;
@@ -57,46 +56,29 @@ void SF_ConcreteJob_Provider::ThreadEnum::processThread(solarflare::Thread *th,
         handler->handle(job);
     }
 
-bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::SWElement& sw)
+bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::SystemElement& se)
 {
-    solarflare::Thread *th = sw.installThread();
+    solarflare::Thread *th = (isDiagnostic ?
+                              static_cast<solarflare::Diagnostic&>(se).asyncThread() :
+                              static_cast<solarflare::SWElement&>(se).installThread());
     if (th != NULL)
-        processThread(th, sw, "installThread");
+        processThread(th, se);
     return true;
 }
 
-bool SF_ConcreteJob_Provider::ThreadEnum::process(solarflare::Diagnostic& diag)
+bool SF_ConcreteJob_Provider::JobFinder::process(solarflare::SystemElement& se)
 {
-    solarflare::Thread *th = diag.asyncThread();
-    if (th != NULL)
-        processThread(th, diag, "diagThread");
-    return true;
-}
-
-bool SF_ConcreteJob_Provider::JobFinder::process(solarflare::SWElement& sw)
-{
-    String tmp = sw.name();
-    tmp.append(":installThread");
+    String tmp = se.name();
+    tmp.append(isDiagnostic ? ":diagThread" : ":installThread");
     if (tmp == jobId)
     {
-        th = sw.installThread();
+        th = (isDiagnostic ?
+              static_cast<solarflare::Diagnostic&>(se).asyncThread() :
+              static_cast<solarflare::SWElement&>(se).installThread());
         return false;
     }
     return true;
 }
-
-bool SF_ConcreteJob_Provider::JobFinder::process(solarflare::Diagnostic& diag)
-{
-    String tmp = diag.name();
-    tmp.append(":diagThread");
-    if (tmp == jobId)
-    {
-        th = diag.asyncThread();
-        return false;
-    }
-    return true;
-}
-
 
 solarflare::Thread *SF_ConcreteJob_Provider::findByInstance(const SF_ConcreteJob& job)
 {
@@ -110,11 +92,14 @@ solarflare::Thread *SF_ConcreteJob_Provider::findByInstance(const SF_ConcreteJob
         return NULL;
 
     String tmp = job.InstanceID.value;
-    JobFinder finder(tmp.substr(prefix.size()));
+    JobFinder swfinder(tmp.substr(prefix.size()), false);
     
-    if (solarflare::System::target.forAllSoftware(finder))
-        solarflare::System::target.forAllDiagnostics(finder);
-    return finder.found();
+    if (!solarflare::System::target.forAllSoftware(swfinder))
+        return swfinder.found();
+
+    JobFinder dfinder(tmp.substr(prefix.size()), true);
+    solarflare::System::target.forAllDiagnostics(dfinder);
+    return dfinder.found();
 }
 
 
@@ -147,9 +132,10 @@ Enum_Instances_Status SF_ConcreteJob_Provider::enum_instances(
     const SF_ConcreteJob* model,
     Enum_Instances_Handler<SF_ConcreteJob>* handler)
 {
-    ThreadEnum threads(handler);
-    solarflare::System::target.forAllSoftware(threads);
-    solarflare::System::target.forAllDiagnostics(threads);
+    ThreadEnum swthreads(handler, false);
+    solarflare::System::target.forAllSoftware(swthreads);
+    ThreadEnum dthreads(handler, true);
+    solarflare::System::target.forAllDiagnostics(dthreads);
     
     return ENUM_INSTANCES_OK;
 }

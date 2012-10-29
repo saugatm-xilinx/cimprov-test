@@ -15,8 +15,9 @@ SF_NICCard *SF_NICCard_Provider::makeReference(const solarflare::NIC& nic)
 }
 
 
-bool SF_NICCard_Provider::NICEnum::process(const solarflare::NIC& nic)
+bool SF_NICCard_Provider::NICEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
     SF_NICCard *card = SF_NICCard::create(true);
     solarflare::VitalProductData vpd = nic.vitalProductData();
     
@@ -44,8 +45,10 @@ bool SF_NICCard_Provider::NICEnum::process(const solarflare::NIC& nic)
     return false;
 }
 
-bool SF_NICCard_Provider::NICFinder::process(solarflare::NIC& nic)
+bool SF_NICCard_Provider::NICFinder::process(solarflare::SystemElement& se)
 {
+    solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
+    
     if (nic.vitalProductData().id() == devId)
     {
         obj = &nic;

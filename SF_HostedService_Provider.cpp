@@ -7,8 +7,9 @@
 CIMPLE_NAMESPACE_BEGIN
 
 bool 
-SF_HostedService_Provider::SWEnum::process(const solarflare::SWElement& sw)
+SF_HostedService_Provider::SWEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
     switch (sw.classify())
     {
         case solarflare::SWElement::SWPackage:
@@ -27,8 +28,9 @@ SF_HostedService_Provider::SWEnum::process(const solarflare::SWElement& sw)
 }
 
 bool 
-SF_HostedService_Provider::SWEnum::process(const solarflare::Diagnostic& diag)
+SF_HostedService_Provider::DiagEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_HostedService *link = SF_HostedService::create(true);
     link->Antecedent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
     link->Dependent = cast<CIM_Service *>(SF_DiagnosticTest_Provider::makeReference(diag));

@@ -62,73 +62,73 @@ namespace solarflare
     const char System::systemDescr[] = "Solarflare-enabled host";
     const String System::systemName = "System";
 
-    class NICPortEnumerator : public NICEnumerator {
-        PortEnumerator& en;
+    class NICPortEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
     public:
-        NICPortEnumerator(PortEnumerator& e) : en(e) {}
-        virtual bool process(NIC& n) 
+        NICPortEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& n) 
         {
-            return n.forAllPorts(en);
+            return static_cast<NIC&>(n).forAllPorts(en);
         }
     };
 
-    class ConstNICPortEnumerator : public ConstNICEnumerator {
-        ConstPortEnumerator& en;
+    class ConstNICPortEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
     public:
-        ConstNICPortEnumerator(ConstPortEnumerator& e) : en(e) {}
-        virtual bool process(const NIC& n) 
+        ConstNICPortEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& n) 
         {
-            return n.forAllPorts(en);
+            return static_cast<const NIC&>(n).forAllPorts(en);
         }
     };
 
-    class NICInterfaceEnumerator : public NICEnumerator {
-        InterfaceEnumerator& en;
+    class NICIntfEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
     public:
-        NICInterfaceEnumerator(InterfaceEnumerator& e) : en(e) {}
-        virtual bool process(NIC& n) 
+        NICIntfEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& n) 
         {
-            return n.forAllInterfaces(en);
+            return static_cast<NIC&>(n).forAllInterfaces(en);
         }
     };
 
-    class ConstNICInterfaceEnumerator : public ConstNICEnumerator {
-        ConstInterfaceEnumerator& en;
+    class ConstNICIntfEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
     public:
-        ConstNICInterfaceEnumerator(ConstInterfaceEnumerator& e) : en(e) {}
-        virtual bool process(const NIC& n) 
+        ConstNICIntfEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& n) 
         {
-            return n.forAllInterfaces(en);
-        }
-    };
-
-
-    class NICDiagnosticEnumerator : public NICEnumerator {
-        DiagnosticEnumerator& en;
-    public:
-        NICDiagnosticEnumerator(DiagnosticEnumerator& e) : en(e) {}
-        virtual bool process(NIC& n) 
-        {
-            return n.forAllDiagnostics(en);
-        }
-    };
-
-    class ConstNICDiagnosticEnumerator : public ConstNICEnumerator {
-        ConstDiagnosticEnumerator& en;
-    public:
-        ConstNICDiagnosticEnumerator(ConstDiagnosticEnumerator& e) : en(e) {}
-        virtual bool process(const NIC& n) 
-        {
-            return n.forAllDiagnostics(en);
+            return static_cast<const NIC&>(n).forAllInterfaces(en);
         }
     };
 
 
-    class PackageContentsEnumerator : public SoftwareEnumerator {
-        SoftwareEnumerator& en;
+    class NICDiagEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
     public:
-        PackageContentsEnumerator(SoftwareEnumerator& e) : en(e) {}
-        virtual bool process(SWElement& se) 
+        NICDiagEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& n) 
+        {
+            return static_cast<NIC&>(n).forAllDiagnostics(en);
+        }
+    };
+
+    class ConstNICDiagEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
+    public:
+        ConstNICDiagEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& n) 
+        {
+            return static_cast<const NIC&>(n).forAllDiagnostics(en);
+        }
+    };
+
+
+    class PackageContentsEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
+    public:
+        PackageContentsEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& se) 
         {
             if (!en.process(se))
                 return false;
@@ -136,11 +136,11 @@ namespace solarflare
         }
     };
 
-    class ConstPackageContentsEnumerator : public ConstSoftwareEnumerator {
-        ConstSoftwareEnumerator& en;
+    class ConstPackageContentsEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
     public:
-        ConstPackageContentsEnumerator(ConstSoftwareEnumerator& e) : en(e) {}
-        virtual bool process(const SWElement& se) 
+        ConstPackageContentsEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& se) 
         {
             if (!en.process(se))
                 return false;
@@ -148,65 +148,64 @@ namespace solarflare
         }
     };
 
-    class NICFwEnumerator : public NICEnumerator {
-        SoftwareEnumerator& en;
+    class NICFwEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
     public:
-        NICFwEnumerator(SoftwareEnumerator& e) : en(e) {}
-        virtual bool process(NIC& n) 
+        NICFwEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& n) 
         {
-            return n.forAllFw(en);
+            return static_cast<NIC&>(n).forAllFw(en);
         }
     };
 
-    class ConstNICFwEnumerator : public ConstNICEnumerator {
-        ConstSoftwareEnumerator& en;
+    class ConstNICFwEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
     public:
-        ConstNICFwEnumerator(ConstSoftwareEnumerator& e) : en(e) {}
-        virtual bool process(const NIC& n) 
+        ConstNICFwEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& n) 
         {
-            return n.forAllFw(en);
+            return static_cast<const NIC&>(n).forAllFw(en);
         }
     };
 
-    bool System::forAllPorts(ConstPortEnumerator& en) const
+    bool System::forAllPorts(ConstElementEnumerator& en) const
     {
         ConstNICPortEnumerator embed(en);
         return forAllNICs(embed);
     }
 
-    bool System::forAllPorts(PortEnumerator& en)
+    bool System::forAllPorts(ElementEnumerator& en)
     {
         NICPortEnumerator embed(en);
         return forAllNICs(embed);
     }
 
-    bool System::forAllInterfaces(ConstInterfaceEnumerator& en) const
+    bool System::forAllInterfaces(ConstElementEnumerator& en) const
     {
-        ConstNICInterfaceEnumerator embed(en);
+        ConstNICIntfEnumerator embed(en);
         return forAllNICs(embed);
     }
 
-    bool System::forAllInterfaces(InterfaceEnumerator& en)
+    bool System::forAllInterfaces(ElementEnumerator& en)
     {
-        NICInterfaceEnumerator embed(en);
+        NICIntfEnumerator embed(en);
         return forAllNICs(embed);
     }
 
-    bool System::forAllDiagnostics(ConstDiagnosticEnumerator& en) const
+    bool System::forAllDiagnostics(ConstElementEnumerator& en) const
     {
-        ConstNICDiagnosticEnumerator embed(en);
+        ConstNICDiagEnumerator embed(en);
         return forAllNICs(embed);
     }
 
-    bool System::forAllDiagnostics(DiagnosticEnumerator& en)
+    bool System::forAllDiagnostics(ElementEnumerator& en)
     {
-        NICDiagnosticEnumerator embed(en);
+        NICDiagEnumerator embed(en);
         return forAllNICs(embed);
     }
 
 
-
-    bool System::forAllSoftware(ConstSoftwareEnumerator& en) const
+    bool System::forAllSoftware(ConstElementEnumerator& en) const
     {
         ConstPackageContentsEnumerator embed(en);
         if (!forAllPackages(embed))
@@ -219,7 +218,7 @@ namespace solarflare
         return true;
     }
 
-    bool System::forAllSoftware(SoftwareEnumerator& en)
+    bool System::forAllSoftware(ElementEnumerator& en)
     {
         PackageContentsEnumerator embed(en);
         if (!forAllPackages(embed))

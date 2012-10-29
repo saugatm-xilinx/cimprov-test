@@ -70,16 +70,20 @@ solarflare::Logger *SF_DiagnosticLog_Provider::findByInstance(const SF_Diagnosti
     return finder.found();
 }
 
-bool SF_DiagnosticLog_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_DiagnosticLog_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+    
     handler->handle(makeInstance(diag, diag.errorLog()));
     if (&diag.okLog() != &diag.errorLog())
         handler->handle(makeInstance(diag, diag.okLog()));
     return true;
 }
 
-bool SF_DiagnosticLog_Provider::LogFinder::process(solarflare::Diagnostic& diag)
+bool SF_DiagnosticLog_Provider::LogFinder::process(solarflare::SystemElement& se)
 {
+    solarflare::Diagnostic& diag = static_cast<solarflare::Diagnostic&>(se);
+
     String n = diag.name();
     n.append(" ");
     n.append(diag.errorLog().description());

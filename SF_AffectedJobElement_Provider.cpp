@@ -5,8 +5,10 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_AffectedJobElement_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_AffectedJobElement_Provider::Enum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+    
     SF_AffectedJobElement *link = SF_AffectedJobElement::create(true);
     
     link->AffectedElement = cast<CIM_ManagedElement *>(SF_PortController_Provider::makeReference(*diag.nic()));

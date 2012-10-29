@@ -11,7 +11,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_InstalledSoftwareIdentity_Provider
 {
-    class ConstEnum : public solarflare::ConstSoftwareEnumerator
+    class ConstEnum : public solarflare::ConstElementEnumerator
     {
         const CIM_ComputerSystem *from;
         Enum_Instances_Handler<SF_InstalledSoftwareIdentity>* handler;
@@ -19,7 +19,7 @@ class SF_InstalledSoftwareIdentity_Provider
         ConstEnum(const CIM_ComputerSystem *f,
                   Enum_Instances_Handler<SF_InstalledSoftwareIdentity>* h) :
             from(f), handler(h) {};
-        virtual bool process(const solarflare::SWElement& e);
+        virtual bool process(const solarflare::SystemElement& e);
     };
 public:
 

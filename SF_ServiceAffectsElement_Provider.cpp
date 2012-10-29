@@ -9,8 +9,10 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ServiceAffectsElement_Provider::Enum::process(const solarflare::SWElement& sw)
+bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
+    
     SF_ServiceAffectsElement *swlink = NULL;
     SF_ServiceAffectsElement *hwlink = NULL;
     switch (sw.classify())
@@ -62,8 +64,9 @@ bool SF_ServiceAffectsElement_Provider::Enum::process(const solarflare::SWElemen
     return true;
 }
 
-bool SF_ServiceAffectsElement_Provider::Enum::process(const solarflare::Diagnostic& diag)
+bool SF_ServiceAffectsElement_Provider::DiagEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
 
     link->AffectedElement = cast<CIM_ManagedElement *>(SF_PortController_Provider::makeReference(*diag.nic()));
@@ -104,9 +107,10 @@ Enum_Instances_Status SF_ServiceAffectsElement_Provider::enum_instances(
     const SF_ServiceAffectsElement* model,
     Enum_Instances_Handler<SF_ServiceAffectsElement>* handler)
 {
-    Enum effects(handler);
-    solarflare::System::target.forAllSoftware(effects);
-    solarflare::System::target.forAllDiagnostics(effects);
+    SWEnum sweffects(handler);
+    DiagEnum deffects(handler);
+    solarflare::System::target.forAllSoftware(sweffects);
+    solarflare::System::target.forAllDiagnostics(deffects);
 
     return ENUM_INSTANCES_OK;
 }

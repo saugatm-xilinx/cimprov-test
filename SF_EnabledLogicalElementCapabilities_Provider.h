@@ -10,15 +10,21 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_EnabledLogicalElementCapabilities_Provider
 {
-    class NICIntfEnum : public solarflare::ConstNICEnumerator,
-                        public solarflare::ConstInterfaceEnumerator
+    class NICEnum : public solarflare::ConstElementEnumerator
     {
         Enum_Instances_Handler<SF_EnabledLogicalElementCapabilities>* handler;
     public:
-        NICIntfEnum(Enum_Instances_Handler<SF_EnabledLogicalElementCapabilities>* h) :
+        NICEnum(Enum_Instances_Handler<SF_EnabledLogicalElementCapabilities>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::NIC& nic);
-        virtual bool process(const solarflare::Interface& intf);
+        virtual bool process(const solarflare::SystemElement& se);
+    };
+    class IntfEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_EnabledLogicalElementCapabilities>* handler;
+    public:
+        IntfEnum(Enum_Instances_Handler<SF_EnabledLogicalElementCapabilities>* h) :
+            handler(h) {}
+        virtual bool process(const solarflare::SystemElement& se);
     };
     static SF_EnabledLogicalElementCapabilities *makeInstance(const solarflare::SystemElement& intf, 
                                                               const char *nameSuffix,

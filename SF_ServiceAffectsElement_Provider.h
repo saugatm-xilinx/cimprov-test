@@ -10,15 +10,22 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ServiceAffectsElement_Provider
 {
-    class Enum : public solarflare::ConstSoftwareEnumerator,
-                 public solarflare::ConstDiagnosticEnumerator
+    class SWEnum : public solarflare::ConstElementEnumerator
     {
         Enum_Instances_Handler<SF_ServiceAffectsElement> *handler;
     public:
-        Enum(Enum_Instances_Handler<SF_ServiceAffectsElement> *h) :
+        SWEnum(Enum_Instances_Handler<SF_ServiceAffectsElement> *h) :
             handler(h) {};
-        virtual bool process(const solarflare::SWElement& sw);
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& se);
+    };
+
+    class DiagEnum : public solarflare::ConstElementEnumerator
+    {
+        Enum_Instances_Handler<SF_ServiceAffectsElement> *handler;
+    public:
+        DiagEnum(Enum_Instances_Handler<SF_ServiceAffectsElement> *h) :
+            handler(h) {};
+        virtual bool process(const solarflare::SystemElement& se);
     };
     
 public:

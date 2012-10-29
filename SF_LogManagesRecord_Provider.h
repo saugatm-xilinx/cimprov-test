@@ -36,12 +36,12 @@ class SF_LogManagesRecord_Provider
     };
 
 
-    class DiagEnum : public solarflare::ConstDiagnosticEnumerator {
+    class DiagEnum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_LogManagesRecord>* handler;
     public:
         DiagEnum(Enum_Instances_Handler<SF_LogManagesRecord>* h) :
             handler(h) {}
-        virtual bool process(const solarflare::Diagnostic& diag);
+        virtual bool process(const solarflare::SystemElement& diag);
     };
     
 public:

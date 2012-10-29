@@ -8,8 +8,9 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ElementSoftwareIdentity_Provider::NICBinder::process(const solarflare::NIC& nic)
+bool SF_ElementSoftwareIdentity_Provider::NICBinder::process(const solarflare::SystemElement& se)
 {
+    const solarflare::NIC &nic = static_cast<const solarflare::NIC &>(se);
     SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
     
     item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(*softItem));
@@ -23,8 +24,9 @@ bool SF_ElementSoftwareIdentity_Provider::NICBinder::process(const solarflare::N
     return true;
 }
 
-bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::Diagnostic& diag)
+bool SF_ElementSoftwareIdentity_Provider::DiagEnum::process(const solarflare::SystemElement& se)
 {
+    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     const solarflare::SWElement *tool = diag.diagnosticTool();
     
     if (tool != NULL)
@@ -43,8 +45,9 @@ bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::Diag
     return true;
 }
 
-bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::SWElement& se)
+bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::SystemElement& el)
 {
+    const solarflare::SWElement& se = static_cast<const solarflare::SWElement &>(el);
     switch (se.classify())
     {
         case solarflare::SWElement::SWFirmware:
@@ -104,9 +107,10 @@ Enum_Instances_Status SF_ElementSoftwareIdentity_Provider::enum_instances(
     const SF_ElementSoftwareIdentity* model,
     Enum_Instances_Handler<SF_ElementSoftwareIdentity>* handler)
 {
-    SWEnum instances(handler);
-    solarflare::System::target.forAllSoftware(instances);
-    solarflare::System::target.forAllDiagnostics(instances);
+    SWEnum swinstances(handler);
+    DiagEnum dinstances(handler);
+    solarflare::System::target.forAllSoftware(swinstances);
+    solarflare::System::target.forAllDiagnostics(dinstances);
     return ENUM_INSTANCES_OK;
 }
 
