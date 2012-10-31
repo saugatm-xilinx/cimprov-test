@@ -10,7 +10,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 SF_SoftwareInstallationService *SF_SoftwareInstallationService_Provider::makeReference(const solarflare::SWElement& sw)
 {
-    const CIM_ComputerSystem *system = SF_ComputerSystem_Provider::findSystem();
+    const CIM_ComputerSystem *system = solarflare::CIMHelper::findSystem();
     SF_SoftwareInstallationService *newSvc = SF_SoftwareInstallationService::create(true);
     
     newSvc->CreationClassName.set("SF_SoftwareInstallationService");
@@ -66,8 +66,8 @@ SF_SoftwareInstallationService_Provider::findByInstance(const SF_SoftwareInstall
         svc.CreationClassName.value != "SF_SoftwareInstallationService" ||
         svc.SystemCreationClassName.null || svc.SystemName.null)
         return NULL;
-    if (!SF_ComputerSystem_Provider::isOurSystem(svc.SystemCreationClassName.value,
-                                                 svc.SystemName.value))
+    if (solarflare::CIMHelper::isOurSystem(svc.SystemCreationClassName.value, 
+                                           svc.SystemName.value))
         return NULL;
     SF_SoftwareIdentity_Provider::SoftwareFinder finder(svc.Name.value);
     scope.forAllSoftware(finder);
@@ -218,7 +218,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     else if (const CIM_ComputerSystem *sys = 
              cast<const CIM_ComputerSystem *>(Target))
     {
-        if (SF_ComputerSystem_Provider::isOurSystem(sys))
+        if (solarflare::CIMHelper::isOurSystem(sys))
             scope = &solarflare::System::target;
         else
         {

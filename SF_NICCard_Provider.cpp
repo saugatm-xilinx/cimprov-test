@@ -14,7 +14,7 @@ SF_NICCard_Provider::~SF_NICCard_Provider()
 
 Load_Status SF_NICCard_Provider::load()
 {
-    solarflare::initProviders();
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 

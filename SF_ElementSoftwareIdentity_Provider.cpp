@@ -14,7 +14,8 @@ bool SF_ElementSoftwareIdentity_Provider::NICBinder::process(const solarflare::S
     SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
     
     item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(*softItem));
-    item->Dependent = cast<CIM_ManagedElement *>(SF_PortController_Provider::makeReference(nic));
+    item->Dependent = cast<CIM_ManagedElement *>(nic.cimReference(SF_PortController::static_meta_class));
+    
     item->ElementSoftwareStatus.null = false;
     item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
     item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);

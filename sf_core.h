@@ -17,9 +17,15 @@ namespace solarflare
     using cimple::uint64;
     using cimple::Mutex;
 
-    /// @brief The root class for all managed objects
+    class CIMHelper;
+
+    /// @brief The root class for all managed objects.
     class SystemElement {
         String descr;
+    protected:
+        /// @return a helper instance to work with CIM instances of class @p cls.
+        /// @retval NULL if a given SystemElement is not compatible with a given CIM class
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& cls) const { return NULL; }
      public:
         SystemElement(const String& d) :
             descr(d) {}
@@ -51,12 +57,9 @@ namespace solarflare
         /// (like. 'Ethernet Adaptor 1')
         virtual String name() const { return genericName(); }
 
-        virtual cimple::Instance *cimInstance(const cimple::Meta_Class& cls) const { return NULL; };
-        virtual cimple::Instance *cimReference(const cimple::Meta_Class& cls) const
-        {
-            return cimReference(cls);
-        }
-        virtual bool cimIsMe(const cimple::Instance& obj) const { return false; };
+        cimple::Instance *cimInstance(const cimple::Meta_Class& cls) const;
+        cimple::Instance *cimReference(const cimple::Meta_Class& cls) const;
+        bool cimIsMe(const cimple::Instance& obj) const;
     };
 
     /// @brief Abstract mutable enumerator for SystemObject

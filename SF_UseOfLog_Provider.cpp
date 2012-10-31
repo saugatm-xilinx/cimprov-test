@@ -4,6 +4,7 @@
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_DiagnosticLog_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -61,7 +62,7 @@ Enum_Instances_Status SF_UseOfLog_Provider::enum_instances(
     for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
     {
         SF_RecordLog *log = SF_RecordLog_Provider::makeReference(*solarflare::Logger::knownLogs[i]);
-        CIM_ComputerSystem *sys = SF_ComputerSystem_Provider::findSystem()->clone();
+        CIM_ComputerSystem *sys = solarflare::CIMHelper::findSystem()->clone();
         SF_UseOfLog *link = SF_UseOfLog::create(true);
         
         link->Antecedent = cast<CIM_Log *>(log);

@@ -80,7 +80,7 @@ bool SF_ElementConformsToProfile_Provider::PortEnum::process(const solarflare::S
 {
     const solarflare::Port &port = static_cast<const solarflare::Port &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::PhysicalAssetProfile, 
-                             SF_PhysicalConnector_Provider::makeReference(port)));
+                             port.cimReference(SF_PhysicalConnector::static_meta_class)));
     return true;
 }
 

@@ -2,6 +2,7 @@
 #include "SF_HostedAccessPoint_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_LANEndpoint_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -10,7 +11,7 @@ SF_HostedAccessPoint_Provider::InterfaceEnum::process(const solarflare::SystemEl
 {
     const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     SF_HostedAccessPoint *link = SF_HostedAccessPoint::create(true);
-    link->Antecedent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
+    link->Antecedent = solarflare::CIMHelper::systemRef();
     link->Dependent = cast<CIM_ServiceAccessPoint *>(SF_LANEndpoint_Provider::makeReference(intf));
     handler->handle(link);
     return true;

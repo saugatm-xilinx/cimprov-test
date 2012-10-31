@@ -14,7 +14,7 @@ bool SF_ConnectorOnNIC_Provider::ConstEnum::process(const solarflare::SystemElem
     link->GroupComponent = 
     cast<CIM_PhysicalPackage *>(e.nic()->cimReference(SF_NICCard::static_meta_class));
     link->PartComponent =
-    cast<CIM_PhysicalConnector *>(SF_PhysicalConnector_Provider::makeReference(e));
+    cast<CIM_PhysicalConnector *>(e.cimReference(SF_PhysicalConnector::static_meta_class));
     
     handler->handle(link);
     

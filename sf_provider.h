@@ -2,6 +2,7 @@
 #define SOLARFLARE_SF_PROVIDER_H 1
 
 #include "sf_platform.h"
+#include "CIM_ComputerSystem.h"
 
 /// This file contains some helpers and utilities 
 /// for writing CIMPLE providers. None of the code is platform-dependent
@@ -10,12 +11,41 @@ namespace solarflare
 {
     using cimple::Instance;
 
-    inline void initProviders()
-    {
-        System::target.initialize();
-    }
 
-    String makeInstanceID(const String& name);
+    /// @brief Abstract class for ties between CIM classes and #SystemElement.
+    /// This class is subclassed internally for descendants of #SystemElement.
+    /// @sa SystemElement::cimDispatch()
+    class CIMHelper {
+        static cimple::Ref<cimple::CIM_ComputerSystem> cimSystem;
+    public:
+        /// @return A CIM reference matching @p obj
+        virtual cimple::Instance *reference(const SystemElement& obj) const = 0;
+        /// @return A CIM instance matching @p obj
+        virtual cimple::Instance *instance(const SystemElement&) const = 0;
+        /// @return true iff @p obj corresponds to CIM instance @p inst
+        virtual bool match(const SystemElement& obj, const cimple::Instance& inst) const = 0;
+
+        static const char solarflareNS[];
+        static const char ibmseNS[];
+        static const char interopNS[];
+        static const char baseNS[];
+        static void initialize()
+        {
+            System::target.initialize();
+        }
+
+        static String instanceID(const String& name);
+        static const cimple::CIM_ComputerSystem *findSystem();
+        static cimple::CIM_System *systemRef()
+        {
+            return reinterpret_cast<cimple::CIM_System *>(findSystem()->clone());
+        }
+        static bool isOurSystem(const String& sysclass, const String& sysname);
+        static bool isOurSystem(const cimple::CIM_ComputerSystem* sys)
+        {
+            return cimple::key_eq(findSystem(), sys);
+        }
+    };
 
     template <class CIMClass>
     class EnumInstances : public ConstElementEnumerator {
@@ -130,6 +160,15 @@ namespace solarflare
         }
     };
     
+    class ObjectCount : public ConstElementEnumerator
+    {
+        unsigned cnt;
+    public:
+        ObjectCount() : cnt(0) {};
+        virtual bool process(const SystemElement&) { cnt++; return true; }
+        unsigned count() const { return cnt; }
+    };
+
 
 } // namespace
 

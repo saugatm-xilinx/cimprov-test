@@ -3,6 +3,7 @@
 #include "SF_SoftwareIdentity.h"
 #include "SF_SoftwareIdentity_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -53,7 +54,7 @@ Enum_Instances_Status SF_InstalledSoftwareIdentity_Provider::enum_instances(
     const SF_InstalledSoftwareIdentity* model,
     Enum_Instances_Handler<SF_InstalledSoftwareIdentity>* handler)
 {
-    const CIM_ComputerSystem *cs = SF_ComputerSystem_Provider::findSystem();
+    const CIM_ComputerSystem *cs = solarflare::CIMHelper::findSystem();
     
     if (cs == NULL)
     {

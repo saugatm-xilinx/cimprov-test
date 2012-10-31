@@ -11,7 +11,7 @@ bool SF_AffectedJobElement_Provider::Enum::process(const solarflare::SystemEleme
     
     SF_AffectedJobElement *link = SF_AffectedJobElement::create(true);
     
-    link->AffectedElement = cast<CIM_ManagedElement *>(SF_PortController_Provider::makeReference(*diag.nic()));
+    link->AffectedElement = cast<CIM_ManagedElement *>(diag.nic()->cimReference(CIM_PortController::static_meta_class));
     link->AffectingElement = cast<CIM_Job *>(SF_ConcreteJob_Provider::makeReference(diag, "diagThread"));
     link->ElementEffects.null = false;
     if (diag.isExclusive())

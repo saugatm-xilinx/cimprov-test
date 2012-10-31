@@ -9,7 +9,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 SF_DiagnosticTest *SF_DiagnosticTest_Provider::makeReference(const solarflare::Diagnostic& diag)
 {
-    const CIM_ComputerSystem *system = SF_ComputerSystem_Provider::findSystem();
+    const CIM_ComputerSystem *system = solarflare::CIMHelper::findSystem();
     SF_DiagnosticTest *newSvc = SF_DiagnosticTest::create(true);
     
     newSvc->CreationClassName.set("SF_DiagnosticTest");
@@ -77,8 +77,8 @@ solarflare::Diagnostic *SF_DiagnosticTest_Provider::findByInstance(const SF_Diag
         p.CreationClassName.value != "SF_DiagnosticTest" ||
         p.SystemCreationClassName.null || p.SystemName.null)
         return NULL;
-    if (!SF_ComputerSystem_Provider::isOurSystem(p.SystemCreationClassName.value,
-                                                 p.SystemName.value))
+    if (!solarflare::CIMHelper::isOurSystem(p.SystemCreationClassName.value, 
+                                            p.SystemName.value))
         return NULL;
     
     DiagnosticFinder finder(p.Name.value);

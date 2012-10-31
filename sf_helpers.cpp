@@ -1,12 +1,38 @@
-#include "sf_platform.h"
-#include "SF_NICCard.h"
+#include "sf_provider.h"
+#include "CIM_ComputerSystem.h"
 
 namespace solarflare 
 {
     using cimple::Instance;
     using cimple::Meta_Class;
+    using cimple::CIM_ComputerSystem;
+    using cimple::Ref;
+    using cimple::cast;
+
+    cimple::Instance *SystemElement::cimInstance(const cimple::Meta_Class& cls) const
+    {
+        const CIMHelper *helper = cimDispatch(cls);
+        return helper ? helper->instance(*this) : NULL;
+    }
+
+    cimple::Instance *SystemElement::cimReference(const cimple::Meta_Class& cls) const
+    {
+        const CIMHelper *helper = cimDispatch(cls);
+        return helper ? helper->reference(*this) : NULL;
+    }
     
-    String makeInstanceID(const String& name)
+    bool SystemElement::cimIsMe(const cimple::Instance& obj) const
+    {
+        const CIMHelper *helper = cimDispatch(*obj.meta_class);
+        return helper ? helper->match(*this, obj) : false;
+    }
+
+    const char CIMHelper::solarflareNS[] = "root/solarflare";
+    const char CIMHelper::ibmseNS[] = "root/ibmse";
+    const char CIMHelper::interopNS[] = "root/pg_interop";
+    const char CIMHelper::baseNS[] = "root/cimv2";
+    
+    String CIMHelper::instanceID(const String& name)
     {
         String result = System::target.prefix();
         result.append(":");
@@ -14,59 +40,45 @@ namespace solarflare
         return result;
     }
 
-    Instance *NIC::cimReference(const Meta_Class& cls) const 
+    Ref<CIM_ComputerSystem> CIMHelper::cimSystem;
+
+    const CIM_ComputerSystem *CIMHelper::findSystem()
     {
-        using cimple::SF_NICCard;
+        static const char * const namespaces[] = 
+        {ibmseNS, solarflareNS, baseNS, NULL};
         
-        if (&cls != &SF_NICCard::static_meta_class)
-            return NULL;
+        if (cimSystem)
+            return cast<CIM_ComputerSystem *>(cimSystem.ptr());
         
-        SF_NICCard *card = SF_NICCard::create(true);
-
-        card->CreationClassName.set("SF_NICCard");
-        card->Tag.set(vitalProductData().id());
-
-        return card;
+        Ref<CIM_ComputerSystem> system = CIM_ComputerSystem::create();
+        Ref<Instance> sysInstance;
+        
+        for (const char * const *ns = namespaces; *ns != NULL; ns++)
+        {
+            cimple::Instance_Enumerator ie;
+            
+            if (cimple::cimom::enum_instances(*ns, system.ptr(), ie) != 0)
+                continue;
+            
+            sysInstance = ie();
+            if (sysInstance)
+            {
+                break;
+            }
+        }
+        if (sysInstance)
+        {
+            cimSystem.reset(cast<CIM_ComputerSystem *>(sysInstance.ptr()));
+        }
+        return cimSystem.ptr();
     }
 
-    Instance* NIC::cimInstance(const Meta_Class &cls) const
+    bool CIMHelper::isOurSystem(const String& sysclass, const String& sysname)
     {
-        using cimple::SF_NICCard;
-
-        SF_NICCard *card = static_cast<SF_NICCard *>(cimReference(cls));
-
-        if (card == NULL)
-            return NULL;
+        const CIM_ComputerSystem* ourSys = findSystem();
         
-        solarflare::VitalProductData vpd = vitalProductData();
+        return (ourSys->CreationClassName.value == sysclass &&
+                ourSys->Name.value == sysname);
+    }
     
-        card->InstanceID.set(makeInstanceID(name()));
-        card->Name.set(name());
-        card->Description.set(description());
-        card->Manufacturer.set(vpd.manufacturer());
-        card->SerialNumber.set(vpd.serial());
-        card->PartNumber.set(vpd.part());
-        card->Model.set(vpd.model());
-        card->SKU.set(vpd.fru());
-        card->PackageType.null = false;
-        card->PackageType.value = SF_NICCard::_PackageType::enum_Module_Card;
-        card->HostingBoard.set(false);
-        card->PoweredOn.set(true);
-        card->ElementName.set(name());
-
-        return card;
-    }
-
-    bool NIC::cimIsMe(const Instance *obj) const
-    {
-        const cimple::CIM_Card *card = static_cast<const cimple::CIM_Card *>(obj);
-        if (card == NULL)
-            return false;
-        if (card->CreationClassName.null || card->Tag.null ||
-            card->CreationClassName.value != "SF_NICCard")
-            return false;
-        return card->Tag.value == vitalProductData().id();
-    }
-
-
-}
+} // namespace

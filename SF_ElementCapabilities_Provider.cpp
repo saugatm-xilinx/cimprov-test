@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 bool SF_ElementCapabilities_Provider::NICEnum::process(const solarflare::SystemElement& se)
 {
     const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
-    SF_PortController *pc = SF_PortController_Provider::makeReference(nic);
+    SF_PortController *pc = static_cast<SF_PortController *>(nic.cimReference(SF_PortController::static_meta_class));
     SF_EnabledLogicalElementCapabilities *caps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Controller");
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
 

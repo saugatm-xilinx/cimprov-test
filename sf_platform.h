@@ -141,6 +141,8 @@ namespace solarflare
         /// fixme: may be it's better to create another hierarchy level like
         /// OrderedSystemElement.
         unsigned portIndex;
+    protected:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///
@@ -323,6 +325,9 @@ namespace solarflare
         static const char nicDescription[];
         static const String nicName;
     protected:
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
         /// Create all necessary internal structures for physical ports
         /// (typically, that would imply creating instance of Port subclass
         /// and calling initialize() on it
@@ -387,9 +392,6 @@ namespace solarflare
             return forAllFw(en);
         }
 
-        virtual cimple::Instance *cimReference(const cimple::Meta_Class& kind) const;
-        virtual cimple::Instance *cimInstance(const cimple::Meta_Class& kind) const;
-        virtual bool cimIsMe(const cimple::Instance *obj) const;
     };
 
     /// @brief An abstract driver class.

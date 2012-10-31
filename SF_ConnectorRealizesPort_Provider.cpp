@@ -14,7 +14,7 @@ bool SF_ConnectorRealizesPort_Provider::InterfaceEnum::process(const solarflare:
     {
         SF_ConnectorRealizesPort* link = SF_ConnectorRealizesPort::create(true);
         
-        link->Antecedent = cast<CIM_PhysicalElement *>(SF_PhysicalConnector_Provider::makeReference(*port));
+        link->Antecedent = cast<CIM_PhysicalElement *>(port->cimReference(SF_PhysicalConnector::static_meta_class));
         link->Dependent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
         handler->handle(link);
     }

@@ -6,6 +6,7 @@
 #include "SF_PortController_Provider.h"
 #include "SF_NICCard_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -36,7 +37,7 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
         case solarflare::SWElement::SWPackage:
         {
             hwlink = SF_ServiceAffectsElement::create(true);
-            hwlink->AffectedElement = cast<CIM_ManagedElement *>(SF_ComputerSystem_Provider::findSystem()->clone());
+            hwlink->AffectedElement = cast<CIM_ManagedElement *>(solarflare::CIMHelper::findSystem()->clone());
             hwlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
             handler->handle(hwlink);
 
@@ -69,7 +70,7 @@ bool SF_ServiceAffectsElement_Provider::DiagEnum::process(const solarflare::Syst
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
 
-    link->AffectedElement = cast<CIM_ManagedElement *>(SF_PortController_Provider::makeReference(*diag.nic()));
+    link->AffectedElement = cast<CIM_ManagedElement *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
     link->AffectingElement = cast<CIM_Service *>(SF_DiagnosticTest_Provider::makeReference(diag));
 
     handler->handle(link);

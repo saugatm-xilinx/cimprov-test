@@ -3,6 +3,7 @@
 #include "SF_ComputerSystem_Provider.h"
 #include "SF_PortController_Provider.h"
 #include "SF_EthernetPort_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -11,8 +12,9 @@ bool SF_SystemDevice_Provider::NICEnum::process(const solarflare::SystemElement&
     const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
     SF_SystemDevice *dev = SF_SystemDevice::create(true);
 
-    dev->GroupComponent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
-    dev->PartComponent = cast<CIM_LogicalDevice *>(SF_PortController_Provider::makeReference(nic));
+    dev->GroupComponent = solarflare::CIMHelper::systemRef();
+    dev->PartComponent = cast<CIM_LogicalDevice *>(nic.cimReference(SF_PortController::static_meta_class));
+    
 
     handler->handle(dev);
 
@@ -24,7 +26,7 @@ bool SF_SystemDevice_Provider::IntfEnum::process(const solarflare::SystemElement
     const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     SF_SystemDevice *dev = SF_SystemDevice::create(true);
 
-    dev->GroupComponent = cast<CIM_System *>(SF_ComputerSystem_Provider::findSystem()->clone());
+    dev->GroupComponent = solarflare::CIMHelper::systemRef();
     dev->PartComponent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
 
     handler->handle(dev);
