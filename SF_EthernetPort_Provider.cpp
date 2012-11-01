@@ -5,111 +5,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-SF_EthernetPort *SF_EthernetPort_Provider::makeReference(const solarflare::Interface& intf)
-{
-    const CIM_ComputerSystem *system = solarflare::CIMHelper::findSystem();
-    SF_EthernetPort *newPort = SF_EthernetPort::create(true);
-    
-    newPort->CreationClassName.set("SF_EthernetPort");
-    newPort->DeviceID.set(intf.ifName());
-    newPort->SystemCreationClassName.set(system->CreationClassName.value);
-    newPort->SystemName.set(system->Name.value);
-    return newPort;
-}
-
-
-bool SF_EthernetPort_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
-    
-    SF_EthernetPort *newPort = makeReference(intf);
-
-    newPort->Description.set(intf.description());
-    newPort->ElementName.set(intf.ifName());
-    newPort->Name.set(intf.name());
-    newPort->InstanceID.set(solarflare::System::target.prefix());
-    newPort->InstanceID.value.append(":");
-    newPort->InstanceID.value.append(intf.name());
-    newPort->EnabledState.null = false;
-    newPort->EnabledState.value = (intf.ifStatus() ?
-                                   (intf.port()->linkStatus() ? 
-                                    SF_EthernetPort::_EnabledState::enum_Enabled : 
-                                    SF_EthernetPort::_EnabledState::enum_Enabled_but_Offline) :
-                                   SF_EthernetPort::_EnabledState::enum_Disabled);
-    newPort->RequestedState.null = false;
-    newPort->RequestedState.value = SF_EthernetPort::_RequestedState::enum_Not_Applicable;
-    newPort->StatusInfo.null = false;
-    newPort->StatusInfo.value = (intf.ifStatus() ?
-                                 SF_EthernetPort::_StatusInfo::enum_Enabled :
-                                 SF_EthernetPort::_StatusInfo::enum_Disabled);
-    // The following is a hack. The point is that PortType variable is
-    // defined in one CIM class (CIM_LogicalPort) but the set of useful
-    // values is defined in another class (CIM_EthernetPort). CIMPLE tools
-    // are unable to handle this properly, so do not generate the correct
-    // enumeration even with -e option
-#define quasi_enum_10GBaseT 55
-    newPort->PortType.null = false;
-    switch (intf.nic()->connector())
-    {
-        case solarflare::NIC::RJ45:
-            newPort->PortType.value = quasi_enum_10GBaseT;
-            break;
-        case solarflare::NIC::SFPPlus:
-            newPort->PortType.value = SF_EthernetPort::_PortType::enum_Other;
-            newPort->OtherNetworkPortType.set("10GBase-CR (SFP+)");
-            break;
-        case solarflare::NIC::Mezzanine:
-            newPort->PortType.value = SF_EthernetPort::_PortType::enum_Other;
-            newPort->OtherNetworkPortType.set("10GBase-KR");
-            break;
-        default:
-            newPort->PortType.value = SF_EthernetPort::_PortType::enum_Unknown;
-            break;
-    }
-    newPort->PortNumber.set(intf.elementId());
-    newPort->LinkTechnology.null = false;
-    newPort->LinkTechnology.value = SF_EthernetPort::_LinkTechnology::enum_Ethernet;
-    newPort->PermanentAddress.set(intf.port()->permanentMAC().string());
-    newPort->NetworkAddresses.null = false;
-    newPort->NetworkAddresses.value.append(intf.currentMAC().string());
-    newPort->FullDuplex.set(intf.port()->fullDuplex());
-    newPort->AutoSense.set(intf.port()->autoneg());
-    newPort->SupportedMaximumTransmissionUnit.set(intf.nic()->supportedMTU());
-    newPort->ActiveMaximumTransmissionUnit.set(intf.mtu());
-    newPort->Speed.set(solarflare::Port::speedBPS(intf.port()->linkSpeed()));
-    newPort->MaxSpeed.set(solarflare::Port::speedBPS(intf.nic()->maxLinkSpeed()));
-
-    handler->handle(newPort);
-    
-    return true;
-}
-
-bool SF_EthernetPort_Provider::InterfaceFinder::process(solarflare::SystemElement& se)
-{
-    solarflare::Interface& intf = static_cast<solarflare::Interface&>(se);
-    
-    if (intf.ifName() == devId)
-    {
-        obj = &intf;
-        return false;
-    }
-    return true;
-}
-
-solarflare::Interface *SF_EthernetPort_Provider::findByInstance(const SF_EthernetPort& p)
-{
-    if (p.CreationClassName.null || p.DeviceID.null || 
-        p.CreationClassName.value != "SF_EthernetPort" ||
-        p.SystemCreationClassName.null || p.SystemName.null)
-        return NULL;
-    if (!solarflare::CIMHelper::isOurSystem(p.SystemCreationClassName.value, p.SystemName.value))
-        return NULL;
-    
-    InterfaceFinder finder(p.DeviceID.value);
-    solarflare::System::target.forAllInterfaces(finder);
-    return finder.found();
-}
-
 SF_EthernetPort_Provider::SF_EthernetPort_Provider()
 {
 }
@@ -140,8 +35,7 @@ Enum_Instances_Status SF_EthernetPort_Provider::enum_instances(
     const SF_EthernetPort* model,
     Enum_Instances_Handler<SF_EthernetPort>* handler)
 {
-    InterfaceEnum intfs(handler);
-    solarflare::System::target.forAllInterfaces(intfs);
+    solarflare::EnumInstances<SF_EthernetPort>::allInterfaces(handler);
     return ENUM_INSTANCES_OK;
 }
 
@@ -161,7 +55,7 @@ Modify_Instance_Status SF_EthernetPort_Provider::modify_instance(
     const SF_EthernetPort* model,
     const SF_EthernetPort* instance)
 {
-    solarflare::Interface *intf = findByInstance(*model);
+    solarflare::Interface *intf = solarflare::Lookup::findInterface(*model);
 
     if (intf == NULL)
         return MODIFY_INSTANCE_NOT_FOUND;
@@ -196,7 +90,7 @@ Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
         InvalidParameter = 5,
         BadTimeout = 4098,
     };
-    solarflare::Interface *intf = findByInstance(*self);
+    solarflare::Interface *intf = solarflare::Lookup::findInterface(*self);
     if (intf == NULL || RequestedState.null)
     {
         return_value.set(InvalidParameter);

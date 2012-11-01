@@ -2,6 +2,7 @@
 #include "SF_ConnectorRealizesPort_Provider.h"
 #include "SF_EthernetPort_Provider.h"
 #include "SF_PhysicalConnector_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -15,7 +16,7 @@ bool SF_ConnectorRealizesPort_Provider::InterfaceEnum::process(const solarflare:
         SF_ConnectorRealizesPort* link = SF_ConnectorRealizesPort::create(true);
         
         link->Antecedent = cast<CIM_PhysicalElement *>(port->cimReference(SF_PhysicalConnector::static_meta_class));
-        link->Dependent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
+        link->Dependent = cast<CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
         handler->handle(link);
     }
     return true;

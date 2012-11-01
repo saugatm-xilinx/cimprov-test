@@ -10,17 +10,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_LANEndpoint_Provider
 {
-    class InterfaceEnum : public solarflare::ConstElementEnumerator {
-        Enum_Instances_Handler<SF_LANEndpoint>* handler;
-    public:
-        InterfaceEnum(Enum_Instances_Handler<SF_LANEndpoint>* h) :
-            handler(h) {};
-        virtual bool process(const solarflare::SystemElement& inrf);
-    };
-
 public:
-
-    static SF_LANEndpoint *makeReference(const solarflare::Interface& intf);
 
     typedef SF_LANEndpoint Class;
 

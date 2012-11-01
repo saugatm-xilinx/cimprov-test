@@ -12,7 +12,7 @@ SF_HostedAccessPoint_Provider::InterfaceEnum::process(const solarflare::SystemEl
     const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     SF_HostedAccessPoint *link = SF_HostedAccessPoint::create(true);
     link->Antecedent = solarflare::CIMHelper::systemRef();
-    link->Dependent = cast<CIM_ServiceAccessPoint *>(SF_LANEndpoint_Provider::makeReference(intf));
+    link->Dependent = cast<CIM_ServiceAccessPoint *>(intf.cimReference(SF_LANEndpoint::static_meta_class));
     handler->handle(link);
     return true;
 }

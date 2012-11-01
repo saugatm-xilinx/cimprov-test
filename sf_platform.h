@@ -243,6 +243,8 @@ namespace solarflare
         // Class-wide name (unrelated to OS ifname) and description.
         static const String ifGenName;
         static const char ifGenDescription[];
+    protected:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///

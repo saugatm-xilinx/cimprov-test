@@ -27,7 +27,7 @@ bool SF_SystemDevice_Provider::IntfEnum::process(const solarflare::SystemElement
     SF_SystemDevice *dev = SF_SystemDevice::create(true);
 
     dev->GroupComponent = solarflare::CIMHelper::systemRef();
-    dev->PartComponent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
+    dev->PartComponent = static_cast<CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
 
     handler->handle(dev);
 

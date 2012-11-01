@@ -48,8 +48,8 @@ bool SF_ElementCapabilities_Provider::IntfEnum::process(const solarflare::System
 {
     const solarflare::Interface& nic = static_cast<const solarflare::Interface&>(se);
 
-    SF_EthernetPort *port = SF_EthernetPort_Provider::makeReference(nic);
-    SF_LANEndpoint *endpoint = SF_LANEndpoint_Provider::makeReference(nic);
+    SF_EthernetPort *port = static_cast<SF_EthernetPort *>(nic.cimReference(SF_EthernetPort::static_meta_class));
+    SF_LANEndpoint *endpoint = static_cast<SF_LANEndpoint *>(nic.cimReference(SF_LANEndpoint::static_meta_class));
     SF_EnabledLogicalElementCapabilities *pcaps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Port");
     SF_EnabledLogicalElementCapabilities *epcaps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Endpoint");
     SF_ElementCapabilities *plink = SF_ElementCapabilities::create(true);

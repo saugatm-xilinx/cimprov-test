@@ -81,7 +81,7 @@ namespace solarflare
 
     bool PhysicalConnectorHelper::match(const SystemElement& se, const Instance &obj) const
     {
-        const cimple::CIM_PhysicalConnector *card = cast<const cimple::CIM_PhysicalConnector *>(&obj);
+        const cimple::CIM_PhysicalConnector *card = static_cast<const cimple::CIM_PhysicalConnector *>(&obj);
         if (card == NULL)
             return false;
         if (card->CreationClassName.null || card->Tag.null ||

@@ -89,9 +89,9 @@ bool SF_ElementConformsToProfile_Provider::IntfEnum::process(const solarflare::S
 {
     const solarflare::Interface &intf = static_cast<const solarflare::Interface &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::EthernetPortProfile, 
-                             SF_EthernetPort_Provider::makeReference(intf)));
+                             intf.cimReference(SF_EthernetPort::static_meta_class)));
     handler->handle(makeLink(SF_RegisteredProfile_Provider::HostLANNetworkPortProfile, 
-                             SF_EthernetPort_Provider::makeReference(intf)));
+                             intf.cimReference(SF_EthernetPort::static_meta_class)));
     return true;
 }
 

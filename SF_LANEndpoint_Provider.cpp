@@ -5,48 +5,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-
-SF_LANEndpoint *SF_LANEndpoint_Provider::makeReference(const solarflare::Interface& intf)
-{
-    const CIM_ComputerSystem *system = solarflare::CIMHelper::findSystem();
-    SF_LANEndpoint *newEP = SF_LANEndpoint::create(true);
-    
-    newEP->CreationClassName.set("SF_LANEndpoint");
-    newEP->Name.set(intf.ifName());
-    newEP->SystemCreationClassName.set(system->CreationClassName.value);
-    newEP->SystemName.set(system->Name.value);
-    return newEP;
-}
-
-
-bool SF_LANEndpoint_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
-    
-    SF_LANEndpoint *newEP = makeReference(intf);
-
-    newEP->Description.set(intf.description());
-    newEP->ElementName.set(intf.ifName());
-    newEP->NameFormat.set("Interface");
-    newEP->InstanceID.set(solarflare::System::target.prefix());
-    newEP->InstanceID.value.append(":");
-    newEP->InstanceID.value.append(intf.name());
-    newEP->EnabledState.null = false;
-    newEP->EnabledState.value = (intf.ifStatus() ?
-                                 SF_LANEndpoint::_EnabledState::enum_Enabled : 
-                                 SF_LANEndpoint::_EnabledState::enum_Disabled);
-    newEP->RequestedState.null = false;
-    newEP->RequestedState.value = SF_LANEndpoint::_RequestedState::enum_Not_Applicable;
-    newEP->ProtocolIFType.null = false;
-    newEP->ProtocolIFType.value = SF_LANEndpoint::_ProtocolIFType::enum_Gigabit_Ethernet;
-    newEP->MACAddress.set(intf.currentMAC().string());
-
-    handler->handle(newEP);
-    
-    return true;
-}
-
-
 SF_LANEndpoint_Provider::SF_LANEndpoint_Provider()
 {
 }
@@ -76,8 +34,7 @@ Enum_Instances_Status SF_LANEndpoint_Provider::enum_instances(
     const SF_LANEndpoint* model,
     Enum_Instances_Handler<SF_LANEndpoint>* handler)
 {
-    InterfaceEnum intfs(handler);
-    solarflare::System::target.forAllInterfaces(intfs);
+    solarflare::EnumInstances<SF_LANEndpoint>::allInterfaces(handler);
     return ENUM_INSTANCES_OK;
 }
 

@@ -10,7 +10,7 @@ bool SF_ControlledBy_Provider::InterfaceEnum::process(const solarflare::SystemEl
     const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     SF_ControlledBy *link = SF_ControlledBy::create(true);
     
-    link->Dependent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
+    link->Dependent = cast<CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
     link->Antecedent = cast<CIM_Controller *>(intf.nic()->cimReference(SF_PortController::static_meta_class));
     handler->handle(link);
     return true;

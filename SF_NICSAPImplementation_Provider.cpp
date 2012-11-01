@@ -10,8 +10,8 @@ bool SF_NICSAPImplementation_Provider::InterfaceEnum::process(const solarflare::
     const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     
     SF_NICSAPImplementation *link = SF_NICSAPImplementation::create(true);
-    link->Antecedent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
-    link->Dependent = cast<CIM_ServiceAccessPoint *>(SF_LANEndpoint_Provider::makeReference(intf));
+    link->Antecedent = static_cast<CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
+    link->Dependent = cast<CIM_ServiceAccessPoint *>(intf.cimReference(SF_LANEndpoint::static_meta_class));
     handler->handle(link);
     return true;
 }
