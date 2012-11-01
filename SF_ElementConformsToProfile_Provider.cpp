@@ -43,7 +43,7 @@ bool SF_ElementConformsToProfile_Provider::SWEnum::process(const solarflare::Sys
             if (const_cast<solarflare::SWElement&>(sw).installThread())
             {
                 handler->handle(makeLink(SF_RegisteredProfile_Provider::JobControlProfile, 
-                                         SF_ConcreteJob_Provider::makeReference(sw, "installThread")));
+                                         sw.cimReference(SF_ConcreteJob::static_meta_class)));
             }
             break;
         default:
@@ -61,7 +61,7 @@ bool SF_ElementConformsToProfile_Provider::DiagEnum::process(const solarflare::S
     if (const_cast<solarflare::Diagnostic&>(diag).asyncThread())
     {
         handler->handle(makeLink(SF_RegisteredProfile_Provider::JobControlProfile, 
-                                 SF_ConcreteJob_Provider::makeReference(diag, "diagThread")));
+                                 diag.cimReference(SF_DiagnosticTest::static_meta_class)));
     }
     return true;
 }

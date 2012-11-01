@@ -13,7 +13,7 @@ bool SF_OwningJobElement_Provider::Enum::process(const solarflare::SystemElement
     SF_OwningJobElement *link = SF_OwningJobElement::create(true);
     
     link->OwningElement = cast<CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
-    link->OwnedElement = cast<CIM_Job *>(SF_ConcreteJob_Provider::makeReference(diag, "diagThread"));
+    link->OwnedElement = cast<CIM_Job *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
 
     handler->handle(link);
 

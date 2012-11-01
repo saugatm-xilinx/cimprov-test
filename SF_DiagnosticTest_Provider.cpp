@@ -128,7 +128,7 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
         else
         {
             diag->run(false);
-            Job = cast<CIM_ConcreteJob *>(SF_ConcreteJob_Provider::makeReference(*diag, "diagThread"));
+            Job = cast<CIM_ConcreteJob *>(diag->cimReference(SF_ConcreteJob::static_meta_class));
             return_value.set(OK);
         }
     }

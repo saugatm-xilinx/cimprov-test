@@ -1,6 +1,7 @@
 #include "sf_provider.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_SoftwareInstallationService.h"
+#include "SF_ConcreteJob.h"
 #include "CIM_OperatingSystem.h"
 
 namespace solarflare 
@@ -14,6 +15,7 @@ namespace solarflare
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_SoftwareInstallationService;
     using cimple::CIM_OperatingSystem;
+    using cimple::SF_ConcreteJob;
 
     class SoftwareIdentityHelper : public CIMHelper {
     public:
@@ -27,6 +29,18 @@ namespace solarflare
         virtual Instance *reference(const SystemElement& obj) const;
         virtual Instance *instance(const SystemElement&) const;
         virtual bool match(const SystemElement& obj, const Instance& inst) const;
+    };
+
+    class InstallationJobHelper : public ConcreteJobAbstractHelper {
+    protected:
+        virtual const char *threadSuffix() const 
+        {
+            return "installThread";
+        }
+        virtual Thread *threadOf(SystemElement& se) const 
+        {
+            return static_cast<SWElement&>(se).installThread();
+        }
     };
 
     const CIMHelper* SWElement::cimDispatch(const Meta_Class& cls) const
@@ -189,11 +203,14 @@ namespace solarflare
     {
         static const BundleSoftwareIdentityHelper bundleSoftwareIdentity;
         static const SoftwareInstallationServiceHelper bundleInstallation;
+        static const InstallationJobHelper bundleInstallationJob;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &bundleInstallation;
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &bundleSoftwareIdentity;
+        if (&cls == &SF_ConcreteJob::static_meta_class)
+            return &bundleInstallationJob;
         else
             return SWElement::cimDispatch(cls);
     }
@@ -243,9 +260,12 @@ namespace solarflare
     const CIMHelper* Firmware::cimDispatch(const Meta_Class& cls) const
     {
         static const SoftwareInstallationServiceHelper firmwareInstallation;
+        static const InstallationJobHelper installationJob;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &firmwareInstallation;
+        if (&cls == &SF_ConcreteJob::static_meta_class)
+            return &installationJob;
         else
             return SWElement::cimDispatch(cls);
     }

@@ -1,5 +1,6 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
+#include "SF_ConcreteJob.h"
 
 namespace solarflare 
 {
@@ -8,6 +9,7 @@ namespace solarflare
     using cimple::CIM_ComputerSystem;
     using cimple::Ref;
     using cimple::cast;
+    using cimple::SF_ConcreteJob;
 
     cimple::Instance *SystemElement::cimInstance(const cimple::Meta_Class& cls) const
     {
@@ -79,6 +81,75 @@ namespace solarflare
         
         return (ourSys->CreationClassName.value == sysclass &&
                 ourSys->Name.value == sysname);
+    }
+    
+    Instance *ConcreteJobAbstractHelper::reference(const SystemElement& obj) const
+    {
+        SF_ConcreteJob *job = SF_ConcreteJob::create(true);
+        job->InstanceID.set(instanceID(obj.name()));
+        job->InstanceID.value.append(":");
+        job->InstanceID.value.append(threadSuffix());
+        return job;
+    }
+
+    Instance *ConcreteJobAbstractHelper::instance(const SystemElement& obj) const
+    {
+        Thread *th = threadOf(const_cast<SystemElement&>(obj));
+        if (th == NULL)
+            return NULL;
+        SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj));
+    
+        job->OperationalStatus.null = false;
+        job->JobState.null = false;
+        switch (th->currentState())
+        {
+            case Thread::NotRun:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Dormant);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_New;
+                break;
+            case Thread::Running:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_OK);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Running;
+                break;
+            case Thread::Succeeded:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_OK);
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Completed);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Completed;
+                break;
+            case Thread::Failed:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Completed);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Exception;
+                break;
+            case Thread::Aborting:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Shutting_Down;
+                break;
+            case Thread::Aborted:
+                job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+                job->JobState.value = SF_ConcreteJob::_JobState::enum_Killed;
+                break;
+        }
+        job->PercentComplete.set(th->percentage());
+        job->DeleteOnCompletion.set(false);
+        return job;
+    }
+    
+    bool
+    ConcreteJobAbstractHelper::match(const SystemElement& se, const Instance& inst) const
+    {
+        const cimple::CIM_ConcreteJob *job = cast<const cimple::CIM_ConcreteJob *>(&inst);
+        if (job == NULL)
+            return false;
+
+        if (job->InstanceID.null)
+            return false;
+
+        String id = instanceID(se.name());
+        id.append(":");
+        id.append(threadSuffix());
+        
+        return id == job->InstanceID.value;
     }
     
 } // namespace

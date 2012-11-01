@@ -170,6 +170,15 @@ namespace solarflare
         unsigned count() const { return cnt; }
     };
 
+    class ConcreteJobAbstractHelper : public CIMHelper {
+    protected:
+        virtual const char* threadSuffix() const = 0;
+        virtual Thread *threadOf(SystemElement& obj) const = 0;
+    public:
+        virtual cimple::Instance *reference(const SystemElement& obj) const;
+        virtual cimple::Instance *instance(const SystemElement&) const;
+        virtual bool match(const SystemElement& obj, const cimple::Instance& inst) const;
+    };
 
 } // namespace
 

@@ -1,5 +1,6 @@
 #include "sf_provider.h"
 #include "SF_DiagnosticTest.h"
+#include "SF_ConcreteJob.h"
 
 namespace solarflare 
 {
@@ -9,6 +10,7 @@ namespace solarflare
     using cimple::Ref;
     using cimple::cast;
     using cimple::SF_DiagnosticTest;
+    using cimple::SF_ConcreteJob;
 
     class DiagnosticTestHelper : public CIMHelper {
     public:
@@ -17,11 +19,24 @@ namespace solarflare
         virtual bool match(const SystemElement& obj, const Instance& inst) const;
     };
 
+    class DiagnosticJobHelper : public ConcreteJobAbstractHelper {
+        virtual const char *threadSuffix() const { return "diagThread"; }
+        virtual Thread *threadOf(SystemElement& se) const
+        {
+            return static_cast<Diagnostic&>(se).asyncThread();
+        }
+    public:
+    };
+
+
     const CIMHelper* Diagnostic::cimDispatch(const Meta_Class& cls) const
     {
         static const DiagnosticTestHelper diagnosticTest;
+        static const DiagnosticJobHelper diagnosticJob;
         if (&cls == &SF_DiagnosticTest::static_meta_class)
             return &diagnosticTest;
+        if (&cls == &SF_ConcreteJob::static_meta_class)
+            return &diagnosticJob;
         return NULL;
     }
 
