@@ -222,6 +222,8 @@ namespace solarflare
 
     /// @brief Abstract class for firmware elements.
     class Firmware : public SWElement, public NICElement {
+    protected:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///

@@ -82,7 +82,8 @@ bool SF_ElementCapabilities_Provider::SWEnum::process(const solarflare::SystemEl
         default:
             return true;
     }
-    SF_SoftwareInstallationService *svc = SF_SoftwareInstallationService_Provider::makeReference(sw);
+    SF_SoftwareInstallationService *svc = 
+    static_cast<SF_SoftwareInstallationService *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
     SF_SoftwareInstallationServiceCapabilities *caps = SF_SoftwareInstallationServiceCapabilities_Provider::makeReference(sw);
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
     

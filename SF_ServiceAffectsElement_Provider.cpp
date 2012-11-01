@@ -24,12 +24,12 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
             
             hwlink = SF_ServiceAffectsElement::create(true);
             hwlink->AffectedElement = cast<CIM_ManagedElement *>(fw.nic()->cimReference(SF_NICCard::static_meta_class));
-            hwlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
+            hwlink->AffectingElement = cast<CIM_Service *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
             handler->handle(hwlink);
 
             swlink = SF_ServiceAffectsElement::create(true);
             swlink->AffectedElement = cast<CIM_ManagedElement *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
-            swlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
+            swlink->AffectingElement = cast<CIM_Service *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
             handler->handle(swlink);
 
             break;
@@ -38,12 +38,12 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
         {
             hwlink = SF_ServiceAffectsElement::create(true);
             hwlink->AffectedElement = cast<CIM_ManagedElement *>(solarflare::CIMHelper::findSystem()->clone());
-            hwlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
+            hwlink->AffectingElement = cast<CIM_Service *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
             handler->handle(hwlink);
 
             swlink = SF_ServiceAffectsElement::create(true);
             swlink->AffectedElement = cast<CIM_ManagedElement *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
-            swlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
+            swlink->AffectingElement = cast<CIM_Service *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
             handler->handle(swlink);
 
             break;
@@ -56,7 +56,7 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
 
                 swlink = SF_ServiceAffectsElement::create(true);
                 swlink->AffectedElement = cast<CIM_ManagedElement *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
-                swlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(*hsw.package()));
+                swlink->AffectingElement = cast<CIM_Service *>(hsw.package()->cimReference(SF_SoftwareInstallationService::static_meta_class));
                 handler->handle(swlink);
             }
             break;

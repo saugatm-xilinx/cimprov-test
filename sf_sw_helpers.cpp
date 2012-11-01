@@ -1,5 +1,6 @@
 #include "sf_provider.h"
 #include "SF_SoftwareIdentity.h"
+#include "SF_SoftwareInstallationService.h"
 #include "CIM_OperatingSystem.h"
 
 namespace solarflare 
@@ -11,9 +12,17 @@ namespace solarflare
     using cimple::cast;
     using cimple::is_a;
     using cimple::SF_SoftwareIdentity;
+    using cimple::SF_SoftwareInstallationService;
     using cimple::CIM_OperatingSystem;
 
     class SoftwareIdentityHelper : public CIMHelper {
+    public:
+        virtual Instance *reference(const SystemElement& obj) const;
+        virtual Instance *instance(const SystemElement&) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+    };
+
+    class SoftwareInstallationServiceHelper : public CIMHelper {
     public:
         virtual Instance *reference(const SystemElement& obj) const;
         virtual Instance *instance(const SystemElement&) const;
@@ -179,6 +188,10 @@ namespace solarflare
     const CIMHelper* Package::cimDispatch(const Meta_Class& cls) const
     {
         static const BundleSoftwareIdentityHelper bundleSoftwareIdentity;
+        static const SoftwareInstallationServiceHelper bundleInstallation;
+
+        if (&cls == &SF_SoftwareInstallationService::static_meta_class)
+            return &bundleInstallation;
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &bundleSoftwareIdentity;
         else
@@ -227,6 +240,71 @@ namespace solarflare
         return id;
     }
 
+    const CIMHelper* Firmware::cimDispatch(const Meta_Class& cls) const
+    {
+        static const SoftwareInstallationServiceHelper firmwareInstallation;
+
+        if (&cls == &SF_SoftwareInstallationService::static_meta_class)
+            return &firmwareInstallation;
+        else
+            return SWElement::cimDispatch(cls);
+    }
 
 
+    Instance *SoftwareInstallationServiceHelper::reference(const SystemElement& se) const
+    {
+        const CIM_ComputerSystem *system = findSystem();
+        SF_SoftwareInstallationService *newSvc = SF_SoftwareInstallationService::create(true);
+        
+        newSvc->CreationClassName.set("SF_SoftwareInstallationService");
+        newSvc->Name.set(se.name());
+        newSvc->SystemCreationClassName.set(system->CreationClassName.value);
+        newSvc->SystemName.set(system->Name.value);
+        return newSvc;
+    }
+
+
+    Instance *
+    SoftwareInstallationServiceHelper::instance(const SystemElement& se) const
+    {
+        const SWElement& sw = static_cast<const SWElement&>(se);
+    
+        SF_SoftwareInstallationService *newSvc = static_cast<SF_SoftwareInstallationService *>(reference(sw));
+
+        newSvc->Description.set(sw.description());
+        newSvc->ElementName.set(sw.name());
+        newSvc->InstanceID.set(instanceID(sw.name()));
+        newSvc->InstanceID.value.append(" Installer");
+        newSvc->OperationalStatus.null = false;
+        newSvc->OperationalStatus.value.append(SF_SoftwareInstallationService::_OperationalStatus::enum_OK);
+        newSvc->OperatingStatus.null = false;
+        newSvc->OperatingStatus.value = SF_SoftwareInstallationService::_OperatingStatus::enum_Servicing;
+        newSvc->PrimaryStatus.null = false;
+        newSvc->PrimaryStatus.value = SF_SoftwareInstallationService::_PrimaryStatus::enum_OK;
+        newSvc->EnabledState.null = false;
+        newSvc->EnabledState.value = SF_SoftwareInstallationService::_EnabledState::enum_Enabled;
+
+        return newSvc;
+    }
+
+    bool
+    SoftwareInstallationServiceHelper::match(const SystemElement& se,
+                                             const Instance& inst) const
+    {
+        const cimple::CIM_SoftwareInstallationService *svc = cast<const cimple::CIM_SoftwareInstallationService *>(&inst);
+        
+        if (svc == NULL)
+            return false;
+
+
+        if (svc->CreationClassName.null || svc->Name.null || 
+            svc->CreationClassName.value != "SF_SoftwareInstallationService" ||
+            svc->SystemCreationClassName.null || svc->SystemName.null)
+            return false;
+        
+        if (!isOurSystem(svc->SystemCreationClassName.value, svc->SystemName.value))
+            return false;
+
+        return svc->Name.value == se.name();
+    }
 } // namespace

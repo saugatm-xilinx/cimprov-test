@@ -23,7 +23,7 @@ SF_HostedService_Provider::SWEnum::process(const solarflare::SystemElement& se)
     }
     SF_HostedService *link = SF_HostedService::create(true);
     link->Antecedent = solarflare::CIMHelper::systemRef();
-    link->Dependent = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
+    link->Dependent = cast<CIM_Service *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
     handler->handle(link);
     return true;
 }

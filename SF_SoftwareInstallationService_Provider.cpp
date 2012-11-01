@@ -8,87 +8,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-SF_SoftwareInstallationService *SF_SoftwareInstallationService_Provider::makeReference(const solarflare::SWElement& sw)
-{
-    const CIM_ComputerSystem *system = solarflare::CIMHelper::findSystem();
-    SF_SoftwareInstallationService *newSvc = SF_SoftwareInstallationService::create(true);
-    
-    newSvc->CreationClassName.set("SF_SoftwareInstallationService");
-    newSvc->Name.set(sw.name());
-    newSvc->SystemCreationClassName.set(system->CreationClassName.value);
-    newSvc->SystemName.set(system->Name.value);
-    return newSvc;
-}
-
-
-bool SF_SoftwareInstallationService_Provider::SWEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
-    
-    switch (sw.classify())
-    {
-        case solarflare::SWElement::SWPackage:
-        case solarflare::SWElement::SWFirmware:
-            /* do nothing, installable software */
-            break;
-        default:
-            /* just skip */
-            return true;
-    }
-
-    SF_SoftwareInstallationService *newSvc = makeReference(sw);
-
-    newSvc->Description.set(sw.description());
-    newSvc->ElementName.set(sw.name());
-    newSvc->InstanceID.set(solarflare::System::target.prefix());
-    newSvc->InstanceID.value.append(":");
-    newSvc->InstanceID.value.append(sw.name());
-    newSvc->InstanceID.value.append(" Install");
-    newSvc->OperationalStatus.null = false;
-    newSvc->OperationalStatus.value.append(SF_SoftwareInstallationService::_OperationalStatus::enum_OK);
-    newSvc->OperatingStatus.null = false;
-    newSvc->OperatingStatus.value = SF_SoftwareInstallationService::_OperatingStatus::enum_Servicing;
-    newSvc->PrimaryStatus.null = false;
-    newSvc->PrimaryStatus.value = SF_SoftwareInstallationService::_PrimaryStatus::enum_OK;
-    newSvc->EnabledState.null = false;
-    newSvc->EnabledState.value = SF_SoftwareInstallationService::_EnabledState::enum_Enabled;
-
-    handler->handle(newSvc);
-    
-    return true;
-}
-
-solarflare::SWElement *
-SF_SoftwareInstallationService_Provider::findByInstance(const SF_SoftwareInstallationService& svc,
-                                                        solarflare::SoftwareContainer& scope)
-{
-#if 0
-    if (svc.CreationClassName.null || svc.Name.null || 
-        svc.CreationClassName.value != "SF_SoftwareInstallationService" ||
-        svc.SystemCreationClassName.null || svc.SystemName.null)
-        return NULL;
-    if (solarflare::CIMHelper::isOurSystem(svc.SystemCreationClassName.value, 
-                                           svc.SystemName.value))
-        return NULL;
-    const SWElement *found = Lookup::findSoftware
-    SF_SoftwareIdentity_Provider::SoftwareFinder finder(svc.Name.value);
-    scope.forAllSoftware(finder);
-    if (found == NULL)
-        return NULL;
-    /// A Software Installation Service may only match a package or a firmware
-    switch (finder.found()->classify())
-    {
-        case solarflare::SWElement::SWPackage:
-        case solarflare::SWElement::SWFirmware:
-            return finder.found();
-        default:
-            return NULL;
-    }
-#else
-    return NULL;
-#endif
-}
-
 SF_SoftwareInstallationService_Provider::SF_SoftwareInstallationService_Provider()
 {
 }
@@ -117,9 +36,8 @@ Get_Instance_Status SF_SoftwareInstallationService_Provider::get_instance(
 Enum_Instances_Status SF_SoftwareInstallationService_Provider::enum_instances(
     const SF_SoftwareInstallationService* model,
     Enum_Instances_Handler<SF_SoftwareInstallationService>* handler)
-{
-    SWEnum installable(handler);
-    solarflare::System::target.forAllSoftware(installable);
+{    
+    solarflare::EnumInstances<SF_SoftwareInstallationService>::allSoftware(handler);
     return ENUM_INSTANCES_OK;
 }
 
@@ -241,7 +159,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         }
     }
 
-    solarflare::SWElement *sw = findByInstance(*self, *scope);
+    solarflare::SWElement *sw = solarflare::Lookup::findSoftware(*self, *scope);
     if (sw == NULL)
     {
         return_value.set(InvalidParameter);

@@ -39,7 +39,7 @@ bool SF_ElementConformsToProfile_Provider::SWEnum::process(const solarflare::Sys
         case solarflare::SWElement::SWFirmware:
         case solarflare::SWElement::SWPackage:
             handler->handle(makeLink(SF_RegisteredProfile_Provider::SoftwareUpdateProfile, 
-                                     SF_SoftwareInstallationService_Provider::makeReference(sw)));
+                                     sw.cimReference(SF_SoftwareInstallationService::static_meta_class)));
             if (const_cast<solarflare::SWElement&>(sw).installThread())
             {
                 handler->handle(makeLink(SF_RegisteredProfile_Provider::JobControlProfile, 

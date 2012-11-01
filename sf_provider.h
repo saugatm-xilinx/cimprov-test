@@ -113,10 +113,11 @@ namespace solarflare
             }
             return true;
         }
-        static SWElement *findSoftware(const Instance& inst)
+        static SWElement *findSoftware(const Instance& inst, 
+                                       SoftwareContainer& scope = System::target)
         {
             Lookup finder(&inst);
-            System::target.forAllSoftware(finder);
+            scope.forAllSoftware(finder);
             return static_cast<SWElement *>(finder.found());
         }
         static NIC *findNIC(const Instance& inst)
