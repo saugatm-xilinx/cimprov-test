@@ -4,39 +4,13 @@
 
 #include <cimple/cimple.h>
 #include "SF_SoftwareIdentity.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_SoftwareIdentity_Provider
 {
-    static SF_SoftwareIdentity *swElement(const solarflare::SWElement& ve);
-    static void addTargetOS(SF_SoftwareIdentity *id);
-    static void addPackageType(SF_SoftwareIdentity *id, solarflare::Package::PkgType type);
-    static SF_SoftwareIdentity *hostSoftware(const solarflare::SWElement& ve);
-
-    class SWEnum : public solarflare::ConstElementEnumerator {
-        Enum_Instances_Handler<SF_SoftwareIdentity>* const handler;
-    public:
-        SWEnum(Enum_Instances_Handler<SF_SoftwareIdentity>* h) :
-            handler(h) {};
-        virtual bool process(const solarflare::SystemElement& se);
-    };
 public:
-
-    class SoftwareFinder : public solarflare::ElementEnumerator
-    {
-        solarflare::SWElement *obj;
-        String name;
-    public:
-        SoftwareFinder(const String& id) :
-            obj(NULL), name(id) {};
-        virtual bool process(solarflare::SystemElement& sw);
-        solarflare::SWElement *found() const { return obj; }
-    };
-
-    static SF_SoftwareIdentity *makeReference(const solarflare::SWElement& ve);
-
     typedef SF_SoftwareIdentity Class;
 
     SF_SoftwareIdentity_Provider();

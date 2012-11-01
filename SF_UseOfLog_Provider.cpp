@@ -15,14 +15,14 @@ bool SF_UseOfLog_Provider::Enum::process(const solarflare::SystemElement& se)
     SF_UseOfLog *link = SF_UseOfLog::create(true);
 
     link->Antecedent = cast<CIM_Log *>(SF_DiagnosticLog_Provider::makeReference(diag, diag.errorLog()));
-    link->Dependent = cast<CIM_ManagedSystemElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
+    link->Dependent = cast<CIM_ManagedSystemElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
     handler->handle(link);
     
     if (&diag.okLog() != &diag.errorLog())
     {
         link = SF_UseOfLog::create(true);
         link->Antecedent = cast<CIM_Log *>(SF_DiagnosticLog_Provider::makeReference(diag, diag.okLog()));
-        link->Dependent = cast<CIM_ManagedSystemElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
+        link->Dependent = cast<CIM_ManagedSystemElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
         handler->handle(link);
     }
     

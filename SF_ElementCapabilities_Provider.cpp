@@ -30,7 +30,7 @@ bool SF_ElementCapabilities_Provider::NICEnum::process(const solarflare::SystemE
 bool SF_ElementCapabilities_Provider::DiagEnum::process(const solarflare::SystemElement& se)
 {
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-    SF_DiagnosticTest *test = SF_DiagnosticTest_Provider::makeReference(diag);
+    SF_DiagnosticTest *test = static_cast<SF_DiagnosticTest *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
     SF_DiagnosticServiceCapabilities *caps = SF_DiagnosticServiceCapabilities_Provider::makeReference(diag);
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
 

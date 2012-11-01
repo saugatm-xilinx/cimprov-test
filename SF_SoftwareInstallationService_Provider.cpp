@@ -62,6 +62,7 @@ solarflare::SWElement *
 SF_SoftwareInstallationService_Provider::findByInstance(const SF_SoftwareInstallationService& svc,
                                                         solarflare::SoftwareContainer& scope)
 {
+#if 0
     if (svc.CreationClassName.null || svc.Name.null || 
         svc.CreationClassName.value != "SF_SoftwareInstallationService" ||
         svc.SystemCreationClassName.null || svc.SystemName.null)
@@ -69,9 +70,10 @@ SF_SoftwareInstallationService_Provider::findByInstance(const SF_SoftwareInstall
     if (solarflare::CIMHelper::isOurSystem(svc.SystemCreationClassName.value, 
                                            svc.SystemName.value))
         return NULL;
+    const SWElement *found = Lookup::findSoftware
     SF_SoftwareIdentity_Provider::SoftwareFinder finder(svc.Name.value);
     scope.forAllSoftware(finder);
-    if (finder.found() == NULL)
+    if (found == NULL)
         return NULL;
     /// A Software Installation Service may only match a package or a firmware
     switch (finder.found()->classify())
@@ -82,6 +84,9 @@ SF_SoftwareInstallationService_Provider::findByInstance(const SF_SoftwareInstall
         default:
             return NULL;
     }
+#else
+    return NULL;
+#endif
 }
 
 SF_SoftwareInstallationService_Provider::SF_SoftwareInstallationService_Provider()

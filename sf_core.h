@@ -93,7 +93,8 @@ namespace solarflare
             }
         };
         InstallThread installer;
-        
+    protected:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;        
     public:
         //// Constructor
         ////
@@ -239,6 +240,8 @@ namespace solarflare
     class Package;
     /// @brief An abstract member of a software package.
     class HostSWElement : public SWElement {
+    protected:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// The containing software package (e.g. RPM)
         /// which this element belongs to.

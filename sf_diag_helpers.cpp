@@ -1,5 +1,5 @@
 #include "sf_provider.h"
-#include "SF_PhysicalConnector.h"
+#include "SF_DiagnosticTest.h"
 
 namespace solarflare 
 {
@@ -8,86 +8,91 @@ namespace solarflare
     using cimple::CIM_ComputerSystem;
     using cimple::Ref;
     using cimple::cast;
-    using cimple::SF_PhysicalConnector;
+    using cimple::SF_DiagnosticTest;
 
-    class PhysicalConnectorHelper : public CIMHelper {
-        String tag(const Port& p) const;
+    class DiagnosticTestHelper : public CIMHelper {
     public:
         virtual Instance *reference(const SystemElement& obj) const;
         virtual Instance *instance(const SystemElement&) const;
         virtual bool match(const SystemElement& obj, const Instance& inst) const;
     };
 
-    const CIMHelper* Port::cimDispatch(const Meta_Class& cls) const
+    const CIMHelper* Diagnostic::cimDispatch(const Meta_Class& cls) const
     {
-        static const PhysicalConnectorHelper physicalConnector;
-        if (&cls == &SF_PhysicalConnector::static_meta_class)
-            return &physicalConnector;
+        static const DiagnosticTestHelper diagnosticTest;
+        if (&cls == &SF_DiagnosticTest::static_meta_class)
+            return &diagnosticTest;
         return NULL;
     }
 
-    String PhysicalConnectorHelper::tag(const Port& p) const
+    Instance *DiagnosticTestHelper::reference(const SystemElement& se) const
     {
-        Buffer buf;
-        buf.appends(p.nic()->vitalProductData().id().c_str());
-        buf.append(':');
-        buf.append_uint16(p.elementId());
-        return buf.data();
+        const Diagnostic& diag = static_cast<const Diagnostic&>(se);
+        const CIM_ComputerSystem *system = findSystem();
+        SF_DiagnosticTest *newSvc = SF_DiagnosticTest::create(true);
+        
+        newSvc->CreationClassName.set("SF_DiagnosticTest");
+        newSvc->Name.set(diag.name());
+        newSvc->SystemCreationClassName.set(system->CreationClassName.value);
+        newSvc->SystemName.set(system->Name.value);
+        
+        return newSvc;
     }
 
-    Instance *PhysicalConnectorHelper::reference(const SystemElement& p) const
+    Instance *DiagnosticTestHelper::instance(const solarflare::SystemElement& se) const 
     {
-        SF_PhysicalConnector *phc = SF_PhysicalConnector::create(true);
-        
-        phc->CreationClassName.set("SF_PhysicalConnector");
-        phc->Tag.set(tag(static_cast<const Port&>(p)));
-   
-        return phc;
-    }
+        const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+    
+        SF_DiagnosticTest *newSvc = static_cast<SF_DiagnosticTest *>(reference(diag));
 
-    Instance *PhysicalConnectorHelper::instance (const solarflare::SystemElement& se) const
-    {
-        const solarflare::Port& p = static_cast<const solarflare::Port&>(se);
-        SF_PhysicalConnector *phc = static_cast<SF_PhysicalConnector *>(reference(p));
-        
-        phc->InstanceID.set(instanceID(p.name()));
-        phc->Name.set(p.name());
-        phc->ElementName.set(p.name());
-        phc->Description.set(p.description());
-        
-        phc->ConnectorType.null = false;
-        phc->ConnectorLayout.null = false;
-        switch (p.nic()->connector()) 
+        newSvc->Description.set(diag.description());
+        newSvc->ElementName.set(diag.name());
+        unsigned p = diag.percentage();
+        newSvc->Started.set(p > 0 && p < 100);
+        newSvc->Characteristics.null = false;
+
+        if (diag.isDestructive())
         {
-            case solarflare::NIC::RJ45:
-                phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_RJ45);
-                phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_RJ45;
+            newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Is_Destructive);
+            newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Is_Risky);
+        }
+        newSvc->TestTypes.null = false;
+        switch (diag.testKind())
+        {
+            case solarflare::Diagnostic::FunctionalTest:
+                newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Functional);
                 break;
-            case solarflare::NIC::SFPPlus:
-                phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_Fibre_Channel__Optical_Fibre_);
-                phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_Fiber_SC;
+            case solarflare::Diagnostic::StressTest:
+                newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Stress);
                 break;
-            case solarflare::NIC::Mezzanine:
-                phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_PMC);
-                phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_Slot;
+            case solarflare::Diagnostic::HealthCheckTest:
+                newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Health_Check);
                 break;
-            default:
-                phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_Unknown);
-                phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_Unknown;
+            case solarflare::Diagnostic::MediaAccessTest:
+                newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Access_Test);
+                newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Media_Required);
+                newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Additional_Hardware_Required);
                 break;
         }
-        return phc;
+        return newSvc;
     }
 
-    bool PhysicalConnectorHelper::match(const SystemElement& se, const Instance &obj) const
+    bool DiagnosticTestHelper::match(const SystemElement& se, const Instance& inst) const
     {
-        const cimple::CIM_PhysicalConnector *card = static_cast<const cimple::CIM_PhysicalConnector *>(&obj);
-        if (card == NULL)
+        const cimple::CIM_DiagnosticTest *test = cast<const cimple::CIM_DiagnosticTest *>(&inst);
+        
+        if (test == NULL)
             return false;
-        if (card->CreationClassName.null || card->Tag.null ||
-            card->CreationClassName.value != "SF_PhysicalConnector")
+
+        if (test->CreationClassName.null || test->Name.null || 
+            test->CreationClassName.value != "SF_DiagnosticTest" ||
+            test->SystemCreationClassName.null || test->SystemName.null)
             return false;
-        return card->Tag.value == tag(static_cast<const Port&>(se));
+        if (!isOurSystem(test->SystemCreationClassName.value, test->SystemName.value))
+            return false;
+        
+        return test->Name.value == se.name();
     }
+
 
 } // namespace

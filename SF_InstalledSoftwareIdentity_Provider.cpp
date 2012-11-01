@@ -42,8 +42,7 @@ bool SF_InstalledSoftwareIdentity_Provider::ConstEnum::process(const solarflare:
     SF_InstalledSoftwareIdentity *link = SF_InstalledSoftwareIdentity::create(true);
 
     link->System = cast<CIM_System *>(from->clone());
-    SF_SoftwareIdentity *sfid = SF_SoftwareIdentity_Provider::makeReference(sw);
-    link->InstalledSoftware = cast<CIM_SoftwareIdentity *>(sfid);
+    link->InstalledSoftware = cast<CIM_SoftwareIdentity *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
 
     handler->handle(link);
 

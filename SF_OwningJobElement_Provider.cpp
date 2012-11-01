@@ -2,6 +2,7 @@
 #include "SF_OwningJobElement_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
 #include "SF_ConcreteJob_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -11,7 +12,7 @@ bool SF_OwningJobElement_Provider::Enum::process(const solarflare::SystemElement
     
     SF_OwningJobElement *link = SF_OwningJobElement::create(true);
     
-    link->OwningElement = cast<CIM_ManagedElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
+    link->OwningElement = cast<CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
     link->OwnedElement = cast<CIM_Job *>(SF_ConcreteJob_Provider::makeReference(diag, "diagThread"));
 
     handler->handle(link);

@@ -15,9 +15,9 @@ bool SF_BundleComponent_Provider::ConstEnum::process(const solarflare::SystemEle
         
         SF_BundleComponent *link = SF_BundleComponent::create(true);
         link->GroupComponent = 
-        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(*he.package()));
+        cast<CIM_ManagedElement *>(he.package()->cimReference(SF_SoftwareIdentity::static_meta_class));
         link->PartComponent =
-        cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(e));
+        cast<CIM_ManagedElement *>(e.cimReference(SF_SoftwareIdentity::static_meta_class));
         if (he.package() != master)
         {
             master = he.package();

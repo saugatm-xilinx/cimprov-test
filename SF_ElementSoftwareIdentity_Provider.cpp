@@ -13,7 +13,7 @@ bool SF_ElementSoftwareIdentity_Provider::NICBinder::process(const solarflare::S
     const solarflare::NIC &nic = static_cast<const solarflare::NIC &>(se);
     SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
     
-    item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(*softItem));
+    item->Antecedent = cast<CIM_SoftwareIdentity *>(softItem->cimReference(SF_SoftwareIdentity::static_meta_class));
     item->Dependent = cast<CIM_ManagedElement *>(nic.cimReference(SF_PortController::static_meta_class));
     
     item->ElementSoftwareStatus.null = false;
@@ -34,8 +34,8 @@ bool SF_ElementSoftwareIdentity_Provider::DiagEnum::process(const solarflare::Sy
     {
         SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
     
-        item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(*tool));
-        item->Dependent = cast<CIM_ManagedElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
+        item->Antecedent = cast<CIM_SoftwareIdentity *>(tool->cimReference(SF_SoftwareIdentity::static_meta_class));
+        item->Dependent = cast<CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
         item->ElementSoftwareStatus.null = false;
         item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
         item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
@@ -56,7 +56,7 @@ bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::Syst
             const solarflare::Firmware& fw = static_cast<const solarflare::Firmware&>(se);
             SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
             
-            item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(fw));
+            item->Antecedent = cast<CIM_SoftwareIdentity *>(fw.cimReference(SF_SoftwareIdentity::static_meta_class));
             item->Dependent = cast<CIM_ManagedElement *>(fw.nic()->cimReference(SF_NICCard::static_meta_class));
             item->ElementSoftwareStatus.null = false;
             item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);

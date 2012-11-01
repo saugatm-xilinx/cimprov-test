@@ -32,7 +32,7 @@ bool SF_ElementConformsToProfile_Provider::SWEnum::process(const solarflare::Sys
 {
     const solarflare::SWElement &sw = static_cast<const solarflare::SWElement &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::SoftwareInventoryProfile, 
-                             SF_SoftwareIdentity_Provider::makeReference(sw)));
+                             sw.cimReference(SF_SoftwareIdentity::static_meta_class)));
     
     switch (sw.classify())
     {
@@ -57,7 +57,7 @@ bool SF_ElementConformsToProfile_Provider::DiagEnum::process(const solarflare::S
 {
     const solarflare::Diagnostic &diag = static_cast<const solarflare::Diagnostic &>(se);
     handler->handle(makeLink(SF_RegisteredProfile_Provider::DiagnosticsProfile, 
-                             SF_DiagnosticTest_Provider::makeReference(diag)));
+                             diag.cimReference(SF_DiagnosticTest::static_meta_class)));
     if (const_cast<solarflare::Diagnostic&>(diag).asyncThread())
     {
         handler->handle(makeLink(SF_RegisteredProfile_Provider::JobControlProfile, 

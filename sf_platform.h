@@ -60,6 +60,8 @@ namespace solarflare
         static const unsigned maxFailureEvents;
         /// Failed test log
         Logger failedLog;
+    protected:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///
@@ -440,6 +442,7 @@ namespace solarflare
         /// Creates internal structures representing package members
         /// (usually as instances of SWElememt subclasses)
         virtual void setupContents() = 0;
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///

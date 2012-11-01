@@ -10,29 +10,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_DiagnosticTest_Provider
 {
-    class Enum : public solarflare::ConstElementEnumerator {
-        Enum_Instances_Handler<SF_DiagnosticTest>* handler;
-    public:
-        Enum(Enum_Instances_Handler<SF_DiagnosticTest>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& se);
-    };
 public:
-    static SF_DiagnosticTest *makeReference(const solarflare::Diagnostic& diag);
-
-    class DiagnosticFinder : public solarflare::ElementEnumerator 
-    {
-        solarflare::Diagnostic *obj;
-        String diagId;
-    public:
-        DiagnosticFinder(const String& id) :
-            obj(NULL), diagId(id) {};
-        virtual bool process(solarflare::SystemElement& se);
-        solarflare::Diagnostic *found() const { return obj; }
-            
-    };
-
-    static solarflare::Diagnostic *findByInstance(const SF_DiagnosticTest& instance);
 
     typedef SF_DiagnosticTest Class;
 

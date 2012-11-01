@@ -7,86 +7,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-SF_DiagnosticTest *SF_DiagnosticTest_Provider::makeReference(const solarflare::Diagnostic& diag)
-{
-    const CIM_ComputerSystem *system = solarflare::CIMHelper::findSystem();
-    SF_DiagnosticTest *newSvc = SF_DiagnosticTest::create(true);
-    
-    newSvc->CreationClassName.set("SF_DiagnosticTest");
-    newSvc->Name.set(diag.name());
-    newSvc->SystemCreationClassName.set(system->CreationClassName.value);
-    newSvc->SystemName.set(system->Name.value);
-
-    return newSvc;
-}
-
-bool SF_DiagnosticTest_Provider::Enum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-    
-    SF_DiagnosticTest *newSvc = makeReference(diag);
-
-    newSvc->Description.set(diag.description());
-    newSvc->ElementName.set(diag.name());
-    unsigned p = diag.percentage();
-    newSvc->Started.set(p > 0 && p < 100);
-    newSvc->Characteristics.null = false;
-
-    if (diag.isDestructive())
-    {
-        newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Is_Destructive);
-        newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Is_Risky);
-    }
-    newSvc->TestTypes.null = false;
-    switch (diag.testKind())
-    {
-        case solarflare::Diagnostic::FunctionalTest:
-            newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Functional);
-            break;
-        case solarflare::Diagnostic::StressTest:
-            newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Stress);
-            break;
-        case solarflare::Diagnostic::HealthCheckTest:
-            newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Health_Check);
-            break;
-        case solarflare::Diagnostic::MediaAccessTest:
-            newSvc->TestTypes.value.append(SF_DiagnosticTest::_TestTypes::enum_Access_Test);
-            newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Media_Required);
-            newSvc->Characteristics.value.append(SF_DiagnosticTest::_Characteristics::enum_Additional_Hardware_Required);
-            break;
-    }
-    handler->handle(newSvc);
-    return true;
-}
-
-bool SF_DiagnosticTest_Provider::DiagnosticFinder::process(solarflare::SystemElement& se)
-{
-    solarflare::Diagnostic& diag = static_cast<solarflare::Diagnostic&>(se);
-    
-    if (diag.name() == diagId)
-    {
-        obj = &diag;
-        return false;
-    }
-    return true;
-}
-
-solarflare::Diagnostic *SF_DiagnosticTest_Provider::findByInstance(const SF_DiagnosticTest& p)
-{
-    if (p.CreationClassName.null || p.Name.null || 
-        p.CreationClassName.value != "SF_DiagnosticTest" ||
-        p.SystemCreationClassName.null || p.SystemName.null)
-        return NULL;
-    if (!solarflare::CIMHelper::isOurSystem(p.SystemCreationClassName.value, 
-                                            p.SystemName.value))
-        return NULL;
-    
-    DiagnosticFinder finder(p.Name.value);
-    solarflare::System::target.forAllDiagnostics(finder);
-    return finder.found();
-}
-
-
 SF_DiagnosticTest_Provider::SF_DiagnosticTest_Provider()
 {
 }
@@ -97,6 +17,7 @@ SF_DiagnosticTest_Provider::~SF_DiagnosticTest_Provider()
 
 Load_Status SF_DiagnosticTest_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -116,9 +37,7 @@ Enum_Instances_Status SF_DiagnosticTest_Provider::enum_instances(
     const SF_DiagnosticTest* model,
     Enum_Instances_Handler<SF_DiagnosticTest>* handler)
 {
-    Enum diagnostics(handler);
-
-    solarflare::System::target.forAllDiagnostics(diagnostics);
+    solarflare::EnumInstances<SF_DiagnosticTest>::allDiagnostics(handler);
     return ENUM_INSTANCES_OK;
 }
 
@@ -184,7 +103,7 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
     CIM_ConcreteJob*& Job,
     Property<uint32>& return_value)
 {
-    solarflare::Diagnostic *diag = findByInstance(*self);
+    solarflare::Diagnostic *diag = solarflare::Lookup::findDiagnostic(*self);
     enum Result 
     {
         OK = 0,

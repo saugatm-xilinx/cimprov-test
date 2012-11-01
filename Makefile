@@ -191,6 +191,8 @@ SOURCES += sf_helpers.cpp
 SOURCES += sf_nic_helpers.cpp
 SOURCES += sf_port_helpers.cpp
 SOURCES += sf_intf_helpers.cpp
+SOURCES += sf_diag_helpers.cpp
+SOURCES += sf_sw_helpers.cpp
 
 CIMPLE_PEGASUS_MODULE=1
 DEFINES += -DCIMPLE_PEGASUS_MODULE

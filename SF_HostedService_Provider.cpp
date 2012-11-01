@@ -34,7 +34,7 @@ SF_HostedService_Provider::DiagEnum::process(const solarflare::SystemElement& se
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_HostedService *link = SF_HostedService::create(true);
     link->Antecedent = solarflare::CIMHelper::systemRef();
-    link->Dependent = cast<CIM_Service *>(SF_DiagnosticTest_Provider::makeReference(diag));
+    link->Dependent = cast<CIM_Service *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
     handler->handle(link);
     return true;
 }

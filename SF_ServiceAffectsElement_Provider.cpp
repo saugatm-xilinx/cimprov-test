@@ -28,7 +28,7 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
             handler->handle(hwlink);
 
             swlink = SF_ServiceAffectsElement::create(true);
-            swlink->AffectedElement = cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(sw));
+            swlink->AffectedElement = cast<CIM_ManagedElement *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
             swlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
             handler->handle(swlink);
 
@@ -42,7 +42,7 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
             handler->handle(hwlink);
 
             swlink = SF_ServiceAffectsElement::create(true);
-            swlink->AffectedElement = cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(sw));
+            swlink->AffectedElement = cast<CIM_ManagedElement *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
             swlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(sw));
             handler->handle(swlink);
 
@@ -55,7 +55,7 @@ bool SF_ServiceAffectsElement_Provider::SWEnum::process(const solarflare::System
                 const solarflare::HostSWElement& hsw = static_cast<const solarflare::HostSWElement&>(sw);
 
                 swlink = SF_ServiceAffectsElement::create(true);
-                swlink->AffectedElement = cast<CIM_ManagedElement *>(SF_SoftwareIdentity_Provider::makeReference(sw));
+                swlink->AffectedElement = cast<CIM_ManagedElement *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
                 swlink->AffectingElement = cast<CIM_Service *>(SF_SoftwareInstallationService_Provider::makeReference(*hsw.package()));
                 handler->handle(swlink);
             }
@@ -71,7 +71,7 @@ bool SF_ServiceAffectsElement_Provider::DiagEnum::process(const solarflare::Syst
     SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
 
     link->AffectedElement = cast<CIM_ManagedElement *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
-    link->AffectingElement = cast<CIM_Service *>(SF_DiagnosticTest_Provider::makeReference(diag));
+    link->AffectingElement = cast<CIM_Service *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
 
     handler->handle(link);
 
