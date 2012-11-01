@@ -128,6 +128,8 @@ namespace solarflare
         Logger& okLog() { return successLog; }
         /// @return associated success logger (immutable)
         const Logger& okLog() const  { return successLog; }
+
+        virtual Thread *embeddedThread() { return asyncThread(); }
     };
 
     /// @brief Abstract class for ports. Implementors shall subclass it for

@@ -82,6 +82,33 @@ namespace solarflare
         return (ourSys->CreationClassName.value == sysclass &&
                 ourSys->Name.value == sysname);
     }
+
+    Thread *Lookup::findThread(const Instance& inst)
+    {
+        Lookup finder(&inst);
+        System::target.forAllDiagnostics(finder);
+        if (!finder.found())
+            System::target.forAllSoftware(finder);
+        return (finder.found() ?
+                finder.found()->embeddedThread() :
+                NULL);
+    }
+
+    SystemElement *Lookup::findAny(const Instance& inst)
+    {
+        Lookup finder(&inst);
+        if (!System::target.forAllSoftware(finder))
+            return finder.found();
+        if (!System::target.forAllNICs(finder))
+        return finder.found();
+        if (!System::target.forAllInterfaces(finder))
+            return finder.found();
+        if (!System::target.forAllPorts(finder))
+            return finder.found();
+        if (!System::target.forAllDiagnostics(finder))
+            return finder.found();
+        return NULL;
+    }
     
     Instance *ConcreteJobAbstractHelper::reference(const SystemElement& obj) const
     {
@@ -94,9 +121,7 @@ namespace solarflare
 
     Instance *ConcreteJobAbstractHelper::instance(const SystemElement& obj) const
     {
-        Thread *th = threadOf(const_cast<SystemElement&>(obj));
-        if (th == NULL)
-            return NULL;
+        Thread *th = const_cast<SystemElement&>(obj).embeddedThread();
         SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj));
     
         job->OperationalStatus.null = false;

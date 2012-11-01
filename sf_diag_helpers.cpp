@@ -35,7 +35,8 @@ namespace solarflare
         static const DiagnosticJobHelper diagnosticJob;
         if (&cls == &SF_DiagnosticTest::static_meta_class)
             return &diagnosticTest;
-        if (&cls == &SF_ConcreteJob::static_meta_class)
+        if (&cls == &SF_ConcreteJob::static_meta_class && 
+            const_cast<Diagnostic *>(this)->asyncThread() != NULL)
             return &diagnosticJob;
         return NULL;
     }

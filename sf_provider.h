@@ -144,21 +144,8 @@ namespace solarflare
             System::target.forAllDiagnostics(finder);
             return static_cast<Diagnostic *>(finder.found());
         }
-        static SystemElement *findAny(const Instance& inst)
-        {
-            Lookup finder(&inst);
-            if (!System::target.forAllSoftware(finder))
-                return finder.found();
-            if (!System::target.forAllNICs(finder))
-                return finder.found();
-            if (!System::target.forAllInterfaces(finder))
-                return finder.found();
-            if (!System::target.forAllPorts(finder))
-                return finder.found();
-            if (!System::target.forAllDiagnostics(finder))
-                return finder.found();
-            return NULL;
-        }
+        static Thread *findThread(const Instance& inst);
+        static SystemElement *findAny(const Instance& inst);
     };
     
     class ObjectCount : public ConstElementEnumerator
@@ -173,7 +160,6 @@ namespace solarflare
     class ConcreteJobAbstractHelper : public CIMHelper {
     protected:
         virtual const char* threadSuffix() const = 0;
-        virtual Thread *threadOf(SystemElement& obj) const = 0;
     public:
         virtual cimple::Instance *reference(const SystemElement& obj) const;
         virtual cimple::Instance *instance(const SystemElement&) const;

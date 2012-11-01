@@ -72,7 +72,6 @@ Invoke_Method_Status SF_ConcreteJob_Provider::RequestStateChange(
     const Property<Datetime>& TimeoutPeriod,
     Property<uint32>& return_value)
 {
-#if 0
     // CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
     {
@@ -86,7 +85,7 @@ Invoke_Method_Status SF_ConcreteJob_Provider::RequestStateChange(
         Terminate = 4,
         Kill = 5,
     };
-    solarflare::Thread *thr = findByInstance(*self);
+    solarflare::Thread *thr = solarflare::Lookup::findThread(*self);
     if (thr == NULL || RequestedState.null)
     {
         return_value.set(InvalidParameter);
@@ -108,7 +107,7 @@ Invoke_Method_Status SF_ConcreteJob_Provider::RequestStateChange(
                 return_value.set(InvalidParameter);
         }
     }
-#endif
+
     return INVOKE_METHOD_OK;
 }
 
@@ -117,14 +116,13 @@ Invoke_Method_Status SF_ConcreteJob_Provider::GetError(
     CIM_Error*& Error,
     Property<uint32>& return_value)
 {
-#if 0
     // CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
     {
         OK = 0,
         Failed = 4,
     };
-    solarflare::Thread *thr = findByInstance(*self);
+    solarflare::Thread *thr = solarflare::Lookup::findThread(*self);
     if (thr == NULL)
     {
         return_value.set(Failed);
@@ -146,7 +144,6 @@ Invoke_Method_Status SF_ConcreteJob_Provider::GetError(
                 break;
         }
     }
-#endif
     
     return INVOKE_METHOD_OK;
 }

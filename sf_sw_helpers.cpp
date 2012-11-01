@@ -209,7 +209,8 @@ namespace solarflare
             return &bundleInstallation;
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &bundleSoftwareIdentity;
-        if (&cls == &SF_ConcreteJob::static_meta_class)
+        if (&cls == &SF_ConcreteJob::static_meta_class && 
+            const_cast<Package *>(this)->installThread() != NULL)
             return &bundleInstallationJob;
         else
             return SWElement::cimDispatch(cls);

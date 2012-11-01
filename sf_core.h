@@ -60,6 +60,8 @@ namespace solarflare
         cimple::Instance *cimInstance(const cimple::Meta_Class& cls) const;
         cimple::Instance *cimReference(const cimple::Meta_Class& cls) const;
         bool cimIsMe(const cimple::Instance& obj) const;
+
+        virtual Thread *embeddedThread() { return NULL; }
     };
 
     /// @brief Abstract mutable enumerator for SystemObject
@@ -73,7 +75,6 @@ namespace solarflare
     public:
         virtual bool process(const SystemElement& elem) = 0;
     };
-
 
     /// @brief Abstract class for software components.
     class SWElement : public SystemElement {
@@ -185,7 +186,8 @@ namespace solarflare
         /// is deleted
         ///
         /// @return Thread or (NULL or inactive Thread object)
-        virtual Thread *installThread() { return &installer; }
+        Thread *installThread() { return &installer; }
+        virtual Thread *embeddedThread() { return installThread(); }
     };
 
     /// @brief Abstract class for bus components (currently, NICs and
