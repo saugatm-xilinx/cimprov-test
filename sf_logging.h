@@ -27,6 +27,7 @@ namespace solarflare
 
     /// @brief Log entry class
     class LogEntry {
+        LogLevel level; //< Logging level
         uint64 serial; //< Serial number of the message
         Datetime timestamp; //< Posting timestamp 
         String messageStr; //< Log message 
@@ -43,11 +44,12 @@ namespace solarflare
         /// @param npass  No of passed iterations
         /// @param nfail  No of failed iterations
         LogEntry(uint64 no, const Datetime& stamp, const String& msg, 
-                 unsigned code = 0, unsigned npass = 0, unsigned nfail = 0) :
-            serial(no), timestamp(stamp), messageStr(msg), 
+                 unsigned code = 0, unsigned npass = 0, unsigned nfail = 0,
+                 LogLevel lvl = LogInfo) :
+            level(lvl), serial(no), timestamp(stamp), messageStr(msg), 
             errorCode(code), nPassed(npass), nFailed(nfail) {}
         /// Empty constructor
-        LogEntry() : serial(0), errorCode(0), nPassed(0), nFailed(0) {}
+        LogEntry() : level(LogInfo), serial(0), errorCode(0), nPassed(0), nFailed(0) {}
         /// @return unique id of the entry (serial number)
         uint64 id() const { return serial; };
         /// sets the serial number to @a sno
@@ -62,8 +64,10 @@ namespace solarflare
         unsigned passed() const { return nPassed; }
         /// @return No of failed iterations
         unsigned failed() const { return nFailed; }
+        /// @return severity level
+        LogLevel severity() const { return level; }
         /// Print a log entry at level @p using CIMPLE logging
-        void printLog(LogLevel at) const;
+        void printLog() const;
     };
 
     /// Abstract iterator of LogEntry instances
@@ -76,7 +80,7 @@ namespace solarflare
     class Logger 
     {
         bool enabled;
-        LogLevel level;
+        LogLevel defaultLevel;
         unsigned size;
         mutable Mutex lock;
         Buffer formatter;
@@ -91,7 +95,7 @@ namespace solarflare
         /// @param sz    Size of the message queue
         /// @param d     Log description
         Logger(LogLevel lvl, unsigned sz, const char *d) :
-            enabled(true), level(lvl), size(sz), 
+            enabled(true), defaultLevel(lvl), size(sz), 
             entries(new LogEntry[sz]), serial(0), descr(d) {}
         ~Logger() { delete[] entries; }
 
@@ -101,14 +105,15 @@ namespace solarflare
         /// Logs a simple string message
         void log(const String& s)
         {
-            put(LogEntry(0, Datetime::now(), s));
+            put(LogEntry(0, Datetime::now(), s, 0, 0, 0, defaultLevel));
         }
 
         /// Log diagnostic status
         void logStatus(const String& s, unsigned err = 0, 
                        unsigned npass = 0, unsigned nfail = 0)
         {
-            put(LogEntry(0, Datetime::now(), s, err, npass, nfail));
+            put(LogEntry(0, Datetime::now(), s, err, npass, nfail,
+                         err != 0 || nfail != 0 ? LogError : defaultLevel));
         }
 
         /// Format and log a printf-style message
@@ -120,8 +125,8 @@ namespace solarflare
         /// @return Log description
         const char *description() const { return descr; }
 
-        /// @return Log severity
-        LogLevel severity() const { return level; }
+        /// @return Log default severity
+        LogLevel defaultSeverity() const { return defaultLevel; }
 
         /// @return Is logging actually enabled
         bool isEnabled() const { return enabled; }

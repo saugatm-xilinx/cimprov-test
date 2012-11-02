@@ -10,7 +10,7 @@ bool SF_RecordAppliesToElement_Provider::EntryEnum::process(const solarflare::Lo
     SF_RecordAppliesToElement *link = SF_RecordAppliesToElement::create(true);
     
     link->Antecedent = cast<CIM_RecordForLog *>(SF_DiagnosticCompletionRecord_Provider::makeReference(*diag,
-                                                                                                      *owner,
+                                                                                                      diag->log(),
                                                                                                       entry));
     link->Dependent = cast<CIM_ManagedElement *>(diag->nic()->cimReference(SF_NICCard::static_meta_class));
 
@@ -22,13 +22,8 @@ bool SF_RecordAppliesToElement_Provider::Enum::process(const solarflare::SystemE
 {
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
 
-    EntryEnum entries(&diag, &diag.errorLog(), handler);
-    diag.errorLog().forAllEntries(entries);
-    if (&diag.okLog() != &diag.errorLog())
-    {
-        EntryEnum okentries(&diag, &diag.okLog(), handler);
-        diag.okLog().forAllEntries(okentries);
-    }
+    EntryEnum entries(&diag, handler);
+    diag.log().forAllEntries(entries);
     return true;
 }
 

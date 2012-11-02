@@ -4,7 +4,7 @@ namespace solarflare
 {
     using cimple::Auto_Mutex;
     
-    void LogEntry::printLog(LogLevel at) const
+    void LogEntry::printLog() const
     {
         static const cimple::Log_Level mapping[] = 
         {
@@ -14,7 +14,7 @@ namespace solarflare
             cimple::LL_INFO,
             cimple::LL_DBG,
         };
-        cimple::log(mapping[at],
+        cimple::log(mapping[level],
                     "", errorCode, "%s", messageStr.c_str());
     }
 
@@ -35,7 +35,7 @@ namespace solarflare
             entries[serial % size] = e;
             entries[serial % size].id(serial);
             serial++;
-            e.printLog(level);
+            e.printLog();
         }
     }
 

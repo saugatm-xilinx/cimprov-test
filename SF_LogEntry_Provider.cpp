@@ -42,7 +42,7 @@ bool SF_LogEntry_Provider::Enum::process(const solarflare::LogEntry& entry)
     le->RecordData.set(entry.message());
     le->CreationTimeStamp.set(entry.stamp());
     le->PerceivedSeverity.null = false;
-    le->PerceivedSeverity.value = severityMap[owner->severity()];
+    le->PerceivedSeverity.value = severityMap[entry.severity()];
     
     handler->handle(le);
     return true;

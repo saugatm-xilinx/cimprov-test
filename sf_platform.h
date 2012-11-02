@@ -51,15 +51,10 @@ namespace solarflare
         /// Diagnostic thread object
         DiagnosticThread diagThread;
 
-        /// Number of success events stored
-        static const unsigned maxSuccessEvents;
-        /// Successful test log
-        Logger successLog;
-
         /// Number of failure events stored
-        static const unsigned maxFailureEvents;
-        /// Failed test log
-        Logger failedLog;
+        static const unsigned maxRecordedEvents;
+        /// Test result log
+        Logger resultLog;
     protected:
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
@@ -68,8 +63,7 @@ namespace solarflare
         /// @param d    Description
         Diagnostic(const String& d) : 
             SystemElement(d), diagThread(this),
-            successLog(LogInfo, maxSuccessEvents, "Success Log"),
-            failedLog(LogError, maxFailureEvents, "Failure Log")
+            resultLog(LogInfo, maxRecordedEvents, "Result Log")
         {}
 
         /// Runs the diagnostic either synchronously or not
@@ -119,15 +113,10 @@ namespace solarflare
         /// @return the kind of the test
         virtual TestKind testKind() const { return FunctionalTest; }
 
-        /// @return associated error logger
-        Logger& errorLog() { return failedLog; }
-        /// @return associated error logger (immutable)
-        const Logger& errorLog() const { return failedLog; }
-
-        /// @return associated success logger
-        Logger& okLog() { return successLog; }
+        /// @return associated result logger
+        Logger& log() { return resultLog; }
         /// @return associated success logger (immutable)
-        const Logger& okLog() const  { return successLog; }
+        const Logger& log() const  { return resultLog; }
 
         virtual Thread *embeddedThread() { return asyncThread(); }
     };

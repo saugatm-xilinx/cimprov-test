@@ -23,8 +23,8 @@ bool SF_LogManagesRecord_Provider::DiagEntryEnum::process(const solarflare::LogE
 {
     SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
 
-    link->Log = cast<CIM_Log *>(SF_DiagnosticLog_Provider::makeReference(*diag, *owner));
-    link->Record = cast<CIM_RecordForLog *>(SF_DiagnosticCompletionRecord_Provider::makeReference(*diag, *owner, entry));
+    link->Log = cast<CIM_Log *>(diag->cimReference(SF_DiagnosticLog::static_meta_class));
+    link->Record = cast<CIM_RecordForLog *>(SF_DiagnosticCompletionRecord_Provider::makeReference(*diag, diag->log(), entry));
     handler->handle(link);
 
     return true;
@@ -34,13 +34,8 @@ bool SF_LogManagesRecord_Provider::DiagEnum::process(const solarflare::SystemEle
 {
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     
-    DiagEntryEnum entries(&diag, &diag.errorLog(), handler);
-    diag.errorLog().forAllEntries(entries);
-    if (&diag.okLog() != &diag.errorLog())
-    {
-        DiagEntryEnum okentries(&diag, &diag.okLog(), handler);
-        diag.okLog().forAllEntries(okentries);
-    }
+    DiagEntryEnum entries(&diag, handler);
+    diag.log().forAllEntries(entries);
     return true;
 }
 

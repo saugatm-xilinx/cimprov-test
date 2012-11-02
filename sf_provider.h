@@ -17,13 +17,20 @@ namespace solarflare
     /// @sa SystemElement::cimDispatch()
     class CIMHelper {
         static cimple::Ref<cimple::CIM_ComputerSystem> cimSystem;
-    public:
-        /// @return A CIM reference matching @p obj
-        virtual cimple::Instance *reference(const SystemElement& obj) const = 0;
+    public:        
         /// @return A CIM instance matching @p obj
         virtual cimple::Instance *instance(const SystemElement&) const = 0;
+        /// @return A CIM reference matching @p obj
+        virtual cimple::Instance *reference(const SystemElement& obj) const 
+        {
+            return instance(obj);
+        }
+
         /// @return true iff @p obj corresponds to CIM instance @p inst
-        virtual bool match(const SystemElement& obj, const cimple::Instance& inst) const = 0;
+        virtual bool match(const SystemElement& obj, const cimple::Instance& inst) const
+        {
+            return false;
+        }
 
         static const char solarflareNS[];
         static const char ibmseNS[];

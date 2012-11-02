@@ -22,6 +22,15 @@ namespace solarflare
         const CIMHelper *helper = cimDispatch(cls);
         return helper ? helper->reference(*this) : NULL;
     }
+
+    cimple::Instance *SystemElement::cimAssociation(const cimple::Meta_Class& from,
+                                                    const cimple::Meta_Class& assoc,
+                                                    const cimple::Meta_Class& to) const
+    {
+        const CIMHelper *helper = cimDispatch(from, assoc, to);
+        return helper ? helper->instance(*this) : NULL;
+    }
+
     
     bool SystemElement::cimIsMe(const cimple::Instance& obj) const
     {

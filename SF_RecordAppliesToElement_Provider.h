@@ -12,13 +12,11 @@ class SF_RecordAppliesToElement_Provider
 {
     class EntryEnum : public solarflare::LogEntryIterator {
         const solarflare::Diagnostic *diag;
-        const solarflare::Logger *owner;
         Enum_Instances_Handler<SF_RecordAppliesToElement>* handler;
     public:
         EntryEnum(const solarflare::Diagnostic *d,
-                  const solarflare::Logger *o,
                   Enum_Instances_Handler<SF_RecordAppliesToElement>* h) :
-            diag(d), owner(o), handler(h) {}
+            diag(d), handler(h) {}
         virtual bool process(const solarflare::LogEntry& e);
     };
 

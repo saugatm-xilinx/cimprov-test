@@ -37,10 +37,6 @@ namespace solarflare
         {
             return "installThread";
         }
-        virtual Thread *threadOf(SystemElement& se) const 
-        {
-            return static_cast<SWElement&>(se).installThread();
-        }
     };
 
     const CIMHelper* SWElement::cimDispatch(const Meta_Class& cls) const

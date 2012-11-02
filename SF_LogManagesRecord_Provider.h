@@ -23,14 +23,11 @@ class SF_LogManagesRecord_Provider
 
     class DiagEntryEnum : public solarflare::LogEntryIterator {
         const solarflare::Diagnostic *diag;
-        const solarflare::Logger *owner;
         Enum_Instances_Handler<SF_LogManagesRecord>* handler;
     public:
         DiagEntryEnum(const solarflare::Diagnostic *d,
-                      const solarflare::Logger *o,
                       Enum_Instances_Handler<SF_LogManagesRecord>* h) :
             diag(d),
-            owner(o),
             handler(h) {}
         virtual bool process(const solarflare::LogEntry& e);
     };

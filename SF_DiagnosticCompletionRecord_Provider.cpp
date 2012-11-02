@@ -44,7 +44,7 @@ bool SF_DiagnosticCompletionRecord_Provider::EntryEnum::process(const solarflare
     le->RecordType.value = SF_DiagnosticCompletionRecord::_RecordType::enum_Results;
     
     le->PerceivedSeverity.null = false;
-    le->PerceivedSeverity.value = severityMap[owner->severity()];
+    le->PerceivedSeverity.value = severityMap[entry.severity()];
 
     le->LoopsPassed.set(entry.passed());
     le->LoopsFailed.set(entry.failed());
@@ -72,13 +72,9 @@ bool SF_DiagnosticCompletionRecord_Provider::Enum::process(const solarflare::Sys
 {
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     
-    EntryEnum entries(&diag, &diag.errorLog(), handler);
-    diag.errorLog().forAllEntries(entries);
-    if (&diag.okLog() != &diag.errorLog())
-    {
-        EntryEnum okentries(&diag, &diag.okLog(), handler);
-        diag.okLog().forAllEntries(okentries);
-    }
+    EntryEnum entries(&diag, &diag.log(), handler);
+    diag.log().forAllEntries(entries);
+
     return true;
 }
 
