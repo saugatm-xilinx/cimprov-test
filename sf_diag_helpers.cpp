@@ -2,7 +2,9 @@
 #include "SF_DiagnosticTest.h"
 #include "SF_ConcreteJob.h"
 #include "SF_AffectedJobElement.h"
+#include "SF_AvailableDiagnosticService.h"
 #include "SF_PortController.h"
+#include "SF_NICCard.h"
 #include "SF_DiagnosticLog.h"
 
 namespace solarflare 
@@ -17,6 +19,8 @@ namespace solarflare
     using cimple::SF_ConcreteJob;
     using cimple::SF_AffectedJobElement;
     using cimple::SF_PortController;
+    using cimple::SF_NICCard;
+    using cimple::SF_AvailableDiagnosticService;
 
     class DiagnosticTestHelper : public CIMHelper {
     public:
@@ -42,17 +46,25 @@ namespace solarflare
         virtual Instance *instance(const SystemElement &se) const;
     };
 
+
+    class AvailableDiagnosticServiceHelper : public CIMHelper {
+        virtual Instance *instance(const SystemElement &se) const;
+    };
+    
     const CIMHelper* Diagnostic::cimDispatch(const Meta_Class& cls) const
     {
         static const DiagnosticTestHelper diagnosticTest;
         static const DiagnosticJobHelper diagnosticJob;
         static const DiagnosticLogHelper diagnosticLog;
         static const AffectedJobElementHelper affectedJobElement;
+        static const AvailableDiagnosticServiceHelper availableDiagnosticService;
 
         if (&cls == &SF_DiagnosticTest::static_meta_class)
             return &diagnosticTest;
         if (&cls == &SF_DiagnosticLog::static_meta_class)
             return &diagnosticLog;
+        if (&cls == &SF_AvailableDiagnosticService::static_meta_class)
+            return &availableDiagnosticService;
         if (const_cast<Diagnostic *>(this)->asyncThread() != NULL)
         {
             if (&cls == &SF_ConcreteJob::static_meta_class)
@@ -208,5 +220,17 @@ namespace solarflare
         
         return link;
     }
+
+    Instance *AvailableDiagnosticServiceHelper::instance(const solarflare::SystemElement& se) const
+    {
+        const Diagnostic& diag = static_cast<const Diagnostic&>(se);
+        SF_AvailableDiagnosticService *link = SF_AvailableDiagnosticService::create(true);
+    
+        link->ServiceProvided = cast<cimple::CIM_DiagnosticService *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
+        link->UserOfService = cast<cimple::CIM_ManagedElement *>(diag.nic()->cimReference(SF_NICCard::static_meta_class));
+
+        return link;
+    }
+
 
 } // namespace

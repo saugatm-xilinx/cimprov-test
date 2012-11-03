@@ -2,21 +2,9 @@
 #include "SF_AvailableDiagnosticService_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
 #include "SF_NICCard_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_AvailableDiagnosticService_Provider::Enum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-    SF_AvailableDiagnosticService *link = SF_AvailableDiagnosticService::create(true);
-    
-    link->ServiceProvided = cast<CIM_DiagnosticService *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
-    link->UserOfService = cast<CIM_ManagedElement *>(diag.nic()->cimReference(SF_NICCard::static_meta_class));
-
-    handler->handle(link);
-
-    return true;
-}
 
 SF_AvailableDiagnosticService_Provider::SF_AvailableDiagnosticService_Provider()
 {
@@ -28,6 +16,7 @@ SF_AvailableDiagnosticService_Provider::~SF_AvailableDiagnosticService_Provider(
 
 Load_Status SF_AvailableDiagnosticService_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -47,8 +36,7 @@ Enum_Instances_Status SF_AvailableDiagnosticService_Provider::enum_instances(
     const SF_AvailableDiagnosticService* model,
     Enum_Instances_Handler<SF_AvailableDiagnosticService>* handler)
 {
-    Enum links(handler);
-    solarflare::System::target.forAllDiagnostics(links);
+    solarflare::EnumInstances<SF_AvailableDiagnosticService>::allDiagnostics(handler);
 
     return ENUM_INSTANCES_OK;
 }
