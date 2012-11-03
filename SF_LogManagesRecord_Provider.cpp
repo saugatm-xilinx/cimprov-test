@@ -4,7 +4,7 @@
 #include "SF_DiagnosticLog_Provider.h"
 #include "SF_LogEntry_Provider.h"
 #include "SF_DiagnosticCompletionRecord_Provider.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -12,8 +12,11 @@ bool SF_LogManagesRecord_Provider::Enum::process(const solarflare::LogEntry& ent
 {
     SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
 
-    link->Log = cast<CIM_Log *>(SF_RecordLog_Provider::makeReference(*owner));
-    link->Record = cast<CIM_RecordForLog *>(SF_LogEntry_Provider::makeReference(*owner, entry));
+    link->Log = cast<CIM_Log *>(solarflare::CIMLoggerHelper::reference(SF_RecordLog::static_meta_class, *owner));
+    link->Record = cast<CIM_RecordForLog *>(solarflare::CIMLogEntryHelper::reference(SF_LogEntry::static_meta_class,
+                                                                                     solarflare::System::target,
+                                                                                     *owner,
+                                                                                     entry));
     handler->handle(link);
 
     return true;

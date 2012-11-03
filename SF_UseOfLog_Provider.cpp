@@ -53,7 +53,8 @@ Enum_Instances_Status SF_UseOfLog_Provider::enum_instances(
 {
     for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
     {
-        SF_RecordLog *log = SF_RecordLog_Provider::makeReference(*solarflare::Logger::knownLogs[i]);
+        SF_RecordLog *log = static_cast<SF_RecordLog *>(solarflare::CIMLoggerHelper::reference(SF_RecordLog::static_meta_class,
+                                                                                               *solarflare::Logger::knownLogs[i]));
         CIM_ComputerSystem *sys = solarflare::CIMHelper::findSystem()->clone();
         SF_UseOfLog *link = SF_UseOfLog::create(true);
         

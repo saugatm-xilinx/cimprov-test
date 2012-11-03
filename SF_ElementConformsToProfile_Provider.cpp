@@ -9,6 +9,7 @@
 #include "SF_DiagnosticTest_Provider.h"
 #include "SF_RecordLog_Provider.h"
 #include "SF_RegisteredProfile_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -140,7 +141,8 @@ Enum_Instances_Status SF_ElementConformsToProfile_Provider::enum_instances(
     for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
     {
         handler->handle(makeLink(SF_RegisteredProfile_Provider::RecordLogProfile,
-                                 SF_RecordLog_Provider::makeReference(*solarflare::Logger::knownLogs[i])));
+                                 solarflare::CIMLoggerHelper::reference(SF_RecordLog::static_meta_class,
+                                                                        *solarflare::Logger::knownLogs[i])));
     }
 
     return ENUM_INSTANCES_OK;

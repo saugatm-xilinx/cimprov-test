@@ -173,6 +173,140 @@ namespace solarflare
         virtual bool match(const SystemElement& obj, const cimple::Instance& inst) const;
     };
 
+    class CIMLoggerHelper {
+    public:
+        /// @return A CIM instance matching @p obj
+        virtual cimple::Instance *instance(const Logger& log) const = 0;
+        /// @return A CIM reference matching @p obj
+        virtual cimple::Instance *reference(const Logger& log) const 
+        {
+            return instance(log);
+        }
+        virtual bool match(const Logger& log, const Instance& inst) const { return false; }
+        static const CIMLoggerHelper *dispatch(const cimple::Meta_Class &cls);
+        static  cimple::Instance *reference(const cimple::Meta_Class &cls,
+                                            const Logger& log)
+        {
+            const CIMLoggerHelper *helper = CIMLoggerHelper::dispatch(cls);
+            if (helper == NULL)
+                return NULL;
+            
+            return helper->reference(log);
+        }
+        
+        template<class CIMClass>
+        static void allLogs(cimple::Enum_Instances_Handler<CIMClass> *handler)
+        {
+            const CIMLoggerHelper *helper = CIMLoggerHelper::dispatch(CIMClass::static_meta_class);
+            if (helper == NULL)
+                return;
+
+            for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+            {
+                CIMClass *cimobj = static_cast<CIMClass *>(helper->instance(*Logger::knownLogs[i]));
+            
+                if (cimobj != NULL)
+                    handler->handle(cimobj);
+            }
+        }
+        static Logger *find(const Instance& inst)
+        {
+            const CIMLoggerHelper *helper = CIMLoggerHelper::dispatch(*inst.meta_class);
+            
+            if (helper == NULL)
+                return NULL;
+
+            for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+            {
+                if (helper->match(*Logger::knownLogs[i], inst))
+                    return Logger::knownLogs[i];
+            }
+            return NULL;
+        }
+    };
+    
+
+
+    class CIMLogEntryHelper {
+    public:
+        /// @return A CIM instance matching @p obj
+        virtual cimple::Instance *instance(const SystemElement& scope, const Logger& log, const LogEntry& entry) const = 0;
+        /// @return A CIM reference matching @p obj
+        virtual cimple::Instance *reference(const SystemElement& scope, const Logger& log, const LogEntry& entry) const 
+        {
+            return instance(scope, log, entry);
+        }
+        static const CIMLogEntryHelper *dispatch(const cimple::Meta_Class &cls);
+        static  cimple::Instance *reference(const cimple::Meta_Class &cls,
+                                            const SystemElement& scope, const Logger& log, const LogEntry& entry)
+        {
+            const CIMLogEntryHelper *helper = CIMLogEntryHelper::dispatch(cls);
+            if (helper == NULL)
+                return NULL;
+            
+            return helper->reference(scope, log, entry);
+        };
+    };
+
+    template <class CIMClass>
+    class EnumLogEntries : public LogEntryIterator {
+        cimple::Enum_Instances_Handler<CIMClass> *handler;
+        const Logger *log;
+        const SystemElement *scope;
+    public:
+        EnumLogEntries(cimple::Enum_Instances_Handler<CIMClass> *h, 
+                       const Logger *inlog,
+                       const SystemElement *scope = &System::target) :
+            handler(h), log(inlog) {}
+        virtual bool process(const LogEntry& le)
+        {
+            const CIMLogEntryHelper *helper = CIMLogEntryHelper::dispatch(CIMClass::static_meta_class);
+            if (helper == NULL)
+                return true;
+            
+            CIMClass *cimobj = static_cast<CIMClass *>(helper->instance(*scope, *log, le));
+            
+            if (cimobj != NULL)
+                handler->handle(cimobj);
+            return true;
+        }
+        static void allEntries(const Logger& log, cimple::Enum_Instances_Handler<CIMClass> *handler)
+        {
+            EnumLogEntries<CIMClass> iter(handler, &log);
+            log.forAllEntries(iter);
+        }
+        static void allEntries(const Diagnostic& diag, cimple::Enum_Instances_Handler<CIMClass> *handler)
+        {
+            EnumLogEntries<CIMClass> iter(handler, &diag.log(), &diag);
+            diag.log().forAllEntries(iter);
+        }
+        class EnumDiag : public ConstElementEnumerator {
+            cimple::Enum_Instances_Handler<CIMClass> *handler;
+        public:
+            EnumDiag(cimple::Enum_Instances_Handler<CIMClass> *h) :
+                handler(h) {}
+            virtual bool process(const SystemElement& se)
+            {
+                allEntries(static_cast<const Diagnostic&>(se), handler);
+                return true;
+            }
+        };
+        static void allDiagEntries(cimple::Enum_Instances_Handler<CIMClass> *handler)
+        {
+            EnumDiag diags(handler);
+            System::target.forAllDiagnostics(diags);
+        }
+        static void allEntries(cimple::Enum_Instances_Handler<CIMClass> *handler)
+        {
+            for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+            {
+                allEntries(*Logger::knownLogs[i], handler);
+            }
+        }
+        
+    };
+
+
 } // namespace
 
 #endif // SOLARFLARE_SF_PROVIDER_H

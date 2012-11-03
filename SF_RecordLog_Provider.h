@@ -5,16 +5,13 @@
 #include <cimple/cimple.h>
 #include "SF_RecordLog.h"
 #include "sf_logging.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_RecordLog_Provider
 {
-    static SF_RecordLog *makeInstance(const solarflare::Logger& log);
 public:
-
-    static SF_RecordLog *makeReference(const solarflare::Logger& log);
-    static solarflare::Logger *findByInstance(const SF_RecordLog& instance);
 
     typedef SF_RecordLog Class;
 
