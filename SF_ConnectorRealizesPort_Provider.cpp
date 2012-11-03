@@ -6,22 +6,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ConnectorRealizesPort_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
-    
-    const solarflare::Port *port = intf.port();
-    if (port != NULL)
-    {
-        SF_ConnectorRealizesPort* link = SF_ConnectorRealizesPort::create(true);
-        
-        link->Antecedent = cast<CIM_PhysicalElement *>(port->cimReference(SF_PhysicalConnector::static_meta_class));
-        link->Dependent = cast<CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
-        handler->handle(link);
-    }
-    return true;
-}
-
 SF_ConnectorRealizesPort_Provider::SF_ConnectorRealizesPort_Provider()
 {
 }
@@ -52,9 +36,7 @@ Enum_Instances_Status SF_ConnectorRealizesPort_Provider::enum_instances(
     const SF_ConnectorRealizesPort* model,
     Enum_Instances_Handler<SF_ConnectorRealizesPort>* handler)
 {
-    InterfaceEnum links(handler);
-    
-    solarflare::System::target.forAllInterfaces(links);
+    solarflare::EnumInstances<SF_ConnectorRealizesPort>::allInterfaces(handler);
     return ENUM_INSTANCES_OK;
 }
 

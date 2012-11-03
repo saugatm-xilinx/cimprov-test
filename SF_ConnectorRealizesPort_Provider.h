@@ -10,13 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ConnectorRealizesPort_Provider
 {
-    class InterfaceEnum : public solarflare::ConstElementEnumerator {
-        Enum_Instances_Handler<SF_ConnectorRealizesPort>* handler;
-    public:
-        InterfaceEnum(Enum_Instances_Handler<SF_ConnectorRealizesPort>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& se);
-    };
 public:
 
     typedef SF_ConnectorRealizesPort Class;

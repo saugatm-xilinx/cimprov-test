@@ -1,6 +1,8 @@
 #include "sf_provider.h"
 #include "SF_EthernetPort.h"
 #include "SF_LANEndpoint.h"
+#include "SF_ConnectorRealizesPort.h"
+#include "SF_PhysicalConnector.h"
 
 namespace solarflare 
 {
@@ -11,6 +13,8 @@ namespace solarflare
     using cimple::cast;
     using cimple::SF_EthernetPort;
     using cimple::SF_LANEndpoint;
+    using cimple::SF_ConnectorRealizesPort;
+    using cimple::SF_PhysicalConnector;
 
     class EthernetPortHelper : public CIMHelper {
     public:
@@ -26,16 +30,23 @@ namespace solarflare
         virtual bool match(const SystemElement& obj, const Instance& inst) const;
     };
 
+    class ConnectorRealizesPortHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement&) const;
+    };
 
 
     const CIMHelper* Interface::cimDispatch(const Meta_Class& cls) const
     {
         static const EthernetPortHelper ethernetPortHelper;
         static const LANEndpointHelper lanEndpointHelper;
+        static const ConnectorRealizesPortHelper connectorRealizesPortHelper;
         if (&cls == &SF_EthernetPort::static_meta_class)
             return &ethernetPortHelper;
         if (&cls == &SF_LANEndpoint::static_meta_class)
             return &lanEndpointHelper;
+        if (&cls == &SF_ConnectorRealizesPort::static_meta_class)
+            return &connectorRealizesPortHelper;
         return NULL;
     }
 
@@ -183,6 +194,27 @@ namespace solarflare
             return false;
     
         return lan->Name.value == static_cast<const Interface&>(se).ifName();
+    }
+
+
+    Instance *ConnectorRealizesPortHelper::instance(const SystemElement& se) const
+    {
+        const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
+    
+        const solarflare::Port *port = intf.port();
+        if (port != NULL)
+        {
+            SF_ConnectorRealizesPort* link = SF_ConnectorRealizesPort::create(true);
+            
+            link->Antecedent = cast<cimple::CIM_PhysicalElement *>(port->cimReference(SF_PhysicalConnector::static_meta_class));
+            link->Dependent = cast<cimple::CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
+            return link;
+        }
+        else
+        {
+            return NULL;
+        }
+        
     }
 
 
