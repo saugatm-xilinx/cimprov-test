@@ -1,6 +1,7 @@
 #include "sf_provider.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_SoftwareInstallationService.h"
+#include "SF_BundleComponent.h"
 #include "SF_ConcreteJob.h"
 #include "CIM_OperatingSystem.h"
 
@@ -16,6 +17,8 @@ namespace solarflare
     using cimple::SF_SoftwareInstallationService;
     using cimple::CIM_OperatingSystem;
     using cimple::SF_ConcreteJob;
+    using cimple::SF_BundleComponent;
+    using cimple::CIM_ManagedElement;
 
     class SoftwareIdentityHelper : public CIMHelper {
     public:
@@ -121,11 +124,19 @@ namespace solarflare
         virtual Instance *instance(const SystemElement&) const;
     };
 
+    class BundleComponentHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement&) const;
+    };
+
     const CIMHelper* HostSWElement::cimDispatch(const Meta_Class& cls) const
     {
         static const HostSoftwareIdentityHelper hostSoftwareIdentity;
+        static const BundleComponentHelper bundleComponent;
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &hostSoftwareIdentity;
+        else if (&cls == &SF_BundleComponent::static_meta_class)
+            return &bundleComponent;
         else
             return SWElement::cimDispatch(cls);
     }
@@ -186,6 +197,40 @@ namespace solarflare
         SF_SoftwareIdentity *id = static_cast<SF_SoftwareIdentity *>(SoftwareIdentityHelper::instance(se));
         addTargetOS(id);
         return id;
+    }
+
+    class FindIndex : public ConstElementEnumerator {
+        unsigned idx;
+        const SystemElement *target;
+    public:
+        FindIndex(const SystemElement *what) : idx(0), target(what) {};
+        unsigned found() const { return idx; }
+        virtual bool process(const SystemElement& se);
+    };
+
+    bool FindIndex::process(const SystemElement& se)
+    {
+        if (&se == target)
+            return false;
+        idx++;
+        return true;
+    }
+
+    Instance *
+    BundleComponentHelper::instance(const solarflare::SystemElement& se) const
+    {
+        const solarflare::HostSWElement& he = static_cast<const solarflare::HostSWElement&>(se);
+        
+        SF_BundleComponent *link = SF_BundleComponent::create(true);
+        link->GroupComponent = 
+        cast<CIM_ManagedElement *>(he.package()->cimReference(SF_SoftwareIdentity::static_meta_class));
+        link->PartComponent =
+        cast<CIM_ManagedElement *>(he.cimReference(SF_SoftwareIdentity::static_meta_class));
+        FindIndex finder(&se);
+        he.package()->forAllSoftware(finder);
+        link->AssignedSequence.set(finder.found());
+        
+        return link;
     }
 
     class BundleSoftwareIdentityHelper : public HostSoftwareIdentityHelper {
