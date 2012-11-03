@@ -1,6 +1,8 @@
 #include "sf_provider.h"
 #include "SF_DiagnosticTest.h"
 #include "SF_ConcreteJob.h"
+#include "SF_AffectedJobElement.h"
+#include "SF_PortController.h"
 #include "SF_DiagnosticLog.h"
 
 namespace solarflare 
@@ -13,6 +15,8 @@ namespace solarflare
     using cimple::SF_DiagnosticTest;
     using cimple::SF_DiagnosticLog;
     using cimple::SF_ConcreteJob;
+    using cimple::SF_AffectedJobElement;
+    using cimple::SF_PortController;
 
     class DiagnosticTestHelper : public CIMHelper {
     public:
@@ -34,18 +38,28 @@ namespace solarflare
     };
 
 
+    class AffectedJobElementHelper : public CIMHelper {
+        virtual Instance *instance(const SystemElement &se) const;
+    };
+
     const CIMHelper* Diagnostic::cimDispatch(const Meta_Class& cls) const
     {
         static const DiagnosticTestHelper diagnosticTest;
         static const DiagnosticJobHelper diagnosticJob;
         static const DiagnosticLogHelper diagnosticLog;
+        static const AffectedJobElementHelper affectedJobElement;
+
         if (&cls == &SF_DiagnosticTest::static_meta_class)
             return &diagnosticTest;
         if (&cls == &SF_DiagnosticLog::static_meta_class)
             return &diagnosticLog;
-        if (&cls == &SF_ConcreteJob::static_meta_class && 
-            const_cast<Diagnostic *>(this)->asyncThread() != NULL)
-            return &diagnosticJob;
+        if (const_cast<Diagnostic *>(this)->asyncThread() != NULL)
+        {
+            if (&cls == &SF_ConcreteJob::static_meta_class)
+                return &diagnosticJob;
+            if (&cls == &SF_AffectedJobElement::static_meta_class)
+                return &affectedJobElement;
+        }
         return NULL;
     }
 
@@ -177,4 +191,22 @@ namespace solarflare
         id.append(diag.log().description());
         return id == log->InstanceID.value;
     }
+
+    Instance *AffectedJobElementHelper::instance(const SystemElement& se) const
+    {
+        const Diagnostic& diag = static_cast<const Diagnostic&>(se);
+    
+        SF_AffectedJobElement *link = SF_AffectedJobElement::create(true);
+    
+        link->AffectedElement = cast<cimple::CIM_ManagedElement *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
+        link->AffectingElement = cast<cimple::CIM_Job *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
+        link->ElementEffects.null = false;
+        if (diag.isExclusive())
+        {
+            link->ElementEffects.value.append(SF_AffectedJobElement::_ElementEffects::enum_Exclusive_Use);
+        }
+        
+        return link;
+    }
+
 } // namespace

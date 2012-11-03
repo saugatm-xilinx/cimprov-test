@@ -5,26 +5,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_AffectedJobElement_Provider::Enum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-    
-    SF_AffectedJobElement *link = SF_AffectedJobElement::create(true);
-    
-    link->AffectedElement = cast<CIM_ManagedElement *>(diag.nic()->cimReference(CIM_PortController::static_meta_class));
-    link->AffectingElement = cast<CIM_Job *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
-    link->ElementEffects.null = false;
-    if (diag.isExclusive())
-    {
-        link->ElementEffects.value.append(SF_AffectedJobElement::_ElementEffects::enum_Exclusive_Use);
-    }
-
-    handler->handle(link);
-
-    return true;
-}
-
-
 SF_AffectedJobElement_Provider::SF_AffectedJobElement_Provider()
 {
 }
@@ -54,8 +34,7 @@ Enum_Instances_Status SF_AffectedJobElement_Provider::enum_instances(
     const SF_AffectedJobElement* model,
     Enum_Instances_Handler<SF_AffectedJobElement>* handler)
 {
-    Enum links(handler);
-    solarflare::System::target.forAllDiagnostics(links);
+    solarflare::EnumInstances<SF_AffectedJobElement>::allDiagnostics(handler);
     return ENUM_INSTANCES_OK;
 }
 
