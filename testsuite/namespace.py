@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from test_classes import check_ns
+from test_classes import ns_check
 
-check_ns('root', 'solarflare')
-check_ns('root', 'PG_InterOp')
+ns_check('root', 'solarflare')
+ns_check('root', 'PG_InterOp')

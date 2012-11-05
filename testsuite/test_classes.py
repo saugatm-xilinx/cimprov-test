@@ -1,12 +1,12 @@
 #!/usr/bin/python
 
+import pywbem
+
 HOST='http://127.0.0.1:5988'
 USER=''
 PASSWORD=''
 
-def check_ns(parent_ns, check_ns):
-    import pywbem
-
+def ns_check(parent_ns, check_ns):
     wbemclient = pywbem.WBEMConnection(HOST, (USER, PASSWORD), parent_ns)
     exist = False
     print 'Checking',  parent_ns + '/' + check_ns, 'existance...',
@@ -24,10 +24,8 @@ def check_ns(parent_ns, check_ns):
             print 'FAIL'
 
 def profile_registered(profile_name):
-    import pywbem
-    
     NS = 'root/PG_InterOp'
-
+    
     wbemclient = pywbem.WBEMConnection(HOST, (USER, PASSWORD), NS)
     inst_list = wbemclient.EnumerateInstances('SF_RegisteredProfile')
     for inst in inst_list:
@@ -35,8 +33,24 @@ def profile_registered(profile_name):
             return True
     return False 
 
+def class_operations_check(class_name, ns):
+    #TODO: GetInstance
+    OP_LIST = ['Associators', 'AssociatorNames',
+               'References', 'ReferenceNames',
+               'EnumerateInstances', 'EnumerateInstanceNames']
+
+    wbemclient = pywbem.WBEMConnection(HOST, (USER, PASSWORD), ns) 
+    print "Checking standard operations for %s class:" % class_name
+    for op in OP_LIST:
+        print "    %-56s" % op,
+        try:
+            pywbem.WBEMConnection.__dict__[op].__get__(
+                    wbemclient, pywbem.WBEMConnection)(class_name)
+            print "OK"
+        except:
+            print "ENOTSUPP"
+
 def profile_check(prof_list, spec_list, ns):
-    import pywbem
     
     # Indices of specification list
     SC_NAME         = 0
