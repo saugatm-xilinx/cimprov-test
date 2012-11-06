@@ -10,29 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_LogManagesRecord_Provider
 {
-    class Enum : public solarflare::LogEntryIterator {
-        const solarflare::Logger *owner;
-        Enum_Instances_Handler<SF_LogManagesRecord>* handler;
-    public:
-        Enum(const solarflare::Logger *o,
-             Enum_Instances_Handler<SF_LogManagesRecord>* h) :
-            owner(o),
-            handler(h) {}
-        virtual bool process(const solarflare::LogEntry& e);
-    };
-
-    class DiagEntryEnum : public solarflare::LogEntryIterator {
-        const solarflare::Diagnostic *diag;
-        Enum_Instances_Handler<SF_LogManagesRecord>* handler;
-    public:
-        DiagEntryEnum(const solarflare::Diagnostic *d,
-                      Enum_Instances_Handler<SF_LogManagesRecord>* h) :
-            diag(d),
-            handler(h) {}
-        virtual bool process(const solarflare::LogEntry& e);
-    };
-
-
     class DiagEnum : public solarflare::ConstElementEnumerator {
         Enum_Instances_Handler<SF_LogManagesRecord>* handler;
     public:

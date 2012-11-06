@@ -34,7 +34,7 @@ Enum_Instances_Status SF_LogEntry_Provider::enum_instances(
     const SF_LogEntry* model,
     Enum_Instances_Handler<SF_LogEntry>* handler)
 {
-    solarflare::EnumLogEntries<SF_LogEntry>::allEntries(handler);
+    solarflare::EnumInstances<SF_LogEntry>::topmost(handler);
     return ENUM_INSTANCES_OK;
 }
 

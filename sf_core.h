@@ -22,17 +22,7 @@ namespace solarflare
     /// @brief The root class for all managed objects.
     class SystemElement {
         String descr;
-    protected:
-        /// @return a helper instance to work with CIM instances of class @p cls.
-        /// @retval NULL if a given SystemElement is not compatible with a given CIM class
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& cls) const { return NULL; }
-
-        /// @return a helper instance to work with CIM associations of class
-        /// @p assoc, linking @p from and @p to
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& from,
-                                             const cimple::Meta_Class& assoc,
-                                             const cimple::Meta_Class& to) const { return cimDispatch(assoc); }
-     public:
+    public:
         SystemElement(const String& d) :
             descr(d) {}
         virtual ~SystemElement() {}
@@ -63,12 +53,10 @@ namespace solarflare
         /// (like. 'Ethernet Adaptor 1')
         virtual String name() const { return genericName(); }
 
-        cimple::Instance *cimInstance(const cimple::Meta_Class& cls) const;
-        cimple::Instance *cimReference(const cimple::Meta_Class& cls) const;
-        cimple::Instance *cimAssociation(const cimple::Meta_Class& from,
-                                         const cimple::Meta_Class& assoc,
-                                         const cimple::Meta_Class& to) const;
-        bool cimIsMe(const cimple::Instance& obj) const;
+        /// @return a helper instance to work with CIM instances of class @p cls.
+        /// @retval NULL if a given SystemElement is not compatible with a given CIM class
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& cls) const { return NULL; }
+        cimple::Instance *cimReference(const cimple::Meta_Class& cls, unsigned idx = 0) const;
 
         virtual Thread *embeddedThread() { return NULL; }
     };

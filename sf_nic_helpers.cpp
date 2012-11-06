@@ -15,30 +15,39 @@ namespace solarflare
 
     class NICCardHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
 
     class PortControllerHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
+
+    class NICConformsToProfile : public CIMHelper {
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
+    
 
     const CIMHelper *NIC::cimDispatch(const Meta_Class& cls) const
     {
         static const NICCardHelper nicCardHelper;
         static const PortControllerHelper ethernetPortHelper;
+        static const NICConformsToProfile conforming;
+        
         if (&cls == &SF_NICCard::static_meta_class)
             return &nicCardHelper;
         if (&cls == &SF_PortController::static_meta_class)
             return &ethernetPortHelper;
+        if (&cls == &SF_NICCard::static_meta_class)
+            return &conforming;
         return NULL;
     }
 
-    Instance *NICCardHelper::reference(const SystemElement& se) const 
+    Instance *NICCardHelper::reference(const SystemElement& se, unsigned) const 
     {
         
         SF_NICCard *card = SF_NICCard::create(true);
@@ -49,10 +58,10 @@ namespace solarflare
         return card;
     }
 
-    Instance* NICCardHelper::instance(const SystemElement& se) const
+    Instance* NICCardHelper::instance(const SystemElement& se, unsigned idx) const
     {
 
-        SF_NICCard *card = static_cast<SF_NICCard *>(reference(se));
+        SF_NICCard *card = static_cast<SF_NICCard *>(reference(se, idx));
 
         const NIC& nic = static_cast<const NIC&>(se);
         solarflare::VitalProductData vpd = nic.vitalProductData();
@@ -74,7 +83,7 @@ namespace solarflare
         return card;
     }
 
-    bool NICCardHelper::match(const SystemElement& se, const Instance &obj) const
+    bool NICCardHelper::match(const SystemElement& se, const Instance &obj, unsigned) const
     {
         const cimple::CIM_Card *card = static_cast<const cimple::CIM_Card *>(&obj);
         if (card == NULL)
@@ -86,7 +95,7 @@ namespace solarflare
     }
 
 
-    Instance *PortControllerHelper::reference(const SystemElement& nic) const 
+    Instance *PortControllerHelper::reference(const SystemElement& nic, unsigned) const 
     {
         const CIM_ComputerSystem *system = findSystem();
         SF_PortController *newPC = SF_PortController::create(true);
@@ -98,11 +107,11 @@ namespace solarflare
         return newPC;
     }
 
-    Instance *PortControllerHelper::instance(const SystemElement& se) const
+    Instance *PortControllerHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
         
-        SF_PortController *newPC = static_cast<SF_PortController *>(reference(nic));
+        SF_PortController *newPC = static_cast<SF_PortController *>(reference(nic, idx));
         ObjectCount counter;
         
         newPC->Description.set(nic.description());
@@ -132,7 +141,7 @@ namespace solarflare
         return newPC;
     }
 
-    bool PortControllerHelper::match(const SystemElement& se, const Instance &obj) const
+    bool PortControllerHelper::match(const SystemElement& se, const Instance &obj, unsigned) const
     {
         const cimple::CIM_PortController *card = static_cast<const cimple::CIM_PortController *>(&obj);
         if (card == NULL)
@@ -141,6 +150,12 @@ namespace solarflare
             card->CreationClassName.value != "SF_PortController")
             return false;
         return card->DeviceID.value == static_cast<const NIC&>(se).vitalProductData().id();
+    }
+
+    Instance *NICConformsToProfile::instance(const SystemElement &se, unsigned) const
+    {
+        return DMTFProfileInfo::PhysicalAssetProfile.                   \
+        conformingElement(se.cimReference(SF_NICCard::static_meta_class));
     }
 
 } // namespace

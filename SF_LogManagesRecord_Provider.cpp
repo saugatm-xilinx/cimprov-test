@@ -8,6 +8,7 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+#if 0
 bool SF_LogManagesRecord_Provider::Enum::process(const solarflare::LogEntry& entry)
 {
     SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
@@ -32,13 +33,16 @@ bool SF_LogManagesRecord_Provider::DiagEntryEnum::process(const solarflare::LogE
 
     return true;
 }
+#endif
 
 bool SF_LogManagesRecord_Provider::DiagEnum::process(const solarflare::SystemElement& se)
 {
+#if 0
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     
     DiagEntryEnum entries(&diag, handler);
     diag.log().forAllEntries(entries);
+#endif
     return true;
 }
 
@@ -72,6 +76,7 @@ Enum_Instances_Status SF_LogManagesRecord_Provider::enum_instances(
     const SF_LogManagesRecord* model,
     Enum_Instances_Handler<SF_LogManagesRecord>* handler)
 {
+#if 0
     for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
     {
         Enum links(solarflare::Logger::knownLogs[i], handler);
@@ -79,6 +84,7 @@ Enum_Instances_Status SF_LogManagesRecord_Provider::enum_instances(
     }
     DiagEnum diagLinks(handler);
     solarflare::System::target.forAllDiagnostics(diagLinks);
+#endif
 
     return ENUM_INSTANCES_OK;
 }

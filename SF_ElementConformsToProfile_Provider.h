@@ -11,57 +11,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ElementConformsToProfile_Provider
 {
-    static const char *const implementationNamespace;
-    static const char *const interopNamespace;
-
-    class SWEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
-    public:
-        SWEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& sw);
-    };
-
-    class PortEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
-    public:
-        PortEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& sw);
-    };
-
-    class NICEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
-    public:
-        NICEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& sw);
-    };
-
-    class IntfEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
-    public:
-        IntfEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& sw);
-    };
-
-    class DiagEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_ElementConformsToProfile>* handler;
-    public:
-        DiagEnum(Enum_Instances_Handler<SF_ElementConformsToProfile>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& sw);
-    };
-
-    static SF_ElementConformsToProfile *makeLink(const SF_RegisteredProfile_Provider::DMTFProfileInfo &profile,
-                                                 Instance *obj);
-        
 public:
 
     typedef SF_ElementConformsToProfile Class;

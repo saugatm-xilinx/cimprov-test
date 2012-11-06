@@ -22,28 +22,33 @@ namespace solarflare
 
     class EthernetPortHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
 
     class LANEndpointHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
 
     class ConnectorRealizesPortHelper : public CIMHelper {
     public:
-        virtual Instance *instance(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
     };
 
     class ControlledByHelper : public CIMHelper {
     public:
-        virtual Instance *instance(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
     };
 
+    class PortConformsToProfile : public CIMHelper {
+        // Host LAN Port + Ethernet Port
+        virtual unsigned nObjects(const SystemElement&) const { return 2; }
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
 
 
     const CIMHelper* Interface::cimDispatch(const Meta_Class& cls) const
@@ -63,7 +68,7 @@ namespace solarflare
         return NULL;
     }
 
-    Instance *EthernetPortHelper::reference(const SystemElement& se) const
+    Instance *EthernetPortHelper::reference(const SystemElement& se, unsigned) const
     {
         const Interface& intf = static_cast<const Interface&>(se);
         const CIM_ComputerSystem *system = findSystem();
@@ -77,11 +82,11 @@ namespace solarflare
     }
 
 
-    Instance *EthernetPortHelper::instance(const solarflare::SystemElement& se) const 
+    Instance *EthernetPortHelper::instance(const solarflare::SystemElement& se, unsigned idx) const 
     {
         const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     
-        SF_EthernetPort *newPort = static_cast<SF_EthernetPort *>(reference(intf));
+        SF_EthernetPort *newPort = static_cast<SF_EthernetPort *>(reference(intf, idx));
 
         newPort->Description.set(intf.description());
         newPort->ElementName.set(intf.ifName());
@@ -139,7 +144,7 @@ namespace solarflare
         return newPort;
     }
 
-    bool EthernetPortHelper::match(const SystemElement& se, const Instance &obj) const
+    bool EthernetPortHelper::match(const SystemElement& se, const Instance &obj, unsigned) const
     {
         const cimple::CIM_EthernetPort *eth = cast<const cimple::CIM_EthernetPort *>(&obj);
         if (eth == NULL)
@@ -156,7 +161,7 @@ namespace solarflare
     }
 
 
-    Instance *LANEndpointHelper::reference(const SystemElement& se) const
+    Instance *LANEndpointHelper::reference(const SystemElement& se, unsigned) const
     {
         const Interface& intf = static_cast<const Interface&>(se);
         const CIM_ComputerSystem *system = findSystem();
@@ -170,11 +175,11 @@ namespace solarflare
     }
 
 
-    Instance *LANEndpointHelper::instance(const solarflare::SystemElement& se) const
+    Instance *LANEndpointHelper::instance(const solarflare::SystemElement& se, unsigned idx) const
     {
         const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
         
-        SF_LANEndpoint *newEP = static_cast<SF_LANEndpoint *>(reference(intf));
+        SF_LANEndpoint *newEP = static_cast<SF_LANEndpoint *>(reference(intf, idx));
 
         newEP->Description.set(intf.description());
         newEP->ElementName.set(intf.ifName());
@@ -193,7 +198,7 @@ namespace solarflare
         return newEP;
     }
 
-    bool LANEndpointHelper::match(const SystemElement& se, const Instance &obj) const
+    bool LANEndpointHelper::match(const SystemElement& se, const Instance &obj, unsigned) const
     {
         const cimple::CIM_LANEndpoint *lan = cast<const cimple::CIM_LANEndpoint *>(&obj);
         if (lan == NULL)
@@ -210,7 +215,7 @@ namespace solarflare
     }
 
 
-    Instance *ConnectorRealizesPortHelper::instance(const SystemElement& se) const
+    Instance *ConnectorRealizesPortHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
     
@@ -230,7 +235,7 @@ namespace solarflare
         
     }
 
-    Instance *ControlledByHelper::instance(const solarflare::SystemElement& se) const
+    Instance *ControlledByHelper::instance(const solarflare::SystemElement& se, unsigned) const
     {
         const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
         SF_ControlledBy *link = SF_ControlledBy::create(true);
@@ -238,6 +243,21 @@ namespace solarflare
         link->Dependent = cast<cimple::CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
         link->Antecedent = cast<cimple::CIM_Controller *>(intf.nic()->cimReference(SF_PortController::static_meta_class));
         return link;
+    }
+
+    Instance *PortConformsToProfile::instance(const SystemElement &se, unsigned idx) const
+    {
+        switch (idx)
+        {
+            case 0:
+                return DMTFProfileInfo::HostLANNetworkPortProfile.           \
+                conformingElement(se.cimReference(SF_EthernetPort::static_meta_class));
+            case 1:
+                return DMTFProfileInfo::EthernetPortProfile.           \
+                conformingElement(se.cimReference(SF_EthernetPort::static_meta_class));
+            default:
+                return NULL;
+        }
     }
 
 

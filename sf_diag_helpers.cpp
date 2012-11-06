@@ -6,6 +6,8 @@
 #include "SF_PortController.h"
 #include "SF_NICCard.h"
 #include "SF_DiagnosticLog.h"
+#include "SF_DiagnosticCompletionRecord.h"
+#include "SF_ElementConformsToProfile.h"
 
 namespace solarflare 
 {
@@ -21,20 +23,32 @@ namespace solarflare
     using cimple::SF_PortController;
     using cimple::SF_NICCard;
     using cimple::SF_AvailableDiagnosticService;
+    using cimple::SF_ElementConformsToProfile;
+    using cimple::SF_DiagnosticCompletionRecord;
 
     class DiagnosticTestHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
 
     class DiagnosticLogHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
+
+    class DiagnosticCompletionRecordHelper : public CIMHelper {
+        static String recordID(const String&, const String&, unsigned);
+    public:
+        virtual unsigned nObjects(const SystemElement& obj) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
+    };
+
 
     class DiagnosticJobHelper : public ConcreteJobAbstractHelper {
     protected:
@@ -43,12 +57,17 @@ namespace solarflare
 
 
     class AffectedJobElementHelper : public CIMHelper {
-        virtual Instance *instance(const SystemElement &se) const;
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
 
 
     class AvailableDiagnosticServiceHelper : public CIMHelper {
-        virtual Instance *instance(const SystemElement &se) const;
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
+
+    class DiagnosticConformsToProfile : public CIMHelper {
+        virtual unsigned nObjects(const SystemElement &se) const;
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
     
     const CIMHelper* Diagnostic::cimDispatch(const Meta_Class& cls) const
@@ -58,6 +77,8 @@ namespace solarflare
         static const DiagnosticLogHelper diagnosticLog;
         static const AffectedJobElementHelper affectedJobElement;
         static const AvailableDiagnosticServiceHelper availableDiagnosticService;
+        static const DiagnosticCompletionRecordHelper diagnosticCompletionRecord;
+        static const DiagnosticConformsToProfile conforming;
 
         if (&cls == &SF_DiagnosticTest::static_meta_class)
             return &diagnosticTest;
@@ -72,10 +93,15 @@ namespace solarflare
             if (&cls == &SF_AffectedJobElement::static_meta_class)
                 return &affectedJobElement;
         }
+        if (&cls == &SF_DiagnosticCompletionRecord::static_meta_class)
+            return &diagnosticCompletionRecord;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
+            return &conforming;
+        
         return NULL;
     }
 
-    Instance *DiagnosticTestHelper::reference(const SystemElement& se) const
+    Instance *DiagnosticTestHelper::reference(const SystemElement& se, unsigned) const
     {
         const Diagnostic& diag = static_cast<const Diagnostic&>(se);
         const CIM_ComputerSystem *system = findSystem();
@@ -89,11 +115,11 @@ namespace solarflare
         return newSvc;
     }
 
-    Instance *DiagnosticTestHelper::instance(const solarflare::SystemElement& se) const 
+    Instance *DiagnosticTestHelper::instance(const solarflare::SystemElement& se, unsigned idx) const 
     {
         const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     
-        SF_DiagnosticTest *newSvc = static_cast<SF_DiagnosticTest *>(reference(diag));
+        SF_DiagnosticTest *newSvc = static_cast<SF_DiagnosticTest *>(reference(diag, idx));
 
         newSvc->Description.set(diag.description());
         newSvc->ElementName.set(diag.name());
@@ -128,7 +154,7 @@ namespace solarflare
     }
 
 
-    bool DiagnosticTestHelper::match(const SystemElement& se, const Instance& inst) const
+    bool DiagnosticTestHelper::match(const SystemElement& se, const Instance& inst, unsigned) const
     {
         const cimple::CIM_DiagnosticTest *test = cast<const cimple::CIM_DiagnosticTest *>(&inst);
         
@@ -146,7 +172,7 @@ namespace solarflare
     }
     
 
-    Instance *DiagnosticLogHelper::reference(const SystemElement& se) const
+    Instance *DiagnosticLogHelper::reference(const SystemElement& se, unsigned) const
     {
         SF_DiagnosticLog *newLog = SF_DiagnosticLog::create(true);
         
@@ -157,10 +183,10 @@ namespace solarflare
         return newLog;
     }
 
-    Instance *DiagnosticLogHelper::instance(const SystemElement& se) const
+    Instance *DiagnosticLogHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const Diagnostic& diag = static_cast<const Diagnostic&>(se);
-        SF_DiagnosticLog *newLog = static_cast<SF_DiagnosticLog *>(reference(diag));
+        SF_DiagnosticLog *newLog = static_cast<SF_DiagnosticLog *>(reference(diag, idx));
         
         newLog->Name.set(se.name());
         newLog->Name.value.append(" ");
@@ -189,7 +215,7 @@ namespace solarflare
         return newLog;
     }
 
-    bool DiagnosticLogHelper::match(const SystemElement& se, const Instance& inst) const
+    bool DiagnosticLogHelper::match(const SystemElement& se, const Instance& inst, unsigned) const
     {
         const Diagnostic& diag = static_cast<const Diagnostic&>(se);
         const cimple::CIM_DiagnosticLog *log = cast<const cimple::CIM_DiagnosticLog *>(&inst);
@@ -204,7 +230,7 @@ namespace solarflare
         return id == log->InstanceID.value;
     }
 
-    Instance *AffectedJobElementHelper::instance(const SystemElement& se) const
+    Instance *AffectedJobElementHelper::instance(const SystemElement& se, unsigned) const
     {
         const Diagnostic& diag = static_cast<const Diagnostic&>(se);
     
@@ -221,7 +247,7 @@ namespace solarflare
         return link;
     }
 
-    Instance *AvailableDiagnosticServiceHelper::instance(const solarflare::SystemElement& se) const
+    Instance *AvailableDiagnosticServiceHelper::instance(const SystemElement& se, unsigned) const
     {
         const Diagnostic& diag = static_cast<const Diagnostic&>(se);
         SF_AvailableDiagnosticService *link = SF_AvailableDiagnosticService::create(true);
@@ -232,5 +258,118 @@ namespace solarflare
         return link;
     }
 
+    unsigned DiagnosticCompletionRecordHelper::nObjects(const SystemElement& se) const
+    {
+        return static_cast<const Diagnostic&>(se).log().currentSize();
+    }
 
+    String
+    DiagnosticCompletionRecordHelper::recordID(const String& d, const String& s, unsigned idx)
+    {
+        Buffer buf;
+        buf.appends(CIMHelper::instanceID(d).c_str());
+        buf.append(' ');
+        buf.appends(s.c_str());
+        buf.append('#');
+        buf.append_uint64(idx);
+        return buf.data();
+    }
+
+    Instance *
+    DiagnosticCompletionRecordHelper::reference(const SystemElement& se, unsigned idx) const
+    {
+        SF_DiagnosticCompletionRecord *l = SF_DiagnosticCompletionRecord::create(true);
+        const Diagnostic& diag = static_cast<const Diagnostic&>(se);
+        const Logger& log = diag.log();
+    
+        l->InstanceID.set(recordID(diag.name(), log.description(), idx));
+        return l;
+    }
+    
+    Instance *
+    DiagnosticCompletionRecordHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        static unsigned const severityMap[] = {
+            SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Fatal_NonRecoverable,
+            SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Major,
+            SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Minor,
+            SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
+            SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
+        };
+        
+        char id[32];
+        SF_DiagnosticCompletionRecord *le = static_cast<SF_DiagnosticCompletionRecord *>(reference(se, idx));
+        const Diagnostic& diag = static_cast<const Diagnostic&>(se);
+        const Logger& log = diag.log();
+        LogEntry entry = log.get(idx);
+        
+        le->RecordFormat.set("");
+        le->RecordData.set(entry.message());
+        le->CreationTimeStamp.set(entry.stamp());
+        le->ServiceName.set(diag.name());
+        le->ManagedElementName.set(diag.nic()->name());
+        le->ExpirationDate.set(Datetime::now());
+        le->RecordType.null = false;
+        le->RecordType.value = SF_DiagnosticCompletionRecord::_RecordType::enum_Results;
+        
+        le->PerceivedSeverity.null = false;
+        le->PerceivedSeverity.value = severityMap[entry.severity()];
+        
+        le->LoopsPassed.set(entry.passed());
+        le->LoopsFailed.set(entry.failed());
+        sprintf(id, "%8.8x", entry.error());
+        le->ErrorCode.null = false;
+        le->ErrorCode.value.append(String(id));
+        le->ErrorCount.null = false;
+        le->CompletionState.null = false;
+        if (entry.error() != 0 || entry.failed() != 0)
+        {
+            le->ErrorCount.value.append(entry.failed() ? entry.failed() : 1);
+            le->CompletionState.value = SF_DiagnosticCompletionRecord::_CompletionState::enum_Failed;
+        }
+        else
+        {
+            le->ErrorCount.value.append(0);
+            le->CompletionState.value = SF_DiagnosticCompletionRecord::_CompletionState::enum_OK;
+        }
+        
+        return le;
+    }
+
+    bool
+    DiagnosticCompletionRecordHelper::match(const SystemElement& se, const Instance& inst, unsigned idx) const 
+    {
+        const cimple::CIM_DiagnosticCompletionRecord *l = cast<const cimple::CIM_DiagnosticCompletionRecord *>(&inst);
+        const Diagnostic& diag = static_cast<const Diagnostic &>(se);
+        const Logger& log = diag.log();
+
+        if (l == NULL)
+            return false;
+        
+        if (l->InstanceID.null)
+            return false;
+        
+        return l->InstanceID.value == recordID(diag.name(), log.description(), idx);
+    }
+
+    unsigned DiagnosticConformsToProfile::nObjects(const SystemElement &se) const
+    {
+        return CIMHelper::nObjects(se) + (se.cimDispatch(SF_ConcreteJob::static_meta_class) != NULL);
+    }
+    
+    Instance *DiagnosticConformsToProfile::instance(const SystemElement &se, unsigned idx) const
+    {
+        switch (idx)
+        {
+            case 0:
+                return DMTFProfileInfo::DiagnosticsProfile.          \
+                conformingElement(se.cimReference(SF_DiagnosticTest::static_meta_class));
+            case 1:
+                return DMTFProfileInfo::JobControlProfile.              \
+                conformingElement(se.cimReference(SF_ConcreteJob::static_meta_class));
+            default:
+                return NULL;
+        }
+    }
+    
 } // namespace

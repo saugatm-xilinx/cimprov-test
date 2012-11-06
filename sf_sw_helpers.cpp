@@ -4,6 +4,7 @@
 #include "SF_BundleComponent.h"
 #include "SF_ConcreteJob.h"
 #include "CIM_OperatingSystem.h"
+#include "SF_ElementConformsToProfile.h"
 
 namespace solarflare 
 {
@@ -19,19 +20,20 @@ namespace solarflare
     using cimple::SF_ConcreteJob;
     using cimple::SF_BundleComponent;
     using cimple::CIM_ManagedElement;
+    using cimple::SF_ElementConformsToProfile;
 
     class SoftwareIdentityHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned idx) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned idx) const;
     };
 
     class SoftwareInstallationServiceHelper : public CIMHelper {
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned idx) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned idx) const;
     };
 
     class InstallationJobHelper : public ConcreteJobAbstractHelper {
@@ -42,17 +44,31 @@ namespace solarflare
         }
     };
 
+    class SWConformsToProfileHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
+
+    class InstallableConformsToProfileHelper : public SWConformsToProfileHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement& se) const;
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
+
     const CIMHelper* SWElement::cimDispatch(const Meta_Class& cls) const
     {
         static const SoftwareIdentityHelper softwareIdentity;
+        static const SWConformsToProfileHelper conformToProfile;
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &softwareIdentity;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
+            return &conformToProfile;
         return NULL;
     }
 
 
     Instance *
-    SoftwareIdentityHelper::reference(const solarflare::SystemElement& se) const
+    SoftwareIdentityHelper::reference(const solarflare::SystemElement& se, unsigned) const
     {
         SF_SoftwareIdentity *identity = SF_SoftwareIdentity::create(true);
         identity->InstanceID.set(instanceID(se.name()));
@@ -60,11 +76,11 @@ namespace solarflare
     }
 
     Instance *
-    SoftwareIdentityHelper::instance(const SystemElement& se) const
+    SoftwareIdentityHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const SWElement& sw = static_cast<const SWElement&>(se);
         
-        SF_SoftwareIdentity *identity = static_cast<SF_SoftwareIdentity *>(reference(sw));
+        SF_SoftwareIdentity *identity = static_cast<SF_SoftwareIdentity *>(reference(sw, idx));
         static const unsigned classmap[] = {
             SF_SoftwareIdentity::_Classifications::enum_Unknown,
             SF_SoftwareIdentity::_Classifications::enum_Unknown,
@@ -109,7 +125,7 @@ namespace solarflare
     }
 
     bool
-    SoftwareIdentityHelper::match(const solarflare::SystemElement& se, const Instance& inst) const
+    SoftwareIdentityHelper::match(const solarflare::SystemElement& se, const Instance& inst, unsigned) const
     {
         if (!is_a<cimple::CIM_SoftwareIdentity>(&inst))
             return false;
@@ -121,12 +137,12 @@ namespace solarflare
     class HostSoftwareIdentityHelper : public SoftwareIdentityHelper {
         static void addTargetOS(SF_SoftwareIdentity *id);
     public:
-        virtual Instance *instance(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
     };
 
     class BundleComponentHelper : public CIMHelper {
     public:
-        virtual Instance *instance(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
     };
 
     const CIMHelper* HostSWElement::cimDispatch(const Meta_Class& cls) const
@@ -192,9 +208,9 @@ namespace solarflare
     }
     
     Instance *
-    HostSoftwareIdentityHelper::instance(const SystemElement& se) const
+    HostSoftwareIdentityHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        SF_SoftwareIdentity *id = static_cast<SF_SoftwareIdentity *>(SoftwareIdentityHelper::instance(se));
+        SF_SoftwareIdentity *id = static_cast<SF_SoftwareIdentity *>(SoftwareIdentityHelper::instance(se, idx));
         addTargetOS(id);
         return id;
     }
@@ -217,7 +233,7 @@ namespace solarflare
     }
 
     Instance *
-    BundleComponentHelper::instance(const solarflare::SystemElement& se) const
+    BundleComponentHelper::instance(const solarflare::SystemElement& se, unsigned) const
     {
         const solarflare::HostSWElement& he = static_cast<const solarflare::HostSWElement&>(se);
         
@@ -236,7 +252,7 @@ namespace solarflare
     class BundleSoftwareIdentityHelper : public HostSoftwareIdentityHelper {
         static void addPackageType(SF_SoftwareIdentity *identity, Package::PkgType type);
     public:
-        virtual Instance *instance(const SystemElement& se) const;
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
     };
 
 
@@ -245,6 +261,7 @@ namespace solarflare
         static const BundleSoftwareIdentityHelper bundleSoftwareIdentity;
         static const SoftwareInstallationServiceHelper bundleInstallation;
         static const InstallationJobHelper bundleInstallationJob;
+        static const InstallableConformsToProfileHelper conformToProfile;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &bundleInstallation;
@@ -253,6 +270,8 @@ namespace solarflare
         if (&cls == &SF_ConcreteJob::static_meta_class && 
             const_cast<Package *>(this)->installThread() != NULL)
             return &bundleInstallationJob;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
+            return &conformToProfile;
         else
             return SWElement::cimDispatch(cls);
     }
@@ -292,9 +311,9 @@ namespace solarflare
     }
 
     Instance *
-    BundleSoftwareIdentityHelper::instance(const SystemElement& se) const
+    BundleSoftwareIdentityHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        SF_SoftwareIdentity *id = static_cast<SF_SoftwareIdentity *>(HostSoftwareIdentityHelper::instance(se));
+        SF_SoftwareIdentity *id = static_cast<SF_SoftwareIdentity *>(HostSoftwareIdentityHelper::instance(se, idx));
         addPackageType(id, static_cast<const Package&>(se).type());
         return id;
     }
@@ -303,17 +322,20 @@ namespace solarflare
     {
         static const SoftwareInstallationServiceHelper firmwareInstallation;
         static const InstallationJobHelper installationJob;
+        static const InstallableConformsToProfileHelper conformToProfile;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &firmwareInstallation;
         if (&cls == &SF_ConcreteJob::static_meta_class)
             return &installationJob;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
+            return &conformToProfile;
         else
             return SWElement::cimDispatch(cls);
     }
 
 
-    Instance *SoftwareInstallationServiceHelper::reference(const SystemElement& se) const
+    Instance *SoftwareInstallationServiceHelper::reference(const SystemElement& se, unsigned idx) const
     {
         const CIM_ComputerSystem *system = findSystem();
         SF_SoftwareInstallationService *newSvc = SF_SoftwareInstallationService::create(true);
@@ -327,11 +349,11 @@ namespace solarflare
 
 
     Instance *
-    SoftwareInstallationServiceHelper::instance(const SystemElement& se) const
+    SoftwareInstallationServiceHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const SWElement& sw = static_cast<const SWElement&>(se);
     
-        SF_SoftwareInstallationService *newSvc = static_cast<SF_SoftwareInstallationService *>(reference(sw));
+        SF_SoftwareInstallationService *newSvc = static_cast<SF_SoftwareInstallationService *>(reference(sw, idx));
 
         newSvc->Description.set(sw.description());
         newSvc->ElementName.set(sw.name());
@@ -351,7 +373,7 @@ namespace solarflare
 
     bool
     SoftwareInstallationServiceHelper::match(const SystemElement& se,
-                                             const Instance& inst) const
+                                             const Instance& inst, unsigned) const
     {
         const cimple::CIM_SoftwareInstallationService *svc = cast<const cimple::CIM_SoftwareInstallationService *>(&inst);
         
@@ -369,4 +391,41 @@ namespace solarflare
 
         return svc->Name.value == se.name();
     }
+
+    Instance *
+    SWConformsToProfileHelper::instance(const SystemElement& se, unsigned) const
+    {
+        return DMTFProfileInfo::SoftwareInventoryProfile.               \
+        conformingElement(se.cimReference(SF_SoftwareIdentity::static_meta_class));
+    }
+
+    unsigned 
+    InstallableConformsToProfileHelper::nObjects(const SystemElement& se) const
+    {
+        // This is nothing magic here: an object that is installable conforms
+        // to all the profile of ordinary software (a single one as of now)
+        // + Software Update profile + Job Control profile if it has an
+        // associated thread
+        return SWConformsToProfileHelper::nObjects(se) + 1 + 
+        (se.cimDispatch(cimple::SF_ConcreteJob::static_meta_class) != NULL);
+    }
+
+    Instance *
+    InstallableConformsToProfileHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        switch (idx)
+        {
+            case 0:
+                return SWConformsToProfileHelper::instance(se, 0);
+            case 1:                
+                return DMTFProfileInfo::SoftwareUpdateProfile.          \
+                conformingElement(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
+            case 2:
+                return DMTFProfileInfo::JobControlProfile.              \
+                conformingElement(se.cimReference(SF_ConcreteJob::static_meta_class));
+            default:
+                return NULL;
+        }
+    }
+
 } // namespace

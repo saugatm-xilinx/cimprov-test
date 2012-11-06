@@ -1,8 +1,8 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
 #include "SF_ConcreteJob.h"
-#include "SF_LogEntry.h"
-#include "SF_RecordLog.h"
+#include "SF_RegisteredProfile.h"
+#include "SF_ReferencedProfile.h"
 
 namespace solarflare 
 {
@@ -12,32 +12,14 @@ namespace solarflare
     using cimple::Ref;
     using cimple::cast;
     using cimple::SF_ConcreteJob;
+    using cimple::SF_RegisteredProfile;
+    using cimple::SF_ReferencedProfile;
+    using cimple::SF_ElementConformsToProfile;
 
-    cimple::Instance *SystemElement::cimInstance(const cimple::Meta_Class& cls) const
+    cimple::Instance *SystemElement::cimReference(const cimple::Meta_Class& cls, unsigned idx) const
     {
         const CIMHelper *helper = cimDispatch(cls);
-        return helper ? helper->instance(*this) : NULL;
-    }
-
-    cimple::Instance *SystemElement::cimReference(const cimple::Meta_Class& cls) const
-    {
-        const CIMHelper *helper = cimDispatch(cls);
-        return helper ? helper->reference(*this) : NULL;
-    }
-
-    cimple::Instance *SystemElement::cimAssociation(const cimple::Meta_Class& from,
-                                                    const cimple::Meta_Class& assoc,
-                                                    const cimple::Meta_Class& to) const
-    {
-        const CIMHelper *helper = cimDispatch(from, assoc, to);
-        return helper ? helper->instance(*this) : NULL;
-    }
-
-    
-    bool SystemElement::cimIsMe(const cimple::Instance& obj) const
-    {
-        const CIMHelper *helper = cimDispatch(*obj.meta_class);
-        return helper ? helper->match(*this, obj) : false;
+        return helper ? helper->reference(*this, idx) : NULL;
     }
 
     const char CIMHelper::solarflareNS[] = "root/solarflare";
@@ -94,6 +76,26 @@ namespace solarflare
                 ourSys->Name.value == sysname);
     }
 
+    bool Lookup::process(SystemElement& se)
+    {
+        const CIMHelper *helper = se.cimDispatch(*sample->meta_class);
+        if (helper == NULL)
+            return true;
+        
+        unsigned n = helper->nObjects(se);
+            
+        for (unsigned i = 0; i < n; i++)
+        {
+            if (helper->match(se, *sample, i))
+            {
+                obj = &se;
+                idx = i;
+                return false;
+            }
+        }
+        return true;
+    }
+
     Thread *Lookup::findThread(const Instance& inst)
     {
         Lookup finder(&inst);
@@ -108,6 +110,8 @@ namespace solarflare
     SystemElement *Lookup::findAny(const Instance& inst)
     {
         Lookup finder(&inst);
+        if (!finder.process(System::target))
+            return finder.found();
         if (!System::target.forAllSoftware(finder))
             return finder.found();
         if (!System::target.forAllNICs(finder))
@@ -121,7 +125,7 @@ namespace solarflare
         return NULL;
     }
     
-    Instance *ConcreteJobAbstractHelper::reference(const SystemElement& obj) const
+    Instance *ConcreteJobAbstractHelper::reference(const SystemElement& obj, unsigned) const
     {
         SF_ConcreteJob *job = SF_ConcreteJob::create(true);
         job->InstanceID.set(instanceID(obj.name()));
@@ -130,10 +134,10 @@ namespace solarflare
         return job;
     }
 
-    Instance *ConcreteJobAbstractHelper::instance(const SystemElement& obj) const
+    Instance *ConcreteJobAbstractHelper::instance(const SystemElement& obj, unsigned idx) const
     {
         Thread *th = const_cast<SystemElement&>(obj).embeddedThread();
-        SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj));
+        SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj, idx));
     
         job->OperationalStatus.null = false;
         job->JobState.null = false;
@@ -172,7 +176,7 @@ namespace solarflare
     }
     
     bool
-    ConcreteJobAbstractHelper::match(const SystemElement& se, const Instance& inst) const
+    ConcreteJobAbstractHelper::match(const SystemElement& se, const Instance& inst, unsigned) const
     {
         const cimple::CIM_ConcreteJob *job = cast<const cimple::CIM_ConcreteJob *>(&inst);
         if (job == NULL)
@@ -188,130 +192,68 @@ namespace solarflare
         return id == job->InstanceID.value;
     }
 
-    using cimple::SF_LogEntry;
-    
-    class LogEntryHelper : public CIMLogEntryHelper {
-    public:
-        virtual cimple::Instance *instance(const SystemElement&, const Logger&, const LogEntry&) const;
-        virtual cimple::Instance *reference(const SystemElement&, const Logger&, const LogEntry& obj) const;
+    const DMTFProfileInfo DMTFProfileInfo::ProfileRegistrationProfile("Profile Registration", "1.0.0", NULL);
+    const DMTFProfileInfo *const DMTFProfileInfo::genericPrpRef[] = 
+    {&ProfileRegistrationProfile, NULL};
+    const DMTFProfileInfo DMTFProfileInfo::DiagnosticsProfile("Diagnostics", "2.0.0", genericPrpRef);
+    const DMTFProfileInfo DMTFProfileInfo::RecordLogProfile("Record Log", "2.0.0", genericPrpRef);
+    const DMTFProfileInfo DMTFProfileInfo::PhysicalAssetProfile("Physical Asset", "1.0.2", genericPrpRef);
+    const DMTFProfileInfo *const DMTFProfileInfo::hostLanPortRef[] = 
+    {&ProfileRegistrationProfile, &PhysicalAssetProfile, NULL};
+    const DMTFProfileInfo DMTFProfileInfo::HostLANNetworkPortProfile("Host LAN Network Port", "1.0.2", hostLanPortRef);
+    const DMTFProfileInfo *const DMTFProfileInfo::ethernetPortRef[] = 
+    {&ProfileRegistrationProfile, &HostLANNetworkPortProfile, NULL};
+    const DMTFProfileInfo DMTFProfileInfo::EthernetPortProfile("Ethernet Port", "1.0.1", ethernetPortRef);
+    const DMTFProfileInfo DMTFProfileInfo::SoftwareInventoryProfile("Software Inventory", "1.0.1", genericPrpRef);
+    const DMTFProfileInfo *const DMTFProfileInfo::softwareUpdateRef[] = 
+    {&ProfileRegistrationProfile, &SoftwareInventoryProfile, NULL};
+    const DMTFProfileInfo DMTFProfileInfo::SoftwareUpdateProfile("Software Update", "1.0.0", softwareUpdateRef);
+    const DMTFProfileInfo DMTFProfileInfo::JobControlProfile("Job Control", "1.0.0", genericPrpRef);
+
+    const DMTFProfileInfo * const DMTFProfileInfo::knownDMTFProfiles[] = 
+    {
+        &ProfileRegistrationProfile,
+        &DiagnosticsProfile,
+        &RecordLogProfile,
+        &PhysicalAssetProfile,
+        &EthernetPortProfile,
+        &SoftwareInventoryProfile,
+        &SoftwareUpdateProfile,
+        &HostLANNetworkPortProfile,
+        &JobControlProfile,
+        NULL
     };
-    
-    cimple::Instance *LogEntryHelper::reference(const SystemElement&, const Logger& log, const LogEntry& entry) const
+
+    String DMTFProfileInfo::profileId() const 
     {
         Buffer buf;
-        SF_LogEntry *l = SF_LogEntry::create(true);
-        
-        buf.appends(solarflare::System::target.prefix().c_str());
+        buf.appends(System::target.prefix().c_str());
         buf.append(':');
-        buf.appends(log.description());
-        buf.append('#');
-        buf.append_uint64(entry.id());
-        l->InstanceID.set(buf.data());
-        return l;
+        buf.appends("DMTF+");
+        buf.appends(name);
+        buf.append('+');
+        buf.appends(version);
+        return buf.data();
     }
-
-    cimple::Instance *LogEntryHelper::instance(const SystemElement& scope, const Logger& log, const LogEntry& entry) const
+    
+    SF_RegisteredProfile *DMTFProfileInfo::reference() const
     {
-        static unsigned const severityMap[] = {
-            SF_LogEntry::_PerceivedSeverity::enum_Fatal_NonRecoverable,
-            SF_LogEntry::_PerceivedSeverity::enum_Major,
-            SF_LogEntry::_PerceivedSeverity::enum_Minor,
-            SF_LogEntry::_PerceivedSeverity::enum_Information,
-            SF_LogEntry::_PerceivedSeverity::enum_Information,
-        };
+        SF_RegisteredProfile *newProf = SF_RegisteredProfile::create(true);
         
-        char id[17];
-        SF_LogEntry *le = static_cast<SF_LogEntry *>(reference(scope, log, entry));
-        le->LogInstanceID.set(CIMHelper::instanceID(log.description()));
-        le->LogName.set(log.description());
-        sprintf(id, "%16.16llx", entry.id());
-        le->ElementName.set(id);
-        le->RecordID.set(id);
-        le->RecordFormat.set("");
-        le->RecordData.set(entry.message());
-        le->CreationTimeStamp.set(entry.stamp());
-        le->PerceivedSeverity.null = false;
-        le->PerceivedSeverity.value = severityMap[entry.severity()];
-
-        return le;
+        newProf->InstanceID.set(profileId());
+        return newProf;
     }
 
-    const CIMLogEntryHelper *CIMLogEntryHelper::dispatch(const Meta_Class& cls)
+    SF_ElementConformsToProfile *DMTFProfileInfo::conformingElement(const Instance *obj) const
     {
-        static const LogEntryHelper logEntryHelper;
-        
-        if (&cls == &SF_LogEntry::static_meta_class)
-            return &logEntryHelper;
-        return NULL;
+        SF_ElementConformsToProfile *link = SF_ElementConformsToProfile::create(true);
+
+        link->ConformantStandard = cast<cimple::CIM_RegisteredProfile *>(reference());
+        link->ConformantStandard->__name_space = CIMHelper::interopNS;
+        link->ManagedElement = cast<cimple::CIM_ManagedElement *>(obj);
+        link->ManagedElement->__name_space = CIMHelper::solarflareNS;
+
+        return link;
     }
-
-    using cimple::SF_RecordLog;
-
-    class RecordLogHelper : public CIMLoggerHelper {
-    public:
-        virtual Instance *instance(const Logger& log) const;
-        virtual Instance *reference(const Logger& log) const;
-        virtual bool match(const Logger& log, const Instance& inst) const;
-    };
-
-
-    Instance *RecordLogHelper::reference(const Logger& log) const
-    {
-        SF_RecordLog *newLog = SF_RecordLog::create(true);
-        
-        newLog->InstanceID.set(CIMHelper::instanceID(log.description()));
-        return newLog;
-    }
-
-    Instance *RecordLogHelper::instance(const solarflare::Logger& log) const
-    {
-        SF_RecordLog *newLog = static_cast<SF_RecordLog *>(reference(log));
-
-        newLog->Name.set(log.description());
-        newLog->ElementName.set(log.description());
-        newLog->Description.set(log.description());
-        newLog->OperationalStatus.null = false;
-        newLog->OperationalStatus.value.append(SF_RecordLog::_OperationalStatus::enum_OK);
-        newLog->HealthState.null = false;
-        newLog->HealthState.value = SF_RecordLog::_HealthState::enum_OK;
-        newLog->EnabledState.null = false;
-        newLog->EnabledState.value = (log.isEnabled() ? 
-                                      SF_RecordLog::_EnabledState::enum_Enabled :
-                                      SF_RecordLog::_EnabledState::enum_Disabled);
-        newLog->RequestedState.null = false;
-        newLog->RequestedState.value = SF_RecordLog::_RequestedState::enum_No_Change;
-        newLog->LogState.null = false;
-        newLog->LogState.value = (log.isEnabled() ?
-                                  SF_RecordLog::_LogState::enum_Normal :
-                                  SF_RecordLog::_LogState::enum_Not_Applicable);
-        newLog->OverwritePolicy.null = false;
-        newLog->OverwritePolicy.value = SF_RecordLog::_OverwritePolicy::enum_Wraps_When_Full;
-        newLog->MaxNumberOfRecords.set(log.logSize());
-        newLog->CurrentNumberOfRecords.set(log.currentSize());
-        
-        return newLog;
-    }
-
-    bool RecordLogHelper::match(const Logger& log, const Instance& instance) const
-    {
-        const cimple::CIM_RecordLog *logObj = cast<const cimple::CIM_RecordLog *>(&instance);
-        if (logObj == NULL)
-            return false;
-
-        if (logObj->InstanceID.null)
-            return false;
-        
-        return CIMHelper::instanceID(log.description()) == logObj->InstanceID.value;
-    }
-
-    const CIMLoggerHelper *CIMLoggerHelper::dispatch(const Meta_Class& cls)
-    {
-        static const RecordLogHelper recordLogHelper;
-        
-        if (&cls == &SF_RecordLog::static_meta_class)
-            return &recordLogHelper;
-        return NULL;
-    }
-
     
 } // namespace

@@ -51,6 +51,7 @@ Enum_Instances_Status SF_UseOfLog_Provider::enum_instances(
     const SF_UseOfLog* model,
     Enum_Instances_Handler<SF_UseOfLog>* handler)
 {
+#if 0
     for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
     {
         SF_RecordLog *log = static_cast<SF_RecordLog *>(solarflare::CIMLoggerHelper::reference(SF_RecordLog::static_meta_class,
@@ -64,7 +65,7 @@ Enum_Instances_Status SF_UseOfLog_Provider::enum_instances(
     }
     Enum diagLogs(handler);
     solarflare::System::target.forAllDiagnostics(diagLogs);
-    
+#endif
     return ENUM_INSTANCES_OK;
 }
 

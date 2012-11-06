@@ -70,13 +70,6 @@ namespace solarflare
         void printLog() const;
     };
 
-    /// Abstract iterator of LogEntry instances
-    class LogEntryIterator {
-    public:
-        typedef LogEntry Class;
-        virtual bool process(const LogEntry& le) = 0;
-    };
-
     class Logger 
     {
         bool enabled;
@@ -116,11 +109,11 @@ namespace solarflare
                          err != 0 || nfail != 0 ? LogError : defaultLevel));
         }
 
+        /// @return @p idx 'th element in the ring buffer
+        LogEntry get(unsigned idx) const;
+
         /// Format and log a printf-style message
         void format(const char *fmt, ...);
-
-        /// Applies `iter' to all the log records inside this log
-        bool forAllEntries(LogEntryIterator& iter) const;
 
         /// @return Log description
         const char *description() const { return descr; }

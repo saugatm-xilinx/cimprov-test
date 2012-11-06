@@ -2,6 +2,7 @@
 #include "SF_PhysicalConnector.h"
 #include "SF_NICCard.h"
 #include "SF_ConnectorOnNIC.h"
+#include "SF_ElementConformsToProfile.h"
 
 namespace solarflare 
 {
@@ -13,28 +14,38 @@ namespace solarflare
     using cimple::SF_PhysicalConnector;
     using cimple::SF_ConnectorOnNIC;
     using cimple::SF_NICCard;
+    using cimple::SF_ElementConformsToProfile;
 
     class PhysicalConnectorHelper : public CIMHelper {
         String tag(const Port& p) const;
     public:
-        virtual Instance *reference(const SystemElement& obj) const;
-        virtual Instance *instance(const SystemElement&) const;
-        virtual bool match(const SystemElement& obj, const Instance& inst) const;
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+        virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
 
     class ConnectorOnNICHelper : public CIMHelper {
     public:
-        virtual Instance *instance(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
     };
+
+    class ConnectorConformsToProfile : public CIMHelper {
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
+    
 
     const CIMHelper* Port::cimDispatch(const Meta_Class& cls) const
     {
         static const PhysicalConnectorHelper physicalConnector;
         static const ConnectorOnNICHelper connectorOnNIC;
+        static const ConnectorConformsToProfile conforming;
+        
         if (&cls == &SF_PhysicalConnector::static_meta_class)
             return &physicalConnector;
         if (&cls == &SF_ConnectorOnNIC::static_meta_class)
             return &connectorOnNIC;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
+            return &conforming;
         return NULL;
     }
 
@@ -47,7 +58,7 @@ namespace solarflare
         return buf.data();
     }
 
-    Instance *PhysicalConnectorHelper::reference(const SystemElement& p) const
+    Instance *PhysicalConnectorHelper::reference(const SystemElement& p, unsigned) const
     {
         SF_PhysicalConnector *phc = SF_PhysicalConnector::create(true);
         
@@ -57,10 +68,10 @@ namespace solarflare
         return phc;
     }
 
-    Instance *PhysicalConnectorHelper::instance (const solarflare::SystemElement& se) const
+    Instance *PhysicalConnectorHelper::instance (const solarflare::SystemElement& se, unsigned idx) const
     {
         const solarflare::Port& p = static_cast<const solarflare::Port&>(se);
-        SF_PhysicalConnector *phc = static_cast<SF_PhysicalConnector *>(reference(p));
+        SF_PhysicalConnector *phc = static_cast<SF_PhysicalConnector *>(reference(p, idx));
         
         phc->InstanceID.set(instanceID(p.name()));
         phc->Name.set(p.name());
@@ -91,7 +102,7 @@ namespace solarflare
         return phc;
     }
 
-    bool PhysicalConnectorHelper::match(const SystemElement& se, const Instance &obj) const
+    bool PhysicalConnectorHelper::match(const SystemElement& se, const Instance &obj, unsigned) const
     {
         const cimple::CIM_PhysicalConnector *card = cast<const cimple::CIM_PhysicalConnector *>(&obj);
         if (card == NULL)
@@ -102,7 +113,7 @@ namespace solarflare
         return card->Tag.value == tag(static_cast<const Port&>(se));
     }
 
-    Instance *ConnectorOnNICHelper::instance(const solarflare::SystemElement& se) const
+    Instance *ConnectorOnNICHelper::instance(const solarflare::SystemElement& se, unsigned) const
     {
         const solarflare::Port& e = static_cast<const solarflare::Port&>(se);
         
@@ -113,6 +124,12 @@ namespace solarflare
         cast<cimple::CIM_PhysicalConnector *>(e.cimReference(SF_PhysicalConnector::static_meta_class));
         
         return link;
+    }
+
+    Instance *ConnectorConformsToProfile::instance(const SystemElement &se, unsigned) const
+    {
+        return DMTFProfileInfo::PhysicalAssetProfile.                   \
+        conformingElement(se.cimReference(SF_PhysicalConnector::static_meta_class));
     }
 
 } // namespace

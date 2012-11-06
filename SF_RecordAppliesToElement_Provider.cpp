@@ -5,6 +5,7 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+#if 0
 bool SF_RecordAppliesToElement_Provider::EntryEnum::process(const solarflare::LogEntry& entry)
 {
     SF_RecordAppliesToElement *link = SF_RecordAppliesToElement::create(true);
@@ -26,7 +27,7 @@ bool SF_RecordAppliesToElement_Provider::Enum::process(const solarflare::SystemE
     diag.log().forAllEntries(entries);
     return true;
 }
-
+#endif
 
 SF_RecordAppliesToElement_Provider::SF_RecordAppliesToElement_Provider()
 {
@@ -57,8 +58,10 @@ Enum_Instances_Status SF_RecordAppliesToElement_Provider::enum_instances(
     const SF_RecordAppliesToElement* model,
     Enum_Instances_Handler<SF_RecordAppliesToElement>* handler)
 {
+#if 0
     Enum links(handler);
     solarflare::System::target.forAllDiagnostics(links);
+#endif
     
     return ENUM_INSTANCES_OK;
 }

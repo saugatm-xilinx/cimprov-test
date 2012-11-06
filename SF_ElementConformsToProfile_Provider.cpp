@@ -13,90 +13,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-const char * const SF_ElementConformsToProfile_Provider::implementationNamespace = "root/solarflare";
-const char * const SF_ElementConformsToProfile_Provider::interopNamespace = "root/pg_interop";
-
-SF_ElementConformsToProfile *SF_ElementConformsToProfile_Provider::makeLink(const SF_RegisteredProfile_Provider::DMTFProfileInfo &profile,
-                                                                            Instance *obj)
-{
-    SF_ElementConformsToProfile *link = SF_ElementConformsToProfile::create(true);
-
-    link->ConformantStandard = cast<CIM_RegisteredProfile *>(SF_RegisteredProfile_Provider::makeReference(profile));
-    link->ConformantStandard->__name_space = interopNamespace;
-    link->ManagedElement = cast<CIM_ManagedElement *>(obj);
-    link->ManagedElement->__name_space = implementationNamespace;
-
-    return link;
-}
-
-bool SF_ElementConformsToProfile_Provider::SWEnum::process(const solarflare::SystemElement &se)
-{
-    const solarflare::SWElement &sw = static_cast<const solarflare::SWElement &>(se);
-    handler->handle(makeLink(SF_RegisteredProfile_Provider::SoftwareInventoryProfile, 
-                             sw.cimReference(SF_SoftwareIdentity::static_meta_class)));
-    
-    switch (sw.classify())
-    {
-        case solarflare::SWElement::SWFirmware:
-        case solarflare::SWElement::SWPackage:
-            handler->handle(makeLink(SF_RegisteredProfile_Provider::SoftwareUpdateProfile, 
-                                     sw.cimReference(SF_SoftwareInstallationService::static_meta_class)));
-            if (const_cast<solarflare::SWElement&>(sw).installThread())
-            {
-                handler->handle(makeLink(SF_RegisteredProfile_Provider::JobControlProfile, 
-                                         sw.cimReference(SF_ConcreteJob::static_meta_class)));
-            }
-            break;
-        default:
-            /* do nothing */
-            break;
-    }
-    return true;
-}
-
-bool SF_ElementConformsToProfile_Provider::DiagEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Diagnostic &diag = static_cast<const solarflare::Diagnostic &>(se);
-    handler->handle(makeLink(SF_RegisteredProfile_Provider::DiagnosticsProfile, 
-                             diag.cimReference(SF_DiagnosticTest::static_meta_class)));
-    if (const_cast<solarflare::Diagnostic&>(diag).asyncThread())
-    {
-        handler->handle(makeLink(SF_RegisteredProfile_Provider::JobControlProfile, 
-                                 diag.cimReference(SF_DiagnosticTest::static_meta_class)));
-    }
-    return true;
-}
-
-
-bool SF_ElementConformsToProfile_Provider::NICEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::NIC &nic = static_cast<const solarflare::NIC &>(se);
-    handler->handle(makeLink(SF_RegisteredProfile_Provider::PhysicalAssetProfile, 
-                             nic.cimReference(SF_NICCard::static_meta_class)));
-    return true;
-}
-
-
-bool SF_ElementConformsToProfile_Provider::PortEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Port &port = static_cast<const solarflare::Port &>(se);
-    handler->handle(makeLink(SF_RegisteredProfile_Provider::PhysicalAssetProfile, 
-                             port.cimReference(SF_PhysicalConnector::static_meta_class)));
-    return true;
-}
-
-
-bool SF_ElementConformsToProfile_Provider::IntfEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Interface &intf = static_cast<const solarflare::Interface &>(se);
-    handler->handle(makeLink(SF_RegisteredProfile_Provider::EthernetPortProfile, 
-                             intf.cimReference(SF_EthernetPort::static_meta_class)));
-    handler->handle(makeLink(SF_RegisteredProfile_Provider::HostLANNetworkPortProfile, 
-                             intf.cimReference(SF_EthernetPort::static_meta_class)));
-    return true;
-}
-
-
 SF_ElementConformsToProfile_Provider::SF_ElementConformsToProfile_Provider()
 {
 }
@@ -107,6 +23,7 @@ SF_ElementConformsToProfile_Provider::~SF_ElementConformsToProfile_Provider()
 
 Load_Status SF_ElementConformsToProfile_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -126,24 +43,7 @@ Enum_Instances_Status SF_ElementConformsToProfile_Provider::enum_instances(
     const SF_ElementConformsToProfile* model,
     Enum_Instances_Handler<SF_ElementConformsToProfile>* handler)
 {
-    SWEnum swenum(handler);
-    NICEnum nicenum(handler);
-    PortEnum portenum(handler);
-    IntfEnum intfenum(handler);
-    DiagEnum denum(handler);
-    
-    solarflare::System::target.forAllSoftware(swenum);
-    solarflare::System::target.forAllNICs(nicenum);
-    solarflare::System::target.forAllPorts(portenum);
-    solarflare::System::target.forAllInterfaces(intfenum);
-    solarflare::System::target.forAllDiagnostics(denum);
-
-    for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
-    {
-        handler->handle(makeLink(SF_RegisteredProfile_Provider::RecordLogProfile,
-                                 solarflare::CIMLoggerHelper::reference(SF_RecordLog::static_meta_class,
-                                                                        *solarflare::Logger::knownLogs[i])));
-    }
+    solarflare::EnumInstances<SF_ElementConformsToProfile>::allObjects(handler);
 
     return ENUM_INSTANCES_OK;
 }

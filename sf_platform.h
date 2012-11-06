@@ -55,8 +55,6 @@ namespace solarflare
         static const unsigned maxRecordedEvents;
         /// Test result log
         Logger resultLog;
-    protected:
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///
@@ -119,6 +117,7 @@ namespace solarflare
         const Logger& log() const  { return resultLog; }
 
         virtual Thread *embeddedThread() { return asyncThread(); }
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     /// @brief Abstract class for ports. Implementors shall subclass it for
@@ -134,8 +133,6 @@ namespace solarflare
         /// fixme: may be it's better to create another hierarchy level like
         /// OrderedSystemElement.
         unsigned portIndex;
-    protected:
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///
@@ -185,6 +182,8 @@ namespace solarflare
         /// We're a port.
         virtual const String& genericName() const { return portName; }
         virtual unsigned elementId() const { return portIndex; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
             
@@ -236,8 +235,6 @@ namespace solarflare
         // Class-wide name (unrelated to OS ifname) and description.
         static const String ifGenName;
         static const char ifGenDescription[];
-    protected:
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///
@@ -273,6 +270,8 @@ namespace solarflare
         virtual void currentMAC(const MACAddress& mac) = 0;
 
         virtual const String& genericName() const { return ifGenName; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
 
@@ -320,9 +319,6 @@ namespace solarflare
         static const char nicDescription[];
         static const String nicName;
     protected:
-
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
-
         /// Create all necessary internal structures for physical ports
         /// (typically, that would imply creating instance of Port subclass
         /// and calling initialize() on it
@@ -387,6 +383,7 @@ namespace solarflare
             return forAllFw(en);
         }
 
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     /// @brief An abstract driver class.
@@ -433,7 +430,6 @@ namespace solarflare
         /// Creates internal structures representing package members
         /// (usually as instances of SWElememt subclasses)
         virtual void setupContents() = 0;
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
         /// Constructor
         ///
@@ -456,6 +452,8 @@ namespace solarflare
 
         /// Package is not host SW as it is a meta thing.
         virtual bool isHostSw() const { return false; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     /// @brief An abstract topmost class. Implementors must subclass it to
@@ -559,6 +557,9 @@ namespace solarflare
         virtual bool forAllSoftware(ElementEnumerator& en);
         
         virtual const String& genericName() const { return systemName; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
     };
 
 } // namespace

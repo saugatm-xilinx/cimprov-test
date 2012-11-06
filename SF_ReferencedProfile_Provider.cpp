@@ -33,20 +33,8 @@ Enum_Instances_Status SF_ReferencedProfile_Provider::enum_instances(
     const SF_ReferencedProfile* model,
     Enum_Instances_Handler<SF_ReferencedProfile>* handler)
 {
-    for (unsigned i = 0; SF_RegisteredProfile_Provider::knownDMTFProfiles[i] != NULL; i++)
-    {
-        if (SF_RegisteredProfile_Provider::knownDMTFProfiles[i]->referenced != NULL)
-        {
-            for (unsigned j = 0; SF_RegisteredProfile_Provider::knownDMTFProfiles[i]->referenced[j] != NULL; j++)
-            {
-                SF_ReferencedProfile *prof = SF_ReferencedProfile::create(true);
-                
-                prof->Dependent = cast<CIM_RegisteredProfile *>(SF_RegisteredProfile_Provider::makeReference(*SF_RegisteredProfile_Provider::knownDMTFProfiles[i]));
-                prof->Antecedent = cast<CIM_RegisteredProfile *>(SF_RegisteredProfile_Provider::makeReference(*SF_RegisteredProfile_Provider::knownDMTFProfiles[i]->referenced[j]));
-                handler->handle(prof);
-            }
-        }
-    }
+    solarflare::EnumInstances<SF_ReferencedProfile>::topmost(handler);
+
     return ENUM_INSTANCES_OK;
 }
 

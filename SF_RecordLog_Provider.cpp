@@ -34,7 +34,7 @@ Enum_Instances_Status SF_RecordLog_Provider::enum_instances(
     const SF_RecordLog* model,
     Enum_Instances_Handler<SF_RecordLog>* handler)
 {
-    solarflare::CIMLoggerHelper::allLogs<SF_RecordLog>(handler);
+    solarflare::EnumInstances<SF_RecordLog>::topmost(handler);
     return ENUM_INSTANCES_OK;
 }
 
@@ -64,6 +64,7 @@ Invoke_Method_Status SF_RecordLog_Provider::RequestStateChange(
     const Property<Datetime>& TimeoutPeriod,
     Property<uint32>& return_value)
 {
+#if 0
     /// CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
     {
@@ -103,6 +104,7 @@ Invoke_Method_Status SF_RecordLog_Provider::RequestStateChange(
                 return_value.set(InvalidParameter);
         }
     }
+#endif
     return INVOKE_METHOD_OK;
 }
 
@@ -110,6 +112,7 @@ Invoke_Method_Status SF_RecordLog_Provider::ClearLog(
     const SF_RecordLog* self,
     Property<uint32>& return_value)
 {
+#if 0
     solarflare::Logger *log = solarflare::CIMLoggerHelper::find(*self);
     if (log == NULL)
         return_value.set(2); // Error
@@ -118,6 +121,7 @@ Invoke_Method_Status SF_RecordLog_Provider::ClearLog(
         log->clear();
         return_value.set(0); // OK
     }
+#endif
     return INVOKE_METHOD_OK;
 }
 
