@@ -8,95 +8,10 @@
 #include "SF_EnabledLogicalElementCapabilities_Provider.h"
 #include "SF_DiagnosticServiceCapabilities_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ElementCapabilities_Provider::NICEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
-    SF_PortController *pc = static_cast<SF_PortController *>(nic.cimReference(SF_PortController::static_meta_class));
-    SF_EnabledLogicalElementCapabilities *caps = static_cast<SF_EnabledLogicalElementCapabilities *>(nic.cimReference(SF_EnabledLogicalElementCapabilities::static_meta_class));
-    SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
-
-    link->ManagedElement = cast<CIM_ManagedElement *>(pc);
-    link->Capabilities = cast<CIM_Capabilities *>(caps);
-    link->Characteristics.null = false;
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(link);
-    return true;
-}
-
-bool SF_ElementCapabilities_Provider::DiagEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-    SF_DiagnosticTest *test = static_cast<SF_DiagnosticTest *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
-    SF_DiagnosticServiceCapabilities *caps = static_cast<SF_DiagnosticServiceCapabilities *>(diag.cimReference(SF_DiagnosticServiceCapabilities::static_meta_class));
-    SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
-
-    link->ManagedElement = cast<CIM_ManagedElement *>(test);
-    link->Capabilities = cast<CIM_Capabilities *>(caps);
-    link->Characteristics.null = false;
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(link);
-    return true;
-}
-
-
-bool SF_ElementCapabilities_Provider::IntfEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Interface& nic = static_cast<const solarflare::Interface&>(se);
-
-    SF_EthernetPort *port = static_cast<SF_EthernetPort *>(nic.cimReference(SF_EthernetPort::static_meta_class));
-    SF_LANEndpoint *endpoint = static_cast<SF_LANEndpoint *>(nic.cimReference(SF_LANEndpoint::static_meta_class));
-    SF_EnabledLogicalElementCapabilities *pcaps = static_cast<SF_EnabledLogicalElementCapabilities *>(nic.cimReference(SF_EnabledLogicalElementCapabilities::static_meta_class, 0));
-    SF_EnabledLogicalElementCapabilities *epcaps = static_cast<SF_EnabledLogicalElementCapabilities *>(nic.cimReference(SF_EnabledLogicalElementCapabilities::static_meta_class, 1));
-    
-    SF_ElementCapabilities *plink = SF_ElementCapabilities::create(true);
-    SF_ElementCapabilities *eplink = SF_ElementCapabilities::create(true);
-
-    plink->ManagedElement = cast<CIM_ManagedElement *>(port);
-    plink->Capabilities = cast<CIM_Capabilities *>(pcaps);
-    plink->Characteristics.null = false;
-    plink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    plink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(plink);
-    eplink->ManagedElement = cast<CIM_ManagedElement *>(endpoint);
-    eplink->Capabilities = cast<CIM_Capabilities *>(epcaps);
-    eplink->Characteristics.null = false;
-    eplink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    eplink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(eplink);
-    return true;
-}
-
-bool SF_ElementCapabilities_Provider::SWEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::SWElement& sw = static_cast<const solarflare::SWElement&>(se);
-    switch (sw.classify())
-    {
-        case solarflare::SWElement::SWFirmware:
-        case solarflare::SWElement::SWPackage:
-            /* acceptable, do nothing here */
-            break;
-        default:
-            return true;
-    }
-    SF_SoftwareInstallationService *svc = 
-    static_cast<SF_SoftwareInstallationService *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
-    SF_SoftwareInstallationServiceCapabilities *caps =
-    static_cast<SF_SoftwareInstallationServiceCapabilities *>(sw.cimReference(SF_SoftwareInstallationServiceCapabilities::static_meta_class));
-    SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
-    
-    link->ManagedElement = cast<CIM_ManagedElement *>(svc);
-    link->Capabilities = cast<CIM_Capabilities *>(caps);
-    link->Characteristics.null = false;
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(link);
-    return true;
-}
 
 SF_ElementCapabilities_Provider::SF_ElementCapabilities_Provider()
 {
@@ -108,7 +23,7 @@ SF_ElementCapabilities_Provider::~SF_ElementCapabilities_Provider()
 
 Load_Status SF_ElementCapabilities_Provider::load()
 {
-    solarflare::System::target.initialize();
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -128,15 +43,7 @@ Enum_Instances_Status SF_ElementCapabilities_Provider::enum_instances(
     const SF_ElementCapabilities* model,
     Enum_Instances_Handler<SF_ElementCapabilities>* handler)
 {
-    NICEnum niclinks(handler);
-    IntfEnum intflinks(handler);
-    SWEnum swlinks(handler);
-    DiagEnum dlinks(handler);
-    
-    solarflare::System::target.forAllNICs(niclinks);
-    solarflare::System::target.forAllInterfaces(intflinks);
-    solarflare::System::target.forAllSoftware(swlinks);
-    solarflare::System::target.forAllDiagnostics(dlinks);
+    solarflare::EnumInstances<SF_ElementCapabilities>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 

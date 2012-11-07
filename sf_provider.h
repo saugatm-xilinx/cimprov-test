@@ -202,6 +202,16 @@ namespace solarflare
         virtual cimple::Instance *instance(const SystemElement&, unsigned idx) const;
     };
 
+    class ElementCapabilitiesHelper : public CIMHelper {
+        const cimple::Meta_Class& elementClass;
+        const cimple::Meta_Class& capsClass;
+    public:
+        ElementCapabilitiesHelper(const cimple::Meta_Class& ec,
+                                  const cimple::Meta_Class& cc) :
+            elementClass(ec), capsClass(cc) {}
+        virtual cimple::Instance *instance(const SystemElement&, unsigned idx) const;
+    };
+
     class DMTFProfileInfo {
         const char *name;
         const char *version;

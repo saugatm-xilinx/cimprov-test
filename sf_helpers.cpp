@@ -2,6 +2,7 @@
 #include "CIM_ComputerSystem.h"
 #include "SF_ConcreteJob.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
+#include "SF_ElementCapabilities.h"
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 
@@ -14,6 +15,7 @@ namespace solarflare
     using cimple::cast;
     using cimple::SF_ConcreteJob;
     using cimple::SF_EnabledLogicalElementCapabilities;
+    using cimple::SF_ElementCapabilities;
     using cimple::SF_RegisteredProfile;
     using cimple::SF_ReferencedProfile;
     using cimple::SF_ElementConformsToProfile;
@@ -224,6 +226,20 @@ namespace solarflare
             caps->RequestedStatesSupported.value.append(states, sizeof(states) / sizeof(*states));
         }
         return caps;
+    }
+
+    Instance *
+    ElementCapabilitiesHelper::instance(const SystemElement& el, unsigned) const
+    {
+        SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
+        
+        link->ManagedElement = cast<cimple::CIM_ManagedElement *>(el.cimReference(elementClass));
+        link->Capabilities = cast<cimple::CIM_Capabilities *>(el.cimReference(capsClass));
+        link->Characteristics.null = false;
+        link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
+        link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
+
+        return link;
     }
 
     const DMTFProfileInfo DMTFProfileInfo::ProfileRegistrationProfile("Profile Registration", "1.0.0", NULL);

@@ -12,6 +12,7 @@
 #include "SF_ElementConformsToProfile.h"
 #include "SF_RecordAppliesToElement.h"
 #include "SF_DiagnosticServiceCapabilities.h"
+#include "SF_ElementCapabilities.h"
 
 namespace solarflare 
 {
@@ -33,6 +34,7 @@ namespace solarflare
     using cimple::SF_LogManagesRecord;
     using cimple::SF_RecordAppliesToElement;
     using cimple::SF_DiagnosticServiceCapabilities;
+    using cimple::SF_ElementCapabilities;
 
     class DiagnosticTestHelper : public CIMHelper {
     public:
@@ -114,6 +116,8 @@ namespace solarflare
         static const DiagnosticCompletionRecordHelper diagnosticCompletionRecord;
         static const DiagnosticConformsToProfile conforming;
         static const DiagnosticServiceCapabilitiesHelper serviceCaps;
+        static const ElementCapabilitiesHelper capsLink(SF_DiagnosticTest::static_meta_class,
+                                                        SF_DiagnosticServiceCapabilities::static_meta_class);
 
         if (&cls == &SF_DiagnosticTest::static_meta_class)
             return &diagnosticTest;
@@ -138,6 +142,8 @@ namespace solarflare
             return &recordAppliesToElement;
         if (&cls == &SF_DiagnosticServiceCapabilities::static_meta_class)
             return &serviceCaps;
+        if (&cls == &SF_ElementCapabilities::static_meta_class)
+            return &capsLink;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conforming;
         

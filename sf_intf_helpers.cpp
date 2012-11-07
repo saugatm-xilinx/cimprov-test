@@ -6,6 +6,7 @@
 #include "SF_PortController.h"
 #include "SF_ControlledBy.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
+#include "SF_ElementCapabilities.h"
 #include "SF_ElementConformsToProfile.h"
 
 namespace solarflare 
@@ -22,6 +23,7 @@ namespace solarflare
     using cimple::SF_PortController;
     using cimple::SF_ControlledBy;
     using cimple::SF_EnabledLogicalElementCapabilities;
+    using cimple::SF_ElementCapabilities;
     using cimple::SF_ElementConformsToProfile;
 
     class EthernetPortHelper : public CIMHelper {
@@ -65,6 +67,20 @@ namespace solarflare
         virtual Instance *instance(const SystemElement& obj, unsigned) const;
     };
 
+    class PortAndEndpointCapsLinkHelper : public CIMHelper {
+        ElementCapabilitiesHelper portCaps;
+        ElementCapabilitiesHelper endpointCaps;
+    public:
+        PortAndEndpointCapsLinkHelper() :
+            portCaps(SF_EthernetPort::static_meta_class,
+                     SF_EnabledLogicalElementCapabilities::static_meta_class), 
+            endpointCaps(SF_LANEndpoint::static_meta_class, 
+                         SF_EnabledLogicalElementCapabilities::static_meta_class) {}
+        virtual unsigned nObjects(const SystemElement&) const { return 2; }
+        virtual Instance *instance(const SystemElement& obj, unsigned) const;
+    };
+
+
     const CIMHelper* Interface::cimDispatch(const Meta_Class& cls) const
     {
         static const EthernetPortHelper ethernetPortHelper;
@@ -72,6 +88,7 @@ namespace solarflare
         static const ConnectorRealizesPortHelper connectorRealizesPortHelper;
         static const ControlledByHelper controlledByHelper;
         static const PortAndEndpointCapabilitiesHelper capabilities;
+        static const PortAndEndpointCapsLinkHelper capsLink;
         static const PortConformsToProfile conforming;
         
         if (&cls == &SF_EthernetPort::static_meta_class)
@@ -84,6 +101,8 @@ namespace solarflare
             return &controlledByHelper;
         if (&cls == &SF_EnabledLogicalElementCapabilities::static_meta_class)
             return &capabilities;
+        if (&cls == &SF_ElementCapabilities::static_meta_class)
+            return &capsLink;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conforming;
         
@@ -281,6 +300,19 @@ namespace solarflare
     }
 
     Instance *PortAndEndpointCapabilitiesHelper::instance(const SystemElement& se, unsigned idx) const 
+    {
+        switch (idx)
+        {
+            case 0:
+                return portCaps.instance(se, 0);
+            case 1:
+                return endpointCaps.instance(se, 0);
+            default:
+                return NULL;
+        }
+    }
+
+    Instance *PortAndEndpointCapsLinkHelper::instance(const SystemElement& se, unsigned idx) const 
     {
         switch (idx)
         {

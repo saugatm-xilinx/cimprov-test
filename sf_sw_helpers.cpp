@@ -6,6 +6,7 @@
 #include "SF_ConcreteJob.h"
 #include "CIM_OperatingSystem.h"
 #include "SF_ElementConformsToProfile.h"
+#include "SF_ElementCapabilities.h"
 
 namespace solarflare 
 {
@@ -23,6 +24,7 @@ namespace solarflare
     using cimple::SF_BundleComponent;
     using cimple::CIM_ManagedElement;
     using cimple::SF_ElementConformsToProfile;
+    using cimple::SF_ElementCapabilities;
 
     class SoftwareIdentityHelper : public CIMHelper {
     public:
@@ -293,11 +295,15 @@ namespace solarflare
         static const BundleSoftwareInstallationServiceCapsHelper bundleInstallationCaps;
         static const InstallationJobHelper bundleInstallationJob;
         static const InstallableConformsToProfileHelper conformToProfile;
+        static const ElementCapabilitiesHelper capsLink(SF_SoftwareInstallationService::static_meta_class,
+                                                        SF_SoftwareInstallationServiceCapabilities::static_meta_class);
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &bundleInstallation;
         if (&cls == &SF_SoftwareInstallationServiceCapabilities::static_meta_class)
             return &bundleInstallationCaps;
+        if (&cls == &SF_ElementCapabilities::static_meta_class)
+            return &capsLink;
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &bundleSoftwareIdentity;
         if (&cls == &SF_ConcreteJob::static_meta_class && 
@@ -355,6 +361,8 @@ namespace solarflare
     {
         static const SoftwareInstallationServiceHelper firmwareInstallation;
         static const FwSoftwareInstallationServiceCapsHelper firmwareInstallationCaps;
+        static const ElementCapabilitiesHelper capsLink(SF_SoftwareInstallationService::static_meta_class,
+                                                        SF_SoftwareInstallationServiceCapabilities::static_meta_class);
         static const InstallationJobHelper installationJob;
         static const InstallableConformsToProfileHelper conformToProfile;
 
