@@ -10,13 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_UseOfLog_Provider
 {
-    class Enum : public solarflare::ConstElementEnumerator {
-        Enum_Instances_Handler<SF_UseOfLog>* handler;
-    public:
-        Enum(Enum_Instances_Handler<SF_UseOfLog>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& diag);
-    };
 public:
 
     typedef SF_UseOfLog Class;

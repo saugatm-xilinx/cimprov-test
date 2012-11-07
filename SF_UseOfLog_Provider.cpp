@@ -8,19 +8,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_UseOfLog_Provider::Enum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-    
-    SF_UseOfLog *link = SF_UseOfLog::create(true);
-
-    link->Antecedent = cast<CIM_Log *>(diag.cimReference(SF_DiagnosticLog::static_meta_class));
-    link->Dependent = cast<CIM_ManagedSystemElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
-    handler->handle(link);
-
-    return true;
-}
-
 SF_UseOfLog_Provider::SF_UseOfLog_Provider()
 {
 }
@@ -31,7 +18,7 @@ SF_UseOfLog_Provider::~SF_UseOfLog_Provider()
 
 Load_Status SF_UseOfLog_Provider::load()
 {
-    solarflare::System::target.initialize();
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -51,21 +38,7 @@ Enum_Instances_Status SF_UseOfLog_Provider::enum_instances(
     const SF_UseOfLog* model,
     Enum_Instances_Handler<SF_UseOfLog>* handler)
 {
-#if 0
-    for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
-    {
-        SF_RecordLog *log = static_cast<SF_RecordLog *>(solarflare::CIMLoggerHelper::reference(SF_RecordLog::static_meta_class,
-                                                                                               *solarflare::Logger::knownLogs[i]));
-        CIM_ComputerSystem *sys = solarflare::CIMHelper::findSystem()->clone();
-        SF_UseOfLog *link = SF_UseOfLog::create(true);
-        
-        link->Antecedent = cast<CIM_Log *>(log);
-        link->Dependent = cast<CIM_ManagedSystemElement *>(sys);
-        handler->handle(link);
-    }
-    Enum diagLogs(handler);
-    solarflare::System::target.forAllDiagnostics(diagLogs);
-#endif
+    solarflare::EnumInstances<SF_UseOfLog>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 

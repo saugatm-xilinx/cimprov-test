@@ -1,6 +1,7 @@
 #include "sf_provider.h"
 #include "SF_NICCard.h"
 #include "SF_PortController.h"
+#include "SF_EnabledLogicalElementCapabilities.h"
 
 namespace solarflare 
 {
@@ -12,6 +13,7 @@ namespace solarflare
 
     using cimple::SF_NICCard;
     using cimple::SF_PortController;
+    using cimple::SF_EnabledLogicalElementCapabilities;
 
     class NICCardHelper : public CIMHelper {
     public:
@@ -36,12 +38,15 @@ namespace solarflare
     {
         static const NICCardHelper nicCardHelper;
         static const PortControllerHelper ethernetPortHelper;
+        static const EnabledLogicalElementCapabilitiesHelper capabilities("Controller", false);
         static const NICConformsToProfile conforming;
         
         if (&cls == &SF_NICCard::static_meta_class)
             return &nicCardHelper;
         if (&cls == &SF_PortController::static_meta_class)
             return &ethernetPortHelper;
+        if (&cls == &SF_EnabledLogicalElementCapabilities::static_meta_class)
+            return &capabilities;
         if (&cls == &SF_NICCard::static_meta_class)
             return &conforming;
         return NULL;

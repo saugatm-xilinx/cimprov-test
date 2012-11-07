@@ -1,6 +1,7 @@
 #include "sf_provider.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_SoftwareInstallationService.h"
+#include "SF_SoftwareInstallationServiceCapabilities.h"
 #include "SF_BundleComponent.h"
 #include "SF_ConcreteJob.h"
 #include "CIM_OperatingSystem.h"
@@ -16,6 +17,7 @@ namespace solarflare
     using cimple::is_a;
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_SoftwareInstallationService;
+    using cimple::SF_SoftwareInstallationServiceCapabilities;
     using cimple::CIM_OperatingSystem;
     using cimple::SF_ConcreteJob;
     using cimple::SF_BundleComponent;
@@ -34,6 +36,34 @@ namespace solarflare
         virtual Instance *reference(const SystemElement& obj, unsigned idx) const;
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
         virtual bool match(const SystemElement& obj, const Instance& inst, unsigned idx) const;
+    };
+
+    class SoftwareInstallationServiceCapsHelper : public CIMHelper {
+    protected:
+        virtual const char *targetType() const = 0;
+    public:
+        virtual Instance *reference(const SystemElement& obj, unsigned idx) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+    };
+
+    class FwSoftwareInstallationServiceCapsHelper : public SoftwareInstallationServiceCapsHelper {
+    protected:
+        virtual const char *targetType() const
+        {
+            return "NIC";
+        }
+    public:
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+    };
+
+    class BundleSoftwareInstallationServiceCapsHelper : public SoftwareInstallationServiceCapsHelper {
+    protected:
+        virtual const char *targetType() const
+        {
+            return "Host";
+        }
+    public:
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
     };
 
     class InstallationJobHelper : public ConcreteJobAbstractHelper {
@@ -260,11 +290,14 @@ namespace solarflare
     {
         static const BundleSoftwareIdentityHelper bundleSoftwareIdentity;
         static const SoftwareInstallationServiceHelper bundleInstallation;
+        static const BundleSoftwareInstallationServiceCapsHelper bundleInstallationCaps;
         static const InstallationJobHelper bundleInstallationJob;
         static const InstallableConformsToProfileHelper conformToProfile;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &bundleInstallation;
+        if (&cls == &SF_SoftwareInstallationServiceCapabilities::static_meta_class)
+            return &bundleInstallationCaps;
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &bundleSoftwareIdentity;
         if (&cls == &SF_ConcreteJob::static_meta_class && 
@@ -321,11 +354,14 @@ namespace solarflare
     const CIMHelper* Firmware::cimDispatch(const Meta_Class& cls) const
     {
         static const SoftwareInstallationServiceHelper firmwareInstallation;
+        static const FwSoftwareInstallationServiceCapsHelper firmwareInstallationCaps;
         static const InstallationJobHelper installationJob;
         static const InstallableConformsToProfileHelper conformToProfile;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &firmwareInstallation;
+        if (&cls == &SF_SoftwareInstallationServiceCapabilities::static_meta_class)
+            return &firmwareInstallationCaps;
         if (&cls == &SF_ConcreteJob::static_meta_class)
             return &installationJob;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
@@ -391,6 +427,106 @@ namespace solarflare
 
         return svc->Name.value == se.name();
     }
+
+    
+    Instance *
+    SoftwareInstallationServiceCapsHelper::reference(const SystemElement& se, unsigned) const
+    {
+        SF_SoftwareInstallationServiceCapabilities *newSvc = SF_SoftwareInstallationServiceCapabilities::create(true);
+    
+        newSvc->InstanceID.set(instanceID(se.name()));
+        newSvc->InstanceID.value.append(" Installation Capabilities");
+        return newSvc;
+    }
+
+    
+    Instance *
+    SoftwareInstallationServiceCapsHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        const SWElement& sw = static_cast<const solarflare::SWElement&>(se);
+        SF_SoftwareInstallationServiceCapabilities *newSvc = 
+        static_cast<SF_SoftwareInstallationServiceCapabilities *>(reference(sw, idx));
+
+        newSvc->SupportedAsynchronousActions.null = false;
+        newSvc->SupportedAsynchronousActions.value.append(SF_SoftwareInstallationServiceCapabilities::_SupportedAsynchronousActions::enum_Install_from_URI);
+        newSvc->SupportedSynchronousActions.null = false;
+        newSvc->SupportedSynchronousActions.value.append(SF_SoftwareInstallationServiceCapabilities::_SupportedSynchronousActions::enum_Install_from_URI);
+        newSvc->SupportedTargetTypes.null = false;
+        newSvc->SupportedTargetTypes.value.append(targetType());
+
+        static const cimple::uint16 supported[] = 
+        {
+            SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Update,
+            SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Repair,
+            SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Force_installation,
+            SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Defer_target_system_reset,
+            SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Log,
+            SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_SilentMode,
+            SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_AdministrativeMode
+        };
+        newSvc->SupportedInstallOptions.null = false;
+        newSvc->SupportedInstallOptions.value.append(supported, sizeof(supported) / sizeof(*supported));
+        
+        newSvc->CanAddToCollection.set(false);
+        
+        newSvc->SupportedURISchemes.null = false;
+        newSvc->SupportedURISchemes.value.append(SF_SoftwareInstallationServiceCapabilities::_SupportedURISchemes::enum_file);
+        
+
+        return newSvc;
+    }
+
+    Instance *
+    FwSoftwareInstallationServiceCapsHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        SF_SoftwareInstallationServiceCapabilities *newSvc = 
+        static_cast<SF_SoftwareInstallationServiceCapabilities *>(SoftwareInstallationServiceCapsHelper::instance(se, idx));
+        newSvc->SupportedExtendedResourceTypes.null = false;
+        newSvc->SupportedExtendedResourceTypes.value.append(SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Other);
+        newSvc->OtherSupportedExtendedResourceTypeDescriptions.null = false;
+        newSvc->OtherSupportedExtendedResourceTypeDescriptions.value.append("Firmware image");
+        return newSvc;
+    }
+    
+    Instance *
+    BundleSoftwareInstallationServiceCapsHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        SF_SoftwareInstallationServiceCapabilities *newSvc = 
+        static_cast<SF_SoftwareInstallationServiceCapabilities *>(SoftwareInstallationServiceCapsHelper::instance(se, idx));
+        const solarflare::Package& pkg = static_cast<const solarflare::Package&>(se);
+        unsigned pkgType = 0;
+
+        switch (pkg.type())
+        {
+            case solarflare::Package::Deb:
+                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Debian_linux_Package;
+                break;
+            case solarflare::Package::RPM:
+                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Linux_RPM;
+                break;
+            case solarflare::Package::MSI:
+                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Windows_MSI;
+                break;
+            case solarflare::Package::VSphereBundle:
+                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_VMware_vSphere_Installation_Bundle;
+                break;
+            case solarflare::Package::Tarball:
+                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Other;
+                newSvc->OtherSupportedExtendedResourceTypeDescriptions.null = false;
+                newSvc->OtherSupportedExtendedResourceTypeDescriptions.value.append("TAR archive");
+                break;
+            default:
+                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Unknown;
+                break;
+        }
+        if (pkgType != 0)
+        {
+            newSvc->SupportedExtendedResourceTypes.null = false;
+            newSvc->SupportedExtendedResourceTypes.value.append(pkgType);
+        }
+        return newSvc;
+    }
+
 
     Instance *
     SWConformsToProfileHelper::instance(const SystemElement& se, unsigned) const

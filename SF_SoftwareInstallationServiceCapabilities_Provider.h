@@ -10,18 +10,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_SoftwareInstallationServiceCapabilities_Provider
 {
-    class SWEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_SoftwareInstallationServiceCapabilities>* handler;
-    public:
-        SWEnum(Enum_Instances_Handler<SF_SoftwareInstallationServiceCapabilities>* h) :
-            handler(h) {};
-        virtual bool process(const solarflare::SystemElement& sw);
-    };
-
 public:
-
-    static SF_SoftwareInstallationServiceCapabilities *makeReference(const solarflare::SWElement& ve);
 
     typedef SF_SoftwareInstallationServiceCapabilities Class;
 

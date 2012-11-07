@@ -1,6 +1,7 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
 #include "SF_ConcreteJob.h"
+#include "SF_EnabledLogicalElementCapabilities.h"
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 
@@ -12,6 +13,7 @@ namespace solarflare
     using cimple::Ref;
     using cimple::cast;
     using cimple::SF_ConcreteJob;
+    using cimple::SF_EnabledLogicalElementCapabilities;
     using cimple::SF_RegisteredProfile;
     using cimple::SF_ReferencedProfile;
     using cimple::SF_ElementConformsToProfile;
@@ -190,6 +192,38 @@ namespace solarflare
         id.append(threadSuffix());
         
         return id == job->InstanceID.value;
+    }
+
+    Instance *
+    EnabledLogicalElementCapabilitiesHelper::reference(const SystemElement& el, unsigned) const
+    {
+        SF_EnabledLogicalElementCapabilities* caps = SF_EnabledLogicalElementCapabilities::create(true);
+    
+        caps->InstanceID.set(instanceID(el.name()));
+        caps->InstanceID.value.append(" ");
+        caps->InstanceID.value.append(suffix);
+        caps->InstanceID.value.append(" Capabilities");
+        return caps;
+    }
+
+    Instance *
+    EnabledLogicalElementCapabilitiesHelper::instance(const SystemElement& el, unsigned idx) const
+    {
+        SF_EnabledLogicalElementCapabilities* caps = 
+        static_cast<SF_EnabledLogicalElementCapabilities*>(reference(el, idx));
+        
+        caps->ElementNameEditSupported.set(false);
+        caps->RequestedStatesSupported.null = false;
+        if (manageable)
+        {
+            static const cimple::uint16 states[] = {
+                SF_EnabledLogicalElementCapabilities::_RequestedStatesSupported::enum_Disabled,
+                SF_EnabledLogicalElementCapabilities::_RequestedStatesSupported::enum_Enabled,
+                SF_EnabledLogicalElementCapabilities::_RequestedStatesSupported::enum_Reset,
+            };
+            caps->RequestedStatesSupported.value.append(states, sizeof(states) / sizeof(*states));
+        }
+        return caps;
     }
 
     const DMTFProfileInfo DMTFProfileInfo::ProfileRegistrationProfile("Profile Registration", "1.0.0", NULL);

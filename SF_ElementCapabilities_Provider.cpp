@@ -15,7 +15,7 @@ bool SF_ElementCapabilities_Provider::NICEnum::process(const solarflare::SystemE
 {
     const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
     SF_PortController *pc = static_cast<SF_PortController *>(nic.cimReference(SF_PortController::static_meta_class));
-    SF_EnabledLogicalElementCapabilities *caps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Controller");
+    SF_EnabledLogicalElementCapabilities *caps = static_cast<SF_EnabledLogicalElementCapabilities *>(nic.cimReference(SF_EnabledLogicalElementCapabilities::static_meta_class));
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
 
     link->ManagedElement = cast<CIM_ManagedElement *>(pc);
@@ -31,7 +31,7 @@ bool SF_ElementCapabilities_Provider::DiagEnum::process(const solarflare::System
 {
     const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     SF_DiagnosticTest *test = static_cast<SF_DiagnosticTest *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
-    SF_DiagnosticServiceCapabilities *caps = SF_DiagnosticServiceCapabilities_Provider::makeReference(diag);
+    SF_DiagnosticServiceCapabilities *caps = static_cast<SF_DiagnosticServiceCapabilities *>(diag.cimReference(SF_DiagnosticServiceCapabilities::static_meta_class));
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
 
     link->ManagedElement = cast<CIM_ManagedElement *>(test);
@@ -50,8 +50,9 @@ bool SF_ElementCapabilities_Provider::IntfEnum::process(const solarflare::System
 
     SF_EthernetPort *port = static_cast<SF_EthernetPort *>(nic.cimReference(SF_EthernetPort::static_meta_class));
     SF_LANEndpoint *endpoint = static_cast<SF_LANEndpoint *>(nic.cimReference(SF_LANEndpoint::static_meta_class));
-    SF_EnabledLogicalElementCapabilities *pcaps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Port");
-    SF_EnabledLogicalElementCapabilities *epcaps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Endpoint");
+    SF_EnabledLogicalElementCapabilities *pcaps = static_cast<SF_EnabledLogicalElementCapabilities *>(nic.cimReference(SF_EnabledLogicalElementCapabilities::static_meta_class, 0));
+    SF_EnabledLogicalElementCapabilities *epcaps = static_cast<SF_EnabledLogicalElementCapabilities *>(nic.cimReference(SF_EnabledLogicalElementCapabilities::static_meta_class, 1));
+    
     SF_ElementCapabilities *plink = SF_ElementCapabilities::create(true);
     SF_ElementCapabilities *eplink = SF_ElementCapabilities::create(true);
 
@@ -84,7 +85,8 @@ bool SF_ElementCapabilities_Provider::SWEnum::process(const solarflare::SystemEl
     }
     SF_SoftwareInstallationService *svc = 
     static_cast<SF_SoftwareInstallationService *>(sw.cimReference(SF_SoftwareInstallationService::static_meta_class));
-    SF_SoftwareInstallationServiceCapabilities *caps = SF_SoftwareInstallationServiceCapabilities_Provider::makeReference(sw);
+    SF_SoftwareInstallationServiceCapabilities *caps =
+    static_cast<SF_SoftwareInstallationServiceCapabilities *>(sw.cimReference(SF_SoftwareInstallationServiceCapabilities::static_meta_class));
     SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
     
     link->ManagedElement = cast<CIM_ManagedElement *>(svc);

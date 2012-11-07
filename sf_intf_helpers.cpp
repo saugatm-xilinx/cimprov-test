@@ -5,6 +5,8 @@
 #include "SF_PhysicalConnector.h"
 #include "SF_PortController.h"
 #include "SF_ControlledBy.h"
+#include "SF_EnabledLogicalElementCapabilities.h"
+#include "SF_ElementConformsToProfile.h"
 
 namespace solarflare 
 {
@@ -19,6 +21,8 @@ namespace solarflare
     using cimple::SF_PhysicalConnector;
     using cimple::SF_PortController;
     using cimple::SF_ControlledBy;
+    using cimple::SF_EnabledLogicalElementCapabilities;
+    using cimple::SF_ElementConformsToProfile;
 
     class EthernetPortHelper : public CIMHelper {
     public:
@@ -50,6 +54,16 @@ namespace solarflare
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
 
+    class PortAndEndpointCapabilitiesHelper : public CIMHelper {
+        EnabledLogicalElementCapabilitiesHelper portCaps;
+        EnabledLogicalElementCapabilitiesHelper endpointCaps;
+    public:
+        PortAndEndpointCapabilitiesHelper() :
+            portCaps("Port", true), endpointCaps("Endpoint", false) {}
+        virtual unsigned nObjects(const SystemElement&) const { return 2; }
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement& obj, unsigned) const;
+    };
 
     const CIMHelper* Interface::cimDispatch(const Meta_Class& cls) const
     {
@@ -57,6 +71,9 @@ namespace solarflare
         static const LANEndpointHelper lanEndpointHelper;
         static const ConnectorRealizesPortHelper connectorRealizesPortHelper;
         static const ControlledByHelper controlledByHelper;
+        static const PortAndEndpointCapabilitiesHelper capabilities;
+        static const PortConformsToProfile conforming;
+        
         if (&cls == &SF_EthernetPort::static_meta_class)
             return &ethernetPortHelper;
         if (&cls == &SF_LANEndpoint::static_meta_class)
@@ -65,6 +82,11 @@ namespace solarflare
             return &connectorRealizesPortHelper;
         if (&cls == &SF_ControlledBy::static_meta_class)
             return &controlledByHelper;
+        if (&cls == &SF_EnabledLogicalElementCapabilities::static_meta_class)
+            return &capabilities;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
+            return &conforming;
+        
         return NULL;
     }
 
@@ -235,15 +257,42 @@ namespace solarflare
         
     }
 
-    Instance *ControlledByHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    Instance *ControlledByHelper::instance(const SystemElement& se, unsigned) const
     {
-        const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
+        const solarflare::Interface& intf = static_cast<const Interface&>(se);
         SF_ControlledBy *link = SF_ControlledBy::create(true);
         
         link->Dependent = cast<cimple::CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
         link->Antecedent = cast<cimple::CIM_Controller *>(intf.nic()->cimReference(SF_PortController::static_meta_class));
         return link;
     }
+
+    Instance *PortAndEndpointCapabilitiesHelper::reference(const SystemElement& se, unsigned idx) const 
+    {
+        switch (idx)
+        {
+            case 0:
+                return portCaps.reference(se, 0);
+            case 1:
+                return endpointCaps.reference(se, 0);
+            default:
+                return NULL;
+        }
+    }
+
+    Instance *PortAndEndpointCapabilitiesHelper::instance(const SystemElement& se, unsigned idx) const 
+    {
+        switch (idx)
+        {
+            case 0:
+                return portCaps.instance(se, 0);
+            case 1:
+                return endpointCaps.instance(se, 0);
+            default:
+                return NULL;
+        }
+    }
+
 
     Instance *PortConformsToProfile::instance(const SystemElement &se, unsigned idx) const
     {

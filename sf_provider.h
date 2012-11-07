@@ -165,6 +165,12 @@ namespace solarflare
         }
         static Thread *findThread(const Instance& inst);
         static SystemElement *findAny(const Instance& inst);
+        static Logger *findRecordLog(const Instance& inst)
+        {
+            Lookup finder(&inst);
+            finder.process(System::target);
+            return finder.found() ? Logger::knownLogs[finder.foundIndex()] : NULL;
+        }
     };
     
     class ObjectCount : public ConstElementEnumerator
@@ -185,6 +191,16 @@ namespace solarflare
         virtual bool match(const SystemElement& obj, const cimple::Instance& inst, unsigned idx) const;
     };
 
+
+    class EnabledLogicalElementCapabilitiesHelper : public CIMHelper {
+        const char *suffix;
+        bool manageable;
+    public:
+        EnabledLogicalElementCapabilitiesHelper(const char *suf, bool man) :
+            suffix(suf), manageable(man) {}
+        virtual cimple::Instance *reference(const SystemElement& obj, unsigned idx) const;
+        virtual cimple::Instance *instance(const SystemElement&, unsigned idx) const;
+    };
 
     class DMTFProfileInfo {
         const char *name;

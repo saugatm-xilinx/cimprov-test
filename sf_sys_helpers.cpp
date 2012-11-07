@@ -6,6 +6,8 @@
 #include "CIM_OperatingSystem.h"
 #include "SF_LogEntry.h"
 #include "SF_RecordLog.h"
+#include "SF_UseOfLog.h"
+#include "SF_LogManagesRecord.h"
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 
@@ -19,6 +21,8 @@ namespace solarflare
     using cimple::is_a;
     using cimple::SF_LogEntry;
     using cimple::SF_RecordLog;
+    using cimple::SF_UseOfLog;
+    using cimple::SF_LogManagesRecord;
     using cimple::SF_RegisteredProfile;
     using cimple::SF_ReferencedProfile;
 
@@ -30,6 +34,7 @@ namespace solarflare
         virtual cimple::Instance *reference(const SystemElement&, unsigned idx) const;
         virtual bool match(const SystemElement&, const Instance& inst, unsigned idx) const;
         static String logInstanceID(const String& s, unsigned idx);
+        static unsigned indexToLogIndex(unsigned idx);
     };
 
     class RecordLogHelper : public CIMHelper {
@@ -38,6 +43,18 @@ namespace solarflare
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
         virtual Instance *reference(const SystemElement&, unsigned idx) const;
         virtual bool match(const SystemElement&, const Instance& inst, unsigned idx) const;
+    };
+
+    class RecordLogUseOfLogHelper : public CIMHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+    };
+
+    class RecordLogManagesRecordHelper : public CIMHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
     };
 
     class RegisteredProfileHelper : public CIMHelper {
@@ -80,6 +97,16 @@ namespace solarflare
                 return Logger::knownLogs[i];
         }
         return NULL;
+    }
+
+    unsigned LogEntryHelper::indexToLogIndex(unsigned idx)
+    {
+        for (unsigned i = 0;  Logger::knownLogs[i] != NULL; i++)
+        {
+            if (idx < Logger::knownLogs[i]->currentSize())
+                return i;
+        }
+        return unsigned(-1);
     }
     
     cimple::Instance *LogEntryHelper::reference(const SystemElement&, unsigned idx) const
@@ -188,6 +215,42 @@ namespace solarflare
         return CIMHelper::instanceID(Logger::knownLogs[idx]->description()) == logObj->InstanceID.value;
     }
 
+    unsigned RecordLogUseOfLogHelper::nObjects(const SystemElement& sys) const
+    {
+        static const RecordLogHelper delegate;
+        return delegate.nObjects(sys);
+    }
+
+    Instance *RecordLogUseOfLogHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        Instance *log = se.cimReference(SF_RecordLog::static_meta_class, idx);
+        CIM_ComputerSystem *sys = solarflare::CIMHelper::findSystem()->clone();
+        SF_UseOfLog *link = SF_UseOfLog::create(true);
+        
+        link->Antecedent = static_cast<cimple::CIM_Log *>(log);
+        link->Dependent = cast<cimple::CIM_ManagedSystemElement *>(sys);
+        return link;
+    }
+
+    unsigned RecordLogManagesRecordHelper::nObjects(const SystemElement& sys) const
+    {
+        static const LogEntryHelper delegate;
+        return delegate.nObjects(sys);
+    }
+
+    Instance *RecordLogManagesRecordHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        Instance *entry = se.cimReference(SF_LogEntry::static_meta_class, idx);
+        unsigned logId = LogEntryHelper::indexToLogIndex(idx);
+        
+        SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
+
+        link->Log = cast<cimple::CIM_Log *>(se.cimReference(SF_RecordLog::static_meta_class, idx));
+        link->Record = static_cast<cimple::CIM_RecordForLog *>(entry);
+
+        return link;
+    }
+
     unsigned RegisteredProfileHelper::nObjects(const SystemElement&) const
     {
         unsigned n = 0;
@@ -282,12 +345,18 @@ namespace solarflare
     {
         static const LogEntryHelper logEntryHelper;
         static const RecordLogHelper recordLogHelper;
+        static const RecordLogUseOfLogHelper useOfLogHelper;
+        static const RecordLogManagesRecordHelper logManagesRecordHelper;
         static const RegisteredProfileHelper registeredProfileHelper;
         static const ReferencedProfileHelper referencedProfileHelper;
         if (&cls == &SF_LogEntry::static_meta_class)
             return &logEntryHelper;
         if (&cls == &SF_RecordLog::static_meta_class)
             return &recordLogHelper;
+        if (&cls == &SF_UseOfLog::static_meta_class)
+            return &useOfLogHelper;
+        if (&cls == &SF_LogManagesRecord::static_meta_class)
+            return &logManagesRecordHelper;
         if (&cls == &SF_RegisteredProfile::static_meta_class)
             return &registeredProfileHelper;
         if (&cls == &SF_ReferencedProfile::static_meta_class)
