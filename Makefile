@@ -2,6 +2,12 @@ ifeq ($(CIMPLE_PATH),)
 $(error CIMPLE_PATH must be specified!)
 endif
 
+ifeq ($(CIM_SERVER),pegasus)
+CIM_INTERFACE=pegasus
+else ifeq ($(CIM_SERVER),sfcb)
+CIM_INTERFACE=cmpi
+endif
+
 TOP=$(CIMPLE_PATH)/share/cimple
 ROOT=.
 BINDIR=.
@@ -11,6 +17,8 @@ export PATH := $(CIMPLE_PATH)/bin:$(PATH)
 
 CIMPLE_WERROR=1
 
+AWK=awk
+SED=sed
 REGMOD=regmod
 
 include $(TOP)/mak/config.mak
@@ -195,10 +203,21 @@ SOURCES += sf_diag_helpers.cpp
 SOURCES += sf_sw_helpers.cpp
 SOURCES += sf_sys_helpers.cpp
 
+ifeq ($(CIM_INTERFACE),pegasus)
 CIMPLE_PEGASUS_MODULE=1
 DEFINES += -DCIMPLE_PEGASUS_MODULE
 
 LIBRARIES += cimplepegadap
+
+else ifeq ($(CIM_INTERFACE),cmpi)
+CIMPLE_CMPI_MODULE=1
+DEFINES += -DCIMPLE_CMPI_MODULE
+
+LIBRARIES += cimplecmpiadap
+else
+$(error Unknown CIM interface: $(CIM_INTERFACE))
+endif
+
 LIBRARIES += cimple
 
 include $(TOP)/mak/rules.mak
@@ -213,15 +232,16 @@ unregister:
 	$(REGMOD) -n $(INTEROP_NAMESPACE) -u -c $(CIMPLE_PATH)/lib/lib${SHARED_LIBRARY}.so $(INTEROP_CLASSES)
 	$(REGMOD) -n $(IMP_NAMESPACE) -u -c $(CIMPLE_PATH)/lib/lib${SHARED_LIBRARY}.so
 
+repository.reg : repository.mof
+	$(AWK) -f mof2reg.awk -vPRODUCTNAME=${SHARED_LIBRARY} -vNAMESPACE=${IMP_NAMESPACE} $< >$@
+
 insmod: all
 
-# Stolen from cimple/depend.mak
-.depend: $(filter %.h,$(INCLUDES)) $(filter %.cpp,$(SOURCES))
-	mu depend $(INCLUDES) $(SOURCES) >.depend
+%.d: %.cpp
+	@set -e; rm -f $@; \
+	$(CXX) -MM $(DEFINES) $(INCLUDES) $< > $@.$$$$; \
+	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
-include .depend
-
-
-
-
+include $(patsubst %.cpp,%.d,$(SOURCES))
 
