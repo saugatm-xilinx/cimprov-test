@@ -2,7 +2,10 @@ $1 == "class" {
     print "[" $2 "]"
     print "\tprovider:", $2 "_Provider"
     print "\tlocation:", PRODUCTNAME
-    print "\ttype: instance method", association ? "association" : "", indication ? "indication" : ""
+    printf "\ttype: instance method";
+    if (association) printf " association";
+    if (indication) printf " indication";
+    print ""
     print "\tgroup:", tolower(PRODUCTNAME)
     print "\tunload: never"
     print "\tnamespace:", NAMESPACE

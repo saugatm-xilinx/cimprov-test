@@ -253,7 +253,7 @@ endif
 
 ifeq ($(CIM_SERVER),sfcb)
 
-repository.reg : repository.mof
+repository.reg : repository.mof mof2reg.awk
 	$(AWK) -f mof2reg.awk -vPRODUCTNAME=${SHARED_LIBRARY} -vNAMESPACE=${IMP_NAMESPACE} $< >$@
 
 register: repository.reg interop.reg insmod
