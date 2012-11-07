@@ -7,10 +7,6 @@ ROOT=.
 BINDIR=.
 LIBDIR=.
 
-ifeq ($(CIM_INTERFACE),cmpi)
-LINK_FLAGS += -L$(CIMPLE_PATH)/lib
-endif
-
 export PATH := $(CIMPLE_PATH)/bin:$(PATH)
 
 CIMPLE_WERROR=1
@@ -31,6 +27,10 @@ else ifeq ($(CIM_SERVER),sfcb)
 CIM_INTERFACE=cmpi
 SFCBSTAGE=sfcbstage
 SFCBREPOS=sfcbrepos -f
+endif
+
+ifeq ($(CIM_INTERFACE),cmpi)
+LINK_FLAGS += -L$(CIMPLE_PATH)/lib
 endif
 
 MODULE=1
