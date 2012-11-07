@@ -1,10 +1,14 @@
 #!/usr/bin/python
 
 import pywbem
+import time
 
 HOST='http://127.0.0.1:5988'
 USER=''
 PASSWORD=''
+
+RC_OK   = 0
+RC_FAIL = 2
 
 def ns_check(parent_ns, check_ns):
     wbemclient = pywbem.WBEMConnection(HOST, (USER, PASSWORD), parent_ns)
@@ -124,4 +128,51 @@ def profile_check(prof_list, spec_list, ns):
                     print "OK\n"
             else:
                 print ""
+
+
+def state_change(conn, inst_path, state, timeout):
+    try:
+        (rval, out_params) = conn.InvokeMethod('RequestStateChange', inst_path,
+                                    RequestedState=state,
+                                    #TimeoutPeriod=pywbem.CIMDateTime(
+                                    #     pywbem.timedelta(seconds=timeout))
+                                    )
+    except:                         
+        (rval, out_params) = (RC_FAIL, {}) 
+    
+    #TODO: do we need out_params ?
+    return rval
+
+def req_state_change_check(ns, class_name, state, timeout):
+    wbemclient = pywbem.WBEMConnection(HOST, (USER, PASSWORD), ns)
+    inst_list = wbemclient.EnumerateInstances(class_name)
+    inst_num = 0
+    for inst in inst_list:
+        inst_num += 1
+        print '    instance #%d...' % inst_num,
+        # Change state
+        rc = state_change(wbemclient, inst.path,
+                          pywbem.Uint16(state),
+                          timeout)
+        if rc != RC_OK:
+            print "FAIL"
+            continue
+        
+        # Wait for the state update
+        time.sleep(timeout)
+        
+        # Check oper state
+        new_inst = wbemclient.GetInstance(inst.path)
+        if new_inst[u'EnabledState'] != state:
+            print "FAIL"
+            continue
+        
+        # Restore old state
+        rc = state_change(wbemclient, inst.path,
+                          pywbem.Uint16(inst[u'EnabledState']),
+                          timeout)
+        if rc != RC_OK:
+            print "FAIL"
+        else:
+            print "OK"
 
