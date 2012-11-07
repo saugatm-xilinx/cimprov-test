@@ -4,19 +4,12 @@
 
 #include <cimple/cimple.h>
 #include "SF_OwningJobElement.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_OwningJobElement_Provider
 {
-    class Enum : public solarflare::ConstElementEnumerator {
-        Enum_Instances_Handler<SF_OwningJobElement>* handler;
-    public:
-        Enum(Enum_Instances_Handler<SF_OwningJobElement>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& diag);
-    };
 public:
 
     typedef SF_OwningJobElement Class;

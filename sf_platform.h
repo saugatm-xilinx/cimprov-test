@@ -308,6 +308,9 @@ namespace solarflare
         virtual const String& genericName() const { return romName; }
     };
 
+
+    class Driver;
+
     /// @brief An abstract class for NIC elements
     /// Implementors shall subclass it for platform-specific behaviour
     class NIC : public BusElement,
@@ -353,6 +356,9 @@ namespace solarflare
 
         /// @return Physical connector type.
         virtual Connector connector() const = 0;
+
+        /// @return Associated device driver or NULL
+        virtual Driver *driver() const { return NULL; }
 
         /// @return maximum link speed (defaults to 10G)
         /// fixme: enum

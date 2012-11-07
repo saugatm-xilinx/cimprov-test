@@ -7,33 +7,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_SystemDevice_Provider::NICEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::NIC& nic = static_cast<const solarflare::NIC&>(se);
-    SF_SystemDevice *dev = SF_SystemDevice::create(true);
-
-    dev->GroupComponent = solarflare::CIMHelper::systemRef();
-    dev->PartComponent = cast<CIM_LogicalDevice *>(nic.cimReference(SF_PortController::static_meta_class));
-    
-
-    handler->handle(dev);
-
-    return true;
-}
-
-bool SF_SystemDevice_Provider::IntfEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
-    SF_SystemDevice *dev = SF_SystemDevice::create(true);
-
-    dev->GroupComponent = solarflare::CIMHelper::systemRef();
-    dev->PartComponent = static_cast<CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
-
-    handler->handle(dev);
-
-    return true;
-}
-
 SF_SystemDevice_Provider::SF_SystemDevice_Provider()
 {
 }
@@ -44,7 +17,7 @@ SF_SystemDevice_Provider::~SF_SystemDevice_Provider()
 
 Load_Status SF_SystemDevice_Provider::load()
 {
-    solarflare::System::target.initialize();
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -64,10 +37,7 @@ Enum_Instances_Status SF_SystemDevice_Provider::enum_instances(
     const SF_SystemDevice* model,
     Enum_Instances_Handler<SF_SystemDevice>* handler)
 {
-    NICEnum nicdevices(handler);
-    IntfEnum idevices(handler);
-    solarflare::System::target.forAllNICs(nicdevices);
-    solarflare::System::target.forAllInterfaces(idevices);
+    solarflare::EnumInstances<SF_SystemDevice>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 

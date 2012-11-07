@@ -3,6 +3,10 @@
 #include "SF_PortController.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
 #include "SF_ElementCapabilities.h"
+#include "SF_ElementSoftwareIdentity.h"
+#include "SF_ElementConformsToProfile.h"
+#include "SF_SoftwareIdentity.h"
+#include "SF_SystemDevice.h"
 
 namespace solarflare 
 {
@@ -16,6 +20,10 @@ namespace solarflare
     using cimple::SF_PortController;
     using cimple::SF_EnabledLogicalElementCapabilities;
     using cimple::SF_ElementCapabilities;
+    using cimple::SF_ElementSoftwareIdentity;
+    using cimple::SF_ElementConformsToProfile;
+    using cimple::SF_SoftwareIdentity;
+    using cimple::SF_SystemDevice;
 
     class NICCardHelper : public CIMHelper {
     public:
@@ -31,6 +39,16 @@ namespace solarflare
         virtual bool match(const SystemElement& obj, const Instance& inst, unsigned) const;
     };
 
+    class DriverElementSoftwareIdentityHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
+
+    class PortControllerSystemDeviceHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
+
     class NICConformsToProfile : public CIMHelper {
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
@@ -43,6 +61,8 @@ namespace solarflare
         static const EnabledLogicalElementCapabilitiesHelper capabilities("Controller", false);
         static const ElementCapabilitiesHelper capsLink(SF_PortController::static_meta_class,
                                                         SF_EnabledLogicalElementCapabilities::static_meta_class);
+        static const DriverElementSoftwareIdentityHelper driverSoftwareIdentity;
+        static const PortControllerSystemDeviceHelper systemDevice;
         static const NICConformsToProfile conforming;
         
         if (&cls == &SF_NICCard::static_meta_class)
@@ -53,7 +73,11 @@ namespace solarflare
             return &capabilities;
         if (&cls == &SF_ElementCapabilities::static_meta_class)
             return &capsLink;
-        if (&cls == &SF_NICCard::static_meta_class)
+        if (&cls == &SF_ElementSoftwareIdentity::static_meta_class)
+            return &driverSoftwareIdentity;
+        if (&cls == &SF_SystemDevice::static_meta_class)
+            return &systemDevice;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conforming;
         return NULL;
     }
@@ -162,6 +186,40 @@ namespace solarflare
             return false;
         return card->DeviceID.value == static_cast<const NIC&>(se).vitalProductData().id();
     }
+
+    Instance *
+    DriverElementSoftwareIdentityHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        const NIC &nic = static_cast<const NIC &>(se);
+        const Driver *drv = nic.driver();
+        
+        if (drv == NULL)
+            return NULL;
+        SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
+    
+        item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(drv->cimReference(SF_SoftwareIdentity::static_meta_class));
+        item->Dependent = cast<cimple::CIM_ManagedElement *>(nic.cimReference(SF_PortController::static_meta_class));
+    
+        item->ElementSoftwareStatus.null = false;
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
+
+        return item;
+    }
+
+    Instance *
+    PortControllerSystemDeviceHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        const NIC& nic = static_cast<const NIC&>(se);
+        SF_SystemDevice *dev = SF_SystemDevice::create(true);
+        
+        dev->GroupComponent = systemRef();
+        dev->PartComponent = cast<cimple::CIM_LogicalDevice *>(nic.cimReference(SF_PortController::static_meta_class));
+
+        return dev;
+    }
+    
 
     Instance *NICConformsToProfile::instance(const SystemElement &se, unsigned) const
     {

@@ -10,14 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_HostedAccessPoint_Provider
 {
-    class InterfaceEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_HostedAccessPoint>* handler;
-    public:
-        InterfaceEnum(Enum_Instances_Handler<SF_HostedAccessPoint>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& intf);
-    };
 public:
 
     typedef SF_HostedAccessPoint Class;

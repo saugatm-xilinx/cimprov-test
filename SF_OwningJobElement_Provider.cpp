@@ -6,20 +6,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_OwningJobElement_Provider::Enum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-    
-    SF_OwningJobElement *link = SF_OwningJobElement::create(true);
-    
-    link->OwningElement = cast<CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
-    link->OwnedElement = cast<CIM_Job *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
-
-    handler->handle(link);
-
-    return true;
-}
-
 SF_OwningJobElement_Provider::SF_OwningJobElement_Provider()
 {
 }
@@ -49,8 +35,7 @@ Enum_Instances_Status SF_OwningJobElement_Provider::enum_instances(
     const SF_OwningJobElement* model,
     Enum_Instances_Handler<SF_OwningJobElement>* handler)
 {
-    Enum links(handler);
-    solarflare::System::target.forAllDiagnostics(links);
+    solarflare::EnumInstances<SF_OwningJobElement>::allDiagnostics(handler);
     return ENUM_INSTANCES_OK;
 }
 

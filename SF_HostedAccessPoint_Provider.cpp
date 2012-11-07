@@ -6,17 +6,6 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool 
-SF_HostedAccessPoint_Provider::InterfaceEnum::process(const solarflare::SystemElement& se)
-{
-    const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
-    SF_HostedAccessPoint *link = SF_HostedAccessPoint::create(true);
-    link->Antecedent = solarflare::CIMHelper::systemRef();
-    link->Dependent = cast<CIM_ServiceAccessPoint *>(intf.cimReference(SF_LANEndpoint::static_meta_class));
-    handler->handle(link);
-    return true;
-}
-
 
 SF_HostedAccessPoint_Provider::SF_HostedAccessPoint_Provider()
 {
@@ -28,7 +17,7 @@ SF_HostedAccessPoint_Provider::~SF_HostedAccessPoint_Provider()
 
 Load_Status SF_HostedAccessPoint_Provider::load()
 {
-    solarflare::System::target.initialize();
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -48,8 +37,7 @@ Enum_Instances_Status SF_HostedAccessPoint_Provider::enum_instances(
     const SF_HostedAccessPoint* model,
     Enum_Instances_Handler<SF_HostedAccessPoint>* handler)
 {
-    InterfaceEnum endpoints(handler);
-    solarflare::System::target.forAllInterfaces(endpoints);
+    solarflare::EnumInstances<SF_HostedAccessPoint>::allInterfaces(handler);
     return ENUM_INSTANCES_OK;
 }
 

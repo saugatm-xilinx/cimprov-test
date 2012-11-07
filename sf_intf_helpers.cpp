@@ -7,7 +7,10 @@
 #include "SF_ControlledBy.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
 #include "SF_ElementCapabilities.h"
+#include "SF_HostedAccessPoint.h"
+#include "SF_NICSAPImplementation.h"
 #include "SF_ElementConformsToProfile.h"
+#include "SF_SystemDevice.h"
 
 namespace solarflare 
 {
@@ -25,6 +28,9 @@ namespace solarflare
     using cimple::SF_EnabledLogicalElementCapabilities;
     using cimple::SF_ElementCapabilities;
     using cimple::SF_ElementConformsToProfile;
+    using cimple::SF_HostedAccessPoint;
+    using cimple::SF_NICSAPImplementation;
+    using cimple::SF_SystemDevice;
 
     class EthernetPortHelper : public CIMHelper {
     public:
@@ -80,6 +86,20 @@ namespace solarflare
         virtual Instance *instance(const SystemElement& obj, unsigned) const;
     };
 
+    class HostedAccessPointHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement& obj, unsigned) const;
+    };
+
+    class EthernetPortSystemDeviceHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement& obj, unsigned) const;
+    };
+
+    class NICSAPImplementationHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement& obj, unsigned) const;
+    };
 
     const CIMHelper* Interface::cimDispatch(const Meta_Class& cls) const
     {
@@ -89,6 +109,9 @@ namespace solarflare
         static const ControlledByHelper controlledByHelper;
         static const PortAndEndpointCapabilitiesHelper capabilities;
         static const PortAndEndpointCapsLinkHelper capsLink;
+        static const HostedAccessPointHelper hostedAccessPoint;
+        static const NICSAPImplementationHelper nicSAPImplementation;
+        static const EthernetPortSystemDeviceHelper systemDevice;
         static const PortConformsToProfile conforming;
         
         if (&cls == &SF_EthernetPort::static_meta_class)
@@ -99,10 +122,16 @@ namespace solarflare
             return &connectorRealizesPortHelper;
         if (&cls == &SF_ControlledBy::static_meta_class)
             return &controlledByHelper;
+        if (&cls == &SF_SystemDevice::static_meta_class)
+            return &systemDevice;
         if (&cls == &SF_EnabledLogicalElementCapabilities::static_meta_class)
             return &capabilities;
         if (&cls == &SF_ElementCapabilities::static_meta_class)
             return &capsLink;
+        if (&cls == &SF_HostedAccessPoint::static_meta_class)
+            return &hostedAccessPoint;
+        if (&cls == &SF_NICSAPImplementation::static_meta_class)
+            return &nicSAPImplementation;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conforming;
         
@@ -325,6 +354,38 @@ namespace solarflare
         }
     }
 
+
+    Instance * 
+    HostedAccessPointHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        SF_HostedAccessPoint *link = SF_HostedAccessPoint::create(true);
+        link->Antecedent = solarflare::CIMHelper::systemRef();
+        link->Dependent = cast<cimple::CIM_ServiceAccessPoint *>(se.cimReference(SF_LANEndpoint::static_meta_class));
+        return link;
+    }
+
+    Instance * 
+    NICSAPImplementationHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
+    
+        SF_NICSAPImplementation *link = SF_NICSAPImplementation::create(true);
+        link->Antecedent = static_cast<cimple::CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
+        link->Dependent = cast<cimple::CIM_ServiceAccessPoint *>(intf.cimReference(SF_LANEndpoint::static_meta_class));
+
+        return link;
+    }
+
+
+    Instance *EthernetPortSystemDeviceHelper::instance(const SystemElement& se, unsigned) const
+    {
+        SF_SystemDevice *dev = SF_SystemDevice::create(true);
+
+        dev->GroupComponent = systemRef();
+        dev->PartComponent = static_cast<cimple::CIM_LogicalDevice *>(se.cimReference(SF_EthernetPort::static_meta_class));
+        
+        return dev;
+    }
 
     Instance *PortConformsToProfile::instance(const SystemElement &se, unsigned idx) const
     {

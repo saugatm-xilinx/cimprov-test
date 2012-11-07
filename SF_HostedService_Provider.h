@@ -10,23 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_HostedService_Provider
 {
-    class SWEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_HostedService>* handler;
-    public:
-        SWEnum(Enum_Instances_Handler<SF_HostedService>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& sw);
-    };
-    
-    class DiagEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_HostedService>* handler;
-    public:
-        DiagEnum(Enum_Instances_Handler<SF_HostedService>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& diag);
-    };
 public:
 
     typedef SF_HostedService Class;

@@ -13,6 +13,11 @@
 #include "SF_RecordAppliesToElement.h"
 #include "SF_DiagnosticServiceCapabilities.h"
 #include "SF_ElementCapabilities.h"
+#include "SF_ElementSoftwareIdentity.h"
+#include "SF_SoftwareIdentity.h"
+#include "SF_HostedService.h"
+#include "SF_OwningJobElement.h"
+#include "SF_ServiceAffectsElement.h"
 
 namespace solarflare 
 {
@@ -35,6 +40,11 @@ namespace solarflare
     using cimple::SF_RecordAppliesToElement;
     using cimple::SF_DiagnosticServiceCapabilities;
     using cimple::SF_ElementCapabilities;
+    using cimple::SF_ElementSoftwareIdentity;
+    using cimple::SF_SoftwareIdentity;
+    using cimple::SF_HostedService;
+    using cimple::SF_OwningJobElement;
+    using cimple::SF_ServiceAffectsElement;
 
     class DiagnosticTestHelper : public CIMHelper {
     public:
@@ -75,6 +85,10 @@ namespace solarflare
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
 
+    class DiagnosticOwningJobElementHelper : public CIMHelper {
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
+
 
     class AvailableDiagnosticServiceHelper : public CIMHelper {
         virtual Instance *instance(const SystemElement &se, unsigned) const;
@@ -97,6 +111,21 @@ namespace solarflare
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
 
+    class DiagnosticElementSoftwareIdentityHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
+
+    class DiagnosticServiceAffectsElementHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
+
+    class DiagnosticHostedServiceHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement &se, unsigned) const;
+    };
+
 
     class DiagnosticConformsToProfile : public CIMHelper {
         virtual unsigned nObjects(const SystemElement &se) const;
@@ -109,6 +138,7 @@ namespace solarflare
         static const DiagnosticJobHelper diagnosticJob;
         static const DiagnosticLogHelper diagnosticLog;
         static const AffectedJobElementHelper affectedJobElement;
+        static const DiagnosticOwningJobElementHelper owningJobElement;
         static const AvailableDiagnosticServiceHelper availableDiagnosticService;
         static const DiagnosticUseOfLogHelper useOfLog;
         static const DiagnosticLogManagesRecordHelper logManagesRecord;
@@ -118,6 +148,9 @@ namespace solarflare
         static const DiagnosticServiceCapabilitiesHelper serviceCaps;
         static const ElementCapabilitiesHelper capsLink(SF_DiagnosticTest::static_meta_class,
                                                         SF_DiagnosticServiceCapabilities::static_meta_class);
+        static const DiagnosticElementSoftwareIdentityHelper elementSoftwareIdentity;
+        static const DiagnosticHostedServiceHelper hostedService;
+        static const DiagnosticServiceAffectsElementHelper serviceAffectsElement;
 
         if (&cls == &SF_DiagnosticTest::static_meta_class)
             return &diagnosticTest;
@@ -131,6 +164,8 @@ namespace solarflare
                 return &diagnosticJob;
             if (&cls == &SF_AffectedJobElement::static_meta_class)
                 return &affectedJobElement;
+            if (&cls == &SF_OwningJobElement::static_meta_class)
+                return &owningJobElement;
         }
         if (&cls == &SF_DiagnosticCompletionRecord::static_meta_class)
             return &diagnosticCompletionRecord;
@@ -144,6 +179,12 @@ namespace solarflare
             return &serviceCaps;
         if (&cls == &SF_ElementCapabilities::static_meta_class)
             return &capsLink;
+        if (&cls == &SF_ElementSoftwareIdentity::static_meta_class)
+            return &elementSoftwareIdentity;
+        if (&cls == &SF_HostedService::static_meta_class)
+            return &hostedService;
+        if (&cls == &SF_ServiceAffectsElement::static_meta_class)
+            return &serviceAffectsElement;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conforming;
         
@@ -458,9 +499,9 @@ namespace solarflare
         return newSvc;
     }
 
-    Instance *DiagnosticServiceCapabilitiesHelper::instance(const solarflare::SystemElement& se, unsigned idx) const
+    Instance *DiagnosticServiceCapabilitiesHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+        const solarflare::Diagnostic& diag = static_cast<const Diagnostic&>(se);
         SF_DiagnosticServiceCapabilities *newSvc = static_cast<SF_DiagnosticServiceCapabilities *>(reference(se, idx));
 
         newSvc->Description.set(diag.description());
@@ -478,6 +519,64 @@ namespace solarflare
         newSvc->SupportedExecutionControls.value.append(SF_DiagnosticServiceCapabilities::_SupportedExecutionControls::enum_Terminate_Job);
         
         return newSvc;
+    }
+
+    Instance *DiagnosticElementSoftwareIdentityHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        const Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+        const SWElement *tool = diag.diagnosticTool();
+    
+        if (tool == NULL)
+            return NULL;
+        
+        SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
+    
+        item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(tool->cimReference(SF_SoftwareIdentity::static_meta_class));
+        item->Dependent = cast<cimple::CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
+        item->ElementSoftwareStatus.null = false;
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
+        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
+
+        return item;
+    }
+
+    Instance * 
+    DiagnosticHostedServiceHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        SF_HostedService *link = SF_HostedService::create(true);
+        link->Antecedent = solarflare::CIMHelper::systemRef();
+        link->Dependent = cast<cimple::CIM_Service *>(se.cimReference(SF_DiagnosticTest::static_meta_class));
+        return link;
+    }
+
+    Instance * 
+    DiagnosticServiceAffectsElementHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        const Diagnostic& diag = static_cast<const Diagnostic&>(se);
+        SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
+        
+        link->AffectedElement = cast<cimple::CIM_ManagedElement *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
+        link->AffectingElement = cast<cimple::CIM_Service *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
+
+        return link;
+    }
+
+
+    Instance *
+    DiagnosticOwningJobElementHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
+        
+        if (const_cast<Diagnostic&>(diag).asyncThread() == NULL)
+            return NULL;
+
+        SF_OwningJobElement *link = SF_OwningJobElement::create(true);
+        
+        link->OwningElement = cast<cimple::CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
+        link->OwnedElement = cast<cimple::CIM_Job *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
+        
+        return link;
     }
 
     unsigned DiagnosticConformsToProfile::nObjects(const SystemElement &se) const

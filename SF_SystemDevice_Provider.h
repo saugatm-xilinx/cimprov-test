@@ -10,22 +10,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_SystemDevice_Provider
 {
-    class NICEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_SystemDevice>* handler;
-    public:
-        NICEnum(Enum_Instances_Handler<SF_SystemDevice>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& se);
-    };
-    class IntfEnum : public solarflare::ConstElementEnumerator
-    {
-        Enum_Instances_Handler<SF_SystemDevice>* handler;
-    public:
-        IntfEnum(Enum_Instances_Handler<SF_SystemDevice>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::SystemElement& se);
-    };
+
 public:
 
     typedef SF_SystemDevice Class;
