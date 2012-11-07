@@ -5,7 +5,7 @@ $1 == "class" {
     printf "\ttype: instance method";
     if (association) printf " association";
     if (indication) printf " indication";
-    print ""
+    printf "\n"
     print "\tgroup:", tolower(PRODUCTNAME)
     print "\tunload: never"
     print "\tnamespace:", NAMESPACE
