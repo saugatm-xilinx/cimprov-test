@@ -253,7 +253,7 @@ repository.reg : repository.mof
 	$(AWK) -f mof2reg.awk -vPRODUCTNAME=${SHARED_LIBRARY} -vNAMESPACE=${IMP_NAMESPACE} $< >$@
 
 register: repository.reg insmod
-	$(SFCBSTAGE) -n $(IMPNAMESPACE) -r repository.reg repository.mof
+	$(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg repository.mof
 	$(SFCBREPOS)
 
 ifeq ($(SFCB_PATH),)
