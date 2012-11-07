@@ -44,6 +44,9 @@ INTEROP_NAMESPACE=root/interop
 endif
 INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
 
+DEFINES += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
+DEFINES += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
+
 SOURCES += CIM_AffectedJobElement.cpp
 SOURCES += CIM_AvailableDiagnosticService.cpp
 SOURCES += CIM_Capabilities.cpp

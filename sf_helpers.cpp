@@ -26,9 +26,9 @@ namespace solarflare
         return helper ? helper->reference(*this, idx) : NULL;
     }
 
-    const char CIMHelper::solarflareNS[] = "root/solarflare";
+    const char CIMHelper::solarflareNS[] = SF_IMPLEMENTATION_NS;
     const char CIMHelper::ibmseNS[] = "root/ibmse";
-    const char CIMHelper::interopNS[] = "root/pg_interop";
+    const char CIMHelper::interopNS[] = SF_INTEROP_NS;
     const char CIMHelper::baseNS[] = "root/cimv2";
     
     String CIMHelper::instanceID(const String& name)
