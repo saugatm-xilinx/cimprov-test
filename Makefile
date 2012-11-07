@@ -2,12 +2,6 @@ ifeq ($(CIMPLE_PATH),)
 $(error CIMPLE_PATH must be specified!)
 endif
 
-ifeq ($(CIM_SERVER),pegasus)
-CIM_INTERFACE=pegasus
-else ifeq ($(CIM_SERVER),sfcb)
-CIM_INTERFACE=cmpi
-endif
-
 TOP=$(CIMPLE_PATH)/share/cimple
 ROOT=.
 BINDIR=.
@@ -23,9 +17,21 @@ CIMPLE_WERROR=1
 
 AWK=awk
 SED=sed
-REGMOD=regmod
 
 include $(TOP)/mak/config.mak
+
+ifneq ($(WITH_PEGASUS_OPT),)
+CIM_SERVER=pegasus
+endif
+
+ifeq ($(CIM_SERVER),pegasus)
+CIM_INTERFACE=pegasus
+REGMOD=regmod
+else ifeq ($(CIM_SERVER),sfcb)
+CIM_INTERFACE=cmpi
+SFCBSTAGE=sfcbstage
+SFCBREPOS=sfcbrepos -f
+endif
 
 MODULE=1
 SHARED_LIBRARY=Solarflare
@@ -224,9 +230,12 @@ endif
 
 LIBRARIES += cimple
 
+
 include $(TOP)/mak/rules.mak
 
 .PHONY: register unregister
+
+ifeq ($(CIM_SERVER),pegasus)
 
 register: insmod
 	$(REGMOD) -n $(IMP_NAMESPACE) -c $(CIMPLE_PATH)/lib/lib${SHARED_LIBRARY}.so
@@ -236,8 +245,24 @@ unregister:
 	$(REGMOD) -n $(INTEROP_NAMESPACE) -u -c $(CIMPLE_PATH)/lib/lib${SHARED_LIBRARY}.so $(INTEROP_CLASSES)
 	$(REGMOD) -n $(IMP_NAMESPACE) -u -c $(CIMPLE_PATH)/lib/lib${SHARED_LIBRARY}.so
 
+endif
+
+ifeq ($(CIM_SERVER),sfcb)
+
 repository.reg : repository.mof
 	$(AWK) -f mof2reg.awk -vPRODUCTNAME=${SHARED_LIBRARY} -vNAMESPACE=${IMP_NAMESPACE} $< >$@
+
+register: repository.reg insmod
+	$(SFCBSTAGE) -n $(IMPNAMESPACE) -r repository.reg repository.mof
+	$(SFCBREPOS)
+
+ifeq ($(SFCB_PATH),)
+$(error No path to SFCB installation)
+endif
+
+insmod : LIBDIR_OPT=$(SFCB_PATH)/lib
+
+endif
 
 insmod: all
 
