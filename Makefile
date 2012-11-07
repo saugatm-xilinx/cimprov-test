@@ -37,7 +37,11 @@ MODULE=1
 SHARED_LIBRARY=Solarflare
 
 IMP_NAMESPACE=root/solarflare
+ifeq ($(CIM_SERVER),pegasus)
 INTEROP_NAMESPACE=root/pg_interop
+else
+INTEROP_NAMESPACE=root/interop
+endif
 INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
 
 SOURCES += CIM_AffectedJobElement.cpp
@@ -252,8 +256,9 @@ ifeq ($(CIM_SERVER),sfcb)
 repository.reg : repository.mof
 	$(AWK) -f mof2reg.awk -vPRODUCTNAME=${SHARED_LIBRARY} -vNAMESPACE=${IMP_NAMESPACE} $< >$@
 
-register: repository.reg insmod
+register: repository.reg interop.reg insmod
 	$(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg repository.mof
+	$(SFCBSTAGE) -n $(INTEROP_NAMESPACE) -r interop.reg repository.mof
 	$(SFCBREPOS)
 
 ifeq ($(SFCB_PATH),)
