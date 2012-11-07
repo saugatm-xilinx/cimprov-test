@@ -13,7 +13,7 @@ ROOT=.
 BINDIR=.
 LIBDIR=.
 
-ifeq ($(CIM_INTERFACE,cmpi))
+ifeq ($(CIM_INTERFACE),cmpi)
 LINK_FLAGS += -L$(CIMPLE_PATH)/lib
 endif
 
