@@ -1,0 +1,21 @@
+[SF_RegisteredProfile]
+	provider: SF_RegisteredProfile_Provider
+	location: Solarflare
+	type: instance method
+	group: solarflare
+	unload: never
+	namespace: root/interop
+[SF_ElementConformsToProfile]
+	provider: SF_ElementConformsToProfile_Provider
+	location: Solarflare
+	type: instance method association
+	group: solarflare
+	unload: never
+	namespace: root/interop
+[SF_ReferencedProfile]
+	provider: SF_ReferencedProfile_Provider
+	location: Solarflare
+	type: instance method association
+	group: solarflare
+	unload: never
+	namespace: root/interop
