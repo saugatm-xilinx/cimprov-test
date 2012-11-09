@@ -1,0 +1,8 @@
+private:
+
+    Indication_Handler<<CLASS>>* _indication_handler;
+};
+
+CIMPLE_NAMESPACE_END
+
+#endif /* _<CLASS>_Provider_h */
