@@ -10,8 +10,10 @@ PEGASUS_LIBDIR=$(PEGASUS_HOME)/lib
 PEGASUS_INCLUDES=$(PEGASUS_ROOT)/src
 else ifeq ($(CIM_SERVER),sfcb)
 CIM_INTERFACE=cmpi
-SFCBSTAGE=sfcbstage
-SFCBREPOS=sfcbrepos -f
+SFCBSTAGE=$(SFCB_PATH)/bin/sfcbstage
+SFCBREPOS=$(SFCB_PATH)/bin/sfcbrepos -f
+else ifeq ($(CIM_SERVER),esxi)
+CIM_INTERFACE=cmpi
 endif
 
 IMP_NAMESPACE=root/solarflare
@@ -26,17 +28,24 @@ PROVIDER_LIBRARY=Solarflare
 
 CPPFLAGS = -DCIMPLE_DEBUG -D_GNU_SOURCE 
 CPPFLAGS += -I. -Icimple
-CPPFLAGS += -Wall -W -Wno-unused -Werror
 CPPFLAGS += -DCIMPLE_PLATFORM_$(CIMPLE_PLATFORM)
 
+ifneq ($(CIM_SERVER),esxi)
 CXXFLAGS = -fPIC  -pthread
-CXXFLAGS += -g -fvisibility=hidden
+CXXFLAGS += -Wall -W -Wno-unused -Werror
+CXXFLAGS += -g 
+
 ifeq ($(CIMPLE_PLATFORM),LINUX_IX86_GNU)
 CXXFLAGS += -m32
 endif
 
+endif
+CXXFLAGS += -fvisibility=hidden
+
+ifneq ($(CIM_SERVER),esxi)
 CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
 CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
+endif
 
 LIBRARIES = pthread
 
@@ -61,9 +70,11 @@ CPPFLAGS += -I$(PEGASUS_INCLUDES)
 CPPFLAGS += -DPEGASUS_PLATFORM_$(CIMPLE_PLATFORM)
 
 else ifeq ($(CIM_INTERFACE),cmpi)
-CPPFLAGS += -DCIMPLE_CMPI_MODULE -Icmpi
+CPPFLAGS += -DCIMPLE_CMPI_MODULE
+ifneq ($(CIM_SERVER),esxi)
+CPPFLAGS += -Icmpi
+endif
 
-VPATH += cimple/cmpi
 include cimple/cmpi/sources.mak
 
 else
@@ -73,10 +84,18 @@ endif
 LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
 
 .PHONY: all
+
+ifneq ($(CIM_SERVER),esxi)
 all : lib$(PROVIDER_LIBRARY).so
 
 lib$(PROVIDER_LIBRARY).so : $(patsubst %.cpp,%.o,$(lib$(PROVIDER_LIBRARY)_SOURCES))
-	$(CXX) -shared -o $@ $(LDFLAGS) $^ $(addprefix -l,$(LIBRARIES))
+	$(CXX) -shared -o $@ $(LDFLAGS) $^ -nostdlib -static-libgcc -Wl,-Bstatic $(addprefix -l,$(LIBRARIES)) -lstdc++ 
+
+else
+
+all : esxi-solarflare.tar.gz
+
+endif
 
 ifeq ($(CIM_SERVER),pegasus)
 
@@ -102,12 +121,18 @@ unregister: regmod
 
 endif
 
-ifeq ($(CIM_SERVER),sfcb)
-
+ifneq ($(CIM_SERVER),pegasus)
 repository.reg : repository.mof mof2reg.awk
 	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) $< >$@
 
-register: repository.reg interop.reg insmod
+interop.reg : interop.mof mof2reg.awk
+	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(INTEROP_NAMESPACE) $< >$@
+
+endif
+
+ifeq ($(CIM_SERVER),sfcb)
+
+register: repository.reg interop.reg install
 	$(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg repository.mof
 	$(SFCBSTAGE) -n $(INTEROP_NAMESPACE) -r interop.reg repository.mof
 	$(SFCBREPOS)
@@ -118,6 +143,52 @@ endif
 
 PROVIDER_LIBPATH=$(SFCB_PATH)/lib
 
+endif
+
+ifeq ($(CIM_SERVER),esxi)
+
+ALL_HEADERS = $(wildcard *.h) $(wildcard cimple/*.h) $(wildcard cimple/cmpi/*.h)
+ESXI_SUBDIR = esxi_solarflare
+ESXI_PROJECT_NAME = solarflare
+ESXI_SRC_PATH = $(ESXI_SUBDIR)/$(ESXI_PROJECT_NAME)
+ESXI_GENERATED = $(lib$(PROVIDER_LIBRARY)_SOURCES) $(ALL_HEADERS)
+ESXI_GENERATED += repository.mof interop.mof
+ESXI_GENERATED += repository.reg.in interop.reg.in
+ESXI_GENERATED += Makefile.am
+
+esxi-solarflare.tar.gz : $(addprefix $(ESXI_SRC_PATH)/,$(ESXI_GENERATED))
+	cd $(ESXI_SUBDIR); tar -czf ../$@ *
+
+$(ESXI_SRC_PATH)/repository.reg.in : repository.reg
+	mkdir -p $(dir $@)	
+	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g' <$< >$@
+
+$(ESXI_SRC_PATH)/interop.reg.in : repository.reg
+	mkdir -p $(dir $@)	
+	$(SED) 's!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
+
+
+$(ESXI_SRC_PATH)/% : %
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(ESXI_SRC_PATH)/Makefile.am : Makefile
+	echo "bin_PROGRAMS=lib$(PROVIDER_LIBRARY).so" >$@
+	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(lib$(PROVIDER_LIBRARY)_SOURCES))" >>$@
+	for src in $(wordlist 2,$(words $(lib$(PROVIDER_LIBRARY)_SOURCES)),$(lib$(PROVIDER_LIBRARY)_SOURCES)); do \
+		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
+	done
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -I\$$(srcdir) -I\$$(srcdir)/cimple" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\\\"\$$(smash_namespace)\\\"" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_INTEROP_NS=\\\"\$$(sfcb_interop_namespace)\\\"" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CXXFLAGS=\$$(CFLAGS) $(CXXFLAGS)" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
+	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace)" >>$@
+	echo "if ENABLE_SFCB" >>$@
+	echo "dist_sfcb_interop_ns_DATA = interop.mof" >>$@
+	echo "dist_sfcb_ns_DATA = repository.mof" >>$@
+	echo "dist_sfcb_reg_DATA = repository.reg interop.reg" >>$@
+	echo "endif" >>$@
 endif
 
 install : all

@@ -53,3 +53,7 @@ cimple_SOURCES = \
 lib$(PROVIDER_LIBRARY)_SOURCES += $(addprefix cimple/lib/,$(cimple_SOURCES))
 
 cimple/lib/%.o : CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
+
+ifeq ($(CIM_SERVER),esxi)
+CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
+endif
