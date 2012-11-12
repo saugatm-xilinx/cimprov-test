@@ -156,14 +156,14 @@ ESXI_GENERATED += repository.mof interop.mof
 ESXI_GENERATED += repository.reg.in interop.reg.in
 ESXI_GENERATED += Makefile.am
 
-esxi-solarflare.tar.gz : $(addprefix $(ESXI_SRC_PATH)/,$(ESXI_GENERATED))
+esxi-solarflare.tar.gz : $(addprefix $(ESXI_SRC_PATH)/,$(ESXI_GENERATED)) $(ESXI_SUBDIR)/esxi_bootstrap.sh
 	cd $(ESXI_SUBDIR); tar -czf ../$@ *
 
 $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g' <$< >$@
 
-$(ESXI_SRC_PATH)/interop.reg.in : repository.reg
+$(ESXI_SRC_PATH)/interop.reg.in : interop.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
 
