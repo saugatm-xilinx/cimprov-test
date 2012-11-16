@@ -89,7 +89,7 @@ ifneq ($(CIM_SERVER),esxi)
 all : lib$(PROVIDER_LIBRARY).so
 
 lib$(PROVIDER_LIBRARY).so : $(patsubst %.cpp,%.o,$(lib$(PROVIDER_LIBRARY)_SOURCES))
-	$(CXX) -shared -o $@ $(LDFLAGS) $^ -nostdlib -static-libgcc -Wl,-Bstatic $(addprefix -l,$(LIBRARIES)) -lstdc++ 
+	$(CXX) -shared -o $@ $(LDFLAGS) $^ $(addprefix -l,$(LIBRARIES)) 
 
 else
 
