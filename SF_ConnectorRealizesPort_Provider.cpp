@@ -2,22 +2,9 @@
 #include "SF_ConnectorRealizesPort_Provider.h"
 #include "SF_EthernetPort_Provider.h"
 #include "SF_PhysicalConnector_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_ConnectorRealizesPort_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
-{
-    const solarflare::Port *port = intf.port();
-    if (port != NULL)
-    {
-        SF_ConnectorRealizesPort* link = SF_ConnectorRealizesPort::create(true);
-        
-        link->Antecedent = cast<CIM_PhysicalElement *>(SF_PhysicalConnector_Provider::makeReference(*port));
-        link->Dependent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
-        handler->handle(link);
-    }
-    return true;
-}
 
 SF_ConnectorRealizesPort_Provider::SF_ConnectorRealizesPort_Provider()
 {
@@ -49,9 +36,7 @@ Enum_Instances_Status SF_ConnectorRealizesPort_Provider::enum_instances(
     const SF_ConnectorRealizesPort* model,
     Enum_Instances_Handler<SF_ConnectorRealizesPort>* handler)
 {
-    InterfaceEnum links(handler);
-    
-    solarflare::System::target.forAllInterfaces(links);
+    solarflare::EnumInstances<SF_ConnectorRealizesPort>::allInterfaces(handler);
     return ENUM_INSTANCES_OK;
 }
 

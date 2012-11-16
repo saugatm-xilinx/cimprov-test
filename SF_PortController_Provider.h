@@ -4,33 +4,14 @@
 
 #include <cimple/cimple.h>
 #include "SF_PortController.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_PortController_Provider
 {
-    class NICEnum : public solarflare::ConstNICEnumerator
-    {
-        Enum_Instances_Handler<SF_PortController>* handler;
-    public:
-        NICEnum(Enum_Instances_Handler<SF_PortController>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::NIC& nic);
-    };
 
-
-    class PortCounter : public solarflare::ConstPortEnumerator
-    {
-        unsigned cnt;
-    public:
-        PortCounter() : cnt(0) {};
-        virtual bool process(const solarflare::Port&) { cnt++; return true; }
-        unsigned count() const { return cnt; }
-    };
 public:
-
-    static SF_PortController *makeReference(const solarflare::NIC& nic);
 
     typedef SF_PortController Class;
 

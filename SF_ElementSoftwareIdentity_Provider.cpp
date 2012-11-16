@@ -4,76 +4,9 @@
 #include "SF_NICCard_Provider.h"
 #include "SF_PortController_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_ElementSoftwareIdentity_Provider::NICBinder::process(const solarflare::NIC& nic)
-{
-    SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
-    
-    item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(*softItem));
-    item->Dependent = cast<CIM_ManagedElement *>(SF_PortController_Provider::makeReference(nic));
-    item->ElementSoftwareStatus.null = false;
-    item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
-    item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
-    item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
-
-    handler->handle(item);
-    return true;
-}
-
-bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::Diagnostic& diag)
-{
-    const solarflare::SWElement *tool = diag.diagnosticTool();
-    
-    if (tool != NULL)
-    {
-        SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
-    
-        item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(*tool));
-        item->Dependent = cast<CIM_ManagedElement *>(SF_DiagnosticTest_Provider::makeReference(diag));
-        item->ElementSoftwareStatus.null = false;
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
-
-        handler->handle(item);
-    }
-    return true;
-}
-
-bool SF_ElementSoftwareIdentity_Provider::SWEnum::process(const solarflare::SWElement& se)
-{
-    switch (se.classify())
-    {
-        case solarflare::SWElement::SWFirmware:
-        {
-            const solarflare::Firmware& fw = static_cast<const solarflare::Firmware&>(se);
-            SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
-            
-            item->Antecedent = cast<CIM_SoftwareIdentity *>(SF_SoftwareIdentity_Provider::makeReference(fw));
-            item->Dependent = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*fw.nic()));
-            item->ElementSoftwareStatus.null = false;
-            item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
-            item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
-            item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
-            item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Installed);
-            handler->handle(item);
-            break;
-        }
-        case solarflare::SWElement::SWDriver:
-        {
-            NICBinder bindToNIC(handler, &se);
-            solarflare::System::target.forAllNICs(bindToNIC);
-            break;
-        }
-        default:
-            /* do nothing */
-            break;
-    }
-    return true;
-}
 
 SF_ElementSoftwareIdentity_Provider::SF_ElementSoftwareIdentity_Provider()
 {
@@ -85,6 +18,7 @@ SF_ElementSoftwareIdentity_Provider::~SF_ElementSoftwareIdentity_Provider()
 
 Load_Status SF_ElementSoftwareIdentity_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -104,9 +38,7 @@ Enum_Instances_Status SF_ElementSoftwareIdentity_Provider::enum_instances(
     const SF_ElementSoftwareIdentity* model,
     Enum_Instances_Handler<SF_ElementSoftwareIdentity>* handler)
 {
-    SWEnum instances(handler);
-    solarflare::System::target.forAllSoftware(instances);
-    solarflare::System::target.forAllDiagnostics(instances);
+    solarflare::EnumInstances<SF_ElementSoftwareIdentity>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 

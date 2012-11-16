@@ -2,17 +2,9 @@
 #include "SF_NICSAPImplementation_Provider.h"
 #include "SF_LANEndpoint_Provider.h"
 #include "SF_EthernetPort_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_NICSAPImplementation_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
-{
-    SF_NICSAPImplementation *link = SF_NICSAPImplementation::create(true);
-    link->Antecedent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
-    link->Dependent = cast<CIM_ServiceAccessPoint *>(SF_LANEndpoint_Provider::makeReference(intf));
-    handler->handle(link);
-    return true;
-}
 
 SF_NICSAPImplementation_Provider::SF_NICSAPImplementation_Provider()
 {
@@ -44,8 +36,7 @@ Enum_Instances_Status SF_NICSAPImplementation_Provider::enum_instances(
     const SF_NICSAPImplementation* model,
     Enum_Instances_Handler<SF_NICSAPImplementation>* handler)
 {
-    InterfaceEnum ap(handler);
-    solarflare::System::target.forAllInterfaces(ap);
+    solarflare::EnumInstances<SF_NICSAPImplementation>::allInterfaces(handler);
     return ENUM_INSTANCES_OK;
 }
 

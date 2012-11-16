@@ -10,15 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_BundleComponent_Provider
 {
-    class ConstEnum : public solarflare::ConstSoftwareEnumerator {
-        Enum_Instances_Handler<SF_BundleComponent>* handler;
-        const solarflare::Package *master;
-        unsigned idx;
-    public:
-        ConstEnum(Enum_Instances_Handler<SF_BundleComponent>* h) :
-            handler(h), master(NULL), idx(0) {};
-        virtual bool process(const solarflare::SWElement& e);
-    };
 public:
 
     typedef SF_BundleComponent Class;

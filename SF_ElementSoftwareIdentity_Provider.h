@@ -10,27 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ElementSoftwareIdentity_Provider
 {
-    class SWEnum : public solarflare::ConstSoftwareEnumerator,
-                   public solarflare::ConstDiagnosticEnumerator
-    {
-        Enum_Instances_Handler<SF_ElementSoftwareIdentity>* const handler;
-    public:
-        SWEnum(Enum_Instances_Handler<SF_ElementSoftwareIdentity>* h) :
-            handler(h) {};
-        virtual bool process(const solarflare::SWElement& se);
-        virtual bool process(const solarflare::Diagnostic& se);
-    };
-
-    class NICBinder : public solarflare::ConstNICEnumerator {
-        Enum_Instances_Handler<SF_ElementSoftwareIdentity>* const handler;
-        const solarflare::SWElement *const softItem;
-    public:
-        NICBinder(Enum_Instances_Handler<SF_ElementSoftwareIdentity>* h,
-                  const solarflare::SWElement *s) :
-            handler(h), softItem(s) {};
-        virtual bool process(const solarflare::NIC& nic);
-    };
-
 public:
 
     typedef SF_ElementSoftwareIdentity Class;

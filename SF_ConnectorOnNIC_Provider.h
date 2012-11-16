@@ -4,19 +4,12 @@
 
 #include <cimple/cimple.h>
 #include "SF_ConnectorOnNIC.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_ConnectorOnNIC_Provider
 {
-    class ConstEnum : public solarflare::ConstPortEnumerator {
-        Enum_Instances_Handler<SF_ConnectorOnNIC>* handler;
-    public:
-        ConstEnum(Enum_Instances_Handler<SF_ConnectorOnNIC>* h) :
-            handler(h) {};
-        virtual bool process(const solarflare::Port& e);
-    };
 public:
 
     typedef SF_ConnectorOnNIC Class;

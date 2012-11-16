@@ -2,34 +2,9 @@
 #include "SF_RecordAppliesToElement_Provider.h"
 #include "SF_NICCard_Provider.h"
 #include "SF_DiagnosticCompletionRecord_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_RecordAppliesToElement_Provider::EntryEnum::process(const solarflare::LogEntry& entry)
-{
-    SF_RecordAppliesToElement *link = SF_RecordAppliesToElement::create(true);
-    
-    link->Antecedent = cast<CIM_RecordForLog *>(SF_DiagnosticCompletionRecord_Provider::makeReference(*diag,
-                                                                                                      *owner,
-                                                                                                      entry));
-    link->Dependent = cast<CIM_ManagedElement *>(SF_NICCard_Provider::makeReference(*diag->nic()));
-
-    handler->handle(link);
-    return true;
-}
-
-bool SF_RecordAppliesToElement_Provider::Enum::process(const solarflare::Diagnostic& diag)
-{
-    EntryEnum entries(&diag, &diag.errorLog(), handler);
-    diag.errorLog().forAllEntries(entries);
-    if (&diag.okLog() != &diag.errorLog())
-    {
-        EntryEnum okentries(&diag, &diag.okLog(), handler);
-        diag.okLog().forAllEntries(okentries);
-    }
-    return true;
-}
-
 
 SF_RecordAppliesToElement_Provider::SF_RecordAppliesToElement_Provider()
 {
@@ -41,6 +16,7 @@ SF_RecordAppliesToElement_Provider::~SF_RecordAppliesToElement_Provider()
 
 Load_Status SF_RecordAppliesToElement_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -60,8 +36,7 @@ Enum_Instances_Status SF_RecordAppliesToElement_Provider::enum_instances(
     const SF_RecordAppliesToElement* model,
     Enum_Instances_Handler<SF_RecordAppliesToElement>* handler)
 {
-    Enum links(handler);
-    solarflare::System::target.forAllDiagnostics(links);
+    solarflare::EnumInstances<SF_RecordAppliesToElement>::allDiagnostics(handler);
     
     return ENUM_INSTANCES_OK;
 }

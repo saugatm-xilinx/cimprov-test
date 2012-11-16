@@ -4,44 +4,9 @@
 #include "SF_DiagnosticLog_Provider.h"
 #include "SF_LogEntry_Provider.h"
 #include "SF_DiagnosticCompletionRecord_Provider.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_LogManagesRecord_Provider::Enum::process(const solarflare::LogEntry& entry)
-{
-    SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
-
-    link->Log = cast<CIM_Log *>(SF_RecordLog_Provider::makeReference(*owner));
-    link->Record = cast<CIM_RecordForLog *>(SF_LogEntry_Provider::makeReference(*owner, entry));
-    handler->handle(link);
-
-    return true;
-}
-
-bool SF_LogManagesRecord_Provider::DiagEntryEnum::process(const solarflare::LogEntry& entry)
-{
-    SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
-
-    link->Log = cast<CIM_Log *>(SF_DiagnosticLog_Provider::makeReference(*diag, *owner));
-    link->Record = cast<CIM_RecordForLog *>(SF_DiagnosticCompletionRecord_Provider::makeReference(*diag, *owner, entry));
-    handler->handle(link);
-
-    return true;
-}
-
-bool SF_LogManagesRecord_Provider::DiagEnum::process(const solarflare::Diagnostic& diag)
-{
-    DiagEntryEnum entries(&diag, &diag.errorLog(), handler);
-    diag.errorLog().forAllEntries(entries);
-    if (&diag.okLog() != &diag.errorLog())
-    {
-        DiagEntryEnum okentries(&diag, &diag.okLog(), handler);
-        diag.okLog().forAllEntries(okentries);
-    }
-    return true;
-}
-
 
 SF_LogManagesRecord_Provider::SF_LogManagesRecord_Provider()
 {
@@ -53,6 +18,7 @@ SF_LogManagesRecord_Provider::~SF_LogManagesRecord_Provider()
 
 Load_Status SF_LogManagesRecord_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -72,14 +38,7 @@ Enum_Instances_Status SF_LogManagesRecord_Provider::enum_instances(
     const SF_LogManagesRecord* model,
     Enum_Instances_Handler<SF_LogManagesRecord>* handler)
 {
-    for (unsigned i = 0; solarflare::Logger::knownLogs[i] != NULL; i++)
-    {
-        Enum links(solarflare::Logger::knownLogs[i], handler);
-        solarflare::Logger::knownLogs[i]->forAllEntries(links);
-    }
-    DiagEnum diagLinks(handler);
-    solarflare::System::target.forAllDiagnostics(diagLinks);
-
+    solarflare::EnumInstances<SF_LogManagesRecord>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 

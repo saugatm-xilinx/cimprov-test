@@ -2,23 +2,9 @@
 #include "SF_ConnectorOnNIC_Provider.h"
 #include "SF_PhysicalConnector_Provider.h"
 #include "SF_NICCard_Provider.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_ConnectorOnNIC_Provider::ConstEnum::process(const solarflare::Port& e)
-{
-    SF_ConnectorOnNIC *link = SF_ConnectorOnNIC::create(true);
-    link->GroupComponent = 
-    cast<CIM_PhysicalPackage *>(SF_NICCard_Provider::makeReference(*e.nic()));
-    link->PartComponent =
-    cast<CIM_PhysicalConnector *>(SF_PhysicalConnector_Provider::makeReference(e));
-    
-    handler->handle(link);
-    
-    return true;
-}
-
 
 SF_ConnectorOnNIC_Provider::SF_ConnectorOnNIC_Provider()
 {
@@ -30,6 +16,7 @@ SF_ConnectorOnNIC_Provider::~SF_ConnectorOnNIC_Provider()
 
 Load_Status SF_ConnectorOnNIC_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -48,10 +35,8 @@ Get_Instance_Status SF_ConnectorOnNIC_Provider::get_instance(
 Enum_Instances_Status SF_ConnectorOnNIC_Provider::enum_instances(
     const SF_ConnectorOnNIC* model,
     Enum_Instances_Handler<SF_ConnectorOnNIC>* handler)
-{
-    ConstEnum processor(handler);
-    
-    solarflare::System::target.forAllPorts(processor);
+{   
+    solarflare::EnumInstances<SF_ConnectorOnNIC>::allPorts(handler);
     
     return ENUM_INSTANCES_OK;
 }

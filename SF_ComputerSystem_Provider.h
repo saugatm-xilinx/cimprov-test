@@ -9,12 +9,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ComputerSystem_Provider
 {
-    static Ref<CIM_ComputerSystem> cimSystem;
 public:
-
-    static const CIM_ComputerSystem *findSystem();
-    static bool isOurSystem(const CIM_ComputerSystem* sys);
-    static bool isOurSystem(const String& sysclass, const String& sysname);
 
     typedef SF_ComputerSystem Class;
 

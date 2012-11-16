@@ -51,23 +51,17 @@ namespace solarflare
         /// Diagnostic thread object
         DiagnosticThread diagThread;
 
-        /// Number of success events stored
-        static const unsigned maxSuccessEvents;
-        /// Successful test log
-        Logger successLog;
-
         /// Number of failure events stored
-        static const unsigned maxFailureEvents;
-        /// Failed test log
-        Logger failedLog;
+        static const unsigned maxRecordedEvents;
+        /// Test result log
+        Logger resultLog;
     public:
         /// Constructor
         ///
         /// @param d    Description
         Diagnostic(const String& d) : 
             SystemElement(d), diagThread(this),
-            successLog(LogInfo, maxSuccessEvents, "Success Log"),
-            failedLog(LogError, maxFailureEvents, "Failure Log")
+            resultLog(LogInfo, maxRecordedEvents, "Result Log")
         {}
 
         /// Runs the diagnostic either synchronously or not
@@ -111,20 +105,19 @@ namespace solarflare
         enum TestKind {
             FunctionalTest, //< functional
             StressTest,     //< stress
-            HealthCheckTest //< health check
+            HealthCheckTest, //< health check
+            MediaAccessTest //< media access test
         };
         /// @return the kind of the test
         virtual TestKind testKind() const { return FunctionalTest; }
 
-        /// @return associated error logger
-        Logger& errorLog() { return failedLog; }
-        /// @return associated error logger (immutable)
-        const Logger& errorLog() const { return failedLog; }
-
-        /// @return associated success logger
-        Logger& okLog() { return successLog; }
+        /// @return associated result logger
+        Logger& log() { return resultLog; }
         /// @return associated success logger (immutable)
-        const Logger& okLog() const  { return successLog; }
+        const Logger& log() const  { return resultLog; }
+
+        virtual Thread *embeddedThread() { return asyncThread(); }
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     /// @brief Abstract class for ports. Implementors shall subclass it for
@@ -189,6 +182,8 @@ namespace solarflare
         /// We're a port.
         virtual const String& genericName() const { return portName; }
         virtual unsigned elementId() const { return portIndex; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
             
@@ -275,6 +270,8 @@ namespace solarflare
         virtual void currentMAC(const MACAddress& mac) = 0;
 
         virtual const String& genericName() const { return ifGenName; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
 
@@ -310,6 +307,9 @@ namespace solarflare
         /// @return Same class name for all instances
         virtual const String& genericName() const { return romName; }
     };
+
+
+    class Driver;
 
     /// @brief An abstract class for NIC elements
     /// Implementors shall subclass it for platform-specific behaviour
@@ -357,6 +357,9 @@ namespace solarflare
         /// @return Physical connector type.
         virtual Connector connector() const = 0;
 
+        /// @return Associated device driver or NULL
+        virtual Driver *driver() const { return NULL; }
+
         /// @return maximum link speed (defaults to 10G)
         /// fixme: enum
         virtual Port::Speed maxLinkSpeed() const {
@@ -374,17 +377,19 @@ namespace solarflare
             setupDiagnostics();
         }
         /// Apply @p en to all firmware of the NIC
-        virtual bool forAllFw(SoftwareEnumerator& en) = 0;
+        virtual bool forAllFw(ElementEnumerator& en) = 0;
         /// Apply @p en to all firmware of the NIC (non-destructive)
-        virtual bool forAllFw(ConstSoftwareEnumerator& en) const = 0;
+        virtual bool forAllFw(ConstElementEnumerator& en) const = 0;
 
         // Inherited methods
-        virtual bool forAllSoftware(SoftwareEnumerator& en) {
+        virtual bool forAllSoftware(ElementEnumerator& en) {
             return forAllFw(en);
         }
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const {
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const {
             return forAllFw(en);
         }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     /// @brief An abstract driver class.
@@ -453,6 +458,8 @@ namespace solarflare
 
         /// Package is not host SW as it is a meta thing.
         virtual bool isHostSw() const { return false; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     /// @brief An abstract topmost class. Implementors must subclass it to
@@ -537,25 +544,28 @@ namespace solarflare
         }
 
         /// Apply en to all NICs in the system (non-destructively)
-        virtual bool forAllNICs(ConstNICEnumerator& en) const = 0;
+        virtual bool forAllNICs(ConstElementEnumerator& en) const = 0;
         /// Apply en to all NICs in the system
-        virtual bool forAllNICs(NICEnumerator& en) = 0;
+        virtual bool forAllNICs(ElementEnumerator& en) = 0;
         /// Apply en to all softwre packages in the system
         /// (non-destructively)
-        virtual bool forAllPackages(ConstSoftwareEnumerator& en) const = 0;
+        virtual bool forAllPackages(ConstElementEnumerator& en) const = 0;
         /// Apply en to all softwre packages in the system 
-        virtual bool forAllPackages(SoftwareEnumerator& en) = 0;
+        virtual bool forAllPackages(ElementEnumerator& en) = 0;
 
-        virtual bool forAllPorts(ConstPortEnumerator& en) const;
-        virtual bool forAllPorts(PortEnumerator& en);
-        virtual bool forAllInterfaces(ConstInterfaceEnumerator& en) const;
-        virtual bool forAllInterfaces(InterfaceEnumerator& en);
-        virtual bool forAllDiagnostics(ConstDiagnosticEnumerator& en) const;
-        virtual bool forAllDiagnostics(DiagnosticEnumerator& en);
-        virtual bool forAllSoftware(ConstSoftwareEnumerator& en) const;
-        virtual bool forAllSoftware(SoftwareEnumerator& en);
+        virtual bool forAllPorts(ConstElementEnumerator& en) const;
+        virtual bool forAllPorts(ElementEnumerator& en);
+        virtual bool forAllInterfaces(ConstElementEnumerator& en) const;
+        virtual bool forAllInterfaces(ElementEnumerator& en);
+        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const;
+        virtual bool forAllDiagnostics(ElementEnumerator& en);
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const;
+        virtual bool forAllSoftware(ElementEnumerator& en);
         
         virtual const String& genericName() const { return systemName; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
     };
 
 } // namespace

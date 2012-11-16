@@ -10,20 +10,6 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_ElementCapabilities_Provider
 {
-    class Enum : public solarflare::ConstNICEnumerator,
-                 public solarflare::ConstInterfaceEnumerator,
-                 public solarflare::ConstSoftwareEnumerator,
-                 public solarflare::ConstDiagnosticEnumerator
-    {
-        Enum_Instances_Handler<SF_ElementCapabilities>* handler;
-    public:
-        Enum(Enum_Instances_Handler<SF_ElementCapabilities>* h) :
-            handler(h) {}
-        virtual bool process(const solarflare::NIC& nic);
-        virtual bool process(const solarflare::Interface& nic);
-        virtual bool process(const solarflare::SWElement& sw);
-        virtual bool process(const solarflare::Diagnostic& diag);
-    };
 public:
 
     typedef SF_ElementCapabilities Class;

@@ -4,37 +4,13 @@
 
 #include <cimple/cimple.h>
 #include "SF_EthernetPort.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_EthernetPort_Provider
 {
-    class InterfaceEnum : public solarflare::ConstInterfaceEnumerator {
-        Enum_Instances_Handler<SF_EthernetPort>* handler;
-    public:
-        InterfaceEnum(Enum_Instances_Handler<SF_EthernetPort>* h) :
-            handler(h) {};
-        virtual bool process(const solarflare::Interface& inrf);
-    };
-
 public:
-
-    class InterfaceFinder : public solarflare::InterfaceEnumerator 
-    {
-        solarflare::Interface *obj;
-        String devId;
-    public:
-        InterfaceFinder(const String& id) :
-            obj(NULL), devId(id) {};
-        virtual bool process(solarflare::Interface& inrf);
-        solarflare::Interface *found() const { return obj; }
-            
-    };
-
-    static SF_EthernetPort *makeReference(const solarflare::Interface& intf);
-    static solarflare::Interface *findByInstance(const SF_EthernetPort& port);
-
     typedef SF_EthernetPort Class;
 
     SF_EthernetPort_Provider();

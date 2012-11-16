@@ -4,7 +4,7 @@ namespace solarflare
 {
     using cimple::Auto_Mutex;
     
-    void LogEntry::printLog(LogLevel at) const
+    void LogEntry::printLog() const
     {
         static const cimple::Log_Level mapping[] = 
         {
@@ -14,7 +14,7 @@ namespace solarflare
             cimple::LL_INFO,
             cimple::LL_DBG,
         };
-        cimple::log(mapping[at],
+        cimple::log(mapping[level],
                     "", errorCode, "%s", messageStr.c_str());
     }
 
@@ -35,7 +35,7 @@ namespace solarflare
             entries[serial % size] = e;
             entries[serial % size].id(serial);
             serial++;
-            e.printLog(level);
+            e.printLog();
         }
     }
 
@@ -47,23 +47,6 @@ namespace solarflare
         va_end(args);
     }
     
-    bool Logger::forAllEntries(LogEntryIterator& iter) const
-    {
-        Auto_Mutex excl(lock);
-        if (serial > 0)
-        {
-            unsigned from = serial >= size ? (serial - size) % size : 0;
-            unsigned upto = serial % size;
-            
-            for (unsigned i = from; i != upto; i++)
-            {
-                if (!iter.process(entries[i]))
-                    return false;
-            }
-        }
-        return true;
-    }
-
     void Logger::clear(void)
     {
         Auto_Mutex excl(lock);
@@ -75,6 +58,20 @@ namespace solarflare
         Auto_Mutex excl(lock);
         return serial > size ? size : serial;
     }
+
+    LogEntry Logger::get(unsigned idx) const
+    {
+        Auto_Mutex excl(lock);
+        LogEntry le;
+        if (serial > 0)
+        {
+            unsigned from = serial >= size ? (serial - size) % size : 0;
+
+            le = entries[(from + idx) % size];
+        }
+        return le;
+    }
+
     
     Logger Logger::errorLog(LogError, 128, "Error log");
     Logger Logger::eventLog(LogInfo, 128, "Event log");

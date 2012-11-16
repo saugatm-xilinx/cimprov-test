@@ -2,18 +2,9 @@
 #include "SF_ControlledBy_Provider.h"
 #include "SF_PortController_Provider.h"
 #include "SF_EthernetPort_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
-
-bool SF_ControlledBy_Provider::InterfaceEnum::process(const solarflare::Interface& intf)
-{
-    SF_ControlledBy *link = SF_ControlledBy::create(true);
-    
-    link->Dependent = cast<CIM_LogicalDevice *>(SF_EthernetPort_Provider::makeReference(intf));
-    link->Antecedent = cast<CIM_Controller *>(SF_PortController_Provider::makeReference(*intf.nic()));
-    handler->handle(link);
-    return true;
-}
 
 
 SF_ControlledBy_Provider::SF_ControlledBy_Provider()
@@ -26,6 +17,7 @@ SF_ControlledBy_Provider::~SF_ControlledBy_Provider()
 
 Load_Status SF_ControlledBy_Provider::load()
 {
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -45,8 +37,7 @@ Enum_Instances_Status SF_ControlledBy_Provider::enum_instances(
     const SF_ControlledBy* model,
     Enum_Instances_Handler<SF_ControlledBy>* handler)
 {
-    InterfaceEnum control(handler);
-    solarflare::System::target.forAllInterfaces(control);
+    solarflare::EnumInstances<SF_ControlledBy>::allInterfaces(handler);
     return ENUM_INSTANCES_OK;
 }
 

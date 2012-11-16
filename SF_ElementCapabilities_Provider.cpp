@@ -8,87 +8,10 @@
 #include "SF_EnabledLogicalElementCapabilities_Provider.h"
 #include "SF_DiagnosticServiceCapabilities_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::NIC& nic)
-{
-    SF_PortController *pc = SF_PortController_Provider::makeReference(nic);
-    SF_EnabledLogicalElementCapabilities *caps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Controller");
-    SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
-
-    link->ManagedElement = cast<CIM_ManagedElement *>(pc);
-    link->Capabilities = cast<CIM_Capabilities *>(caps);
-    link->Characteristics.null = false;
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(link);
-    return true;
-}
-
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::Diagnostic& diag)
-{
-    SF_DiagnosticTest *test = SF_DiagnosticTest_Provider::makeReference(diag);
-    SF_DiagnosticServiceCapabilities *caps = SF_DiagnosticServiceCapabilities_Provider::makeReference(diag);
-    SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
-
-    link->ManagedElement = cast<CIM_ManagedElement *>(test);
-    link->Capabilities = cast<CIM_Capabilities *>(caps);
-    link->Characteristics.null = false;
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(link);
-    return true;
-}
-
-
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::Interface& nic)
-{
-    SF_EthernetPort *port = SF_EthernetPort_Provider::makeReference(nic);
-    SF_LANEndpoint *endpoint = SF_LANEndpoint_Provider::makeReference(nic);
-    SF_EnabledLogicalElementCapabilities *pcaps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Port");
-    SF_EnabledLogicalElementCapabilities *epcaps = SF_EnabledLogicalElementCapabilities_Provider::makeReference(nic, "Endpoint");
-    SF_ElementCapabilities *plink = SF_ElementCapabilities::create(true);
-    SF_ElementCapabilities *eplink = SF_ElementCapabilities::create(true);
-
-    plink->ManagedElement = cast<CIM_ManagedElement *>(port);
-    plink->Capabilities = cast<CIM_Capabilities *>(pcaps);
-    plink->Characteristics.null = false;
-    plink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    plink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(plink);
-    eplink->ManagedElement = cast<CIM_ManagedElement *>(endpoint);
-    eplink->Capabilities = cast<CIM_Capabilities *>(epcaps);
-    eplink->Characteristics.null = false;
-    eplink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    eplink->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(eplink);
-    return true;
-}
-
-bool SF_ElementCapabilities_Provider::Enum::process(const solarflare::SWElement& sw)
-{
-    switch (sw.classify())
-    {
-        case solarflare::SWElement::SWFirmware:
-        case solarflare::SWElement::SWPackage:
-            /* acceptable, do nothing here */
-            break;
-        default:
-            return true;
-    }
-    SF_SoftwareInstallationService *svc = SF_SoftwareInstallationService_Provider::makeReference(sw);
-    SF_SoftwareInstallationServiceCapabilities *caps = SF_SoftwareInstallationServiceCapabilities_Provider::makeReference(sw);
-    SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
-    
-    link->ManagedElement = cast<CIM_ManagedElement *>(svc);
-    link->Capabilities = cast<CIM_Capabilities *>(caps);
-    link->Characteristics.null = false;
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
-    link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
-    handler->handle(link);
-    return true;
-}
 
 SF_ElementCapabilities_Provider::SF_ElementCapabilities_Provider()
 {
@@ -100,7 +23,7 @@ SF_ElementCapabilities_Provider::~SF_ElementCapabilities_Provider()
 
 Load_Status SF_ElementCapabilities_Provider::load()
 {
-    solarflare::System::target.initialize();
+    solarflare::CIMHelper::initialize();
     return LOAD_OK;
 }
 
@@ -120,12 +43,7 @@ Enum_Instances_Status SF_ElementCapabilities_Provider::enum_instances(
     const SF_ElementCapabilities* model,
     Enum_Instances_Handler<SF_ElementCapabilities>* handler)
 {
-    Enum links(handler);
-    
-    solarflare::System::target.forAllNICs(links);
-    solarflare::System::target.forAllInterfaces(links);
-    solarflare::System::target.forAllSoftware(links);
-    solarflare::System::target.forAllDiagnostics(links);
+    solarflare::EnumInstances<SF_ElementCapabilities>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 
