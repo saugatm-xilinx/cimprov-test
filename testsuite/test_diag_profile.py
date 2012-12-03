@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-from test_classes import profile_check
-
-NS = 'root/solarflare'
+from test_lib import profile_check
+from tester_vars import *
+from tester_hlpr import *
 
 PROFILE_LIST = ['Diagnostics', 'Job Control', 'Record Log']
 
@@ -156,4 +156,10 @@ SPEC_CLASSES_LIST = [
     ]
 ]
 
-profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, NS)
+def test_function(param = {}):
+    """Diagnostics, Job Control and Record Log profiles testing..."""
+    TEST_NAME = "diag_profile"
+
+    test_start(TEST_NAME, test_function.__doc__)
+    res = profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, TESTER_NS)
+    test_result(TEST_NAME, res)

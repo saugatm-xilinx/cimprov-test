@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-from test_classes import profile_check
-
-NS = 'root/solarflare'
+from test_lib import profile_check
+from tester_vars import *
+from tester_hlpr import *
 
 # Specification
 SPEC_CLASSES_LIST = [
@@ -94,4 +94,11 @@ SPEC_CLASSES_LIST = [
 
 PROFILE_LIST = ['Software Inventory', 'Software Update']
 
-profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, NS)
+def test_function(param = {}):
+    """Software Inventory and Software Update profiles testing"""
+    TEST_NAME = "sw_profile"
+
+    test_start(TEST_NAME, test_function.__doc__)
+    res = profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, TESTER_NS)
+    test_result(TEST_NAME, res)
+

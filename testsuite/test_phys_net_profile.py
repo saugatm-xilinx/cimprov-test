@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-from test_classes import profile_check
+from test_lib import profile_check
+from tester_vars import *
+from tester_hlpr import *
 
-NS = 'root/solarflare'
 CARD_NUM = 1
 
 PROFILE_LIST = ['Physical Asset', 'Ethernet Port', 'Host LAN Network Port']
@@ -78,4 +79,10 @@ SPEC_CLASSES_LIST = [
     ]
 ]
 
-profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, NS)
+def test_function(param = {}):
+    """Physical asset, Ethernet and Host LAN Network Port profiles testing"""
+    TEST_NAME = "phys_net_profile"
+    
+    test_start(TEST_NAME, test_function.__doc__)
+    res = profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, TESTER_NS)
+    test_result(TEST_NAME, res)
