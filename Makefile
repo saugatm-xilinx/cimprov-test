@@ -89,7 +89,7 @@ ifneq ($(CIM_SERVER),esxi)
 all : lib$(PROVIDER_LIBRARY).so
 
 lib$(PROVIDER_LIBRARY).so : $(patsubst %.cpp,%.o,$(lib$(PROVIDER_LIBRARY)_SOURCES))
-	$(CXX) -shared -o $@ $(LDFLAGS) $^ $(addprefix -l,$(LIBRARIES)) 
+	$(CXX) -shared -o $@ $(LDFLAGS) $(CXXFLAGS) $^ $(addprefix -l,$(LIBRARIES)) 
 
 else
 
@@ -100,7 +100,7 @@ endif
 ifeq ($(CIM_SERVER),pegasus)
 
 regmod : $(patsubst %.cpp,%.o,$(regmod_SOURCES))
-	$(CXX) -o $@ $(LDFLAGS) $^ -L. -l$(PROVIDER_LIBRARY) $(addprefix -l,$(LIBRARIES))
+	$(CXX) -o $@ $(LDFLAGS) $(CXXFLAGS) $^ -L. -l$(PROVIDER_LIBRARY) $(addprefix -l,$(LIBRARIES))
 
 endif
 
