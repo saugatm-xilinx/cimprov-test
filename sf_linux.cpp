@@ -2,16 +2,14 @@
  * TODO and questions list:
  *
  * - SKU/FRU - there is no such attribute in SF VPD?
- * - Permanent MAC - where I can get it?
  * - Connector type - where I can get it (via ethtool it is TP, FIBRE, ...)?
  * - Autoneg getting returns operstate - should it return if autoneg 
  *   is supported instead?
  * - Error handling - which values should be returned and what about logging?
  * - More accurate VPD tags parsing
- * - Properties getting for Port and Firmware use ethtool, so these
- *   classes have Interface pointer - looks ugly
- * - Add software package, driver and diagnostics stuff
- * - Check this code for on-port card; check set callbacks
+ * - BootRom
+ * - SoftwareUpdate
+ * - Indications
  */
 
 #include "sf_platform.h"
@@ -200,7 +198,7 @@ namespace solarflare
         virtual void renegotiate();
 
         /// @return Manufacturer-supplied MAC address
-        virtual MACAddress permanentMAC() const { return MACAddress(0, 1, 2, 3, 4, 5); };
+        virtual MACAddress permanentMAC() const;
 
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
@@ -339,6 +337,30 @@ namespace solarflare
         memset(&edata, 0, sizeof(edata));
         linuxEthtoolCmd(boundIface->ifName().c_str(),
                         ETHTOOL_NWAY_RST, &edata);
+    }
+
+    MACAddress LinuxPort::permanentMAC() const
+    {
+        struct ethtool_perm_addr    *edata;
+        
+        edata = (ethtool_perm_addr *)calloc(1,
+                    sizeof(struct ethtool_perm_addr) + ETH_ALEN);
+        if (!edata)
+            return MACAddress(0, 0, 0, 0, 0, 0);
+        
+        edata->size = ETH_ALEN;
+        if (linuxEthtoolCmd(boundIface->ifName().c_str(),
+                            ETHTOOL_GPERMADDR, edata) < 0)
+        {
+            free(edata);
+            return MACAddress(0, 0, 0, 0, 0, 0);
+        }
+
+        MACAddress mac = MACAddress(edata->data[0], edata->data[1],
+                                    edata->data[2], edata->data[3],
+                                    edata->data[4], edata->data[5]);
+        free(edata);
+        return mac;
     }
 
     class LinuxInterface : public Interface {
