@@ -694,11 +694,14 @@ namespace solarflare
 
     VitalProductData LinuxNIC::vitalProductData() const 
     {
-        char path[SYS_PATH_MAX_LEN];
-        int fd;
+        char    path[SYS_PATH_MAX_LEN];
+        int     fd;
         ssize_t size;
-        String sno;
-        String pno;
+        String  sno;
+        String  pno;
+       
+        unsigned        deviceId = pciAddress().device();
+        const char     *modelId;
 
         sprintf(path, "%s/vpd", sysfsPath.c_str());
 
@@ -774,8 +777,21 @@ namespace solarflare
 
         close(fd);
 
+        switch (deviceId)
+        {
+            case 0x0703: modelId = "SFC4000 rev A net"; break;
+            case 0x0710: modelId = "SFC4000 rev B"; break;
+            case 0x0803: modelId = "SFC9020"; break;
+            case 0x0813: modelId = "SFC9021"; break;
+            case 0x1803: modelId = "SFC9020 Virtual Function"; break;
+            case 0x1813: modelId = "SFC9021 Virtual Function"; break;
+            case 0x6703: modelId = "SFC4000 rev A iSCSI/Onload"; break; 
+            case 0xc101: modelId = "EF1-21022T"; break;
+            default: modelId = "";
+        }
+
         return VitalProductData(sno, "", sno, pno,
-                                "SFC00000", pno /* ??? */);
+                                modelId, pno /* ??? */);
     }
 
     NIC::Connector LinuxNIC::connector() const
