@@ -27,6 +27,8 @@
 #define PROC_BUS_PATH       "/proc/bus/pci/"
 #define DEV_PATH            "/dev/"
 #define PATH_MAX_LEN        1024
+#define CMD_MAX_LEN         1024
+#define VPD_FIELD_MAX_LEN   255
 #define PCI_CONF_LEN        12
 #define CLASS_NET_VALUE     0x20000
 #define VENDOR_SF_VALUE     0x1924 
@@ -65,6 +67,16 @@ namespace solarflare
                                              allocated memory in the
                                              array */
     } NICDescr;
+
+    /**
+     * Description of VPD.
+     */
+    typedef struct VPDdescr {
+        char mac[VPD_FIELD_MAX_LEN]; 
+        char sn[VPD_FIELD_MAX_LEN];
+        char pn[VPD_FIELD_MAX_LEN];
+        char pid[VPD_FIELD_MAX_LEN];
+    } VPDDescr;
 
     /**
      * Free array with NIC descriptions.
@@ -475,6 +487,110 @@ namespace solarflare
     }
 
     /**
+     * Remove space symbols from the end of a string.
+     *
+     * @param s     Char array pointer
+     */
+    void trim(char *s)
+    {
+        int i;
+
+        for (i = strlen(s) - 1; i >= 0; i--)
+            if (s[i] == ' ' || s[i] == '\n' ||
+                s[i] == '\r')
+                s[i] = '\0';
+            else
+                break;
+    }
+
+    /**
+     * Get VPD fields for all ports of a NIC to which a given
+     * port belongs.
+     *
+     * @param portName  Port name
+     * @param vpd       Where to save array of VPD descriptions
+     *                  (one per port)
+     * @param num       Where to save number of descriptions
+     *
+     * @return 0 on success or error code
+     */
+    int getVPD(const char *portName, VPDDescr **vpd, int *num)
+    {
+        char         dev_path[PATH_MAX_LEN];
+        int          rc;
+        int          fd;
+        char         cmd[CMD_MAX_LEN];
+        FILE        *f = NULL;
+        VPDDescr    *arr = NULL;
+        int          cnt = 0;
+        int          max_cnt = 2;
+        char         str[VPD_FIELD_MAX_LEN];
+        void        *tmp;
+
+        arr = (VPDDescr *)calloc(max_cnt, sizeof(VPDDescr));
+        if (arr == NULL)
+            return -1;
+
+        rc = snprintf(cmd, CMD_MAX_LEN,
+                      "/sienaconfig --dynamic ioctl=%s 2>/dev/null | "
+                      "grep \"\\(MAC address base\\)\\|"
+                      "\\(product ID\\)\\|"
+                      "\\(part number (PN)\\)\\|"
+                      "\\(serial number (SN)\\)\" |"
+                      "sed \"s/^[^:]*:\\s*//g\"",
+                      portName);
+        if (rc < 0 || rc >= CMD_MAX_LEN)
+        {
+            free(arr);
+            return -2;
+        }
+
+        f = popen(cmd, "r");
+        if (f == NULL)
+        {
+            free(arr);
+            return -3;
+        }
+
+        while (1)
+        {
+            if (fgets(str, VPD_FIELD_MAX_LEN, f) != str)
+                break;
+            if (cnt >= max_cnt)
+            {
+                max_cnt *= 2;
+                tmp = realloc(arr, max_cnt * sizeof(VPDDescr));
+                if (tmp == NULL)
+                {
+                    free(arr);
+                    return -4;
+                }
+            }
+            strncpy(arr[cnt].mac, str, VPD_FIELD_MAX_LEN);
+            if (fgets(arr[cnt].pid, VPD_FIELD_MAX_LEN, f) != arr[cnt].pid ||
+                fgets(arr[cnt].pn, VPD_FIELD_MAX_LEN, f) != arr[cnt].pn ||
+                fgets(arr[cnt].sn, VPD_FIELD_MAX_LEN, f) != arr[cnt].sn)
+            {
+                free(arr);
+                return -5;
+            }
+
+            trim(arr[cnt].mac);
+            trim(arr[cnt].pid);
+            trim(arr[cnt].pn);
+            trim(arr[cnt].sn);
+
+            cnt++;
+        }
+
+        *vpd = arr;
+        *num = cnt;
+
+        pclose(f);
+        return 0;
+    }
+
+    /**
      * Perform ethool command.
      *
      * @param dev_file          Path to device file
@@ -805,7 +921,9 @@ namespace solarflare
 
             for (i = 0; i < portNum; i++)
                 if (!en.process(*(ports[i])))
+                {
                     return false;
+                }
 
             return true;
         }
@@ -816,7 +934,9 @@ namespace solarflare
 
             for (i = 0; i < portNum; i++)
                 if (!en.process(*(ports[i])))
+                {
                     return false;
+                }
 
             return true;
         }
@@ -845,7 +965,25 @@ namespace solarflare
 
     VitalProductData VMWareNIC::vitalProductData() const 
     {
-        return VitalProductData("", "", "", "", "", "");
+        if (portNum <= 0)
+            return VitalProductData("", "", "", "", "", "");
+        else
+        {
+            VPDDescr  *vpd;
+            int        num;
+            String     pid;
+            String     pn;
+            String     sn;
+
+            if (getVPD(ports[0]->dev_name.c_str(), &vpd, &num) < 0 ||
+                num == 0)
+                return VitalProductData("", "", "", "", "", "");
+            pid = String(vpd[0].pid);
+            pn = String(vpd[0].pn);
+            sn = String(vpd[0].sn);
+            free(vpd);
+            return VitalProductData(sn, "", sn, pn, pid, pn /* ??? */);
+        }
     }
 
     PCIAddress VMWareNIC::pciAddress() const
@@ -967,9 +1105,12 @@ namespace solarflare
         bool        res;
         bool        ret;
         VMWareNIC  *nic;
+        int         rc;
 
-        if (getNICs(&nics, &count) < 0)
+        if ((rc = getNICs(&nics, &count)) < 0)
+        {
             return false;
+        }
 
         for (i = 0; i < count; i++)
         {
