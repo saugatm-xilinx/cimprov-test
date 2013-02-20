@@ -2,13 +2,10 @@
  * TODO and questions list:
  *
  * - SKU/FRU - there is no such attribute in SF VPD?
- * - Connector type - where I can get it (via ethtool it is TP, FIBRE, ...)?
  * - Autoneg getting returns operstate - should it return if autoneg 
  *   is supported instead?
  * - Error handling - which values should be returned and what about logging?
  * - More accurate VPD tags parsing
- * - BootRom
- * - SoftwareUpdate
  * - Indications
  */
 
@@ -37,6 +34,7 @@
 #include <linux/if_arp.h>
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
+#include <mtd/mtd-user.h>
 
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"
@@ -44,7 +42,10 @@
 #define CLASS_NET_VALUE                 "0x020000"
 #define VENDOR_SF_VALUE                 "0x1924" 
 #define SYS_PATH_MAX_LEN                1024
-#define BUF_MAX_LEN                     32
+#define BUF_MAX_LEN                     256
+
+#define BOOT_ROM_VERSION_MAX_OFFSET     0x600
+#define BOOT_ROM_VERSION_PREFIX         "Solarflare Boot Manager (v"
 
 #define VPD_TAG_ID                      0x82
 #define VPD_TAG_R                       0x90
@@ -519,15 +520,93 @@ namespace solarflare
 
     class LinuxBootROM : public BootROM {
         const NIC *owner;
-        VersionInfo vers;
+        const Interface *boundIface;
     public:
-        LinuxBootROM(const NIC *o, const VersionInfo &v) :
-            owner(o), vers(v) {}
+        LinuxBootROM(const NIC *o, const Interface *bi) :
+            owner(o), boundIface(bi) {}
         virtual const NIC *nic() const { return owner; }
-        virtual VersionInfo version() const { return vers; }
+        virtual VersionInfo version() const;
         virtual bool syncInstall(const char *) { return true; }
         virtual void initialize() {};
     };
+
+    VersionInfo LinuxBootROM::version() const
+    {
+        mtd_info_t   mtd_info;
+        FILE        *mtd_list;
+        char         line[BUF_MAX_LEN];
+        char         dev_path[BUF_MAX_LEN];
+        char         buf[BOOT_ROM_VERSION_MAX_OFFSET + 1];
+        char        *dev_name = NULL;
+        int          read_bytes;
+        int          offset;
+        int          fd;
+        int          i;
+        const char   prefix[] = BOOT_ROM_VERSION_PREFIX;
+        const char  *ifname = boundIface->ifName().c_str();
+
+        mtd_list = fopen("/proc/mtd", "r");
+        if (!mtd_list)
+            return VersionInfo("");
+        
+        fgets(line, sizeof(line), mtd_list);
+        while (fgets(line, sizeof(line), mtd_list))
+        {
+            char *p;
+
+            p = strchr(line, ':');
+            if (!p)
+                break;
+                
+            *p++ = 0;
+            if (!strstr(p, ifname) ||
+                !strstr(p, "sfc_exp_rom"))
+                continue;
+
+            dev_name = line;
+            break;
+        }
+        fclose(mtd_list);
+
+        if (!dev_name)
+            return VersionInfo("");
+
+        sprintf(dev_path, "/dev/%sro", dev_name);
+
+        fd = open(dev_path, O_RDONLY);
+
+        read_bytes = read(fd, buf, BOOT_ROM_VERSION_MAX_OFFSET);
+        close(fd);
+
+        if (read_bytes != BOOT_ROM_VERSION_MAX_OFFSET)
+            return VersionInfo("");
+
+        offset = 0;
+        while (offset < read_bytes - (int)sizeof(prefix))
+        {
+            if (memcmp(&buf[offset], prefix, sizeof (prefix) - 1) == 0)
+            {
+                offset += sizeof (prefix) - 1;
+                break;
+            }
+            offset++;
+        }
+
+        if (offset == BOOT_ROM_VERSION_MAX_OFFSET - sizeof (prefix))
+            return VersionInfo("");
+
+        i = 0;
+        while ((offset + i < BOOT_ROM_VERSION_MAX_OFFSET) &&
+                (buf[offset + i] != ')'))
+            i++;
+
+        if (offset + i == BOOT_ROM_VERSION_MAX_OFFSET)
+            return VersionInfo("");
+
+        buf[offset + i] = '\0';
+
+        return VersionInfo(buf + offset);
+    }
 
     class LinuxDiagnostic : public Diagnostic {
         const NIC *owner;
@@ -623,8 +702,7 @@ namespace solarflare
             NIC(idx), portNum(num), 
             port0(this, 0), port1(this, 1),
             intf0(this, 0, ifPath0), intf1(this, 1, ifPath1),
-            nicFw(this, &intf0),
-            rom(this, VersionInfo("2.3.4")),
+            nicFw(this, &intf0), rom(this, &intf0),
             diag(this, &intf0), sysfsPath(NICPath)
         {}
 
