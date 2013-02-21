@@ -503,6 +503,22 @@ namespace solarflare
                 break;
     }
 
+#define POPEN(rc_, f_, fmt_...) \
+    do {                                          \
+        char         cmd_[CMD_MAX_LEN];           \
+        rc_ = snprintf(cmd_, CMD_MAX_LEN, fmt_);  \
+        if (rc_ < 0 || rc_ >= CMD_MAX_LEN)        \
+            rc_ = -1;                             \
+        else                                      \
+        {                                         \
+            f_ = popen(cmd_, "r");                \
+            if (f_ == NULL)                       \
+                rc_ = -2;                         \
+            else                                  \
+                rc_ = 0;                          \
+        }                                         \
+    } while (0)
+
     /**
      * Get VPD fields for all ports of a NIC to which a given
      * port belongs.
@@ -519,7 +535,6 @@ namespace solarflare
         char         dev_path[PATH_MAX_LEN];
         int          rc;
         int          fd;
-        char         cmd[CMD_MAX_LEN];
         FILE        *f = NULL;
         VPDDescr    *arr = NULL;
         int          cnt = 0;
@@ -531,25 +546,19 @@ namespace solarflare
         if (arr == NULL)
             return -1;
 
-        rc = snprintf(cmd, CMD_MAX_LEN,
-                      "/sienaconfig --dynamic ioctl=%s 2>/dev/null | "
-                      "grep \"\\(MAC address base\\)\\|"
-                      "\\(product ID\\)\\|"
-                      "\\(part number (PN)\\)\\|"
-                      "\\(serial number (SN)\\)\" |"
-                      "sed \"s/^[^:]*:\\s*//g\"",
-                      portName);
-        if (rc < 0 || rc >= CMD_MAX_LEN)
+        POPEN(rc, f, 
+              "sienaconfig --dynamic ioctl=%s 2>/dev/null | "
+              "grep \"\\(MAC address base\\)\\|"
+              "\\(product ID\\)\\|"
+              "\\(part number (PN)\\)\\|"
+              "\\(serial number (SN)\\)\" |"
+              "sed \"s/^[^:]*:\\s*//g\"",
+              portName);
+
+        if (rc < 0)
         {
             free(arr);
             return -2;
-        }
-
-        f = popen(cmd, "r");
-        if (f == NULL)
-        {
-            free(arr);
-            return -3;
         }
 
         while (1)
@@ -563,7 +572,7 @@ namespace solarflare
                 if (tmp == NULL)
                 {
                     free(arr);
-                    return -4;
+                    return -3;
                 }
             }
             strncpy(arr[cnt].mac, str, VPD_FIELD_MAX_LEN);
@@ -572,7 +581,7 @@ namespace solarflare
                 fgets(arr[cnt].sn, VPD_FIELD_MAX_LEN, f) != arr[cnt].sn)
             {
                 free(arr);
-                return -5;
+                return -4;
             }
 
             trim(arr[cnt].mac);
@@ -651,10 +660,10 @@ namespace solarflare
         virtual void autoneg(bool an);
         
         /// causes a renegotiation like 'ethtool -r'
-        virtual void renegotiate() {};
+        virtual void renegotiate();
 
         /// @return Manufacturer-supplied MAC address
-        virtual MACAddress permanentMAC() const { return MACAddress(0, 1, 2, 3, 4, 5); };
+        virtual MACAddress permanentMAC() const;
 
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
@@ -784,6 +793,39 @@ namespace solarflare
                          ETHTOOL_SSET, &edata);
     }
     
+    void VMWarePort::renegotiate()
+    {
+        struct ethtool_cmd edata;
+
+        memset(&edata, 0, sizeof(edata));
+        vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
+                         ETHTOOL_NWAY_RST, &edata);
+    }
+
+    MACAddress VMWarePort::permanentMAC() const
+    {
+        struct ethtool_perm_addr    *edata;
+        
+        edata = (ethtool_perm_addr *)calloc(1,
+                    sizeof(struct ethtool_perm_addr) + ETH_ALEN);
+        if (!edata)
+            return MACAddress(0, 0, 0, 0, 0, 0);
+        
+        edata->size = ETH_ALEN;
+        if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
+                             ETHTOOL_GPERMADDR, edata) < 0)
+        {
+            free(edata);
+            return MACAddress(0, 0, 0, 0, 0, 0);
+        }
+
+        MACAddress mac = MACAddress(edata->data[0], edata->data[1],
+                                    edata->data[2], edata->data[3],
+                                    edata->data[4], edata->data[5]);
+        free(edata);
+        return mac;
+    }
+
     class VMWareNICFirmware : public NICFirmware {
         const NIC *owner;
     public:
@@ -806,7 +848,7 @@ namespace solarflare
         VMWareBootROM(const NIC *o, const VersionInfo &v) :
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
-        virtual VersionInfo version() const { return vers; }
+        virtual VersionInfo version() const;
         virtual bool syncInstall(const char *) { return true; }
         virtual void initialize() {};
     };
@@ -999,12 +1041,34 @@ namespace solarflare
         VMWareDriver(const Package *pkg, const String& d, const String& sn, 
                      const VersionInfo& v) :
             Driver(d, sn), owner(pkg), vers(v) {}
-        virtual VersionInfo version() const { return vers; }
+        virtual VersionInfo version() const;
         virtual void initialize() {};
         virtual bool syncInstall(const char *) { return false; }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
+
+    VersionInfo VMWareDriver::version() const
+    {
+        FILE    *f = NULL;
+        int      rc;
+        char     str[VPD_FIELD_MAX_LEN];
+
+        POPEN(rc, f,
+              "esxcli system module "
+              "get --module=sfc | grep Version | "
+              "sed \"s/^\\s*Version:\\s*Version\\s*//\" | "
+              "sed \"s/, Build:.*//g\"");
+        if (rc < 0)
+          return VersionInfo("");
+        
+        if (fgets(str, VPD_FIELD_MAX_LEN, f) != str)
+          return VersionInfo("");
+
+        pclose(f);
+        trim(str);
+        return VersionInfo(str);
+    }
 
     class VMWareLibrary : public Library {
         const Package *owner;
@@ -1153,6 +1217,9 @@ namespace solarflare
     {
         struct ethtool_drvinfo edata;
 
+        if (((VMWareNIC *)owner)->portNum <= 0)
+            return VersionInfo("");
+
         if (vmwareEthtoolCmd(((VMWareNIC *)owner)->
                                         ports[0]->dev_file.c_str(),
                              ((VMWareNIC *)owner)->
@@ -1161,6 +1228,32 @@ namespace solarflare
             return VersionInfo("");
 
         return VersionInfo(edata.fw_version);
+    }
+
+    VersionInfo VMWareBootROM::version() const
+    {
+        FILE    *f = NULL;
+        int      rc;
+        char     str[VPD_FIELD_MAX_LEN];
+
+        if (((VMWareNIC *)owner)->portNum <= 0)
+            return VersionInfo("");
+
+        POPEN(rc, f,
+              "sfupdate -i %s 2>/dev/null | "
+              "grep \"ROM version\" | sed "
+              "\"s/\\s*Boot ROM version:\\s*//g\"",
+              ((VMWareNIC *)owner)->ports[0]->dev_name.c_str());
+
+        if (rc < 0)
+          return VersionInfo("");
+        
+        if (fgets(str, VPD_FIELD_MAX_LEN, f) != str)
+          return VersionInfo("");
+
+        pclose(f);
+        trim(str);
+        return VersionInfo(str);
     }
 
 }
