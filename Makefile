@@ -1,6 +1,6 @@
 AWK=awk
 SED=sed
-CURL=curl
+CURL=curl --negotiate -u :
 
 CIM_SERVER=pegasus
 CIMPLE_PLATFORM=LINUX_IX86_GNU
