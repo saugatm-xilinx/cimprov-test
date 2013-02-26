@@ -39,7 +39,10 @@
 # include <windows.h>
 # include <io.h>
 # include <fcntl.h>
+#else
+# include <unistd.h>
 #endif
+
 
 CIMPLE_NAMESPACE_BEGIN
 

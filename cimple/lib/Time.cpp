@@ -64,7 +64,7 @@ void Time::sleep(uint64 timeout_usec)
 
 #else
 
-    timeval tv = { timeout_usec / 1000000, timeout_usec % 1000000 };
+    timeval tv = { long(timeout_usec / 1000000), long(timeout_usec % 1000000) };
     select(0, 0, 0, 0, &tv);
 
 #endif
