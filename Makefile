@@ -1,5 +1,6 @@
 AWK=awk
 SED=sed
+CURL=curl
 
 CIM_SERVER=pegasus
 CIMPLE_PLATFORM=LINUX_IX86_GNU
@@ -54,6 +55,21 @@ include cimple/lib/sources.mak
 include cimple/tools/lib/sources.mak
 
 ifeq ($(CIM_INTERFACE),pegasus)
+
+ifeq ($(INTREE_PEGASUS),1)
+$(info Using in-tree Pegasus build)
+override PEGASUS_ROOT=$(CURDIR)/pegasus
+override PEGASUS_HOME=$(PEGASUS_ROOT)/setup
+ifeq ($(wildcard $(PEGASUS_HOME)),)
+$(error In-tree Pegasus build is not complete; try running 'make pegasus-build')
+endif
+else
+ifeq ($(and $(PEGASUS_ROOT),$(PEGASUS_HOME),ok),ok)
+else
+$(error OpenPegasus is not installed or cannot be found!)
+endif
+endif
+
 CPPFLAGS += -DCIMPLE_PEGASUS_MODULE
 
 include cimple/pegasus/sources.mak
@@ -118,6 +134,31 @@ register: install regmod
 unregister: regmod
 	./regmod -n $(INTEROP_NAMESPACE) -u -c $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
 	./regmod -n $(IMP_NAMESPACE) -u -c $(PROVIDER_LIBRARY_SO)
+
+PEGASUS_UPSTREAM_VERSION=2.11.1
+PEGASUS_UPSTREAM_TARBALL=pegasus-$(PEGASUS_UPSTREAM_VERSION).tar.gz
+PEGASUS_UPSTREAM_REPOSITORY=https://oktetlabs.ru/purgatorium/prj/level5/cim
+
+.PRECIOUS : $(PEGASUS_UPSTREAM_TARBALL)
+$(PEGASUS_UPSTREAM_TARBALL):
+	$(CURL) $(PEGASUS_UPSTREAM_REPOSITORY)/$(PEGASUS_UPSTREAM_TARBALL) -o $@
+
+.PHONY: pegasus-build
+
+export PEGASUS_HOME
+export PEGASUS_ROOT
+export PEGASUS_PLATFORM
+
+pegasus-build : override PEGASUS_ROOT=$(CURDIR)/pegasus
+pegasus-build : override PEGASUS_HOME=$(PEGASUS_ROOT)/setup
+pegasus-build : override PEGASUS_PLATFORM=$(CIMPLE_PLATFORM)
+pegasus-build : export PEGASUS_DEBUG=true
+
+pegasus-build: $(PEGASUS_UPSTREAM_TARBALL)
+	tar xzf $<
+	test -d $(PEGASUS_ROOT)
+	mkdir -p $(PEGASUS_HOME)
+	make -C $(PEGASUS_ROOT) build
 
 endif
 
