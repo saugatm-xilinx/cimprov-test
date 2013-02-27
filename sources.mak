@@ -75,6 +75,8 @@ lib$(PROVIDER_LIBRARY)_SOURCES += CIM_AffectedJobElement.cpp \
 	CIM_SystemComponent.cpp \
 	CIM_SystemDevice.cpp \
 	CIM_UseOfLog.cpp \
+	CIM_ReferencedSpecification.cpp \
+	CIM_RegisteredSpecification.cpp \
 	SF_AffectedJobElement.cpp \
 	SF_AffectedJobElement_Provider.cpp \
 	SF_AvailableDiagnosticService.cpp \
