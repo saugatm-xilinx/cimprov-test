@@ -165,6 +165,17 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::DiscontinueTest(
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
+Invoke_Method_Status SF_DiagnosticTest_Provider::ChangeAffectedElementsAssignedSequence(
+    const SF_DiagnosticTest* self,
+    const Property< Array<CIM_ManagedElement*> >& ManagedElements,
+    const Property<Array_uint16>& AssignedSequence,
+    CIM_ConcreteJob*& Job,
+    Property<uint32>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

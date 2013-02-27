@@ -129,6 +129,16 @@ static int __cimple_SF_ConcreteJob_Provider_proc(
             method->return_value);
     }
 
+    if (strcasecmp(meth_name, "GetErrors") == 0)
+    {
+        typedef SF_ConcreteJob_GetErrors_method Method;
+        Method* method = (Method*)arg2;
+        return provider->GetErrors(
+            self,
+            method->Errors,
+            method->return_value);
+    }
+
     return -1;
 }
 
@@ -593,6 +603,17 @@ static int __cimple_SF_EnabledLogicalElementCapabilities_Provider_proc(
     const Class* self = (const Class*)arg1;
     const char* meth_name = ((Instance*)arg2)->meta_class->name;
 
+    if (strcasecmp(meth_name, "CreateGoalSettings") == 0)
+    {
+        typedef SF_EnabledLogicalElementCapabilities_CreateGoalSettings_method Method;
+        Method* method = (Method*)arg2;
+        return provider->CreateGoalSettings(
+            self,
+            method->TemplateGoalSettings,
+            method->SupportedGoalSettings,
+            method->return_value);
+    }
+
     return -1;
 }
 
@@ -683,6 +704,15 @@ static int __cimple_SF_LANEndpoint_Provider_proc(
             method->return_value);
     }
 
+    if (strcasecmp(meth_name, "BroadcastReset") == 0)
+    {
+        typedef SF_LANEndpoint_BroadcastReset_method Method;
+        Method* method = (Method*)arg2;
+        return provider->BroadcastReset(
+            self,
+            method->return_value);
+    }
+
     return -1;
 }
 
@@ -765,6 +795,18 @@ static int __cimple_SF_SoftwareInstallationService_Provider_proc(
             method->return_value);
     }
 
+    if (strcasecmp(meth_name, "ChangeAffectedElementsAssignedSequence") == 0)
+    {
+        typedef SF_SoftwareInstallationService_ChangeAffectedElementsAssignedSequence_method Method;
+        Method* method = (Method*)arg2;
+        return provider->ChangeAffectedElementsAssignedSequence(
+            self,
+            method->ManagedElements,
+            method->AssignedSequence,
+            method->Job,
+            method->return_value);
+    }
+
     if (strcasecmp(meth_name, "CheckSoftwareIdentity") == 0)
     {
         typedef SF_SoftwareInstallationService_CheckSoftwareIdentity_method Method;
@@ -790,6 +832,20 @@ static int __cimple_SF_SoftwareInstallationService_Provider_proc(
             method->Source,
             method->Target,
             method->Collection,
+            method->return_value);
+    }
+
+    if (strcasecmp(meth_name, "InstallFromByteStream") == 0)
+    {
+        typedef SF_SoftwareInstallationService_InstallFromByteStream_method Method;
+        Method* method = (Method*)arg2;
+        return provider->InstallFromByteStream(
+            self,
+            method->Job,
+            method->Image,
+            method->Target,
+            method->InstallOptions,
+            method->InstallOptionsValues,
             method->return_value);
     }
 
@@ -832,6 +888,17 @@ static int __cimple_SF_SoftwareInstallationServiceCapabilities_Provider_proc(
     Provider* provider = (Provider*)arg0;
     const Class* self = (const Class*)arg1;
     const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    if (strcasecmp(meth_name, "CreateGoalSettings") == 0)
+    {
+        typedef SF_SoftwareInstallationServiceCapabilities_CreateGoalSettings_method Method;
+        Method* method = (Method*)arg2;
+        return provider->CreateGoalSettings(
+            self,
+            method->TemplateGoalSettings,
+            method->SupportedGoalSettings,
+            method->return_value);
+    }
 
     return -1;
 }
@@ -1217,6 +1284,18 @@ static int __cimple_SF_DiagnosticTest_Provider_proc(
             method->return_value);
     }
 
+    if (strcasecmp(meth_name, "ChangeAffectedElementsAssignedSequence") == 0)
+    {
+        typedef SF_DiagnosticTest_ChangeAffectedElementsAssignedSequence_method Method;
+        Method* method = (Method*)arg2;
+        return provider->ChangeAffectedElementsAssignedSequence(
+            self,
+            method->ManagedElements,
+            method->AssignedSequence,
+            method->Job,
+            method->return_value);
+    }
+
     if (strcasecmp(meth_name, "RunDiagnostic") == 0)
     {
         typedef SF_DiagnosticTest_RunDiagnostic_method Method;
@@ -1303,6 +1382,17 @@ static int __cimple_SF_DiagnosticServiceCapabilities_Provider_proc(
     Provider* provider = (Provider*)arg0;
     const Class* self = (const Class*)arg1;
     const char* meth_name = ((Instance*)arg2)->meta_class->name;
+
+    if (strcasecmp(meth_name, "CreateGoalSettings") == 0)
+    {
+        typedef SF_DiagnosticServiceCapabilities_CreateGoalSettings_method Method;
+        Method* method = (Method*)arg2;
+        return provider->CreateGoalSettings(
+            self,
+            method->TemplateGoalSettings,
+            method->SupportedGoalSettings,
+            method->return_value);
+    }
 
     return -1;
 }

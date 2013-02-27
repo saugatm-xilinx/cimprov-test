@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_Setting features:
     Property<String> SettingID;
@@ -86,7 +87,7 @@ public:
             enum_Software_Configuration = 12,
             enum_References = 13,
             enum_Debug = 14,
-            enum_No_Log_Options = 15,
+            enum_No_Log_Options = 0,
         };
         Array_uint16 value;
         uint8 null;
@@ -99,7 +100,7 @@ public:
         {
             enum_Unknown = 0,
             enum_Other = 1,
-            enum_DiagnosticRecordLog = 2,
+            enum_DiagnosticLog = 2,
             enum_MessageLog = 3,
             enum_File = 4,
         };

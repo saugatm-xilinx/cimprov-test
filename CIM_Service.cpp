@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -320,6 +324,88 @@ CIM_Service_StopService_method::static_meta_class =
     UINT32,
 };
 
+/*[1721]*/
+static const Meta_Reference
+_CIM_Service_ChangeAffectedElementsAssignedSequence_ManagedElements =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_IN|CIMPLE_FLAG_REQUIRED,
+    "ManagedElements",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    -1, /* subscript */
+    &CIM_ManagedElement::static_meta_class,
+    CIMPLE_OFF(CIM_Service_ChangeAffectedElementsAssignedSequence_method,ManagedElements)
+};
+
+/*[1782]*/
+static const Meta_Property
+_CIM_Service_ChangeAffectedElementsAssignedSequence_AssignedSequence =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_IN|CIMPLE_FLAG_REQUIRED,
+    "AssignedSequence",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT16,
+    -1,
+    CIMPLE_OFF(CIM_Service_ChangeAffectedElementsAssignedSequence_method,AssignedSequence),
+    0, /* value */
+};
+
+/*[1721]*/
+static const Meta_Reference
+_CIM_Service_ChangeAffectedElementsAssignedSequence_Job =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_OUT,
+    "Job",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    0, /* subscript */
+    &CIM_ConcreteJob::static_meta_class,
+    CIMPLE_OFF(CIM_Service_ChangeAffectedElementsAssignedSequence_method,Job)
+};
+
+/*[1935]*/
+static const Meta_Property
+_CIM_Service_ChangeAffectedElementsAssignedSequence_return_value =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_OUT,
+    "return_value",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT32,
+    0,
+    CIMPLE_OFF(CIM_Service_ChangeAffectedElementsAssignedSequence_method,return_value),
+    0, /* value */
+};
+
+/*[1911]*/
+static Meta_Feature* _CIM_Service_ChangeAffectedElementsAssignedSequence_MFA[] =
+{
+    (Meta_Feature*)(void*)&_CIM_Service_ChangeAffectedElementsAssignedSequence_ManagedElements,
+    (Meta_Feature*)(void*)&_CIM_Service_ChangeAffectedElementsAssignedSequence_AssignedSequence,
+    (Meta_Feature*)(void*)&_CIM_Service_ChangeAffectedElementsAssignedSequence_Job,
+    (Meta_Feature*)(void*)&_CIM_Service_ChangeAffectedElementsAssignedSequence_return_value
+};
+
+/*[2113]*/
+const Meta_Method
+CIM_Service_ChangeAffectedElementsAssignedSequence_method::static_meta_class =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
+    "ChangeAffectedElementsAssignedSequence",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    _CIM_Service_ChangeAffectedElementsAssignedSequence_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_Service_ChangeAffectedElementsAssignedSequence_MFA),
+    sizeof(CIM_Service_ChangeAffectedElementsAssignedSequence_method),
+    UINT32,
+};
+
 /*[2291]*/
 static Meta_Feature* _CIM_Service_MFA[] =
 {
@@ -327,6 +413,7 @@ static Meta_Feature* _CIM_Service_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
     (Meta_Feature*)(void*)&_CIM_Service_Name,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_OperationalStatus,
@@ -354,11 +441,13 @@ static Meta_Feature* _CIM_Service_MFA[] =
     (Meta_Feature*)(void*)&_CIM_Service_Started,
     (Meta_Feature*)(void*)&CIM_Service_StartService_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_Service_StopService_method::static_meta_class,
+    (Meta_Feature*)(void*)&CIM_Service_ChangeAffectedElementsAssignedSequence_method::static_meta_class,
 };
 
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
     {0},
     {0},
     {0},
@@ -381,6 +470,7 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {1},
     {1},
     {1},
     {1},
@@ -406,7 +496,7 @@ const Meta_Class CIM_Service::static_meta_class =
     _locals,
     &CIM_EnabledLogicalElement::static_meta_class,
     4, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

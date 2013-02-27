@@ -23,6 +23,8 @@ public:
     CIM_RegisteredProfile* Antecedent;
     CIM_RegisteredProfile* Dependent;
 
+    // CIM_ReferencedSpecification features:
+
     // CIM_ReferencedProfile features:
 
     // SF_ReferencedProfile features:

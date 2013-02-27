@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_RecordForLog features:
     Property<String> RecordFormat;
@@ -53,10 +54,10 @@ public:
     Property<String> LogName;
     Property<String> RecordID;
     Property<Datetime> CreationTimeStamp;
+    Property<String> OwningEntity;
     Property<String> MessageID;
     Property<String> Message;
     Property<Array_String> MessageArguments;
-    Property<String> OwningEntity;
 
     // SF_LogEntry features:
 

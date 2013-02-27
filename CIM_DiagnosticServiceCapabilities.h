@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_Capabilities features:
 
@@ -39,6 +40,8 @@ public:
             enum_QuickMode = 3,
             enum_HaltOnError = 4,
             enum_ResultPersistence = 5,
+            enum_QueryTimeout = 6,
+            enum_NonDestructive = 7,
             enum_No_Service_Modes = 0,
         };
         Array_uint16 value;
@@ -95,7 +98,7 @@ public:
         {
             enum_Unknown = 0,
             enum_Other = 1,
-            enum_DiagnosticRecordLog = 2,
+            enum_DiagnosticLog = 2,
             enum_MessageLog = 3,
             enum_File = 4,
             enum_No_Log_Storage = 0,
@@ -111,7 +114,7 @@ public:
         {
             enum_Unknown = 0,
             enum_Other = 1,
-            enum_Job_Creation = 2,
+            enum_Reserved = 2,
             enum_Kill_Job = 3,
             enum_Suspend_Job = 4,
             enum_Terminate_Job = 5,
@@ -138,6 +141,8 @@ public:
 
     CIMPLE_CLASS(CIM_DiagnosticServiceCapabilities)
 };
+
+typedef CIM_Capabilities_CreateGoalSettings_method CIM_DiagnosticServiceCapabilities_CreateGoalSettings_method;
 
 CIMPLE_NAMESPACE_END
 

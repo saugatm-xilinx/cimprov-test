@@ -14,11 +14,11 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_InstanceID;
+_CIM_RegisteredSpecification_InstanceID;
 
 /*[1568]*/
 extern const Meta_Property
@@ -34,27 +34,39 @@ _CIM_ManagedElement_ElementName;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_RegisteredOrganization;
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_OtherRegisteredOrganization;
+_CIM_RegisteredProfile_SpecificationType;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_RegisteredName;
+_CIM_RegisteredSpecification_OtherSpecificationType;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_RegisteredVersion;
+_CIM_RegisteredSpecification_RegisteredOrganization;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_AdvertiseTypes;
+_CIM_RegisteredSpecification_OtherRegisteredOrganization;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_AdvertiseTypeDescriptions;
+_CIM_RegisteredSpecification_RegisteredName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredSpecification_RegisteredVersion;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredSpecification_AdvertiseTypes;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredSpecification_AdvertiseTypeDescriptions;
 
 /*[1568]*/
 extern const Meta_Property
@@ -63,16 +75,19 @@ _CIM_RegisteredProfile_ImplementedFeatures;
 /*[2291]*/
 static Meta_Feature* _SF_RegisteredProfile_MFA[] =
 {
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_InstanceID,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_InstanceID,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_RegisteredOrganization,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_OtherRegisteredOrganization,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_RegisteredName,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_RegisteredVersion,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_AdvertiseTypes,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_AdvertiseTypeDescriptions,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
+    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_SpecificationType,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_OtherSpecificationType,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredOrganization,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_OtherRegisteredOrganization,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredName,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredVersion,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_AdvertiseTypes,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_AdvertiseTypeDescriptions,
     (Meta_Feature*)(void*)&_CIM_RegisteredProfile_ImplementedFeatures,
     (Meta_Feature*)(void*)&CIM_RegisteredProfile_CloseConformantInstances_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_RegisteredProfile_OpenConformantInstances_method::static_meta_class,
@@ -82,6 +97,9 @@ static Meta_Feature* _SF_RegisteredProfile_MFA[] =
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
+    {0},
+    {0},
     {0},
     {0},
     {0},
@@ -112,7 +130,7 @@ const Meta_Class SF_RegisteredProfile::static_meta_class =
     _locals,
     &CIM_RegisteredProfile::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

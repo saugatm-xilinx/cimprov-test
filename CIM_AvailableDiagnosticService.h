@@ -41,6 +41,7 @@ public:
     }
     EstimatedDurationOfService;
     Property<uint32> EstimatedDurationQualifier;
+    Property<boolean> IsExclusiveForME;
 
     CIMPLE_CLASS(CIM_AvailableDiagnosticService)
 };

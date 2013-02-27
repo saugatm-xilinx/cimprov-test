@@ -585,7 +585,9 @@ namespace solarflare
                 pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Windows_MSI;
                 break;
             case solarflare::Package::VSphereBundle:
-                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_VMware_vSphere_Installation_Bundle;
+                pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Other;
+                newSvc->OtherSupportedExtendedResourceTypeDescriptions.null = false;
+                newSvc->OtherSupportedExtendedResourceTypeDescriptions.value.append("VMWare vSphere bundle");
                 break;
             case solarflare::Package::Tarball:
                 pkgType = SF_SoftwareInstallationServiceCapabilities::_SupportedExtendedResourceTypes::enum_Other;

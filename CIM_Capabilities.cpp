@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -62,6 +62,76 @@ _CIM_Capabilities_ElementName =
     0, /* value */
 };
 
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
+
+/*[1846]*/
+static const Meta_Reference
+_CIM_Capabilities_CreateGoalSettings_TemplateGoalSettings =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_EMBEDDED_INSTANCE|CIMPLE_FLAG_IN,
+    "TemplateGoalSettings",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    -1, /* subscript */
+    &CIM_SettingData::static_meta_class,
+    CIMPLE_OFF(CIM_Capabilities_CreateGoalSettings_method,TemplateGoalSettings)
+};
+
+/*[1846]*/
+static const Meta_Reference
+_CIM_Capabilities_CreateGoalSettings_SupportedGoalSettings =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_EMBEDDED_INSTANCE|CIMPLE_FLAG_IN|CIMPLE_FLAG_OUT,
+    "SupportedGoalSettings",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    -1, /* subscript */
+    &CIM_SettingData::static_meta_class,
+    CIMPLE_OFF(CIM_Capabilities_CreateGoalSettings_method,SupportedGoalSettings)
+};
+
+/*[1935]*/
+static const Meta_Property
+_CIM_Capabilities_CreateGoalSettings_return_value =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_OUT,
+    "return_value",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT16,
+    0,
+    CIMPLE_OFF(CIM_Capabilities_CreateGoalSettings_method,return_value),
+    0, /* value */
+};
+
+/*[1911]*/
+static Meta_Feature* _CIM_Capabilities_CreateGoalSettings_MFA[] =
+{
+    (Meta_Feature*)(void*)&_CIM_Capabilities_CreateGoalSettings_TemplateGoalSettings,
+    (Meta_Feature*)(void*)&_CIM_Capabilities_CreateGoalSettings_SupportedGoalSettings,
+    (Meta_Feature*)(void*)&_CIM_Capabilities_CreateGoalSettings_return_value
+};
+
+/*[2113]*/
+const Meta_Method
+CIM_Capabilities_CreateGoalSettings_method::static_meta_class =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
+    "CreateGoalSettings",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    _CIM_Capabilities_CreateGoalSettings_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_Capabilities_CreateGoalSettings_MFA),
+    sizeof(CIM_Capabilities_CreateGoalSettings_method),
+    UINT16,
+};
+
 /*[2291]*/
 static Meta_Feature* _CIM_Capabilities_MFA[] =
 {
@@ -69,6 +139,8 @@ static Meta_Feature* _CIM_Capabilities_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_Capabilities_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
+    (Meta_Feature*)(void*)&CIM_Capabilities_CreateGoalSettings_method::static_meta_class,
 };
 
 /*[2338]*/
@@ -76,6 +148,8 @@ static const Meta_Feature_Local _locals[] =
 {
     {1},
     {0},
+    {0},
+    {1},
     {0},
     {1},
 };
@@ -94,7 +168,7 @@ const Meta_Class CIM_Capabilities::static_meta_class =
     _locals,
     &CIM_ManagedElement::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

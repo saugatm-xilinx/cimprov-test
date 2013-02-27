@@ -59,6 +59,16 @@ Modify_Instance_Status SF_SoftwareInstallationServiceCapabilities_Provider::modi
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+Invoke_Method_Status SF_SoftwareInstallationServiceCapabilities_Provider::CreateGoalSettings(
+    const SF_SoftwareInstallationServiceCapabilities* self,
+    const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
+    Property< Array<CIM_SettingData*> >& SupportedGoalSettings,
+    Property<uint16>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

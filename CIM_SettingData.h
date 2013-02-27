@@ -25,8 +25,23 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_SettingData features:
+    Property<String> ConfigurationName;
+    struct _ChangeableType
+    {
+        enum
+        {
+            enum_Not_Changeable___Persistent = 0,
+            enum_Changeable___Transient = 1,
+            enum_Changeable___Persistent = 2,
+            enum_Not_Changeable___Transient = 3,
+        };
+        uint16 value;
+        uint8 null;
+    }
+    ChangeableType;
 
     CIMPLE_CLASS(CIM_SettingData)
 };

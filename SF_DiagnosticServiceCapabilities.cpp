@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_Capabilities_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -83,6 +87,8 @@ static Meta_Feature* _SF_DiagnosticServiceCapabilities_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_Capabilities_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
+    (Meta_Feature*)(void*)&CIM_Capabilities_CreateGoalSettings_method::static_meta_class,
     (Meta_Feature*)(void*)&_CIM_DiagnosticServiceCapabilities_SupportedServiceModes,
     (Meta_Feature*)(void*)&_CIM_DiagnosticServiceCapabilities_OtherSupportedServiceModesDescriptions,
     (Meta_Feature*)(void*)&_CIM_DiagnosticServiceCapabilities_SupportedLoopControl,
@@ -114,6 +120,8 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {0},
+    {0},
 };
 
 /*[2358]*/
@@ -130,7 +138,7 @@ const Meta_Class SF_DiagnosticServiceCapabilities::static_meta_class =
     _locals,
     &CIM_DiagnosticServiceCapabilities::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

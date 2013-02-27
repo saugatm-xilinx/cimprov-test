@@ -195,6 +195,30 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     return INVOKE_METHOD_OK;
 }
 
+Invoke_Method_Status SF_SoftwareInstallationService_Provider::ChangeAffectedElementsAssignedSequence(
+    const SF_SoftwareInstallationService* self,
+    const Property< Array<CIM_ManagedElement*> >& ManagedElements,
+    const Property<Array_uint16>& AssignedSequence,
+    CIM_ConcreteJob*& Job,
+    Property<uint32>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
+Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromByteStream(
+    const SF_SoftwareInstallationService* self,
+    CIM_ConcreteJob*& Job,
+    const Property<Array_uint8>& Image,
+    const CIM_ManagedElement* Target,
+    const Property<Array_uint16>& InstallOptions,
+    const Property<Array_String>& InstallOptionsValues,
+    Property<uint32>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

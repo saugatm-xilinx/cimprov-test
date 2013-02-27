@@ -9,7 +9,7 @@
 #define _cimple_CIM_RegisteredProfile_h
 
 #include <cimple/cimple.h>
-#include "CIM_ManagedElement.h"
+#include "CIM_RegisteredSpecification.h"
 #include "CIM_ManagedElement.h"
 #include "CIM_ManagedElement.h"
 
@@ -27,8 +27,24 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
-    // CIM_RegisteredProfile features:
+    // CIM_RegisteredSpecification features:
+    struct _SpecificationType
+    {
+        enum
+        {
+            enum_Other = 1,
+            enum_Profile = 2,
+            enum_Initiative_Wrapper = 3,
+            enum_Mapping = 4,
+            enum_DMTF_Reserved = 0,
+        };
+        uint16 value;
+        uint8 null;
+    }
+    SpecificationType;
+    Property<String> OtherSpecificationType;
     struct _RegisteredOrganization
     {
         enum
@@ -70,12 +86,15 @@ public:
             enum_Other = 1,
             enum_Not_Advertised = 2,
             enum_SLP = 3,
+            enum_WS_Identify = 4,
         };
         Array_uint16 value;
         uint8 null;
     }
     AdvertiseTypes;
     Property<Array_String> AdvertiseTypeDescriptions;
+
+    // CIM_RegisteredProfile features:
     Property<Array_String> ImplementedFeatures;
 
     CIMPLE_CLASS(CIM_RegisteredProfile)

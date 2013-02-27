@@ -10,6 +10,8 @@
 
 #include <cimple/cimple.h>
 #include "CIM_EnabledLogicalElement.h"
+#include "CIM_ManagedElement.h"
+#include "CIM_ConcreteJob.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -28,6 +30,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -55,7 +58,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -77,7 +79,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -297,6 +298,17 @@ class CIM_Service_StopService_method : public Instance
 public:
     Property<uint32> return_value;
     CIMPLE_METHOD(CIM_Service_StopService_method)
+};
+
+/*[1280]*/
+class CIM_Service_ChangeAffectedElementsAssignedSequence_method : public Instance
+{
+public:
+    Property< Array<CIM_ManagedElement*> > ManagedElements;
+    Property<Array_uint16> AssignedSequence;
+    CIM_ConcreteJob* Job;
+    Property<uint32> return_value;
+    CIMPLE_METHOD(CIM_Service_ChangeAffectedElementsAssignedSequence_method)
 };
 
 CIMPLE_NAMESPACE_END

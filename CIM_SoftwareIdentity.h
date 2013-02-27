@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -52,7 +53,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -74,7 +74,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -217,7 +216,6 @@ public:
             enum_Debian_linux_Package = 8,
             enum_VMware_vSphere_Installation_Bundle = 9,
             enum_VMware_Software_Bulletin = 10,
-            enum_HP_Smart_Component = 11,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -230,7 +228,126 @@ public:
     Property<uint16> MinExtendedResourceTypeMinorVersion;
     Property<uint16> MinExtendedResourceTypeRevisionNumber;
     Property<uint16> MinExtendedResourceTypeBuildNumber;
-    Property<Array_uint16> TargetOSTypes;
+    struct _TargetOSTypes
+    {
+        enum
+        {
+            enum_Unknown = 0,
+            enum_Other = 1,
+            enum_MACOS = 2,
+            enum_ATTUNIX = 3,
+            enum_DGUX = 4,
+            enum_DECNT = 5,
+            enum_Tru64_UNIX = 6,
+            enum_OpenVMS = 7,
+            enum_HPUX = 8,
+            enum_AIX = 9,
+            enum_MVS = 10,
+            enum_OS400 = 11,
+            enum_OS_2 = 12,
+            enum_JavaVM = 13,
+            enum_MSDOS = 14,
+            enum_WIN3x = 15,
+            enum_WIN95 = 16,
+            enum_WIN98 = 17,
+            enum_WINNT = 18,
+            enum_WINCE = 19,
+            enum_NCR3000 = 20,
+            enum_NetWare = 21,
+            enum_OSF = 22,
+            enum_DC_OS = 23,
+            enum_Reliant_UNIX = 24,
+            enum_SCO_UnixWare = 25,
+            enum_SCO_OpenServer = 26,
+            enum_Sequent = 27,
+            enum_IRIX = 28,
+            enum_Solaris = 29,
+            enum_SunOS = 30,
+            enum_U6000 = 31,
+            enum_ASERIES = 32,
+            enum_HP_NonStop_OS = 33,
+            enum_HP_NonStop_OSS = 34,
+            enum_BS2000 = 35,
+            enum_LINUX = 36,
+            enum_Lynx = 37,
+            enum_XENIX = 38,
+            enum_VM = 39,
+            enum_Interactive_UNIX = 40,
+            enum_BSDUNIX = 41,
+            enum_FreeBSD = 42,
+            enum_NetBSD = 43,
+            enum_GNU_Hurd = 44,
+            enum_OS9 = 45,
+            enum_MACH_Kernel = 46,
+            enum_Inferno = 47,
+            enum_QNX = 48,
+            enum_EPOC = 49,
+            enum_IxWorks = 50,
+            enum_VxWorks = 51,
+            enum_MiNT = 52,
+            enum_BeOS = 53,
+            enum_HP_MPE = 54,
+            enum_NextStep = 55,
+            enum_PalmPilot = 56,
+            enum_Rhapsody = 57,
+            enum_Windows_2000 = 58,
+            enum_Dedicated = 59,
+            enum_OS_390 = 60,
+            enum_VSE = 61,
+            enum_TPF = 62,
+            enum_Windows__R__Me = 63,
+            enum_Caldera_Open_UNIX = 64,
+            enum_OpenBSD = 65,
+            enum_Not_Applicable = 66,
+            enum_Windows_XP = 67,
+            enum_z_OS = 68,
+            enum_Microsoft_Windows_Server_2003 = 69,
+            enum_Microsoft_Windows_Server_2003_64_Bit = 70,
+            enum_Windows_XP_64_Bit = 71,
+            enum_Windows_XP_Embedded = 72,
+            enum_Windows_Vista = 73,
+            enum_Windows_Vista_64_Bit = 74,
+            enum_Windows_Embedded_for_Point_of_Service = 75,
+            enum_Microsoft_Windows_Server_2008 = 76,
+            enum_Microsoft_Windows_Server_2008_64_Bit = 77,
+            enum_FreeBSD_64_Bit = 78,
+            enum_RedHat_Enterprise_Linux = 79,
+            enum_RedHat_Enterprise_Linux_64_Bit = 80,
+            enum_Solaris_64_Bit = 81,
+            enum_SUSE = 82,
+            enum_SUSE_64_Bit = 83,
+            enum_SLES = 84,
+            enum_SLES_64_Bit = 85,
+            enum_Novell_OES = 86,
+            enum_Novell_Linux_Desktop = 87,
+            enum_Sun_Java_Desktop_System = 88,
+            enum_Mandriva = 89,
+            enum_Mandriva_64_Bit = 90,
+            enum_TurboLinux = 91,
+            enum_TurboLinux_64_Bit = 92,
+            enum_Ubuntu = 93,
+            enum_Ubuntu_64_Bit = 94,
+            enum_Debian = 95,
+            enum_Debian_64_Bit = 96,
+            enum_Linux_2_4_x = 97,
+            enum_Linux_2_4_x_64_Bit = 98,
+            enum_Linux_2_6_x = 99,
+            enum_Linux_2_6_x_64_Bit = 100,
+            enum_Linux_64_Bit = 101,
+            enum_Other_64_Bit = 102,
+            enum_Microsoft_Windows_Server_2008_R2 = 103,
+            enum_VMware_ESXi = 104,
+            enum_Microsoft_Windows_7 = 105,
+            enum_CentOS_32_bit = 106,
+            enum_CentOS_64_bit = 107,
+            enum_Oracle_Enterprise_Linux_32_bit = 108,
+            enum_Oracle_Enterprise_Linux_64_bit = 109,
+            enum_eComStation_32_bitx = 110,
+        };
+        Array_uint16 value;
+        uint8 null;
+    }
+    TargetOSTypes;
 
     CIMPLE_CLASS(CIM_SoftwareIdentity)
 };

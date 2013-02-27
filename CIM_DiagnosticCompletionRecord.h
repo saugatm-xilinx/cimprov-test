@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_RecordForLog features:
     Property<String> RecordFormat;
@@ -47,6 +48,16 @@ public:
         uint8 null;
     }
     PerceivedSeverity;
+
+    // CIM_LogEntry features:
+    Property<String> LogInstanceID;
+    Property<String> LogName;
+    Property<String> RecordID;
+    Property<Datetime> CreationTimeStamp;
+    Property<String> OwningEntity;
+    Property<String> MessageID;
+    Property<String> Message;
+    Property<Array_String> MessageArguments;
 
     // CIM_DiagnosticRecord features:
     Property<String> ServiceName;
@@ -77,7 +88,6 @@ public:
     }
     RecordType;
     Property<String> OtherRecordTypeDescription;
-    Property<Datetime> CreationTimeStamp;
 
     // CIM_DiagnosticServiceRecord features:
     Property<Array_String> ErrorCode;

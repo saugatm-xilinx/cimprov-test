@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_PhysicalElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_PhysicalElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -171,6 +175,7 @@ static Meta_Feature* _SF_PhysicalConnector_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_PhysicalElement_Description,
     (Meta_Feature*)(void*)&_CIM_PhysicalElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_Name,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_OperationalStatus,
@@ -246,6 +251,7 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {0},
 };
 
 /*[2358]*/
@@ -262,7 +268,7 @@ const Meta_Class SF_PhysicalConnector::static_meta_class =
     _locals,
     &CIM_PhysicalConnector::static_meta_class,
     2, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

@@ -60,6 +60,46 @@ public:
         uint8 null;
     }
     IsNext;
+    struct _IsMinimum
+    {
+        enum
+        {
+            enum_Unknown = 0,
+            enum_Not_Applicable = 1,
+            enum_Is_Minimum = 2,
+            enum_Is_Not_Minimum = 3,
+        };
+        uint16 value;
+        uint8 null;
+    }
+    IsMinimum;
+    struct _IsMaximum
+    {
+        enum
+        {
+            enum_Unknown = 0,
+            enum_Not_Applicable = 1,
+            enum_Is_Maximum = 2,
+            enum_Is_Not_Maximum = 3,
+        };
+        uint16 value;
+        uint8 null;
+    }
+    IsMaximum;
+    struct _IsPending
+    {
+        enum
+        {
+            enum_Unknown = 0,
+            enum_Is_Pending = 2,
+            enum_Is_Not_Pending = 3,
+            enum_DMTF_Reserved = 0,
+            enum_Vendor_Reserved = 32768,
+        };
+        uint16 value;
+        uint8 null;
+    }
+    IsPending;
 
     CIMPLE_CLASS(CIM_ElementSettingData)
 };

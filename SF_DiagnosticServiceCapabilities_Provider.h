@@ -41,6 +41,12 @@ public:
         const SF_DiagnosticServiceCapabilities* model,
         const SF_DiagnosticServiceCapabilities* instance);
 
+    Invoke_Method_Status CreateGoalSettings(
+        const SF_DiagnosticServiceCapabilities* self,
+        const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
+        Property< Array<CIM_SettingData*> >& SupportedGoalSettings,
+        Property<uint16>& return_value);
+
     /*@END@*/
 };
 

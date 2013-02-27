@@ -14,11 +14,11 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_DiagnosticRecord_InstanceID;
+_CIM_LogEntry_InstanceID;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -47,6 +51,38 @@ _CIM_RecordForLog_Locale;
 /*[1568]*/
 extern const Meta_Property
 _CIM_RecordForLog_PerceivedSeverity;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_LogInstanceID;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_LogName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_RecordID;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_CreationTimeStamp;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_OwningEntity;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_MessageID;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_Message;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_LogEntry_MessageArguments;
 
 /*[1568]*/
 extern const Meta_Property
@@ -67,10 +103,6 @@ _CIM_DiagnosticRecord_RecordType;
 /*[1568]*/
 extern const Meta_Property
 _CIM_DiagnosticRecord_OtherRecordTypeDescription;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_DiagnosticRecord_CreationTimeStamp;
 
 /*[1568]*/
 extern const Meta_Property
@@ -129,20 +161,28 @@ _CIM_DiagnosticCompletionRecord_OtherCompletionStateDescription =
 /*[2291]*/
 static Meta_Feature* _CIM_DiagnosticCompletionRecord_MFA[] =
 {
-    (Meta_Feature*)(void*)&_CIM_DiagnosticRecord_InstanceID,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_InstanceID,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_RecordForLog_RecordFormat,
     (Meta_Feature*)(void*)&_CIM_RecordForLog_RecordData,
     (Meta_Feature*)(void*)&_CIM_RecordForLog_Locale,
     (Meta_Feature*)(void*)&_CIM_RecordForLog_PerceivedSeverity,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_LogInstanceID,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_LogName,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_RecordID,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_CreationTimeStamp,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_OwningEntity,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_MessageID,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_Message,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_MessageArguments,
     (Meta_Feature*)(void*)&_CIM_DiagnosticRecord_ServiceName,
     (Meta_Feature*)(void*)&_CIM_DiagnosticRecord_ManagedElementName,
     (Meta_Feature*)(void*)&_CIM_DiagnosticRecord_ExpirationDate,
     (Meta_Feature*)(void*)&_CIM_DiagnosticRecord_RecordType,
     (Meta_Feature*)(void*)&_CIM_DiagnosticRecord_OtherRecordTypeDescription,
-    (Meta_Feature*)(void*)&_CIM_DiagnosticRecord_CreationTimeStamp,
     (Meta_Feature*)(void*)&_CIM_DiagnosticServiceRecord_ErrorCode,
     (Meta_Feature*)(void*)&_CIM_DiagnosticServiceRecord_ErrorCount,
     (Meta_Feature*)(void*)&_CIM_DiagnosticServiceRecord_LoopsFailed,
@@ -154,6 +194,14 @@ static Meta_Feature* _CIM_DiagnosticCompletionRecord_MFA[] =
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
     {0},
     {0},
     {0},
@@ -190,7 +238,7 @@ const Meta_Class CIM_DiagnosticCompletionRecord::static_meta_class =
     _locals,
     &CIM_DiagnosticServiceRecord::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

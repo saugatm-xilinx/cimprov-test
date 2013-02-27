@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -110,11 +114,11 @@ _CIM_Log_CurrentNumberOfRecords;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_Log_OverwritePolicy;
+_CIM_Log_LogState;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_Log_LogState;
+_CIM_Log_OverwritePolicy;
 
 /*[2291]*/
 static Meta_Feature* _CIM_DiagnosticLog_MFA[] =
@@ -123,6 +127,7 @@ static Meta_Feature* _CIM_DiagnosticLog_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_Name,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_OperationalStatus,
@@ -143,8 +148,8 @@ static Meta_Feature* _CIM_DiagnosticLog_MFA[] =
     (Meta_Feature*)(void*)&CIM_EnabledLogicalElement_RequestStateChange_method::static_meta_class,
     (Meta_Feature*)(void*)&_CIM_Log_MaxNumberOfRecords,
     (Meta_Feature*)(void*)&_CIM_Log_CurrentNumberOfRecords,
-    (Meta_Feature*)(void*)&_CIM_Log_OverwritePolicy,
     (Meta_Feature*)(void*)&_CIM_Log_LogState,
+    (Meta_Feature*)(void*)&_CIM_Log_OverwritePolicy,
     (Meta_Feature*)(void*)&CIM_Log_ClearLog_method::static_meta_class,
 };
 
@@ -178,13 +183,14 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {0},
 };
 
 /*[2358]*/
 const Meta_Class CIM_DiagnosticLog::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_CLASS,
+    CIMPLE_FLAG_CLASS|CIMPLE_FLAG_EXPERIMENTAL,
     "CIM_DiagnosticLog",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
@@ -194,7 +200,7 @@ const Meta_Class CIM_DiagnosticLog::static_meta_class =
     _locals,
     &CIM_RecordLog::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -46,6 +46,10 @@ _CIM_ProtocolEndpoint_Description =
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -263,6 +267,61 @@ _CIM_ProtocolEndpoint_OtherTypeDescription =
     0, /* value */
 };
 
+/*[1568]*/
+extern const Meta_Property
+_CIM_ProtocolEndpoint_BroadcastResetSupported;
+
+/*[1591]*/
+const Meta_Property
+_CIM_ProtocolEndpoint_BroadcastResetSupported =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ,
+    "BroadcastResetSupported",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    BOOLEAN,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_ProtocolEndpoint,BroadcastResetSupported),
+    0, /* value */
+};
+
+/*[1935]*/
+static const Meta_Property
+_CIM_ProtocolEndpoint_BroadcastReset_return_value =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_OUT,
+    "return_value",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT32,
+    0,
+    CIMPLE_OFF(CIM_ProtocolEndpoint_BroadcastReset_method,return_value),
+    0, /* value */
+};
+
+/*[1911]*/
+static Meta_Feature* _CIM_ProtocolEndpoint_BroadcastReset_MFA[] =
+{
+    (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_BroadcastReset_return_value
+};
+
+/*[2113]*/
+const Meta_Method
+CIM_ProtocolEndpoint_BroadcastReset_method::static_meta_class =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
+    "BroadcastReset",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    _CIM_ProtocolEndpoint_BroadcastReset_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_ProtocolEndpoint_BroadcastReset_MFA),
+    sizeof(CIM_ProtocolEndpoint_BroadcastReset_method),
+    UINT32,
+};
+
 /*[2291]*/
 static Meta_Feature* _CIM_ProtocolEndpoint_MFA[] =
 {
@@ -270,6 +329,7 @@ static Meta_Feature* _CIM_ProtocolEndpoint_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_Name,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_OperationalStatus,
@@ -295,6 +355,8 @@ static Meta_Feature* _CIM_ProtocolEndpoint_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_ProtocolType,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_ProtocolIFType,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_OtherTypeDescription,
+    (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_BroadcastResetSupported,
+    (Meta_Feature*)(void*)&CIM_ProtocolEndpoint_BroadcastReset_method::static_meta_class,
 };
 
 /*[2338]*/
@@ -305,19 +367,8 @@ static const Meta_Feature_Local _locals[] =
     {1},
     {0},
     {0},
-    {1},
-    {1},
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
     {0},
     {1},
-    {0},
-    {0},
-    {0},
     {1},
     {0},
     {0},
@@ -325,6 +376,20 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {0},
+    {1},
+    {0},
+    {0},
+    {0},
+    {1},
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
+    {1},
+    {1},
     {1},
     {1},
     {1},
@@ -345,7 +410,7 @@ const Meta_Class CIM_ProtocolEndpoint::static_meta_class =
     _locals,
     &CIM_ServiceAccessPoint::static_meta_class,
     4, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

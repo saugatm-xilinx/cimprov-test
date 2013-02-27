@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_Capabilities features:
 
@@ -69,10 +70,7 @@ public:
             enum_Solaris_Package = 6,
             enum_Macintosh_Disk_Image = 7,
             enum_Debian_linux_Package = 8,
-            enum_VMware_vSphere_Installation_Bundle = 9,
-            enum_VMware_Software_Bulletin = 10,
-            enum_HP_Smart_Component = 11,
-            enum_DMTF_Reserved = 0,
+            enum_DMTF_Reserved = 9,
             enum_Vendor_Reserved = 0,
         };
         Array_uint16 value;
@@ -131,6 +129,8 @@ public:
 
     CIMPLE_CLASS(SF_SoftwareInstallationServiceCapabilities)
 };
+
+typedef CIM_Capabilities_CreateGoalSettings_method SF_SoftwareInstallationServiceCapabilities_CreateGoalSettings_method;
 
 CIMPLE_NAMESPACE_END
 

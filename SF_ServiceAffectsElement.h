@@ -45,6 +45,7 @@ public:
     }
     ElementEffects;
     Property<Array_String> OtherElementEffectsDescriptions;
+    Property<uint16> AssignedSequence;
 
     // SF_ServiceAffectsElement features:
 

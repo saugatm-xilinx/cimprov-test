@@ -56,6 +56,11 @@ public:
         CIM_Error*& Error,
         Property<uint32>& return_value);
 
+    Invoke_Method_Status GetErrors(
+        const SF_ConcreteJob* self,
+        Property< Array<CIM_Error*> >& Errors,
+        Property<uint32>& return_value);
+
     /*@END@*/
 };
 

@@ -8,7 +8,7 @@
 #include <cimple/Meta_Class.h>
 #include <cimple/Meta_Property.h>
 #include <cimple/Meta_Reference.h>
-#include "CIM_ServiceAvailableToElement.h"
+#include "CIM_ReferencedSpecification.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -18,45 +18,45 @@ extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1653]*/
 extern const Meta_Reference
-_CIM_ServiceAvailableToElement_ServiceProvided;
+_CIM_ReferencedSpecification_Antecedent;
 
 /*[1664]*/
 const Meta_Reference
-_CIM_ServiceAvailableToElement_ServiceProvided =
+_CIM_ReferencedSpecification_Antecedent =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
     CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_KEY,
-    "ServiceProvided",
+    "Antecedent",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     0, /* subscript */
-    &CIM_Service::static_meta_class,
-    CIMPLE_OFF(CIM_ServiceAvailableToElement,ServiceProvided)
+    &CIM_RegisteredSpecification::static_meta_class,
+    CIMPLE_OFF(CIM_ReferencedSpecification,Antecedent)
 };
 
 /*[1653]*/
 extern const Meta_Reference
-_CIM_ServiceAvailableToElement_UserOfService;
+_CIM_ReferencedSpecification_Dependent;
 
 /*[1664]*/
 const Meta_Reference
-_CIM_ServiceAvailableToElement_UserOfService =
+_CIM_ReferencedSpecification_Dependent =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
     CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_KEY,
-    "UserOfService",
+    "Dependent",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     0, /* subscript */
-    &CIM_ManagedElement::static_meta_class,
-    CIMPLE_OFF(CIM_ServiceAvailableToElement,UserOfService)
+    &CIM_RegisteredSpecification::static_meta_class,
+    CIMPLE_OFF(CIM_ReferencedSpecification,Dependent)
 };
 
 /*[2291]*/
-static Meta_Feature* _CIM_ServiceAvailableToElement_MFA[] =
+static Meta_Feature* _CIM_ReferencedSpecification_MFA[] =
 {
-    (Meta_Feature*)(void*)&_CIM_ServiceAvailableToElement_ServiceProvided,
-    (Meta_Feature*)(void*)&_CIM_ServiceAvailableToElement_UserOfService,
+    (Meta_Feature*)(void*)&_CIM_ReferencedSpecification_Antecedent,
+    (Meta_Feature*)(void*)&_CIM_ReferencedSpecification_Dependent,
 };
 
 /*[2338]*/
@@ -67,18 +67,18 @@ static const Meta_Feature_Local _locals[] =
 };
 
 /*[2358]*/
-const Meta_Class CIM_ServiceAvailableToElement::static_meta_class =
+const Meta_Class CIM_ReferencedSpecification::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_ASSOCIATION,
-    "CIM_ServiceAvailableToElement",
+    CIMPLE_FLAG_ASSOCIATION|CIMPLE_FLAG_EXPERIMENTAL,
+    "CIM_ReferencedSpecification",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
-    _CIM_ServiceAvailableToElement_MFA,
-    CIMPLE_ARRAY_SIZE(_CIM_ServiceAvailableToElement_MFA),
-    sizeof(CIM_ServiceAvailableToElement),
+    _CIM_ReferencedSpecification_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_ReferencedSpecification_MFA),
+    sizeof(CIM_ReferencedSpecification),
     _locals,
-    0, /* super_class */ 
+    &CIM_Dependency::static_meta_class,
     2, /* num_keys */
     &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };

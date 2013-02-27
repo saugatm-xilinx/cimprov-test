@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -46,6 +46,10 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -250,6 +254,57 @@ _CIM_ConcreteJob_TimeBeforeRemoval =
     (const Meta_Value*)(void*)&_CIM_ConcreteJob_TimeBeforeRemoval_MV,
 };
 
+extern const Meta_Reference
+_CIM_ConcreteJob_JobInParameters;
+
+/*[2180]*/
+const Meta_Reference _CIM_ConcreteJob_JobInParameters =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_EMBEDDED_OBJECT,
+    "JobInParameters",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qualifiers */
+    0, /* subscript */
+    &Instance::static_meta_class,
+    CIMPLE_OFF(CIM_ConcreteJob,JobInParameters)
+};
+
+extern const Meta_Reference
+_CIM_ConcreteJob_JobOutParameters;
+
+/*[2180]*/
+const Meta_Reference _CIM_ConcreteJob_JobOutParameters =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_EMBEDDED_OBJECT,
+    "JobOutParameters",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qualifiers */
+    0, /* subscript */
+    &Instance::static_meta_class,
+    CIMPLE_OFF(CIM_ConcreteJob,JobOutParameters)
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ConcreteJob_MethodName;
+
+/*[1591]*/
+const Meta_Property
+_CIM_ConcreteJob_MethodName =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ,
+    "MethodName",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    STRING,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_ConcreteJob,MethodName),
+    0, /* value */
+};
+
 /*[1782]*/
 static const Meta_Property
 _CIM_ConcreteJob_RequestStateChange_RequestedState =
@@ -369,6 +424,57 @@ CIM_ConcreteJob_GetError_method::static_meta_class =
     UINT32,
 };
 
+/*[1846]*/
+static const Meta_Reference
+_CIM_ConcreteJob_GetErrors_Errors =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_EMBEDDED_INSTANCE|CIMPLE_FLAG_IN|CIMPLE_FLAG_OUT,
+    "Errors",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    -1, /* subscript */
+    &CIM_Error::static_meta_class,
+    CIMPLE_OFF(CIM_ConcreteJob_GetErrors_method,Errors)
+};
+
+/*[1935]*/
+static const Meta_Property
+_CIM_ConcreteJob_GetErrors_return_value =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_OUT,
+    "return_value",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT32,
+    0,
+    CIMPLE_OFF(CIM_ConcreteJob_GetErrors_method,return_value),
+    0, /* value */
+};
+
+/*[1911]*/
+static Meta_Feature* _CIM_ConcreteJob_GetErrors_MFA[] =
+{
+    (Meta_Feature*)(void*)&_CIM_ConcreteJob_GetErrors_Errors,
+    (Meta_Feature*)(void*)&_CIM_ConcreteJob_GetErrors_return_value
+};
+
+/*[2113]*/
+const Meta_Method
+CIM_ConcreteJob_GetErrors_method::static_meta_class =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
+    "GetErrors",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    _CIM_ConcreteJob_GetErrors_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_ConcreteJob_GetErrors_MFA),
+    sizeof(CIM_ConcreteJob_GetErrors_method),
+    UINT32,
+};
+
 /*[2291]*/
 static Meta_Feature* _CIM_ConcreteJob_MFA[] =
 {
@@ -376,6 +482,7 @@ static Meta_Feature* _CIM_ConcreteJob_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
     (Meta_Feature*)(void*)&_CIM_ConcreteJob_Name,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_OperationalStatus,
@@ -411,8 +518,12 @@ static Meta_Feature* _CIM_ConcreteJob_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ConcreteJob_JobState,
     (Meta_Feature*)(void*)&_CIM_ConcreteJob_TimeOfLastStateChange,
     (Meta_Feature*)(void*)&_CIM_ConcreteJob_TimeBeforeRemoval,
+    (Meta_Feature*)(void*)&_CIM_ConcreteJob_JobInParameters,
+    (Meta_Feature*)(void*)&_CIM_ConcreteJob_JobOutParameters,
+    (Meta_Feature*)(void*)&_CIM_ConcreteJob_MethodName,
     (Meta_Feature*)(void*)&CIM_ConcreteJob_RequestStateChange_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_ConcreteJob_GetError_method::static_meta_class,
+    (Meta_Feature*)(void*)&CIM_ConcreteJob_GetErrors_method::static_meta_class,
 };
 
 /*[2338]*/
@@ -423,6 +534,7 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {0},
     {1},
     {0},
     {0},
@@ -454,6 +566,10 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {1},
+    {1},
+    {1},
+    {1},
     {1},
     {1},
     {1},
@@ -475,7 +591,7 @@ const Meta_Class CIM_ConcreteJob::static_meta_class =
     _locals,
     &CIM_Job::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

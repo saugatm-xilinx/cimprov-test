@@ -40,6 +40,7 @@ public:
     }
     EstimatedDurationOfService;
     Property<uint32> EstimatedDurationQualifier;
+    Property<boolean> IsExclusiveForME;
 
     // SF_AvailableDiagnosticService features:
 

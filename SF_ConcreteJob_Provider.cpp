@@ -148,6 +148,15 @@ Invoke_Method_Status SF_ConcreteJob_Provider::GetError(
     return INVOKE_METHOD_OK;
 }
 
+Invoke_Method_Status SF_ConcreteJob_Provider::GetErrors(
+    const SF_ConcreteJob* self,
+    Property< Array<CIM_Error*> >& Errors,
+    Property<uint32>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

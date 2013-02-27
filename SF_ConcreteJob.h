@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -52,7 +53,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -74,7 +74,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -274,6 +273,9 @@ public:
     JobState;
     Property<Datetime> TimeOfLastStateChange;
     Property<Datetime> TimeBeforeRemoval;
+    Instance* JobInParameters;
+    Instance* JobOutParameters;
+    Property<String> MethodName;
 
     // SF_ConcreteJob features:
 
@@ -285,6 +287,8 @@ typedef CIM_Job_KillJob_method SF_ConcreteJob_KillJob_method;
 typedef CIM_ConcreteJob_RequestStateChange_method SF_ConcreteJob_RequestStateChange_method;
 
 typedef CIM_ConcreteJob_GetError_method SF_ConcreteJob_GetError_method;
+
+typedef CIM_ConcreteJob_GetErrors_method SF_ConcreteJob_GetErrors_method;
 
 CIMPLE_NAMESPACE_END
 

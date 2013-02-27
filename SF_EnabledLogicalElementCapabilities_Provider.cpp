@@ -57,6 +57,16 @@ Modify_Instance_Status SF_EnabledLogicalElementCapabilities_Provider::modify_ins
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+Invoke_Method_Status SF_EnabledLogicalElementCapabilities_Provider::CreateGoalSettings(
+    const SF_EnabledLogicalElementCapabilities* self,
+    const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
+    Property< Array<CIM_SettingData*> >& SupportedGoalSettings,
+    Property<uint16>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

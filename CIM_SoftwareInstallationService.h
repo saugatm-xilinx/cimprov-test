@@ -19,6 +19,8 @@
 #include "CIM_Collection.h"
 #include "CIM_ConcreteJob.h"
 #include "CIM_ManagedElement.h"
+#include "CIM_ConcreteJob.h"
+#include "CIM_ManagedElement.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -37,6 +39,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -64,7 +67,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -86,7 +88,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -298,6 +299,8 @@ typedef CIM_Service_StartService_method CIM_SoftwareInstallationService_StartSer
 
 typedef CIM_Service_StopService_method CIM_SoftwareInstallationService_StopService_method;
 
+typedef CIM_Service_ChangeAffectedElementsAssignedSequence_method CIM_SoftwareInstallationService_ChangeAffectedElementsAssignedSequence_method;
+
 /*[1280]*/
 class CIM_SoftwareInstallationService_CheckSoftwareIdentity_method : public Instance
 {
@@ -322,6 +325,19 @@ public:
     CIM_Collection* Collection;
     Property<uint32> return_value;
     CIMPLE_METHOD(CIM_SoftwareInstallationService_InstallFromSoftwareIdentity_method)
+};
+
+/*[1280]*/
+class CIM_SoftwareInstallationService_InstallFromByteStream_method : public Instance
+{
+public:
+    CIM_ConcreteJob* Job;
+    Property<Array_uint8> Image;
+    CIM_ManagedElement* Target;
+    Property<Array_uint16> InstallOptions;
+    Property<Array_String> InstallOptionsValues;
+    Property<uint32> return_value;
+    CIMPLE_METHOD(CIM_SoftwareInstallationService_InstallFromByteStream_method)
 };
 
 /*[1280]*/

@@ -46,6 +46,7 @@ public:
     }
     ElementEffects;
     Property<Array_String> OtherElementEffectsDescriptions;
+    Property<uint16> AssignedSequence;
 
     CIMPLE_CLASS(CIM_ServiceAffectsElement)
 };

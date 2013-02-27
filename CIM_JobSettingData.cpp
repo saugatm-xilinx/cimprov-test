@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,215 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_SettingData_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_SettingData_ConfigurationName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_SettingData_ChangeableType;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_JobRunTimes;
+
+/*[540]*/
+static const Meta_Value_Scalar<uint32>
+_CIM_JobSettingData_JobRunTimes_MV =
+{
+    CIMPLE_UINT32_LITERAL(1)
+};
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_JobRunTimes =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "JobRunTimes",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT32,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,JobRunTimes),
+    (const Meta_Value*)(void*)&_CIM_JobSettingData_JobRunTimes_MV,
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_RunMonth;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_RunMonth =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "RunMonth",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT8,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,RunMonth),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_RunDay;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_RunDay =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "RunDay",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    SINT8,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,RunDay),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_RunDayOfWeek;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_RunDayOfWeek =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "RunDayOfWeek",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    SINT8,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,RunDayOfWeek),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_RunStartInterval;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_RunStartInterval =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "RunStartInterval",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    DATETIME,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,RunStartInterval),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_LocalOrUtcTime;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_LocalOrUtcTime =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "LocalOrUtcTime",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT16,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,LocalOrUtcTime),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_UntilTime;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_UntilTime =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "UntilTime",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    DATETIME,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,UntilTime),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_Notify;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_Notify =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "Notify",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    STRING,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,Notify),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_Owner;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_Owner =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "Owner",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    STRING,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,Owner),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_JobSettingData_Priority;
+
+/*[1591]*/
+const Meta_Property
+_CIM_JobSettingData_Priority =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ|CIMPLE_FLAG_WRITE,
+    "Priority",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT32,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_JobSettingData,Priority),
+    0, /* value */
+};
 
 /*[1568]*/
 extern const Meta_Property
@@ -96,6 +305,19 @@ static Meta_Feature* _CIM_JobSettingData_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_SettingData_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
+    (Meta_Feature*)(void*)&_CIM_SettingData_ConfigurationName,
+    (Meta_Feature*)(void*)&_CIM_SettingData_ChangeableType,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_JobRunTimes,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_RunMonth,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_RunDay,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_RunDayOfWeek,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_RunStartInterval,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_LocalOrUtcTime,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_UntilTime,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_Notify,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_Owner,
+    (Meta_Feature*)(void*)&_CIM_JobSettingData_Priority,
     (Meta_Feature*)(void*)&_CIM_JobSettingData_DeleteOnCompletion,
     (Meta_Feature*)(void*)&_CIM_JobSettingData_RecoveryAction,
     (Meta_Feature*)(void*)&_CIM_JobSettingData_OtherRecoveryAction,
@@ -108,6 +330,19 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {0},
+    {0},
+    {0},
+    {1},
+    {1},
+    {1},
+    {1},
+    {1},
+    {1},
+    {1},
+    {1},
+    {1},
+    {1},
     {1},
     {1},
     {1},
@@ -127,7 +362,7 @@ const Meta_Class CIM_JobSettingData::static_meta_class =
     _locals,
     &CIM_SettingData::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

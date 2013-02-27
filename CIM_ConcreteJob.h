@@ -11,6 +11,7 @@
 #include <cimple/cimple.h>
 #include "CIM_Job.h"
 #include "CIM_Error.h"
+#include "CIM_Error.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -26,6 +27,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -53,7 +55,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -75,7 +76,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -275,6 +275,9 @@ public:
     JobState;
     Property<Datetime> TimeOfLastStateChange;
     Property<Datetime> TimeBeforeRemoval;
+    Instance* JobInParameters;
+    Instance* JobOutParameters;
+    Property<String> MethodName;
 
     CIMPLE_CLASS(CIM_ConcreteJob)
 };
@@ -298,6 +301,15 @@ public:
     CIM_Error* Error;
     Property<uint32> return_value;
     CIMPLE_METHOD(CIM_ConcreteJob_GetError_method)
+};
+
+/*[1280]*/
+class CIM_ConcreteJob_GetErrors_method : public Instance
+{
+public:
+    Property< Array<CIM_Error*> > Errors;
+    Property<uint32> return_value;
+    CIMPLE_METHOD(CIM_ConcreteJob_GetErrors_method)
 };
 
 CIMPLE_NAMESPACE_END

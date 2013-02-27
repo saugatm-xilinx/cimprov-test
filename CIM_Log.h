@@ -24,6 +24,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -51,7 +52,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -73,7 +73,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -268,20 +267,6 @@ public:
     // CIM_Log features:
     Property<uint64> MaxNumberOfRecords;
     Property<uint64> CurrentNumberOfRecords;
-    struct _OverwritePolicy
-    {
-        enum
-        {
-            enum_Unknown = 0,
-            enum_Wraps_When_Full = 2,
-            enum_Never_Overwrites = 7,
-            enum_DMTF_Reserved = 0,
-            enum_Vendor_Reserved = 32768,
-        };
-        uint16 value;
-        uint8 null;
-    }
-    OverwritePolicy;
     struct _LogState
     {
         enum
@@ -297,6 +282,20 @@ public:
         uint8 null;
     }
     LogState;
+    struct _OverwritePolicy
+    {
+        enum
+        {
+            enum_Unknown = 0,
+            enum_Wraps_When_Full = 2,
+            enum_Never_Overwrites = 7,
+            enum_DMTF_Reserved = 0,
+            enum_Vendor_Reserved = 32768,
+        };
+        uint16 value;
+        uint8 null;
+    }
+    OverwritePolicy;
 
     CIMPLE_CLASS(CIM_Log)
 };

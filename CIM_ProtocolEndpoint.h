@@ -28,6 +28,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -55,7 +56,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -77,7 +77,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -585,11 +584,20 @@ public:
     }
     ProtocolIFType;
     Property<String> OtherTypeDescription;
+    Property<boolean> BroadcastResetSupported;
 
     CIMPLE_CLASS(CIM_ProtocolEndpoint)
 };
 
 typedef CIM_EnabledLogicalElement_RequestStateChange_method CIM_ProtocolEndpoint_RequestStateChange_method;
+
+/*[1280]*/
+class CIM_ProtocolEndpoint_BroadcastReset_method : public Instance
+{
+public:
+    Property<uint32> return_value;
+    CIMPLE_METHOD(CIM_ProtocolEndpoint_BroadcastReset_method)
+};
 
 CIMPLE_NAMESPACE_END
 

@@ -67,6 +67,14 @@ Invoke_Method_Status SF_LANEndpoint_Provider::RequestStateChange(
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
+Invoke_Method_Status SF_LANEndpoint_Provider::BroadcastReset(
+    const SF_LANEndpoint* self,
+    Property<uint32>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

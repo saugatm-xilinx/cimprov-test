@@ -14,26 +14,11 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_InstanceID;
-
-/*[1591]*/
-const Meta_Property
-_CIM_RegisteredProfile_InstanceID =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_KEY|CIMPLE_FLAG_READ,
-    "InstanceID",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    STRING,
-    0, /* subscript */
-    CIMPLE_OFF(CIM_RegisteredProfile,InstanceID),
-    0, /* value */
-};
+_CIM_RegisteredSpecification_InstanceID;
 
 /*[1568]*/
 extern const Meta_Property
@@ -49,117 +34,54 @@ _CIM_ManagedElement_ElementName;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_RegisteredOrganization;
+_CIM_ManagedElement_Generation;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredProfile_SpecificationType;
 
 /*[1591]*/
 const Meta_Property
-_CIM_RegisteredProfile_RegisteredOrganization =
+_CIM_RegisteredProfile_SpecificationType =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
-    "RegisteredOrganization",
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
+    "SpecificationType",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     UINT16,
     0, /* subscript */
-    CIMPLE_OFF(CIM_RegisteredProfile,RegisteredOrganization),
+    CIMPLE_OFF(CIM_RegisteredProfile,SpecificationType),
     0, /* value */
 };
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_OtherRegisteredOrganization;
-
-/*[1591]*/
-const Meta_Property
-_CIM_RegisteredProfile_OtherRegisteredOrganization =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "OtherRegisteredOrganization",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    STRING,
-    0, /* subscript */
-    CIMPLE_OFF(CIM_RegisteredProfile,OtherRegisteredOrganization),
-    0, /* value */
-};
+_CIM_RegisteredSpecification_OtherSpecificationType;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_RegisteredName;
-
-/*[1591]*/
-const Meta_Property
-_CIM_RegisteredProfile_RegisteredName =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
-    "RegisteredName",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    STRING,
-    0, /* subscript */
-    CIMPLE_OFF(CIM_RegisteredProfile,RegisteredName),
-    0, /* value */
-};
+_CIM_RegisteredSpecification_RegisteredOrganization;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_RegisteredVersion;
-
-/*[1591]*/
-const Meta_Property
-_CIM_RegisteredProfile_RegisteredVersion =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
-    "RegisteredVersion",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    STRING,
-    0, /* subscript */
-    CIMPLE_OFF(CIM_RegisteredProfile,RegisteredVersion),
-    0, /* value */
-};
+_CIM_RegisteredSpecification_OtherRegisteredOrganization;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_AdvertiseTypes;
-
-/*[1591]*/
-const Meta_Property
-_CIM_RegisteredProfile_AdvertiseTypes =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
-    "AdvertiseTypes",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    UINT16,
-    -1, /* subscript */
-    CIMPLE_OFF(CIM_RegisteredProfile,AdvertiseTypes),
-    0, /* value */
-};
+_CIM_RegisteredSpecification_RegisteredName;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RegisteredProfile_AdvertiseTypeDescriptions;
+_CIM_RegisteredSpecification_RegisteredVersion;
 
-/*[1591]*/
-const Meta_Property
-_CIM_RegisteredProfile_AdvertiseTypeDescriptions =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "AdvertiseTypeDescriptions",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    STRING,
-    -1, /* subscript */
-    CIMPLE_OFF(CIM_RegisteredProfile,AdvertiseTypeDescriptions),
-    0, /* value */
-};
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredSpecification_AdvertiseTypes;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredSpecification_AdvertiseTypeDescriptions;
 
 /*[1568]*/
 extern const Meta_Property
@@ -170,7 +92,7 @@ const Meta_Property
 _CIM_RegisteredProfile_ImplementedFeatures =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ,
     "ImplementedFeatures",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
@@ -222,7 +144,7 @@ const Meta_Method
 CIM_RegisteredProfile_CloseConformantInstances_method::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_METHOD,
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
     "CloseConformantInstances",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
@@ -401,7 +323,7 @@ const Meta_Method
 CIM_RegisteredProfile_OpenConformantInstances_method::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_METHOD,
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
     "OpenConformantInstances",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
@@ -516,7 +438,7 @@ const Meta_Method
 CIM_RegisteredProfile_PullConformantInstances_method::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_METHOD,
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
     "PullConformantInstances",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
@@ -529,16 +451,19 @@ CIM_RegisteredProfile_PullConformantInstances_method::static_meta_class =
 /*[2291]*/
 static Meta_Feature* _CIM_RegisteredProfile_MFA[] =
 {
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_InstanceID,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_InstanceID,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_RegisteredOrganization,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_OtherRegisteredOrganization,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_RegisteredName,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_RegisteredVersion,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_AdvertiseTypes,
-    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_AdvertiseTypeDescriptions,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
+    (Meta_Feature*)(void*)&_CIM_RegisteredProfile_SpecificationType,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_OtherSpecificationType,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredOrganization,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_OtherRegisteredOrganization,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredName,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredVersion,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_AdvertiseTypes,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_AdvertiseTypeDescriptions,
     (Meta_Feature*)(void*)&_CIM_RegisteredProfile_ImplementedFeatures,
     (Meta_Feature*)(void*)&CIM_RegisteredProfile_CloseConformantInstances_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_RegisteredProfile_OpenConformantInstances_method::static_meta_class,
@@ -548,16 +473,19 @@ static Meta_Feature* _CIM_RegisteredProfile_MFA[] =
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
+    {0},
+    {0},
+    {0},
+    {0},
     {1},
     {0},
     {0},
     {0},
-    {1},
-    {1},
-    {1},
-    {1},
-    {1},
-    {1},
+    {0},
+    {0},
+    {0},
+    {0},
     {1},
     {1},
     {1},
@@ -576,9 +504,9 @@ const Meta_Class CIM_RegisteredProfile::static_meta_class =
     CIMPLE_ARRAY_SIZE(_CIM_RegisteredProfile_MFA),
     sizeof(CIM_RegisteredProfile),
     _locals,
-    &CIM_ManagedElement::static_meta_class,
+    &CIM_RegisteredSpecification::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

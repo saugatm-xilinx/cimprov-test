@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1653]*/
 extern const Meta_Reference
@@ -36,6 +36,18 @@ _CIM_ElementSettingData_IsCurrent;
 extern const Meta_Property
 _CIM_ElementSettingData_IsNext;
 
+/*[1568]*/
+extern const Meta_Property
+_CIM_ElementSettingData_IsMinimum;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ElementSettingData_IsMaximum;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ElementSettingData_IsPending;
+
 /*[2291]*/
 static Meta_Feature* _SF_ElementSettingData_MFA[] =
 {
@@ -44,11 +56,17 @@ static Meta_Feature* _SF_ElementSettingData_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ElementSettingData_IsDefault,
     (Meta_Feature*)(void*)&_CIM_ElementSettingData_IsCurrent,
     (Meta_Feature*)(void*)&_CIM_ElementSettingData_IsNext,
+    (Meta_Feature*)(void*)&_CIM_ElementSettingData_IsMinimum,
+    (Meta_Feature*)(void*)&_CIM_ElementSettingData_IsMaximum,
+    (Meta_Feature*)(void*)&_CIM_ElementSettingData_IsPending,
 };
 
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
+    {0},
+    {0},
     {0},
     {0},
     {0},
@@ -70,7 +88,7 @@ const Meta_Class SF_ElementSettingData::static_meta_class =
     _locals,
     &CIM_ElementSettingData::static_meta_class,
     2, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

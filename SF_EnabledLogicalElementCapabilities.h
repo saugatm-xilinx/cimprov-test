@@ -25,6 +25,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_Capabilities features:
 
@@ -50,11 +51,25 @@ public:
     }
     RequestedStatesSupported;
     Property<String> ElementNameMask;
+    struct _StateAwareness
+    {
+        enum
+        {
+            enum_Implicit = 2,
+            enum_RequestStateChange = 3,
+            enum_DMTF_Reserved = 0,
+        };
+        Array_uint16 value;
+        uint8 null;
+    }
+    StateAwareness;
 
     // SF_EnabledLogicalElementCapabilities features:
 
     CIMPLE_CLASS(SF_EnabledLogicalElementCapabilities)
 };
+
+typedef CIM_Capabilities_CreateGoalSettings_method SF_EnabledLogicalElementCapabilities_CreateGoalSettings_method;
 
 CIMPLE_NAMESPACE_END
 

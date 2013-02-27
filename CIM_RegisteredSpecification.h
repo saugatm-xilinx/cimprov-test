@@ -5,19 +5,19 @@
 //
 //==============================================================================
 
-#ifndef _cimple_SF_RegisteredProfile_h
-#define _cimple_SF_RegisteredProfile_h
+#ifndef _cimple_CIM_RegisteredSpecification_h
+#define _cimple_CIM_RegisteredSpecification_h
 
 #include <cimple/cimple.h>
-#include "CIM_RegisteredProfile.h"
+#include "CIM_ManagedElement.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
-// SF_RegisteredProfile keys:
+// CIM_RegisteredSpecification keys:
 //     InstanceID
 
 /*[1194]*/
-class SF_RegisteredProfile : public Instance
+class CIM_RegisteredSpecification : public Instance
 {
 public:
     // CIM_ManagedElement features:
@@ -92,20 +92,9 @@ public:
     AdvertiseTypes;
     Property<Array_String> AdvertiseTypeDescriptions;
 
-    // CIM_RegisteredProfile features:
-    Property<Array_String> ImplementedFeatures;
-
-    // SF_RegisteredProfile features:
-
-    CIMPLE_CLASS(SF_RegisteredProfile)
+    CIMPLE_CLASS(CIM_RegisteredSpecification)
 };
-
-typedef CIM_RegisteredProfile_CloseConformantInstances_method SF_RegisteredProfile_CloseConformantInstances_method;
-
-typedef CIM_RegisteredProfile_OpenConformantInstances_method SF_RegisteredProfile_OpenConformantInstances_method;
-
-typedef CIM_RegisteredProfile_PullConformantInstances_method SF_RegisteredProfile_PullConformantInstances_method;
 
 CIMPLE_NAMESPACE_END
 
-#endif /* _cimple_SF_RegisteredProfile_h */
+#endif /* _cimple_CIM_RegisteredSpecification_h */

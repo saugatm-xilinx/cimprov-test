@@ -8,7 +8,7 @@
 #include <cimple/Meta_Class.h>
 #include <cimple/Meta_Property.h>
 #include <cimple/Meta_Reference.h>
-#include "CIM_LogEntry.h"
+#include "CIM_RegisteredSpecification.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -18,11 +18,11 @@ extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_LogEntry_InstanceID;
+_CIM_RegisteredSpecification_InstanceID;
 
 /*[1591]*/
 const Meta_Property
-_CIM_LogEntry_InstanceID =
+_CIM_RegisteredSpecification_InstanceID =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
     CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_KEY|CIMPLE_FLAG_READ,
@@ -31,7 +31,7 @@ _CIM_LogEntry_InstanceID =
     0, /* num_meta_qaulifiers */
     STRING,
     0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,InstanceID),
+    CIMPLE_OFF(CIM_RegisteredSpecification,InstanceID),
     0, /* value */
 };
 
@@ -53,202 +53,178 @@ _CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_RecordForLog_RecordFormat;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_RecordForLog_RecordData;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_RecordForLog_Locale;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_RecordForLog_PerceivedSeverity;
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_LogEntry_LogInstanceID;
+_CIM_RegisteredSpecification_SpecificationType;
 
 /*[1591]*/
 const Meta_Property
-_CIM_LogEntry_LogInstanceID =
+_CIM_RegisteredSpecification_SpecificationType =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
     CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "LogInstanceID",
+    "SpecificationType",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT16,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_RegisteredSpecification,SpecificationType),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredSpecification_OtherSpecificationType;
+
+/*[1591]*/
+const Meta_Property
+_CIM_RegisteredSpecification_OtherSpecificationType =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
+    "OtherSpecificationType",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     STRING,
     0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,LogInstanceID),
+    CIMPLE_OFF(CIM_RegisteredSpecification,OtherSpecificationType),
     0, /* value */
 };
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_LogEntry_LogName;
+_CIM_RegisteredSpecification_RegisteredOrganization;
 
 /*[1591]*/
 const Meta_Property
-_CIM_LogEntry_LogName =
+_CIM_RegisteredSpecification_RegisteredOrganization =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
+    "RegisteredOrganization",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT16,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_RegisteredSpecification,RegisteredOrganization),
+    0, /* value */
+};
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_RegisteredSpecification_OtherRegisteredOrganization;
+
+/*[1591]*/
+const Meta_Property
+_CIM_RegisteredSpecification_OtherRegisteredOrganization =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
     CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "LogName",
+    "OtherRegisteredOrganization",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     STRING,
     0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,LogName),
+    CIMPLE_OFF(CIM_RegisteredSpecification,OtherRegisteredOrganization),
     0, /* value */
 };
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_LogEntry_RecordID;
+_CIM_RegisteredSpecification_RegisteredName;
 
 /*[1591]*/
 const Meta_Property
-_CIM_LogEntry_RecordID =
+_CIM_RegisteredSpecification_RegisteredName =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "RecordID",
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
+    "RegisteredName",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     STRING,
     0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,RecordID),
+    CIMPLE_OFF(CIM_RegisteredSpecification,RegisteredName),
     0, /* value */
 };
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_LogEntry_CreationTimeStamp;
+_CIM_RegisteredSpecification_RegisteredVersion;
 
 /*[1591]*/
 const Meta_Property
-_CIM_LogEntry_CreationTimeStamp =
+_CIM_RegisteredSpecification_RegisteredVersion =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "CreationTimeStamp",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    DATETIME,
-    0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,CreationTimeStamp),
-    0, /* value */
-};
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_LogEntry_OwningEntity;
-
-/*[1591]*/
-const Meta_Property
-_CIM_LogEntry_OwningEntity =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ,
-    "OwningEntity",
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
+    "RegisteredVersion",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     STRING,
     0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,OwningEntity),
+    CIMPLE_OFF(CIM_RegisteredSpecification,RegisteredVersion),
     0, /* value */
 };
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_LogEntry_MessageID;
+_CIM_RegisteredSpecification_AdvertiseTypes;
 
 /*[1591]*/
 const Meta_Property
-_CIM_LogEntry_MessageID =
+_CIM_RegisteredSpecification_AdvertiseTypes =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "MessageID",
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ|CIMPLE_FLAG_REQUIRED,
+    "AdvertiseTypes",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
-    STRING,
-    0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,MessageID),
+    UINT16,
+    -1, /* subscript */
+    CIMPLE_OFF(CIM_RegisteredSpecification,AdvertiseTypes),
     0, /* value */
 };
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_LogEntry_Message;
+_CIM_RegisteredSpecification_AdvertiseTypeDescriptions;
 
 /*[1591]*/
 const Meta_Property
-_CIM_LogEntry_Message =
+_CIM_RegisteredSpecification_AdvertiseTypeDescriptions =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
     CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "Message",
-    0, /* meta_qualifiers */
-    0, /* num_meta_qaulifiers */
-    STRING,
-    0, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,Message),
-    0, /* value */
-};
-
-/*[1568]*/
-extern const Meta_Property
-_CIM_LogEntry_MessageArguments;
-
-/*[1591]*/
-const Meta_Property
-_CIM_LogEntry_MessageArguments =
-{
-    CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_READ,
-    "MessageArguments",
+    "AdvertiseTypeDescriptions",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
     STRING,
     -1, /* subscript */
-    CIMPLE_OFF(CIM_LogEntry,MessageArguments),
+    CIMPLE_OFF(CIM_RegisteredSpecification,AdvertiseTypeDescriptions),
     0, /* value */
 };
 
 /*[2291]*/
-static Meta_Feature* _CIM_LogEntry_MFA[] =
+static Meta_Feature* _CIM_RegisteredSpecification_MFA[] =
 {
-    (Meta_Feature*)(void*)&_CIM_LogEntry_InstanceID,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_InstanceID,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
-    (Meta_Feature*)(void*)&_CIM_RecordForLog_RecordFormat,
-    (Meta_Feature*)(void*)&_CIM_RecordForLog_RecordData,
-    (Meta_Feature*)(void*)&_CIM_RecordForLog_Locale,
-    (Meta_Feature*)(void*)&_CIM_RecordForLog_PerceivedSeverity,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_LogInstanceID,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_LogName,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_RecordID,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_CreationTimeStamp,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_OwningEntity,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_MessageID,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_Message,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_MessageArguments,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_SpecificationType,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_OtherSpecificationType,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredOrganization,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_OtherRegisteredOrganization,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredName,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_RegisteredVersion,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_AdvertiseTypes,
+    (Meta_Feature*)(void*)&_CIM_RegisteredSpecification_AdvertiseTypeDescriptions,
 };
 
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
     {1},
-    {0},
-    {0},
-    {0},
-    {0},
     {0},
     {0},
     {0},
@@ -264,18 +240,18 @@ static const Meta_Feature_Local _locals[] =
 };
 
 /*[2358]*/
-const Meta_Class CIM_LogEntry::static_meta_class =
+const Meta_Class CIM_RegisteredSpecification::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_CLASS,
-    "CIM_LogEntry",
+    CIMPLE_FLAG_CLASS|CIMPLE_FLAG_EXPERIMENTAL,
+    "CIM_RegisteredSpecification",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
-    _CIM_LogEntry_MFA,
-    CIMPLE_ARRAY_SIZE(_CIM_LogEntry_MFA),
-    sizeof(CIM_LogEntry),
+    _CIM_RegisteredSpecification_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_RegisteredSpecification_MFA),
+    sizeof(CIM_RegisteredSpecification),
     _locals,
-    &CIM_RecordForLog::static_meta_class,
+    &CIM_ManagedElement::static_meta_class,
     1, /* num_keys */
     &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };

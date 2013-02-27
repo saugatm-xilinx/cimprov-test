@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,18 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_SettingData_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_SettingData_ConfigurationName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_SettingData_ChangeableType;
 
 /*[1568]*/
 extern const Meta_Property
@@ -319,6 +331,9 @@ static Meta_Feature* _CIM_DiagnosticSettingData_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_SettingData_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
+    (Meta_Feature*)(void*)&_CIM_SettingData_ConfigurationName,
+    (Meta_Feature*)(void*)&_CIM_SettingData_ChangeableType,
     (Meta_Feature*)(void*)&_CIM_DiagnosticSettingData_HaltOnError,
     (Meta_Feature*)(void*)&_CIM_DiagnosticSettingData_QuickMode,
     (Meta_Feature*)(void*)&_CIM_DiagnosticSettingData_PercentOfTestCoverage,
@@ -338,6 +353,9 @@ static Meta_Feature* _CIM_DiagnosticSettingData_MFA[] =
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
+    {0},
+    {0},
     {0},
     {0},
     {0},
@@ -362,7 +380,7 @@ static const Meta_Feature_Local _locals[] =
 const Meta_Class CIM_DiagnosticSettingData::static_meta_class =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
-    CIMPLE_FLAG_CLASS,
+    CIMPLE_FLAG_CLASS|CIMPLE_FLAG_EXPERIMENTAL,
     "CIM_DiagnosticSettingData",
     0, /* meta_qualifiers */
     0, /* num_meta_qaulifiers */
@@ -372,7 +390,7 @@ const Meta_Class CIM_DiagnosticSettingData::static_meta_class =
     _locals,
     &CIM_SettingData::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

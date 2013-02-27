@@ -55,6 +55,16 @@ Modify_Instance_Status SF_DiagnosticServiceCapabilities_Provider::modify_instanc
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+Invoke_Method_Status SF_DiagnosticServiceCapabilities_Provider::CreateGoalSettings(
+    const SF_DiagnosticServiceCapabilities* self,
+    const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
+    Property< Array<CIM_SettingData*> >& SupportedGoalSettings,
+    Property<uint16>& return_value)
+
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

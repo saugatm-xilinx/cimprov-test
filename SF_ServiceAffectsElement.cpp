@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1653]*/
 extern const Meta_Reference
@@ -32,6 +32,10 @@ _CIM_ServiceAffectsElement_ElementEffects;
 extern const Meta_Property
 _CIM_ServiceAffectsElement_OtherElementEffectsDescriptions;
 
+/*[1568]*/
+extern const Meta_Property
+_CIM_ServiceAffectsElement_AssignedSequence;
+
 /*[2291]*/
 static Meta_Feature* _SF_ServiceAffectsElement_MFA[] =
 {
@@ -39,11 +43,13 @@ static Meta_Feature* _SF_ServiceAffectsElement_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ServiceAffectsElement_AffectingElement,
     (Meta_Feature*)(void*)&_CIM_ServiceAffectsElement_ElementEffects,
     (Meta_Feature*)(void*)&_CIM_ServiceAffectsElement_OtherElementEffectsDescriptions,
+    (Meta_Feature*)(void*)&_CIM_ServiceAffectsElement_AssignedSequence,
 };
 
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
     {0},
     {0},
     {0},
@@ -64,7 +70,7 @@ const Meta_Class SF_ServiceAffectsElement::static_meta_class =
     _locals,
     &CIM_ServiceAffectsElement::static_meta_class,
     2, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

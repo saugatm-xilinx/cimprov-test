@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1653]*/
 extern const Meta_Reference
@@ -78,9 +78,9 @@ const Meta_Class CIM_ReferencedProfile::static_meta_class =
     CIMPLE_ARRAY_SIZE(_CIM_ReferencedProfile_MFA),
     sizeof(CIM_ReferencedProfile),
     _locals,
-    &CIM_Dependency::static_meta_class,
+    &CIM_ReferencedSpecification::static_meta_class,
     2, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

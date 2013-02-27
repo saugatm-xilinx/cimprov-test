@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -66,6 +70,10 @@ _CIM_LogEntry_CreationTimeStamp;
 
 /*[1568]*/
 extern const Meta_Property
+_CIM_LogEntry_OwningEntity;
+
+/*[1568]*/
+extern const Meta_Property
 _CIM_LogEntry_MessageID;
 
 /*[1568]*/
@@ -76,10 +84,6 @@ _CIM_LogEntry_Message;
 extern const Meta_Property
 _CIM_LogEntry_MessageArguments;
 
-/*[1568]*/
-extern const Meta_Property
-_CIM_LogEntry_OwningEntity;
-
 /*[2291]*/
 static Meta_Feature* _SF_LogEntry_MFA[] =
 {
@@ -87,6 +91,7 @@ static Meta_Feature* _SF_LogEntry_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_RecordForLog_RecordFormat,
     (Meta_Feature*)(void*)&_CIM_RecordForLog_RecordData,
     (Meta_Feature*)(void*)&_CIM_RecordForLog_Locale,
@@ -95,15 +100,16 @@ static Meta_Feature* _SF_LogEntry_MFA[] =
     (Meta_Feature*)(void*)&_CIM_LogEntry_LogName,
     (Meta_Feature*)(void*)&_CIM_LogEntry_RecordID,
     (Meta_Feature*)(void*)&_CIM_LogEntry_CreationTimeStamp,
+    (Meta_Feature*)(void*)&_CIM_LogEntry_OwningEntity,
     (Meta_Feature*)(void*)&_CIM_LogEntry_MessageID,
     (Meta_Feature*)(void*)&_CIM_LogEntry_Message,
     (Meta_Feature*)(void*)&_CIM_LogEntry_MessageArguments,
-    (Meta_Feature*)(void*)&_CIM_LogEntry_OwningEntity,
 };
 
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
     {0},
     {0},
     {0},
@@ -136,7 +142,7 @@ const Meta_Class SF_LogEntry::static_meta_class =
     _locals,
     &CIM_LogEntry::static_meta_class,
     1, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

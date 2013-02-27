@@ -9,7 +9,7 @@
 #define _cimple_CIM_ReferencedProfile_h
 
 #include <cimple/cimple.h>
-#include "CIM_Dependency.h"
+#include "CIM_ReferencedSpecification.h"
 #include "CIM_RegisteredProfile.h"
 #include "CIM_RegisteredProfile.h"
 
@@ -24,6 +24,8 @@ public:
     // CIM_Dependency features:
     CIM_RegisteredProfile* Antecedent;
     CIM_RegisteredProfile* Dependent;
+
+    // CIM_ReferencedSpecification features:
 
     // CIM_ReferencedProfile features:
 

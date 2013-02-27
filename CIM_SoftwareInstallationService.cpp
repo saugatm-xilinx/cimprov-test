@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_ManagedElement_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -355,6 +359,120 @@ CIM_SoftwareInstallationService_InstallFromSoftwareIdentity_method::static_meta_
 
 /*[1721]*/
 static const Meta_Reference
+_CIM_SoftwareInstallationService_InstallFromByteStream_Job =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_OUT,
+    "Job",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    0, /* subscript */
+    &CIM_ConcreteJob::static_meta_class,
+    CIMPLE_OFF(CIM_SoftwareInstallationService_InstallFromByteStream_method,Job)
+};
+
+/*[1782]*/
+static const Meta_Property
+_CIM_SoftwareInstallationService_InstallFromByteStream_Image =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_IN|CIMPLE_FLAG_OCTET_STRING,
+    "Image",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT8,
+    -1,
+    CIMPLE_OFF(CIM_SoftwareInstallationService_InstallFromByteStream_method,Image),
+    0, /* value */
+};
+
+/*[1721]*/
+static const Meta_Reference
+_CIM_SoftwareInstallationService_InstallFromByteStream_Target =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_REFERENCE|CIMPLE_FLAG_IN,
+    "Target",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    0, /* subscript */
+    &CIM_ManagedElement::static_meta_class,
+    CIMPLE_OFF(CIM_SoftwareInstallationService_InstallFromByteStream_method,Target)
+};
+
+/*[1782]*/
+static const Meta_Property
+_CIM_SoftwareInstallationService_InstallFromByteStream_InstallOptions =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_IN,
+    "InstallOptions",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT16,
+    -1,
+    CIMPLE_OFF(CIM_SoftwareInstallationService_InstallFromByteStream_method,InstallOptions),
+    0, /* value */
+};
+
+/*[1782]*/
+static const Meta_Property
+_CIM_SoftwareInstallationService_InstallFromByteStream_InstallOptionsValues =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_IN,
+    "InstallOptionsValues",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    STRING,
+    -1,
+    CIMPLE_OFF(CIM_SoftwareInstallationService_InstallFromByteStream_method,InstallOptionsValues),
+    0, /* value */
+};
+
+/*[1935]*/
+static const Meta_Property
+_CIM_SoftwareInstallationService_InstallFromByteStream_return_value =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_OUT,
+    "return_value",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT32,
+    0,
+    CIMPLE_OFF(CIM_SoftwareInstallationService_InstallFromByteStream_method,return_value),
+    0, /* value */
+};
+
+/*[1911]*/
+static Meta_Feature* _CIM_SoftwareInstallationService_InstallFromByteStream_MFA[] =
+{
+    (Meta_Feature*)(void*)&_CIM_SoftwareInstallationService_InstallFromByteStream_Job,
+    (Meta_Feature*)(void*)&_CIM_SoftwareInstallationService_InstallFromByteStream_Image,
+    (Meta_Feature*)(void*)&_CIM_SoftwareInstallationService_InstallFromByteStream_Target,
+    (Meta_Feature*)(void*)&_CIM_SoftwareInstallationService_InstallFromByteStream_InstallOptions,
+    (Meta_Feature*)(void*)&_CIM_SoftwareInstallationService_InstallFromByteStream_InstallOptionsValues,
+    (Meta_Feature*)(void*)&_CIM_SoftwareInstallationService_InstallFromByteStream_return_value
+};
+
+/*[2113]*/
+const Meta_Method
+CIM_SoftwareInstallationService_InstallFromByteStream_method::static_meta_class =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_METHOD|CIMPLE_FLAG_EXPERIMENTAL,
+    "InstallFromByteStream",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    _CIM_SoftwareInstallationService_InstallFromByteStream_MFA,
+    CIMPLE_ARRAY_SIZE(_CIM_SoftwareInstallationService_InstallFromByteStream_MFA),
+    sizeof(CIM_SoftwareInstallationService_InstallFromByteStream_method),
+    UINT32,
+};
+
+/*[1721]*/
+static const Meta_Reference
 _CIM_SoftwareInstallationService_InstallFromURI_Job =
 {
     CIMPLE_ATOMIC_INITIALIZER, /* refs */
@@ -474,6 +592,7 @@ static Meta_Feature* _CIM_SoftwareInstallationService_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
     (Meta_Feature*)(void*)&_CIM_Service_Name,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_OperationalStatus,
@@ -501,8 +620,10 @@ static Meta_Feature* _CIM_SoftwareInstallationService_MFA[] =
     (Meta_Feature*)(void*)&_CIM_Service_Started,
     (Meta_Feature*)(void*)&CIM_Service_StartService_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_Service_StopService_method::static_meta_class,
+    (Meta_Feature*)(void*)&CIM_Service_ChangeAffectedElementsAssignedSequence_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_SoftwareInstallationService_CheckSoftwareIdentity_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_SoftwareInstallationService_InstallFromSoftwareIdentity_method::static_meta_class,
+    (Meta_Feature*)(void*)&CIM_SoftwareInstallationService_InstallFromByteStream_method::static_meta_class,
     (Meta_Feature*)(void*)&CIM_SoftwareInstallationService_InstallFromURI_method::static_meta_class,
 };
 
@@ -540,6 +661,9 @@ static const Meta_Feature_Local _locals[] =
     {0},
     {0},
     {0},
+    {0},
+    {0},
+    {1},
     {1},
     {1},
     {1},
@@ -559,7 +683,7 @@ const Meta_Class CIM_SoftwareInstallationService::static_meta_class =
     _locals,
     &CIM_Service::static_meta_class,
     4, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

@@ -28,6 +28,7 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_ManagedSystemElement features:
     Property<Datetime> InstallDate;
@@ -55,7 +56,6 @@ public:
             enum_Supporting_Entity_in_Error = 16,
             enum_Completed = 17,
             enum_Power_Mode = 18,
-            enum_Relocating = 19,
             enum_DMTF_Reserved = 0,
             enum_Vendor_Reserved = 0,
         };
@@ -77,7 +77,6 @@ public:
             enum_Critical_failure = 25,
             enum_Non_recoverable_error = 30,
             enum_DMTF_Reserved = 0,
-            enum_Vendor_Specific = 32768,
         };
         uint16 value;
         uint8 null;
@@ -374,6 +373,19 @@ public:
     }
     AdditionalAvailability;
     Property<uint64> MaxQuiesceTime;
+    struct _LocationIndicator
+    {
+        enum
+        {
+            enum_Unknown = 0,
+            enum_On = 2,
+            enum_Off = 3,
+            enum_Not_Supported = 4,
+        };
+        uint16 value;
+        uint8 null;
+    }
+    LocationIndicator;
 
     CIMPLE_CLASS(CIM_LogicalDevice)
 };

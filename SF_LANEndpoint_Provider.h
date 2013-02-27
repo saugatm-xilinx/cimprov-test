@@ -47,6 +47,10 @@ public:
         const Property<Datetime>& TimeoutPeriod,
         Property<uint32>& return_value);
 
+    Invoke_Method_Status BroadcastReset(
+        const SF_LANEndpoint* self,
+        Property<uint32>& return_value);
+
     /*@END@*/
 };
 

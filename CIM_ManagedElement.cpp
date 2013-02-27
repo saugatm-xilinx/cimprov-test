@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -92,6 +92,25 @@ _CIM_ManagedElement_ElementName =
     0, /* value */
 };
 
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
+
+/*[1591]*/
+const Meta_Property
+_CIM_ManagedElement_Generation =
+{
+    CIMPLE_ATOMIC_INITIALIZER, /* refs */
+    CIMPLE_FLAG_PROPERTY|CIMPLE_FLAG_EXPERIMENTAL|CIMPLE_FLAG_READ,
+    "Generation",
+    0, /* meta_qualifiers */
+    0, /* num_meta_qaulifiers */
+    UINT64,
+    0, /* subscript */
+    CIMPLE_OFF(CIM_ManagedElement,Generation),
+    0, /* value */
+};
+
 /*[2291]*/
 static Meta_Feature* _CIM_ManagedElement_MFA[] =
 {
@@ -99,11 +118,13 @@ static Meta_Feature* _CIM_ManagedElement_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
 };
 
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {1},
     {1},
     {1},
     {1},
@@ -124,7 +145,7 @@ const Meta_Class CIM_ManagedElement::static_meta_class =
     _locals,
     0, /* super_class */ 
     0, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

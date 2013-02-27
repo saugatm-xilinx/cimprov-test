@@ -14,7 +14,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 using namespace cimple;
 
-extern const Meta_Repository __meta_repository_52E780FCF95E157C8B11653275F6420A;
+extern const Meta_Repository __meta_repository_0DDA66E0FF471BAB95C366A9360C9285;
 
 /*[1568]*/
 extern const Meta_Property
@@ -31,6 +31,10 @@ _CIM_ProtocolEndpoint_Description;
 /*[1568]*/
 extern const Meta_Property
 _CIM_ManagedElement_ElementName;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ManagedElement_Generation;
 
 /*[1568]*/
 extern const Meta_Property
@@ -122,11 +126,15 @@ _CIM_ProtocolEndpoint_ProtocolType;
 
 /*[1568]*/
 extern const Meta_Property
-_CIM_ProtocolEndpoint_ProtocolIFType;
+_CIM_LANEndpoint_ProtocolIFType;
 
 /*[1568]*/
 extern const Meta_Property
 _CIM_ProtocolEndpoint_OtherTypeDescription;
+
+/*[1568]*/
+extern const Meta_Property
+_CIM_ProtocolEndpoint_BroadcastResetSupported;
 
 /*[1568]*/
 extern const Meta_Property
@@ -163,6 +171,7 @@ static Meta_Feature* _SF_LANEndpoint_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ManagedElement_Caption,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_Description,
     (Meta_Feature*)(void*)&_CIM_ManagedElement_ElementName,
+    (Meta_Feature*)(void*)&_CIM_ManagedElement_Generation,
     (Meta_Feature*)(void*)&_CIM_ManagedSystemElement_InstallDate,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_Name,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_OperationalStatus,
@@ -186,8 +195,10 @@ static Meta_Feature* _SF_LANEndpoint_MFA[] =
     (Meta_Feature*)(void*)&_CIM_ServiceAccessPoint_CreationClassName,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_NameFormat,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_ProtocolType,
-    (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_ProtocolIFType,
+    (Meta_Feature*)(void*)&_CIM_LANEndpoint_ProtocolIFType,
     (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_OtherTypeDescription,
+    (Meta_Feature*)(void*)&_CIM_ProtocolEndpoint_BroadcastResetSupported,
+    (Meta_Feature*)(void*)&CIM_ProtocolEndpoint_BroadcastReset_method::static_meta_class,
     (Meta_Feature*)(void*)&_CIM_LANEndpoint_LANID,
     (Meta_Feature*)(void*)&_CIM_LANEndpoint_LANType,
     (Meta_Feature*)(void*)&_CIM_LANEndpoint_OtherLANType,
@@ -200,6 +211,9 @@ static Meta_Feature* _SF_LANEndpoint_MFA[] =
 /*[2338]*/
 static const Meta_Feature_Local _locals[] =
 {
+    {0},
+    {0},
+    {0},
     {0},
     {0},
     {0},
@@ -252,7 +266,7 @@ const Meta_Class SF_LANEndpoint::static_meta_class =
     _locals,
     &CIM_LANEndpoint::static_meta_class,
     4, /* num_keys */
-    &__meta_repository_52E780FCF95E157C8B11653275F6420A,
+    &__meta_repository_0DDA66E0FF471BAB95C366A9360C9285,
 };
 
 CIMPLE_NAMESPACE_END

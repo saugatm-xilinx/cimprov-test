@@ -82,6 +82,22 @@ public:
         const Property<Array_String>& InstallOptionsValues,
         Property<uint32>& return_value);
 
+    Invoke_Method_Status ChangeAffectedElementsAssignedSequence(
+        const SF_SoftwareInstallationService* self,
+        const Property< Array<CIM_ManagedElement*> >& ManagedElements,
+        const Property<Array_uint16>& AssignedSequence,
+        CIM_ConcreteJob*& Job,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status InstallFromByteStream(
+        const SF_SoftwareInstallationService* self,
+        CIM_ConcreteJob*& Job,
+        const Property<Array_uint8>& Image,
+        const CIM_ManagedElement* Target,
+        const Property<Array_uint16>& InstallOptions,
+        const Property<Array_String>& InstallOptionsValues,
+        Property<uint32>& return_value);
+
     /*@END@*/
 };
 

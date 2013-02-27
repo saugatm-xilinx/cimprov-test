@@ -10,6 +10,8 @@
 
 #include <cimple/cimple.h>
 #include "CIM_ManagedElement.h"
+#include "CIM_SettingData.h"
+#include "CIM_SettingData.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -25,10 +27,21 @@ public:
     Property<String> Caption;
     Property<String> Description;
     Property<String> ElementName;
+    Property<uint64> Generation;
 
     // CIM_Capabilities features:
 
     CIMPLE_CLASS(CIM_Capabilities)
+};
+
+/*[1280]*/
+class CIM_Capabilities_CreateGoalSettings_method : public Instance
+{
+public:
+    Property< Array<CIM_SettingData*> > TemplateGoalSettings;
+    Property< Array<CIM_SettingData*> > SupportedGoalSettings;
+    Property<uint16> return_value;
+    CIMPLE_METHOD(CIM_Capabilities_CreateGoalSettings_method)
 };
 
 CIMPLE_NAMESPACE_END
