@@ -1,0 +1,93 @@
+/**************************************************************************\
+*//*! \file
+** <L5_PRIVATE L5_SOURCE>
+** \author  mjs
+**  \brief  Solarflare board type enumerations
+**   \date  2009/07/16
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
+#ifndef CI_MGMT_BOARD_IDS_H
+#define CI_MGMT_BOARD_IDS_H
+
+/* Reference: SF-103611-PS */
+
+enum {
+  /* Falcon-based */
+  BOARD_TYPE_SFE4001 = 0x0,
+  BOARD_TYPE_SFE4002 = 0x1,
+  BOARD_TYPE_SFE4003 = 0x2,
+  BOARD_TYPE_SFE4005 = 0x4,
+  BOARD_TYPE_SFE4007 = 0x5,
+  BOARD_TYPE_SFN4111T = 0x51,
+  BOARD_TYPE_SFN4112F = 0x52,
+  /* Siena-based */
+  BOARD_TYPE_SFE4008 = 0x6,
+  BOARD_TYPE_SFN5122F = 0x7, /* QT2025-based variants (R0,R1,R2) */
+  BOARD_TYPE_SFN5123H = 0x8,
+  BOARD_TYPE_SFN5121T = 0x9,
+  BOARD_TYPE_EVT_TDB = 0xa,
+  BOARD_TYPE_SFN5322F = 0xb, /* PTP NIC with FPGA */
+  /* (0xc reserved to maintain the current correspondence between
+   * board type IDs and firmware subtypes for Siena-based boards)
+   */
+  BOARD_TYPE_SFN5122F_XFI = 0xd, /* XFI-based variant (R3) - different f/w */
+  BOARD_TYPE_SFN5802K = 0xe,     /* HP blade NIC */
+  BOARD_TYPE_SFN5802K_R2 = 0xf,
+  BOARD_TYPE_SFN6822F = 0x10,
+
+  /* Huntington-based */
+  BOARD_TYPE_SFN7122F = 0x11
+};
+
+enum {
+  BOARD_PCI_SDID_SFE4001_PCBA1 = 0x0101,
+  BOARD_PCI_SDID_SFE4001_PCBA2 = 0x0102,
+  BOARD_PCI_SDID_SFE4001_PCBA3 = 0x0103,
+
+  BOARD_PCI_SDID_SFE4002_PCBA1 = 0x0201,
+
+  BOARD_PCI_SDID_SFE4003_PCBA1 = 0x0301,
+  BOARD_PCI_SDID_SFE4003_PCBA2 = 0x0302,
+  BOARD_PCI_SDID_SFE4003_PCBA3 = 0x0303,
+  BOARD_PCI_SDID_SFE4003_PCBA4 = 0x0304,
+
+  BOARD_PCI_SDID_SFE4005_PCBA0 = 0x0500,
+
+  BOARD_PCI_SDID_SFN4111T_PCBA1 = 0x5101,
+  BOARD_PCI_SDID_SFN4111T_PCBA2 = 0x5102,
+  BOARD_PCI_SDID_SFN4111T_PCBA3 = 0x5103,
+  BOARD_PCI_SDID_SFN4111T_PCBR4 = 0x5104,
+  BOARD_PCI_SDID_SFN4111T_PCBR5 = 0x5105,
+
+  BOARD_PCI_SDID_SFN4112F_PCBR0 = 0x5200,
+  BOARD_PCI_SDID_SFN4112F_PCBR1 = 0x5201,
+  BOARD_PCI_SDID_SFN4112F_PCBR2 = 0x5202,
+
+  BOARD_PCI_SDID_SFN5122F_PCBR0 = 0x6200,
+  BOARD_PCI_SDID_SFN5122F_PCBR1 = 0x6201,
+  BOARD_PCI_SDID_SFN5122F_PCBR2 = 0x6202,
+  BOARD_PCI_SDID_SFN5122F_PCBR3 = 0x6203, /* XFI-based variant */
+  BOARD_PCI_SDID_SFN5122F_PCBR7 = 0x6207,
+
+  BOARD_PCI_SDID_SFN5152F_PCBR7 = 0x7A07,
+
+  BOARD_PCI_SDID_SFN5162F_PCBR7 = 0x7207,
+
+  BOARD_PCI_SDID_SFN5322F_PCBR0 = 0x6210,
+
+  BOARD_PCI_SDID_SFN5123H_PCBR0 = 0x6300,
+
+  BOARD_PCI_SDID_SFN6122F_PCBR7 = 0x6227,
+
+  BOARD_PCI_SDID_SFN6322F_PCBR7 = 0x6237,
+
+  BOARD_PCI_SDID_SFA6902_PCBR0  = 0x1200,
+
+  BOARD_PCI_SDID_SFN6822F_PCBR1 = 0x2132, /* HP board, SVID to be 0x103C */
+};
+
+#endif
+

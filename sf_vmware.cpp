@@ -4,6 +4,13 @@
 #include <cimple/Array.h>
 #include <cimple.h>
 
+#define EFX_NOT_UPSTREAM
+#include "efx_ioctl.h"
+#include <ci/tools/byteorder.h>
+#include <ci/tools/bitfield.h>
+#include <ci/mgmt/mc_flash_layout.h>
+#include "efx_regs_mcdi.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -24,6 +31,17 @@
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 
+#include <errno.h>
+
+#define CHUNK_LEN 0x80
+
+#define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
+CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
+                    CI_DWORD_0, (_val))
+
+#define PAYLOAD_DWORD(_payload, _ofst) \
+  CI_DWORD_FIELD((_payload).dword[_ofst], CI_DWORD_0)
+
 #define PROC_BUS_PATH       "/proc/bus/pci/"
 #define DEV_PATH            "/dev/"
 #define PATH_MAX_LEN        1024
@@ -36,13 +54,22 @@
 
 #define BUF_MAX_LEN                     32
 
-#define VPD_TAG_ID                      0x82
-#define VPD_TAG_R                       0x90
-#define VPD_TAG_W                       0x91
-#define VPD_TAG_END                     0x78
+#define VPD_TAG_ID   0x02
+#define VPD_TAG_END  0x0f
+#define VPD_TAG_R    0x10
+#define VPD_TAG_W    0x11
 
 namespace solarflare 
 {
+    /**
+     * Auxiliary type for MCDI data processing.
+     */
+    typedef union {
+        uint8_t u8[MCDI_CTL_SDU_LEN_MAX];
+        uint16_t u16[MCDI_CTL_SDU_LEN_MAX/2];
+        ci_dword_t dword[MCDI_CTL_SDU_LEN_MAX/4];
+    } payload_t;
+
     /**
      * Description of Ethernet port.
      */
@@ -67,16 +94,6 @@ namespace solarflare
                                              allocated memory in the
                                              array */
     } NICDescr;
-
-    /**
-     * Description of VPD.
-     */
-    typedef struct VPDdescr {
-        char mac[VPD_FIELD_MAX_LEN]; 
-        char sn[VPD_FIELD_MAX_LEN];
-        char pn[VPD_FIELD_MAX_LEN];
-        char pid[VPD_FIELD_MAX_LEN];
-    } VPDDescr;
 
     /**
      * Free array with NIC descriptions.
@@ -503,99 +520,286 @@ namespace solarflare
                 break;
     }
 
-#define POPEN(rc_, f_, fmt_...) \
-    do {                                          \
-        char         cmd_[CMD_MAX_LEN];           \
-        rc_ = snprintf(cmd_, CMD_MAX_LEN, fmt_);  \
-        if (rc_ < 0 || rc_ >= CMD_MAX_LEN)        \
-            rc_ = -1;                             \
-        else                                      \
-        {                                         \
-            f_ = popen(cmd_, "r");                \
-            if (f_ == NULL)                       \
-                rc_ = -2;                         \
-            else                                  \
-                rc_ = 0;                          \
-        }                                         \
-    } while (0)
-
     /**
-     * Get VPD fields for all ports of a NIC to which a given
-     * port belongs.
+     * Parse VPD tag.
      *
-     * @param portName  Port name
-     * @param vpd       Where to save array of VPD descriptions
-     *                  (one per port)
-     * @param num       Where to save number of descriptions
+     * @param vpd       Pointer to buffer with VPD data
+     * @param len       Length of VPD data
+     * @param tag_name  Where to save tag name
+     * @param tag_len   Where to save tag data len
+     * @param tag_start Where to save address of the first
+     *                  byte of tag data
      *
      * @return 0 on success or error code
      */
-    int getVPD(const char *portName, VPDDescr **vpd, int *num)
+    int getVPDTag(uint8_t *vpd, uint32_t len,
+                  int *tag_name, unsigned int *tag_len,
+                  uint8_t **tag_start)
     {
-        char         dev_path[PATH_MAX_LEN];
-        int          rc;
-        int          fd;
-        FILE        *f = NULL;
-        VPDDescr    *arr = NULL;
-        int          cnt = 0;
-        int          max_cnt = 2;
-        char         str[VPD_FIELD_MAX_LEN];
-        void        *tmp;
+        if (vpd[0] & 0x80) // 10000000b
+        {
+             if (len < 2)
+                return -1;
+            *tag_name = vpd[0] & 0x7f; // 01111111b
+            *tag_len = (vpd[1] & 0x000000ff) +
+                       ((vpd[2] & 0x000000ff) >> 8);
+            *tag_start = vpd + 3;
+            if (len < *tag_len + 3)
+                return -2;
+        }
+        else
+        {
+            *tag_name = ((vpd[0] & 0xf8) >> 3); // 01111000b
+            *tag_len = (vpd[0] & 0x07); // 00000111b
+            *tag_start = vpd + 1;
+            if (len < *tag_len + 1)
+                return -3;
+        }
 
-        arr = (VPDDescr *)calloc(max_cnt, sizeof(VPDDescr));
-        if (arr == NULL)
+        return 0;
+    }
+
+    /**
+     * Parse VPD data.
+     *
+     * @param vpd               Buffer with VPD data
+     * @param len               Length of VPD data
+     * @param product_name      Where to save product name
+     * @param product_number    Where to save product number
+     * @param serial_number     Where to save serial number
+     *
+     * @return 0 on success or error code
+     */
+    int parseVPD(uint8_t *vpd, uint32_t len,
+                 char **product_name, char **product_number,
+                 char **serial_number)
+    {
+        int             tag_name;
+        unsigned int    tag_len;
+        uint8_t        *tag_start;
+        uint8_t        *end = vpd + len;
+        int             rc;
+
+        uint8_t        *vpd_field;
+        char            field_name[3];
+        unsigned int    field_len;
+        char           *field_value;
+
+        int i = 0;
+        uint8_t sum = 0;
+        uint8_t *vpd_start = vpd;
+
+        *product_name = NULL;
+        *product_number = NULL;
+        *serial_number = NULL;
+
+        while (vpd < end)
+        {
+            if ((rc = getVPDTag(vpd, len, &tag_name,
+                                &tag_len, &tag_start)) < 0)
+                return rc;
+
+            switch (tag_name)
+            {
+                case VPD_TAG_ID:
+                    *product_name = (char *)calloc(1, tag_len + 1);
+                    memcpy(*product_name, tag_start, tag_len);
+                    (*product_name)[tag_len] = '\0';
+
+                    break;
+
+                case VPD_TAG_R:
+                case VPD_TAG_W:
+
+                    sum = 0;
+                    for (vpd_field = tag_start;
+                         vpd_field < tag_start + tag_len; )
+                    {
+                        field_name[0] = vpd_field[0];
+                        field_name[1] = vpd_field[1];
+                        field_name[2] = '\0';
+                        field_len = vpd_field[2];
+                        field_value = (char *)calloc(1, field_len + 1);
+                        memcpy(field_value, vpd_field + 3, field_len);
+                        field_value[field_len] = '\0';
+
+                        if (strcmp(field_name, "PN") == 0)
+                            *product_number = strdup(field_value);
+                        else if (strcmp(field_name, "SN") == 0)
+                            *serial_number = strdup(field_value);
+                        else if (strcmp(field_name, "RV") == 0 &&
+                            tag_name == VPD_TAG_R)
+                        {
+                            if (field_len < 1)
+                            {
+                                free(field_value);
+                                return -10;
+                            }
+
+                            sum = 0;
+                            for (i = 0; i < vpd_field + 3 - vpd_start; i++)
+                                sum += (vpd_start[i] & 0x000000ff);
+
+                            sum += vpd_field[3];
+
+#if 0
+                            if (sum != 0)
+                                printf("Invalid checksum!\n");
+#endif
+                        }
+
+                        free(field_value);
+
+                        vpd_field += 3 + field_len;
+                    }
+
+                    break;
+            }
+
+            if (tag_name == VPD_TAG_END)
+                break;
+            if (tag_name != VPD_TAG_ID &&
+                tag_name != VPD_TAG_R &&
+                tag_name != VPD_TAG_W &&
+                tag_name != VPD_TAG_END)
+                return -11;
+
+            vpd = tag_start + tag_len;
+            len = end - vpd;
+
+            if (tag_len == 0 || len == 0)
+                break;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Read NVRAM data from NIC.
+     *
+     * @param fd        File descriptor to be used for ioctl()
+     * @param data      Where to save obtained data
+     * @param offset    Offset of data to be read
+     * @param len       Length of data to be read
+     * @param ifname    Interface name
+     * @param type      This value is determined by port number
+     *
+     * @return 0 on success or error code
+     */
+    int
+    readNVRAMBytes(int fd, uint8_t *data, unsigned int offset,
+                   unsigned int len,
+                   const char *ifname, int port_number)
+    {
+        unsigned int    end = offset + len;
+        unsigned int    chunk;
+        uint8_t        *ptr = data;
+
+        struct efx_mcdi_request *mcdi_req;
+        struct efx_ioctl         ioc;
+        payload_t                payload;
+        uint32_t                 type;
+
+        if (port_number == 0)
+            type = MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0;
+        else
+            type = MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT1;
+
+        for ( ; offset < end; )
+        {
+            chunk = end - offset;
+            if (chunk > CHUNK_LEN)
+                chunk = CHUNK_LEN;
+
+            memset(&ioc, 0, sizeof(ioc));
+            strncpy(ioc.if_name, ifname, sizeof(ioc.if_name));
+            ioc.cmd = EFX_MCDI_REQUEST;
+
+            mcdi_req = &ioc.u.mcdi_request;
+            mcdi_req->cmd = MC_CMD_NVRAM_READ;
+            mcdi_req->len = 12;
+            
+            memset(&payload, 0, sizeof(payload));
+            SET_PAYLOAD_DWORD(payload, 0, type);
+            SET_PAYLOAD_DWORD(payload, 1, offset);
+            SET_PAYLOAD_DWORD(payload, 2, chunk);
+            memcpy(mcdi_req->payload, payload.u8,
+                   mcdi_req->len);
+
+            if (ioctl(fd, SIOCEFX, &ioc) < 0)
+                return -1;
+
+            memcpy(ptr, mcdi_req->payload, mcdi_req->len);
+            ptr += mcdi_req->len;
+            offset += mcdi_req->len;
+            if (mcdi_req->len == 0)
+                return -2;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Get VPD.
+     *
+     * @param ifname            Interface name
+     * @param port_number       Port number
+     * @param product_name      Where to save product name
+     * @param product_number    Where to save product number
+     * @param serial_number     Where to save serial number
+     *
+     * @return 0 on success or error code
+     */
+    int
+    getVPD(const char *ifname, int port_number,
+           char **product_name, char **product_number,
+           char **serial_number)
+    {
+        int       rc;
+        int       fd;
+        uint8_t  *vpd;
+        int       vpd_off;
+        int       vpd_len;
+
+        struct efx_mcdi_request *mcdi_req;
+        struct efx_ioctl         ioc;
+        payload_t                payload;
+
+        siena_mc_static_config_hdr_t partial_hdr;
+
+        fd = open("/dev/sfc_control", O_RDWR);
+        if (fd < 0)
             return -1;
 
-        POPEN(rc, f, 
-              "sienaconfig --dynamic ioctl=%s 2>/dev/null | "
-              "grep \"\\(MAC address base\\)\\|"
-              "\\(product ID\\)\\|"
-              "\\(part number (PN)\\)\\|"
-              "\\(serial number (SN)\\)\" |"
-              "sed \"s/^[^:]*:\\s*//g\"",
-              portName);
-
-        if (rc < 0)
-        {
-            free(arr);
+        if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
+                           sizeof(partial_hdr),
+                           ifname, port_number) < 0)
             return -2;
-        }
 
-        while (1)
+        vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
+        vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
+
+        vpd = (uint8_t *)calloc(1, vpd_len);
+        if (readNVRAMBytes(fd, vpd, vpd_off, vpd_len,
+                           ifname, port_number) < 0)
         {
-            if (fgets(str, VPD_FIELD_MAX_LEN, f) != str)
-                break;
-            if (cnt >= max_cnt)
-            {
-                max_cnt *= 2;
-                tmp = realloc(arr, max_cnt * sizeof(VPDDescr));
-                if (tmp == NULL)
-                {
-                    free(arr);
-                    return -3;
-                }
-            }
-            strncpy(arr[cnt].mac, str, VPD_FIELD_MAX_LEN);
-            if (fgets(arr[cnt].pid, VPD_FIELD_MAX_LEN, f) != arr[cnt].pid ||
-                fgets(arr[cnt].pn, VPD_FIELD_MAX_LEN, f) != arr[cnt].pn ||
-                fgets(arr[cnt].sn, VPD_FIELD_MAX_LEN, f) != arr[cnt].sn)
-            {
-                free(arr);
-                return -4;
-            }
-
-            trim(arr[cnt].mac);
-            trim(arr[cnt].pid);
-            trim(arr[cnt].pn);
-            trim(arr[cnt].sn);
-
-            cnt++;
+            free(vpd);
+            return -3;
         }
 
-        *vpd = arr;
-        *num = cnt;
+        if ((rc = parseVPD(vpd, vpd_len, product_name,
+                           product_number, serial_number)) < 0)
+        {
+            free(product_name);
+            free(product_number);
+            free(serial_number);
+            free(vpd);
+            return -4;
+        }
 
-        pclose(f);
+        free(vpd);
+        close(fd);
+
         return 0;
     }
 
@@ -621,7 +825,7 @@ namespace solarflare
             return -1;
 
         strncpy(ifr.ifr_name, dev_name, sizeof(ifr.ifr_name));
-        ifr.ifr_data = edata;
+        ifr.ifr_data = (char *)edata;
         ((struct ethtool_value *)edata)->cmd = cmd;
         if (ioctl(fd, SIOCETHTOOL, &ifr) < 0)
         {
@@ -840,7 +1044,6 @@ namespace solarflare
         virtual void initialize() {};
     };
 
-
     class VMWareBootROM : public BootROM {
         const NIC *owner;
         VersionInfo vers;
@@ -1011,20 +1214,21 @@ namespace solarflare
             return VitalProductData("", "", "", "", "", "");
         else
         {
-            VPDDescr  *vpd;
-            int        num;
-            String     pid;
-            String     pn;
-            String     sn;
+            char    *p_name;
+            char    *pn;
+            char    *sn;
 
-            if (getVPD(ports[0]->dev_name.c_str(), &vpd, &num) < 0 ||
-                num == 0)
+            if (getVPD(ports[0]->dev_name.c_str(), 0,
+                       &p_name, &pn, &sn) < 0)
                 return VitalProductData("", "", "", "", "", "");
-            pid = String(vpd[0].pid);
-            pn = String(vpd[0].pn);
-            sn = String(vpd[0].sn);
-            free(vpd);
-            return VitalProductData(sn, "", sn, pn, pid, pn /* ??? */);
+
+            VitalProductData vpd(sn, "", sn, pn, p_name, pn /* ??? */);
+
+            free(p_name);
+            free(pn);
+            free(sn);
+
+            return vpd;
         }
     }
 
@@ -1050,24 +1254,7 @@ namespace solarflare
 
     VersionInfo VMWareDriver::version() const
     {
-        FILE    *f = NULL;
-        int      rc;
-        char     str[VPD_FIELD_MAX_LEN];
-
-        POPEN(rc, f,
-              "esxcli system module "
-              "get --module=sfc | grep Version | "
-              "sed \"s/^\\s*Version:\\s*Version\\s*//\" | "
-              "sed \"s/, Build:.*//g\"");
-        if (rc < 0)
-          return VersionInfo("");
-        
-        if (fgets(str, VPD_FIELD_MAX_LEN, f) != str)
-          return VersionInfo("");
-
-        pclose(f);
-        trim(str);
-        return VersionInfo(str);
+        return VersionInfo("");
     }
 
     class VMWareLibrary : public Library {
@@ -1232,28 +1419,6 @@ namespace solarflare
 
     VersionInfo VMWareBootROM::version() const
     {
-        FILE    *f = NULL;
-        int      rc;
-        char     str[VPD_FIELD_MAX_LEN];
-
-        if (((VMWareNIC *)owner)->portNum <= 0)
-            return VersionInfo("");
-
-        POPEN(rc, f,
-              "sfupdate -i %s 2>/dev/null | "
-              "grep \"ROM version\" | sed "
-              "\"s/\\s*Boot ROM version:\\s*//g\"",
-              ((VMWareNIC *)owner)->ports[0]->dev_name.c_str());
-
-        if (rc < 0)
-          return VersionInfo("");
-        
-        if (fgets(str, VPD_FIELD_MAX_LEN, f) != str)
-          return VersionInfo("");
-
-        pclose(f);
-        trim(str);
-        return VersionInfo(str);
+        return VersionInfo("");
     }
-
 }
