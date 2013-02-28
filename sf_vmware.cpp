@@ -776,6 +776,10 @@ namespace solarflare
                            ifname, port_number) < 0)
             return -2;
 
+        if (CI_BSWAP_LE32(partial_hdr.magic) !=
+                                    SIENA_MC_STATIC_CONFIG_MAGIC)
+            return -3; 
+
         vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
         vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
 
@@ -784,7 +788,7 @@ namespace solarflare
                            ifname, port_number) < 0)
         {
             free(vpd);
-            return -3;
+            return -4;
         }
 
         if ((rc = parseVPD(vpd, vpd_len, product_name,
@@ -794,7 +798,7 @@ namespace solarflare
             free(product_number);
             free(serial_number);
             free(vpd);
-            return -4;
+            return -5;
         }
 
         free(vpd);
