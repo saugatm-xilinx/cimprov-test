@@ -1254,6 +1254,62 @@ namespace solarflare
 
     VersionInfo VMWareDriver::version() const
     {
+        DIR                     *device_dir;
+        struct dirent           *device;
+        struct ethtool_drvinfo   drvinfo;
+        struct ifreq             ifr;
+        int                      fd;
+        char                     device_path[PATH_MAX_LEN];
+
+        /**
+         * BUG HERE: what if there is no SF NICs?
+         * Is there a way to determine driver version
+         * not via ETHTOOL_GDRVINFO and not via using
+         * esxcli (the latter is impossible since fork() is not
+         * permitted here)?
+         */
+        device_dir = opendir(DEV_PATH);
+        if (device_dir == NULL)
+            return VersionInfo("");
+
+        for (device = readdir(device_dir);
+             device != NULL;
+             device = readdir(device_dir))
+        {
+            if (device->d_name[0] == '.')
+                continue;
+            if (strlen(device->d_name) > IFNAMSIZ)
+                continue;
+
+            if (snprintf(device_path, PATH_MAX_LEN, "%s/%s",
+                         DEV_PATH, device->d_name) >= PATH_MAX_LEN)
+                continue;
+            fd = open(device_path, O_RDWR);
+            if (fd < 0)
+                continue;
+
+            memset(&ifr, 0, sizeof(ifr));
+            memset(&drvinfo, 0, sizeof(drvinfo));
+            drvinfo.cmd = ETHTOOL_GDRVINFO;
+            ifr.ifr_data = (char *)&drvinfo;
+            strcpy(ifr.ifr_name, device->d_name);
+
+            if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
+            {
+                close(fd);
+
+                if (strcmp(drvinfo.driver, "sfc") == 0)
+                {
+                    closedir(device_dir);
+                    return VersionInfo(drvinfo.version); 
+                }
+            }
+            else
+                close(fd);
+        }
+
+        closedir(device_dir);
+
         return VersionInfo("");
     }
 
