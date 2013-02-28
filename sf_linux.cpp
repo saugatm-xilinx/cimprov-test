@@ -1,18 +1,17 @@
-/**
- * TODO and questions list:
- *
- * - SKU/FRU - there is no such attribute in SF VPD?
- * - Autoneg getting returns operstate - should it return if autoneg 
- *   is supported instead?
- * - Error handling - which values should be returned and what about logging?
- * - More accurate VPD tags parsing
- * - Indications
- */
+///
+/// TODO and questions list:
+///
+/// - SKU/FRU - there is no such attribute in SF VPD?
+/// - Autoneg getting returns operstate - should it return if autoneg
+///  is supported instead?
+/// - Indications
+///
 
 #include "sf_platform.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
+#include <cimple/log.h>
 #include <cimple.h>
 
 #include <stdio.h>
@@ -29,6 +28,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <errno.h>
 
 #include <linux/if.h>
 #include <linux/if_arp.h>
@@ -40,7 +40,7 @@
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"
 #define SYS_SF_DRV_PATH                 SYS_SF_MOD_PATH "/drivers/pci:sfc"
 #define CLASS_NET_VALUE                 "0x020000"
-#define VENDOR_SF_VALUE                 "0x1924" 
+#define VENDOR_SF_VALUE                 "0x1924"
 #define SYS_PATH_MAX_LEN                1024
 #define BUF_MAX_LEN                     256
 
@@ -52,18 +52,36 @@
 #define VPD_TAG_W                       0x91
 #define VPD_TAG_END                     0x78
 
-namespace solarflare 
+#ifdef LINUX_LOG_ENABLE
+#    define LINUX_LOG_ERR(ARGS)         CIMPLE_ERR(ARGS)
+#    define LINUX_LOG_WARN(ARGS)        CIMPLE_WARN(ARGS)
+#    define LINUX_LOG_DBG(ARGS)         CIMPLE_DBG(ARGS)
+#else
+#    define LINUX_LOG_ERR(ARGS)         do {} while(0)
+#    define LINUX_LOG_WARN(ARGS)        do {} while(0)
+#    define LINUX_LOG_DBG(ARGS)         do {} while(0)
+#endif
+
+namespace solarflare
 {
-    /**
-     * Get device attribute from sysfs file.
-     *
-     * @param dev_path          Path in sysfs
-     * @param attr_name         Attribute name
-     * @param buf               Location for value
-     * @param maxlen            Buffer size
-     *
-     * @return size of value on success, -1 on error
-     */
+#ifdef LINUX_LOG_ENABLE
+    using cimple::Log_Call_Frame;
+    using cimple::_log_enabled_state;
+    using cimple::LL_DBG;
+    using cimple::LL_WARN;
+    using cimple::LL_ERR;
+#endif
+
+    ///
+    /// Get device attribute from sysfs file.
+    ///
+    /// @param dev_path         Path to device node in sysfs tree
+    /// @param attr_name        Attribute name
+    /// @param buf              Location for value
+    /// @param maxlen           Buffer size
+    ///
+    /// @return size of value on success, -1 on error
+    ///
     int linuxDeviceGetAttr(const char *dev_path, const char *attr_name,
                            char *buf, int maxlen)
     {
@@ -82,14 +100,19 @@ namespace solarflare
         fd = open(path, O_RDONLY);
         if (fd < 0)
         {
-            printf("Failed to read file %s\n", path);
+            LINUX_LOG_ERR(("Failed to open file %s: %s",
+                            path, strerror(errno)));
             return -1;
         }
         size = read(fd, buf, maxlen);
         close(fd);
-        if (size <= 0)
+        if (size < 0)
+        {
+            LINUX_LOG_ERR(("Failed to read file %s: %s",
+                            path, strerror(errno)));
             return -1;
-        if (size == maxlen)
+        }
+        if (size == 0 || size == maxlen)
             return -1;
         if (buf[size - 1] == '\n')
             buf[size - 1] = '\0';
@@ -98,13 +121,13 @@ namespace solarflare
         return size;
     }
 
-    /**
-     * Check class and vendor attributes for given sysfs path.
-     *
-     * @param path              Path in sysfs
-     *
-     * @return true on success, false on error
-     */
+    ///
+    /// Check that given device is Solarflare network device.
+    ///
+    /// @param path     Path to device node in sysfs tree
+    ///
+    /// @return true on success, false on error
+    ///
     bool linuxDeviceCheckPath(const char *path)
     {
         char value[BUF_MAX_LEN];
@@ -124,55 +147,69 @@ namespace solarflare
         return true;
     }
 
-    /**
-     * Perform ethool command.
-     *
-     * @param ifname            Interface name
-     * @param cmd               Ethtool command
-     * @param edata             Location for get, data for set method
-     *
-     * @return zero on success, -1 on error
-     */
+    ///
+    /// Perform ethool command.
+    ///
+    /// @param ifname            Interface name
+    /// @param cmd               Ethtool command
+    /// @param edata             Location for get, data for set method
+    ///
+    /// @return zero on success, -1 on error
+    ///
     int linuxEthtoolCmd(const char *ifname, unsigned cmd, void *edata)
     {
         int sock;
         struct ifreq ifr;
-        
+
         memset(&ifr, 0, sizeof(ifr));
         sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
         if (sock < 0)
+        {
+            LINUX_LOG_ERR(("Failed to create PF_INET socket: %s",
+                             strerror(errno)));
             return -1;
+        }
 
         strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
         ifr.ifr_data = edata;
         ((struct ethtool_value *)edata)->cmd = cmd;
         if (ioctl(sock, SIOCETHTOOL, &ifr) < 0)
+        {
+            LINUX_LOG_ERR(("Failed to perform SIOCETHTOOL ioctl with "
+                            "cmd value <%u>: %s", cmd, strerror(errno)));
+            close(sock);
             return -1;
+        }
 
+        close(sock);
         return 0;
     }
 
-    /**
-     * Perform ioctl command on interface.
-     *
-     * @param ifname            Interface name
-     * @param cmd               Ethtool command
-     * @param ifr               Location for IO data             
-     *
-     * @return zero on success, -1 on error
-     */
+    ///
+    /// Perform ioctl command on interface.
+    ///
+    /// @param ifname            Interface name
+    /// @param cmd               Ethtool command
+    /// @param ifr               Location for IO data
+    ///
+    /// @return zero on success, -1 on error
+    ///
     int linuxIOctlCmd(const char *ifname, unsigned cmd, struct ifreq *ifr)
     {
         int sock;
-        
+
         sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
         if (sock < 0)
             return -1;
 
         strncpy(ifr->ifr_name, ifname, sizeof(ifr->ifr_name));
         if (ioctl(sock, cmd, ifr) < 0)
+        {
+            close(sock);
             return -1;
+        }
 
+        close(sock);
         return 0;
     }
 
@@ -180,25 +217,19 @@ namespace solarflare
         const NIC *owner;
         Interface *boundIface;
     public:
-        LinuxPort(const NIC *up, unsigned i) : Port(i), owner(up) {} 
-       
+        LinuxPort(const NIC *up, unsigned i) : Port(i), owner(up) {}
+
         virtual bool linkStatus() const;
         virtual Speed linkSpeed() const;
         virtual void linkSpeed(Speed sp);
-            
-        /// @return full-duplex state
+
         virtual bool fullDuplex() const;
-        /// enable or disable full-duplex mode depending on @p fd
         virtual void fullDuplex(bool fd);
-        /// @return true iff autonegotiation is available
         virtual bool autoneg() const;
-        /// enable/disable autonegotiation according to @p an
+
         virtual void autoneg(bool an);
-        
-        /// causes a renegotiation like 'ethtool -r'
         virtual void renegotiate();
 
-        /// @return Manufacturer-supplied MAC address
         virtual MACAddress permanentMAC() const;
 
         virtual const NIC *nic() const { return owner; }
@@ -218,8 +249,8 @@ namespace solarflare
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GLINK, &edata) < 0)
-            return true;
+                            ETHTOOL_GLINK, &edata) < 0)
+            return false;
 
         return edata.data == 1 ? true : false;
     }
@@ -230,7 +261,7 @@ namespace solarflare
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GSET, &edata) < 0)
+                            ETHTOOL_GSET, &edata) < 0)
             return Speed(Port::SpeedUnknown);
 
         switch (edata.speed)
@@ -249,7 +280,7 @@ namespace solarflare
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GSET, &edata) < 0)
+                            ETHTOOL_GSET, &edata) < 0)
             return;
 
         switch (sp)
@@ -262,17 +293,17 @@ namespace solarflare
         }
 
         linuxEthtoolCmd(boundIface->ifName().c_str(),
-                         ETHTOOL_SSET, &edata);
+                        ETHTOOL_SSET, &edata);
     }
-       
+
     bool LinuxPort::fullDuplex() const
-    { 
+    {
         struct ethtool_cmd edata;
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GSET, &edata) < 0)
-            return true;
+                            ETHTOOL_GSET, &edata) < 0)
+            return false;
 
         if (edata.duplex == DUPLEX_HALF)
             return false;
@@ -281,12 +312,12 @@ namespace solarflare
     }
 
     void LinuxPort::fullDuplex(bool fd)
-    { 
+    {
         struct ethtool_cmd edata;
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GSET, &edata) < 0)
+                            ETHTOOL_GSET, &edata) < 0)
             return;
 
         if (fd)
@@ -295,7 +326,7 @@ namespace solarflare
             edata.duplex = DUPLEX_HALF;
 
         linuxEthtoolCmd(boundIface->ifName().c_str(),
-                         ETHTOOL_SSET, &edata);
+                        ETHTOOL_SSET, &edata);
     }
 
     bool LinuxPort::autoneg() const
@@ -304,13 +335,13 @@ namespace solarflare
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GSET, &edata) < 0)
-            return true;
+                            ETHTOOL_GSET, &edata) < 0)
+            return false;
 
         if (edata.autoneg == AUTONEG_DISABLE)
             return false;
 
-        return true;          
+        return true;
     }
 
     void LinuxPort::autoneg(bool an)
@@ -319,7 +350,7 @@ namespace solarflare
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GSET, &edata) < 0)
+                            ETHTOOL_GSET, &edata) < 0)
             return;
 
         if (an)
@@ -328,7 +359,7 @@ namespace solarflare
             edata.autoneg = AUTONEG_DISABLE;
 
         linuxEthtoolCmd(boundIface->ifName().c_str(),
-                         ETHTOOL_SSET, &edata);
+                        ETHTOOL_SSET, &edata);
     }
 
     void LinuxPort::renegotiate()
@@ -343,18 +374,18 @@ namespace solarflare
     MACAddress LinuxPort::permanentMAC() const
     {
         struct ethtool_perm_addr    *edata;
-        
+
         edata = (ethtool_perm_addr *)calloc(1,
                     sizeof(struct ethtool_perm_addr) + ETH_ALEN);
         if (!edata)
-            return MACAddress(0, 0, 0, 0, 0, 0);
-        
+            return MACAddress();
+
         edata->size = ETH_ALEN;
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GPERMADDR, edata) < 0)
         {
             free(edata);
-            return MACAddress(0, 0, 0, 0, 0, 0);
+            return MACAddress();
         }
 
         MACAddress mac = MACAddress(edata->data[0], edata->data[1],
@@ -369,26 +400,19 @@ namespace solarflare
         Port *boundPort;
         String sysfsPath;
     public:
-        LinuxInterface(const NIC *up, unsigned i, const char *path) : 
-            Interface(i), 
-            owner(up), 
+        LinuxInterface(const NIC *up, unsigned i, const char *path) :
+            Interface(i),
+            owner(up),
             boundPort(NULL),
             sysfsPath(path) { };
 
         virtual bool ifStatus() const;
         virtual void enable(bool st);
-
-        /// @return current MTU
         virtual uint64 mtu() const;
-        /// change MTU to @p u
         virtual void mtu(uint64 u);
-        /// @return system interface name (e.g. ethX for Linux)
         virtual String ifName() const;
-        /// @return MAC address actually in use
         virtual MACAddress currentMAC() const;
-        /// Change the current MAC address to @p mac
         virtual void currentMAC(const MACAddress& mac);
-
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
         {
@@ -399,14 +423,14 @@ namespace solarflare
         virtual const Port *port() const { return boundPort; }
 
         void bindToPort(Port *p) { boundPort = p; }
-            
+
         virtual void initialize() {};
     };
 
     bool LinuxInterface::ifStatus() const
     {
         struct ifreq    ifr;
-        
+
         memset(&ifr, 0, sizeof(ifr));
         if (linuxIOctlCmd(ifName().c_str(), SIOCGIFFLAGS, &ifr))
             return false;
@@ -424,7 +448,7 @@ namespace solarflare
         memset(&ifr, 0, sizeof(ifr));
         if (linuxIOctlCmd(ifName().c_str(), SIOCGIFFLAGS, &ifr))
             return;
-       
+
         if (st)
             ifr.ifr_flags |= IFF_UP;
         else
@@ -434,7 +458,7 @@ namespace solarflare
     }
 
     uint64 LinuxInterface::mtu() const
-    { 
+    {
         struct ifreq    ifr;
 
         memset(&ifr, 0, sizeof(ifr));
@@ -465,11 +489,11 @@ namespace solarflare
     MACAddress LinuxInterface::currentMAC() const
     {
         struct ifreq    ifr;
-        
+
         memset(&ifr, 0, sizeof(ifr));
         ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
         if (linuxIOctlCmd(ifName().c_str(), SIOCGIFHWADDR, &ifr) < 0)
-            return MACAddress(0, 0, 0, 0, 0, 0);
+            return MACAddress();
 
         return MACAddress(ifr.ifr_hwaddr.sa_data[0],
                           ifr.ifr_hwaddr.sa_data[1],
@@ -483,7 +507,7 @@ namespace solarflare
     {
         int             i;
         struct ifreq    ifr;
-        
+
         memset(&ifr, 0, sizeof(ifr));
         ifr.ifr_hwaddr.sa_family = ARPHRD_ETHER;
         for (i = 0; i < ETH_ALEN; i++)
@@ -491,7 +515,7 @@ namespace solarflare
 
         linuxIOctlCmd(ifName().c_str(), SIOCSIFHWADDR, &ifr);
     }
-    
+
     class LinuxNICFirmware : public NICFirmware {
         const NIC *owner;
         const Interface *boundIface;
@@ -512,7 +536,7 @@ namespace solarflare
         struct ethtool_drvinfo edata;
 
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GDRVINFO, &edata) < 0)
+                            ETHTOOL_GDRVINFO, &edata) < 0)
             return VersionInfo("");
 
         return VersionInfo(edata.fw_version);
@@ -547,8 +571,11 @@ namespace solarflare
 
         mtd_list = fopen("/proc/mtd", "r");
         if (!mtd_list)
+        {
+            LINUX_LOG_ERR(("Failed to open /proc/mtd"));
             return VersionInfo("");
-        
+        }
+
         fgets(line, sizeof(line), mtd_list);
         while (fgets(line, sizeof(line), mtd_list))
         {
@@ -557,7 +584,7 @@ namespace solarflare
             p = strchr(line, ':');
             if (!p)
                 break;
-                
+
             *p++ = 0;
             if (!strstr(p, ifname) ||
                 !strstr(p, "sfc_exp_rom"))
@@ -574,9 +601,22 @@ namespace solarflare
         sprintf(dev_path, "/dev/%sro", dev_name);
 
         fd = open(dev_path, O_RDONLY);
+        if (fd < 0)
+        {
+            LINUX_LOG_ERR(("Failed to open file %s: %s",
+                            dev_path, strerror(errno)));
+            return VersionInfo("");
+        }
 
         read_bytes = read(fd, buf, BOOT_ROM_VERSION_MAX_OFFSET);
         close(fd);
+
+        if (read_bytes < 0)
+        {
+            LINUX_LOG_ERR(("Failed to read file %s: %s",
+                            dev_path, strerror(errno)));
+            return VersionInfo("");
+        }
 
         if (read_bytes != BOOT_ROM_VERSION_MAX_OFFSET)
             return VersionInfo("");
@@ -584,7 +624,7 @@ namespace solarflare
         offset = 0;
         while (offset < read_bytes - (int)sizeof(prefix))
         {
-            if (memcmp(&buf[offset], prefix, sizeof (prefix) - 1) == 0)
+            if (memcmp(&buf[offset], prefix, sizeof(prefix) - 1) == 0)
             {
                 offset += sizeof (prefix) - 1;
                 break;
@@ -628,13 +668,13 @@ namespace solarflare
     const char LinuxDiagnostic::sampleDescr[] = "Linux Diagnostic";
     const String LinuxDiagnostic::diagGenName = "Diagnostic";
 
-    Diagnostic::Result LinuxDiagnostic::syncTest() 
+    Diagnostic::Result LinuxDiagnostic::syncTest()
     {
         struct ethtool_drvinfo  drv_data;
         struct ethtool_test    *test_data;
 
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                             ETHTOOL_GDRVINFO, &drv_data) < 0)
+                            ETHTOOL_GDRVINFO, &drv_data) < 0)
             return NotKnown;
 
         test_data = (ethtool_test*)calloc(1, sizeof(*test_data) +
@@ -699,7 +739,7 @@ namespace solarflare
 
         LinuxNIC(unsigned idx, char *NICPath, int num,
                  const char *ifPath0, const char *ifPath1) :
-            NIC(idx), portNum(num), 
+            NIC(idx), portNum(num),
             port0(this, 0), port1(this, 1),
             intf0(this, 0, ifPath0), intf1(this, 1, ifPath1),
             nicFw(this, &intf0), rom(this, &intf0),
@@ -730,7 +770,7 @@ namespace solarflare
                 return en.process(port1);
             return true;
         }
-        
+
         virtual bool forAllPorts(ConstElementEnumerator& en) const
         {
             if (!en.process(port0))
@@ -748,7 +788,7 @@ namespace solarflare
                 return en.process(intf1);
             return true;
         }
-        
+
         virtual bool forAllInterfaces(ConstElementEnumerator& en) const
         {
             if (!en.process(intf0))
@@ -761,7 +801,7 @@ namespace solarflare
         {
             return en.process(diag);
         }
-        
+
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             return en.process(diag);
@@ -770,14 +810,14 @@ namespace solarflare
         virtual PCIAddress pciAddress() const;
     };
 
-    VitalProductData LinuxNIC::vitalProductData() const 
+    VitalProductData LinuxNIC::vitalProductData() const
     {
         char    path[SYS_PATH_MAX_LEN];
         int     fd;
         ssize_t size;
         String  sno;
         String  pno;
-       
+
         unsigned        deviceId = pciAddress().device();
         const char     *modelId;
 
@@ -797,7 +837,7 @@ namespace solarflare
             bool is_pn          = false;
             bool is_sn          = false;
 
-            /* Read header */
+            // Read header
             size = read(fd, buf, 3);
             if (size <= 0)
             {
@@ -863,13 +903,13 @@ namespace solarflare
             case 0x0813: modelId = "SFC9021"; break;
             case 0x1803: modelId = "SFC9020 Virtual Function"; break;
             case 0x1813: modelId = "SFC9021 Virtual Function"; break;
-            case 0x6703: modelId = "SFC4000 rev A iSCSI/Onload"; break; 
+            case 0x6703: modelId = "SFC4000 rev A iSCSI/Onload"; break;
             case 0xc101: modelId = "EF1-21022T"; break;
             default: modelId = "";
         }
 
         return VitalProductData(sno, "", sno, pno,
-                                modelId, pno /* ??? */);
+                                modelId, pno);
     }
 
     NIC::Connector LinuxNIC::connector() const
@@ -877,14 +917,14 @@ namespace solarflare
         VitalProductData        vpd = vitalProductData();
         const char             *part = vpd.part().c_str();
         char                    last = 'T';
-        
+
         if (*part != '\0')
             last = part[strlen(part) - 1];
 
         switch (last)
         {
             case 'F': return NIC::SFPPlus;
-            case 'K': /* fallthrough */
+            case 'K': // fallthrough
             case 'H': return NIC::Mezzanine;
             case 'T': return NIC::RJ45;
 
@@ -906,7 +946,7 @@ namespace solarflare
         domain = strtoul(addr, &ptr, 16);
         ptr++;
         bus = strtoul(ptr, NULL, 16);
-        
+
         if (linuxDeviceGetAttr(sysfsPath.c_str(), "device",
                             buf, sizeof(buf)) < 0)
             deviceId = 0;
@@ -921,7 +961,7 @@ namespace solarflare
         VersionInfo vers;
         static const String drvName;
     public:
-        LinuxDriver(const Package *pkg, const String& d, const String& sn, 
+        LinuxDriver(const Package *pkg, const String& d, const String& sn,
                      const VersionInfo& v) :
             Driver(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const;
@@ -999,7 +1039,7 @@ namespace solarflare
             free(iface_name);
             return VersionInfo(edata.version);
         }
-       
+
         return VersionInfo("");
     }
 
@@ -1007,7 +1047,7 @@ namespace solarflare
         const Package *owner;
         VersionInfo vers;
     public:
-        LinuxLibrary(const Package *pkg, const String& d, const String& sn, 
+        LinuxLibrary(const Package *pkg, const String& d, const String& sn,
                      const VersionInfo& v) :
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
@@ -1035,7 +1075,7 @@ namespace solarflare
         {
             return en.process(kernelDriver);
         }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const
         {
             return en.process(kernelDriver);
         }
@@ -1059,7 +1099,7 @@ namespace solarflare
         {
             return en.process(providerLibrary);
         }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const
         {
             return en.process(providerLibrary);
         }
@@ -1068,7 +1108,7 @@ namespace solarflare
 
     /// @brief stub-only System implementation
     /// @note all structures are initialised statically,
-    /// so initialize() does nothing 
+    /// so initialize() does nothing
     class LinuxSystem : public System {
         LinuxKernelPackage kernelPackage;
         LinuxManagementPackage mgmtPackage;
@@ -1124,7 +1164,7 @@ namespace solarflare
             sprintf(buf, "%s/%s", SYS_PCI_DEVICE_PATH, device->d_name);
             if (!linuxDeviceCheckPath(buf))
                 continue;
-            
+
             // assume that dual-port NIC has .0 and .1 numbers in sysfs
 
             if (buf[strlen(buf) - 1] != '0')
@@ -1164,7 +1204,7 @@ namespace solarflare
             LinuxNIC nic = LinuxNIC(NICNum, port_path[0], pnum,
                                     iface_path[0],
                                     iface_path[1] ? iface_path[1] : "");
-            nic.initialize(); 
+            nic.initialize();
             res = en.process(nic);
             ret = ret && res;
             NICNum++;
@@ -1182,16 +1222,16 @@ namespace solarflare
 
     bool LinuxSystem::forAllNICs(ElementEnumerator& en)
     {
-        return forAllNICs((ConstElementEnumerator&) en); 
+        return forAllNICs((ConstElementEnumerator&) en);
     }
-    
+
     bool LinuxSystem::forAllPackages(ConstElementEnumerator& en) const
     {
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
     }
-    
+
     bool LinuxSystem::forAllPackages(ElementEnumerator& en)
     {
         if (!en.process(kernelPackage))

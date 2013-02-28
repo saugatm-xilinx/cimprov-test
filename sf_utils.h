@@ -177,7 +177,7 @@ namespace solarflare
         /// does not allow compound initializers in many contexts
         MACAddress(unsigned a0, unsigned a1, unsigned a2,
                    unsigned a3, unsigned a4, unsigned a5);
-
+        MACAddress();
         String string() const;
     };
 
@@ -190,6 +190,10 @@ namespace solarflare
         address[3] = a3;
         address[4] = a4;
         address[5] = a5;
+    }
+    inline MACAddress::MACAddress()
+    {
+        memset(address, 0, sizeof(address));
     }
 } // namespace
 
