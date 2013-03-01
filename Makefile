@@ -210,6 +210,8 @@ endif
 ifeq ($(CIM_SERVER),esxi)
 
 ALL_HEADERS = $(wildcard *.h) $(wildcard cimple/*.h) $(wildcard cimple/cmpi/*.h)
+ALL_HEADERS += $(wildcard ci/*.h) $(wildcard ci/tools/*.h) $(wildcard ci/tools/platform/*.h)
+ALL_HEADERS += $(wildcard ci/compat/*.h) $(wildcard ci/mgmt/*.h)
 ESXI_SUBDIR = esxi_solarflare
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(ESXI_SUBDIR)/$(ESXI_PROJECT_NAME)
