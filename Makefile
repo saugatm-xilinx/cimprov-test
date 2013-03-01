@@ -175,6 +175,12 @@ pegasus-build: $(PEGASUS_UPSTREAM_TARBALL) $(CIM_SCHEMA_ZIP)
 	$(PEGASUS_HOME)/bin/cimmofl -aE -R$(PEGASUS_HOME) -Nrepository -n$(IMP_NAMESPACE) \
 					$(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/Core_Qualifiers.mof
 
+.PHONY : patch-pegasus-schema
+patch-pegasus-schema: $(CIM_SCHEMA_ZIP)
+	mkdir -p $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/DMTF
+	unzip -o $(CIM_SCHEMA_ZIP) -d $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/DMTF
+	cp schemas/$(CIM_SCHEMA_DIR)/*.mof $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)
+
 endif
 
 ifneq ($(CIM_SERVER),pegasus)
