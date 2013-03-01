@@ -175,6 +175,10 @@ pegasus-build: $(PEGASUS_UPSTREAM_TARBALL) $(CIM_SCHEMA_ZIP)
 	$(PEGASUS_HOME)/bin/cimmofl -aE -R$(PEGASUS_HOME) -Nrepository -n$(IMP_NAMESPACE) \
 					$(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/Core_Qualifiers.mof
 
+.PHONY : pegasus-start
+pegasus-start:
+	$(PEGASUS_HOME)/bin/cimserver $(PEGASUS_RUN_OPTS)
+
 .PHONY : patch-pegasus-schema
 patch-pegasus-schema: $(CIM_SCHEMA_ZIP)
 	mkdir -p $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/DMTF
