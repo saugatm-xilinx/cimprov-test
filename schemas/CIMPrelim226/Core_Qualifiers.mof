@@ -1,0 +1,3 @@
+#pragma include ("DMTF/qualifiers.mof")
+#pragma include ("DMTF/qualifiers_optional.mof")
+ 

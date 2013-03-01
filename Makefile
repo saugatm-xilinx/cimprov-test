@@ -5,7 +5,7 @@ CURL=curl --negotiate -u :
 PRESET ?= default
 include presets/$(PRESET).mk
 
-CIM_SCHEMA_DIR=CIM226Exp
+CIM_SCHEMA_DIR=CIMPrelim226
 
 ifeq ($(CIM_SERVER),pegasus)
 CIM_INTERFACE=pegasus
@@ -161,13 +161,19 @@ pegasus-build : override PEGASUS_ROOT=$(CURDIR)/pegasus
 pegasus-build : override PEGASUS_HOME=$(PEGASUS_ROOT)/setup
 pegasus-build : override PEGASUS_PLATFORM=$(CIMPLE_PLATFORM)
 pegasus-build : export PEGASUS_DEBUG=true
+pegasus-build : export PEGASUS_CIM_SCHEMA=$(CIM_SCHEMA_DIR)
 
 pegasus-build: $(PEGASUS_UPSTREAM_TARBALL) $(CIM_SCHEMA_ZIP)
 	tar xzf $<
 	test -d $(PEGASUS_ROOT)
 	mkdir -p $(PEGASUS_HOME)
+	mkdir -p $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/DMTF
+	unzip -o $(CIM_SCHEMA_ZIP) -d $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/DMTF
+	cp schemas/$(CIM_SCHEMA_DIR)/*.mof $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)
 	make -C $(PEGASUS_ROOT) build
-	unzip $(CIM_SCHEMA_ZIP) -d $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)
+	make -C $(PEGASUS_ROOT) repository
+	$(PEGASUS_HOME)/bin/cimmofl -aE -R$(PEGASUS_HOME) -Nrepository -n$(IMP_NAMESPACE) \
+					$(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/Core_Qualifiers.mof
 
 endif
 
