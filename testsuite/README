@@ -1,0 +1,52 @@
+Python testsuite howto:
+
+1. Getting and installing PyWBEM library
+
+wget http://downloads.sourceforge.net/pywbem/pywbem-0.7.0.tar.gz
+tar xzf pywbem-0.7.0.tar.gz
+
+cd pywbem-0.7.0
+python setup.py build
+
+python setup.py install
+or
+python setup.py install --install-lib=~/work/wbem/build/pywbem_frar
+
+2. Running tests
+
+Set CIMPROV_CLASSES to the file with provider classes list:
+export CIMPROV_CLASSES=/home/marsik/work/wbem/src/cimprov_el/classes 
+
+If you have installed pywbem locally, set PYTHONPATH to installation location:
+export PYTHONPATH=/home/marsik/work/wbem/build/pywbem_frar
+
+Several configuration parameters located in tester_vars_<cfg>.py.
+By default <cfg>="defauĺt". You can change it via TESTER_CFG variable:
+export TESTER_CFG=ibm
+
+Run tester.py. By default it runs whole test package.
+You can specify test names and parameters:
+marsik@frar:~$ /home/marsik/work/wbem/src/cimprov_el/testsuite/tester.py namespace
+Starting package misc
+Starting test namespace                                     PASSED
+Done package misc
+
+marsik@frar:~$ /home/marsik/work/wbem/src/cimprov_el/testsuite/tester.py namespace \
+association:names_only=True,role=False
+Starting package misc
+Starting test namespace                                     PASSED
+Done package misc
+Starting package intrinsics
+Starting test association                                   FAILED
+Starting test association                                   FAILED
+Done package intrinsics
+
+You can find logs in /tmp/tester.log:
+marsik@frar:~$ grep TEST /tmp/tester.log 
+TEST namespace: Check namespaces existance
+TEST namespace: PASSED
+TEST association: Check associations traversal
+TEST association: FAILED
+TEST association: Check associations traversal
+TEST association: FAILED
+
