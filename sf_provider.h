@@ -7,10 +7,10 @@
 #include "SF_ReferencedProfile.h"
 #include "SF_ElementConformsToProfile.h"
 
-/// This file contains some helpers and utilities 
+/// This file contains some helpers and utilities
 /// for writing CIMPLE providers. None of the code is platform-dependent
 
-namespace solarflare 
+namespace solarflare
 {
     using cimple::Instance;
 
@@ -19,18 +19,21 @@ namespace solarflare
     /// @sa SystemElement::cimDispatch()
     class CIMHelper {
         static cimple::Ref<cimple::CIM_ComputerSystem> cimSystem;
-    public:        
+    public:
         virtual unsigned nObjects(const SystemElement&) const { return 1; }
         /// @return A CIM instance matching @p obj
-        virtual cimple::Instance *instance(const SystemElement&, unsigned idx = 0) const = 0;
+        virtual cimple::Instance *instance(const SystemElement&,
+                                           unsigned idx = 0) const = 0;
         /// @return A CIM reference matching @p obj
-        virtual cimple::Instance *reference(const SystemElement& obj, unsigned idx = 0) const 
+        virtual cimple::Instance *reference(const SystemElement& obj,
+                                            unsigned idx = 0) const
         {
             return instance(obj, idx);
         }
 
         /// @return true iff @p obj corresponds to CIM instance @p inst
-        virtual bool match(const SystemElement& obj, const cimple::Instance& inst, unsigned idx = 0) const
+        virtual bool match(const SystemElement& obj,
+                           const cimple::Instance& inst, unsigned idx = 0) const
         {
             return false;
         }
@@ -56,7 +59,7 @@ namespace solarflare
             return cimple::key_eq(findSystem(), sys);
         }
     };
-    
+
     template <class CIMClass>
     class EnumInstances : public ConstElementEnumerator {
         cimple::Enum_Instances_Handler<CIMClass> *handler;
@@ -70,7 +73,7 @@ namespace solarflare
                 return true;
 
             unsigned n = helper->nObjects(obj);
-            
+
             for (unsigned i = 0; i < n; i++)
             {
                 Instance *cimobj = helper->instance(obj, i);
@@ -132,7 +135,7 @@ namespace solarflare
         SystemElement *found() const { return obj; }
         unsigned foundIndex() const { return idx; }
         virtual bool process(SystemElement& el);
-        static SWElement *findSoftware(const Instance& inst, 
+        static SWElement *findSoftware(const Instance& inst,
                                        SoftwareContainer& scope = System::target)
         {
             Lookup finder(&inst);
@@ -172,7 +175,7 @@ namespace solarflare
             return finder.found() ? Logger::knownLogs[finder.foundIndex()] : NULL;
         }
     };
-    
+
     class ObjectCount : public ConstElementEnumerator
     {
         unsigned cnt;
@@ -221,7 +224,7 @@ namespace solarflare
         static const DMTFProfileInfo *const ethernetPortRef[];
         static const DMTFProfileInfo *const hostLanPortRef[];
     public:
-        DMTFProfileInfo(const char *n, const char *v, 
+        DMTFProfileInfo(const char *n, const char *v,
                         const DMTFProfileInfo * const deps[]) :
             name(n), version(v), referenced(deps) {}
 

@@ -4,7 +4,7 @@
 #include "SF_ConnectorOnNIC.h"
 #include "SF_ElementConformsToProfile.h"
 
-namespace solarflare 
+namespace solarflare
 {
     using cimple::Instance;
     using cimple::Meta_Class;
@@ -32,14 +32,14 @@ namespace solarflare
     class ConnectorConformsToProfile : public CIMHelper {
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
-    
+
 
     const CIMHelper* Port::cimDispatch(const Meta_Class& cls) const
     {
         static const PhysicalConnectorHelper physicalConnector;
         static const ConnectorOnNICHelper connectorOnNIC;
         static const ConnectorConformsToProfile conforming;
-        
+
         if (&cls == &SF_PhysicalConnector::static_meta_class)
             return &physicalConnector;
         if (&cls == &SF_ConnectorOnNIC::static_meta_class)
@@ -61,10 +61,10 @@ namespace solarflare
     Instance *PhysicalConnectorHelper::reference(const SystemElement& p, unsigned) const
     {
         SF_PhysicalConnector *phc = SF_PhysicalConnector::create(true);
-        
+
         phc->CreationClassName.set("SF_PhysicalConnector");
         phc->Tag.set(tag(static_cast<const Port&>(p)));
-   
+
         return phc;
     }
 
@@ -72,15 +72,15 @@ namespace solarflare
     {
         const solarflare::Port& p = static_cast<const solarflare::Port&>(se);
         SF_PhysicalConnector *phc = static_cast<SF_PhysicalConnector *>(reference(p, idx));
-        
+
         phc->InstanceID.set(instanceID(p.name()));
         phc->Name.set(p.name());
         phc->ElementName.set(p.name());
         phc->Description.set(p.description());
-        
+
         phc->ConnectorType.null = false;
         phc->ConnectorLayout.null = false;
-        switch (p.nic()->connector()) 
+        switch (p.nic()->connector())
         {
             case solarflare::NIC::RJ45:
                 phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_RJ45);
@@ -116,13 +116,13 @@ namespace solarflare
     Instance *ConnectorOnNICHelper::instance(const solarflare::SystemElement& se, unsigned) const
     {
         const solarflare::Port& e = static_cast<const solarflare::Port&>(se);
-        
+
         SF_ConnectorOnNIC *link = SF_ConnectorOnNIC::create(true);
-        link->GroupComponent = 
+        link->GroupComponent =
         cast<cimple::CIM_PhysicalPackage *>(e.nic()->cimReference(SF_NICCard::static_meta_class));
         link->PartComponent =
         cast<cimple::CIM_PhysicalConnector *>(e.cimReference(SF_PhysicalConnector::static_meta_class));
-        
+
         return link;
     }
 

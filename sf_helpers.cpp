@@ -6,7 +6,7 @@
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 
-namespace solarflare 
+namespace solarflare
 {
     using cimple::Instance;
     using cimple::Meta_Class;
@@ -30,7 +30,7 @@ namespace solarflare
     const char CIMHelper::ibmseNS[] = "root/ibmse";
     const char CIMHelper::interopNS[] = SF_INTEROP_NS;
     const char CIMHelper::baseNS[] = "root/cimv2";
-    
+
     String CIMHelper::instanceID(const String& name)
     {
         String result = System::target.prefix();
@@ -43,22 +43,22 @@ namespace solarflare
 
     const CIM_ComputerSystem *CIMHelper::findSystem()
     {
-        static const char * const namespaces[] = 
+        static const char * const namespaces[] =
         {ibmseNS, solarflareNS, baseNS, NULL};
-        
+
         if (cimSystem)
             return cast<CIM_ComputerSystem *>(cimSystem.ptr());
-        
+
         Ref<CIM_ComputerSystem> system = CIM_ComputerSystem::create();
         Ref<Instance> sysInstance;
-        
+
         for (const char * const *ns = namespaces; *ns != NULL; ns++)
         {
             cimple::Instance_Enumerator ie;
-            
+
             if (cimple::cimom::enum_instances(*ns, system.ptr(), ie) != 0)
                 continue;
-            
+
             sysInstance = ie();
             if (sysInstance)
             {
@@ -75,7 +75,7 @@ namespace solarflare
     bool CIMHelper::isOurSystem(const String& sysclass, const String& sysname)
     {
         const CIM_ComputerSystem* ourSys = findSystem();
-        
+
         return (ourSys->CreationClassName.value == sysclass &&
                 ourSys->Name.value == sysname);
     }
@@ -85,9 +85,9 @@ namespace solarflare
         const CIMHelper *helper = se.cimDispatch(*sample->meta_class);
         if (helper == NULL)
             return true;
-        
+
         unsigned n = helper->nObjects(se);
-            
+
         for (unsigned i = 0; i < n; i++)
         {
             if (helper->match(se, *sample, i))
@@ -128,7 +128,7 @@ namespace solarflare
             return finder.found();
         return NULL;
     }
-    
+
     Instance *ConcreteJobAbstractHelper::reference(const SystemElement& obj, unsigned) const
     {
         SF_ConcreteJob *job = SF_ConcreteJob::create(true);
@@ -142,7 +142,7 @@ namespace solarflare
     {
         Thread *th = const_cast<SystemElement&>(obj).embeddedThread();
         SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj, idx));
-    
+
         job->OperationalStatus.null = false;
         job->JobState.null = false;
         switch (th->currentState())
@@ -178,7 +178,7 @@ namespace solarflare
         job->DeleteOnCompletion.set(false);
         return job;
     }
-    
+
     bool
     ConcreteJobAbstractHelper::match(const SystemElement& se, const Instance& inst, unsigned) const
     {
@@ -192,7 +192,7 @@ namespace solarflare
         String id = instanceID(se.name());
         id.append(":");
         id.append(threadSuffix());
-        
+
         return id == job->InstanceID.value;
     }
 
@@ -200,7 +200,7 @@ namespace solarflare
     EnabledLogicalElementCapabilitiesHelper::reference(const SystemElement& el, unsigned) const
     {
         SF_EnabledLogicalElementCapabilities* caps = SF_EnabledLogicalElementCapabilities::create(true);
-    
+
         caps->InstanceID.set(instanceID(el.name()));
         caps->InstanceID.value.append(" ");
         caps->InstanceID.value.append(suffix);
@@ -211,9 +211,9 @@ namespace solarflare
     Instance *
     EnabledLogicalElementCapabilitiesHelper::instance(const SystemElement& el, unsigned idx) const
     {
-        SF_EnabledLogicalElementCapabilities* caps = 
+        SF_EnabledLogicalElementCapabilities* caps =
         static_cast<SF_EnabledLogicalElementCapabilities*>(reference(el, idx));
-        
+
         caps->ElementNameEditSupported.set(false);
         caps->RequestedStatesSupported.null = false;
         if (manageable)
@@ -232,7 +232,7 @@ namespace solarflare
     ElementCapabilitiesHelper::instance(const SystemElement& el, unsigned) const
     {
         SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
-        
+
         link->ManagedElement = cast<cimple::CIM_ManagedElement *>(el.cimReference(elementClass));
         link->Capabilities = cast<cimple::CIM_Capabilities *>(el.cimReference(capsClass));
         link->Characteristics.null = false;
@@ -243,24 +243,24 @@ namespace solarflare
     }
 
     const DMTFProfileInfo DMTFProfileInfo::ProfileRegistrationProfile("Profile Registration", "1.0.0", NULL);
-    const DMTFProfileInfo *const DMTFProfileInfo::genericPrpRef[] = 
+    const DMTFProfileInfo *const DMTFProfileInfo::genericPrpRef[] =
     {&ProfileRegistrationProfile, NULL};
     const DMTFProfileInfo DMTFProfileInfo::DiagnosticsProfile("Diagnostics", "2.0.0", genericPrpRef);
     const DMTFProfileInfo DMTFProfileInfo::RecordLogProfile("Record Log", "2.0.0", genericPrpRef);
     const DMTFProfileInfo DMTFProfileInfo::PhysicalAssetProfile("Physical Asset", "1.0.2", genericPrpRef);
-    const DMTFProfileInfo *const DMTFProfileInfo::hostLanPortRef[] = 
+    const DMTFProfileInfo *const DMTFProfileInfo::hostLanPortRef[] =
     {&ProfileRegistrationProfile, &PhysicalAssetProfile, NULL};
     const DMTFProfileInfo DMTFProfileInfo::HostLANNetworkPortProfile("Host LAN Network Port", "1.0.2", hostLanPortRef);
-    const DMTFProfileInfo *const DMTFProfileInfo::ethernetPortRef[] = 
+    const DMTFProfileInfo *const DMTFProfileInfo::ethernetPortRef[] =
     {&ProfileRegistrationProfile, &HostLANNetworkPortProfile, NULL};
     const DMTFProfileInfo DMTFProfileInfo::EthernetPortProfile("Ethernet Port", "1.0.1", ethernetPortRef);
     const DMTFProfileInfo DMTFProfileInfo::SoftwareInventoryProfile("Software Inventory", "1.0.1", genericPrpRef);
-    const DMTFProfileInfo *const DMTFProfileInfo::softwareUpdateRef[] = 
+    const DMTFProfileInfo *const DMTFProfileInfo::softwareUpdateRef[] =
     {&ProfileRegistrationProfile, &SoftwareInventoryProfile, NULL};
     const DMTFProfileInfo DMTFProfileInfo::SoftwareUpdateProfile("Software Update", "1.0.0", softwareUpdateRef);
     const DMTFProfileInfo DMTFProfileInfo::JobControlProfile("Job Control", "1.0.0", genericPrpRef);
 
-    const DMTFProfileInfo * const DMTFProfileInfo::knownDMTFProfiles[] = 
+    const DMTFProfileInfo * const DMTFProfileInfo::knownDMTFProfiles[] =
     {
         &ProfileRegistrationProfile,
         &DiagnosticsProfile,
@@ -274,7 +274,7 @@ namespace solarflare
         NULL
     };
 
-    String DMTFProfileInfo::profileId() const 
+    String DMTFProfileInfo::profileId() const
     {
         Buffer buf;
         buf.appends(System::target.prefix().c_str());
@@ -285,11 +285,11 @@ namespace solarflare
         buf.appends(version);
         return buf.data();
     }
-    
+
     SF_RegisteredProfile *DMTFProfileInfo::reference() const
     {
         SF_RegisteredProfile *newProf = SF_RegisteredProfile::create(true);
-        
+
         newProf->InstanceID.set(profileId());
         return newProf;
     }
@@ -305,5 +305,5 @@ namespace solarflare
 
         return link;
     }
-    
+
 } // namespace
