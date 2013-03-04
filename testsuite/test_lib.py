@@ -45,8 +45,13 @@ def enum_check(cli, class_list):
     for cl in class_list:
         res = "PASSED"
         logger.info('Checking class %s', cl)
-        inst_list = cli.EnumerateInstances(cl)
-        inst_name_list = cli.EnumerateInstanceNames(cl)
+        try:
+            inst_list = cli.EnumerateInstances(cl)
+            inst_name_list = cli.EnumerateInstanceNames(cl)
+        except Exception, e:
+            logger.error("Failed to enumerate class instances:\n{0}".format(e))
+            passed = False
+            continue
         if len(inst_list) != len(inst_name_list):
             logger.error('Number of ei and ein doesn\'t match: %d != %d',
                           len(inst_list), len(inst_name_list))
@@ -87,7 +92,7 @@ def profile_registered(profile_name):
     for inst in inst_list:
         if inst[u'RegisteredName'] == profile_name:
             return True
-    return False 
+    return False
 
 def profile_check(prof_list, spec_list, ns):
     
@@ -135,7 +140,7 @@ def profile_check(prof_list, spec_list, ns):
                 logger.info("Checking property {0}".format(req_prop))
                 try:
                     if inst.properties[req_prop].value == None:
-                        logger.error(("Required property {0} " + 
+                        logger.error(("Required property {0} " +
                                       "has NULL value").format(req_prop))
                 except Exception, e:
                     logger.error("Failed to get property\n{0}".format(e))
@@ -175,7 +180,7 @@ def profile_check(prof_list, spec_list, ns):
             logger.info(total)
             
             if (class_spec[SC_INST_NUM] != inst_count):
-                logger.error(("{0}: unexpected instance count: " + 
+                logger.error(("{0}: unexpected instance count: " +
                               "{1} != {2}").format(class_spec[SC_NAME],
                                 inst_count, class_spec[SC_INST_NUM]))
                 global_passed = False
@@ -197,7 +202,7 @@ def state_change(conn, inst_path, state):
     except Exception, e:                         
         logger.error("Failed to change state of {0} to {1}:\n{2}".format(
                                                 inst_path, state, e))
-        (rval, out_params) = (RC_FAIL, {}) 
+        (rval, out_params) = (RC_FAIL, {})
     
     #TODO: do we need out_params ?
     return rval
@@ -305,6 +310,7 @@ def assoc_traversal(cli, class_list, is_assoc,
         for inst in inst_list:
             ref = [{}, {}]
             num = 0
+            cross_ns = False
             logger.info("Checking {0} instance {1}".format(cl, inst))
             for key, prop in inst.properties.items():
                 if prop.type == 'reference':
@@ -314,21 +320,29 @@ def assoc_traversal(cli, class_list, is_assoc,
                     #TODO: ignore >2-way associations
             for r in ref:
                 logger.info("Get reference instance:\n{0}".format(r))
+                if r['path'].namespace != TESTER_NS:
+                    #TODO: proper handling
+                    logger.warn("Cross-namespace reference - ignore");
+                    cross_ns = True
+                    break
                 try:
                     r['inst'] = cli.GetInstance(r['path'])
                 except Exception, e:
                     logger.error(
                     "Failed to get reference instance:\n{0}".format(e))
+                    logger.info("Namespace is {0}\n".format(r['path'].namespace))
                     passed = False
                     global_passed = False
             
+            if cross_ns:
+                continue
             if not passed:
                 break
-
+            
             func = is_assoc and  associators_check or references_check
-            passed = func(cli, 0, ref, cl, names_only, 
+            passed = func(cli, 0, ref, cl, names_only,
                                      role, res_role)
-            passed = passed and func(cli, 1, ref, cl, names_only, 
+            passed = passed and func(cli, 1, ref, cl, names_only,
                                      role, res_role)
         logger.info("{0}: {1}".format(cl, passed and "PASSED" or "FAILED"))
     return global_passed
