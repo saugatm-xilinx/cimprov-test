@@ -77,6 +77,20 @@ include cimple/tools/libgencommon/sources.mk
 include cimple/tools/genclass/sources.mk
 include cimple/tools/genmod/sources.mk
 include cimple/tools/genprov/sources.mk
+
+.PHONY : bootstrap
+
+CLASSLIST = classes
+
+bootstrap : $(CLASSLIST) $(genclass_TARGET) $(genmod_TARGET) $(genprov_TARGET)
+	$(genclass_TARGET) -r -e -F $<
+	$(genprov_TARGET)  -F$<
+	$(genmod_TARGET) $(PROVIDER_LIBRARY) -F$<
+
+.PHONY : clean-tools
+
+clean-tools : clean-file2c clean-libmof clean-libgencommon clean-genclass clean-genmod clean-genprov
+
 endif
 
 include sources.mk
