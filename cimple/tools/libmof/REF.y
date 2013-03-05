@@ -150,7 +150,7 @@ value
 	REF_trace("literal:1");
 	$$ = new MOF_Literal();
 	MOF_ASSERT($$ != NULL);
-	$$->value_type = TOK_INT_VALUE;
+	$$->value_type = REF_TOK_INT_VALUE;
 	$$->int_value = $1;
     }
     | REF_TOK_REAL_VALUE
@@ -158,7 +158,7 @@ value
 	REF_trace("literal:2");
 	$$ = new MOF_Literal();
 	MOF_ASSERT($$ != NULL);
-	$$->value_type = TOK_REAL_VALUE;
+	$$->value_type = REF_TOK_REAL_VALUE;
 	$$->real_value = $1;
     }
     | REF_TOK_CHAR_VALUE
@@ -166,7 +166,7 @@ value
 	REF_trace("literal:3");
 	$$ = new MOF_Literal();
 	MOF_ASSERT($$ != NULL);
-	$$->value_type = TOK_CHAR_VALUE;
+	$$->value_type = REF_TOK_CHAR_VALUE;
 	$$->char_value = $1;
     }
     | REF_TOK_BOOL_VALUE
@@ -174,7 +174,7 @@ value
 	REF_trace("literal:4");
 	$$ = new MOF_Literal();
 	MOF_ASSERT($$ != NULL);
-	$$->value_type = TOK_BOOL_VALUE;
+	$$->value_type = REF_TOK_BOOL_VALUE;
 	$$->bool_value = $1 ? true : false;
     }
     | multi_string
@@ -182,7 +182,7 @@ value
 	REF_trace("literal:6");
 	$$ = new MOF_Literal();
 	MOF_ASSERT($$ != NULL);
-	$$->value_type = TOK_STRING_VALUE;
+	$$->value_type = REF_TOK_STRING_VALUE;
 	$$->string_value = $1;
     }
     | REF_TOK_NULL_VALUE
@@ -190,7 +190,7 @@ value
 	REF_trace("literal:5");
 	$$ = new MOF_Literal();
 	MOF_ASSERT($$ != NULL);
-	$$->value_type = TOK_NULL_VALUE;
+	$$->value_type = REF_TOK_NULL_VALUE;
     }
     ;                              
 

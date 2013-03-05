@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cctype>
 #include <getopt.h>
-#include <util/util.h>
+#include <util.h>
 
 const char USAGE[] = "\
 Usage: %s path [-n array-name]\n\

@@ -1,4 +1,4 @@
-cimple_SOURCES = \
+libcimple_SOURCES = \
     Atomic.cpp \
     Cond_Queue.cpp \
     Exception.cpp \
@@ -50,10 +50,16 @@ cimple_SOURCES = \
     TSD.cpp \
     FileSystem.cpp
 
-lib$(PROVIDER_LIBRARY)_SOURCES += $(addprefix cimple/lib/,$(cimple_SOURCES))
+libcimple_DIR = cimple/lib
 
-cimple/lib/%.o : CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
+$(libcimple_DIR)/%.o : CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
 
 ifeq ($(CIM_SERVER),esxi)
 CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
 endif
+
+libcimple_TARGET = libcimple.a
+
+$(eval $(call component,libcimple,STATIC_LIBRARIES))
+
+CIMPLE_LIBS += $(libcimple_TARGET)

@@ -1,31 +1,39 @@
-/*NOCHKSRC*/
-/* A Bison parser, made by GNU Bison 2.0.  */
 
-/* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+/* A Bison parser, made by GNU Bison 2.4.1.  */
 
-   This program is free software; you can redistribute it and/or modify
+/* Skeleton implementation for Bison's Yacc-like parsers in C
+   
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* As a special exception, when this file is copied by Bison into a
-   Bison output file, you may use that output file without restriction.
-   This special exception was added by the Free Software Foundation
-   in version 1.24 of Bison.  */
+/* As a special exception, you may create a larger work that contains
+   part or all of the Bison parser skeleton and distribute that work
+   under terms of your choice, so long as that work isn't itself a
+   parser generator using the skeleton or a modified version thereof
+   as a parser skeleton.  Alternatively, if you modify or redistribute
+   the parser skeleton itself, you may (at your option) remove this
+   special exception, which will cause the skeleton and the resulting
+   Bison output files to be licensed under the GNU General Public
+   License without this special exception.
+   
+   This special exception was added by the Free Software Foundation in
+   version 2.2 of Bison.  */
 
-/* Written by Richard Stallman by simplifying the original so called
-   ``semantic'' parser.  */
+/* C LALR(1) parser skeleton written by Richard Stallman, by
+   simplifying the original so-called "semantic" parser.  */
 
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
@@ -37,23 +45,70 @@
 /* Identify Bison output.  */
 #define YYBISON 1
 
+/* Bison version.  */
+#define YYBISON_VERSION "2.4.1"
+
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
 
 /* Pure parsers.  */
 #define YYPURE 0
 
+/* Push parsers.  */
+#define YYPUSH 0
+
+/* Pull parsers.  */
+#define YYPULL 1
+
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
 /* Substitute the variable and function names.  */
-#define yyparse MOF_parse
-#define yylex   MOF_lex
-#define yyerror MOF_error
-#define yylval  MOF_lval
-#define yychar  MOF_char
-#define yydebug MOF_debug
-#define yynerrs MOF_nerrs
+#define yyparse         MOF_parse
+#define yylex           MOF_lex
+#define yyerror         MOF_error
+#define yylval          MOF_lval
+#define yychar          MOF_char
+#define yydebug         MOF_debug
+#define yynerrs         MOF_nerrs
+
+
+/* Copy the first part of user declarations.  */
+
+/* Line 189 of yacc.c  */
+#line 1 "cimple/tools/libmof/MOF.y"
+
+
+#include <cassert>
+#include "MOF_Types.h"
+#include "REF_Parser.h"
+
+extern int MOF_lex();
+
+static void MOF_trace(const char* str);
+
+
+
+/* Line 189 of yacc.c  */
+#line 94 "cimple/tools/libmof/MOF_Yacc.cpp"
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
 
 
 /* Tokens.  */
@@ -118,94 +173,16 @@
      TOK_UINT8 = 311
    };
 #endif
-#define TOK_ALIAS_IDENT 258
-#define TOK_ANY 259
-#define TOK_AS 260
-#define TOK_ASSOCIATION 261
-#define TOK_BOOLEAN 262
-#define TOK_CHAR16 263
-#define TOK_CHAR_VALUE 264
-#define TOK_CLASS 265
-#define TOK_CLOSE_BRACE 266
-#define TOK_CLOSE_BRACKET 267
-#define TOK_CLOSE_PAREN 268
-#define TOK_COLON 269
-#define TOK_COMMA 270
-#define TOK_DATETIME 271
-#define TOK_DISABLEOVERRIDE 272
-#define TOK_ENABLEOVERRIDE 273
-#define TOK_EQUAL 274
-#define TOK_FLAVOR 275
-#define TOK_IDENT 276
-#define TOK_INDICATION 277
-#define TOK_INSTANCE 278
-#define TOK_METHOD 279
-#define TOK_NULL_VALUE 280
-#define TOK_OF 281
-#define TOK_OPEN_BRACE 282
-#define TOK_OPEN_BRACKET 283
-#define TOK_OPEN_PAREN 284
-#define TOK_PARAMETER 285
-#define TOK_PRAGMA 286
-#define TOK_PROPERTY 287
-#define TOK_QUALIFIER 288
-#define TOK_REAL32 289
-#define TOK_REAL64 290
-#define TOK_REAL_VALUE 291
-#define TOK_REF 292
-#define TOK_REFERENCE 293
-#define TOK_RESTRICTED 294
-#define TOK_SCHEMA 295
-#define TOK_SCOPE 296
-#define TOK_SEMICOLON 297
-#define TOK_SINT16 298
-#define TOK_SINT32 299
-#define TOK_SINT64 300
-#define TOK_SINT8 301
-#define TOK_STRING 302
-#define TOK_STRING_VALUE 303
-#define TOK_TOSUBCLASS 304
-#define TOK_TRANSLATABLE 305
-#define TOK_BOOL_VALUE 306
-#define TOK_INT_VALUE 307
-#define TOK_UINT16 308
-#define TOK_UINT32 309
-#define TOK_UINT64 310
-#define TOK_UINT8 311
 
 
 
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+typedef union YYSTYPE
+{
 
-/* Copy the first part of user declarations.  */
-#line 1 "MOF.y"
+/* Line 214 of yacc.c  */
+#line 14 "cimple/tools/libmof/MOF.y"
 
-
-#include <cassert>
-#include "MOF_Types.h"
-#include "REF_Parser.h"
-
-extern int MOF_lex();
-
-static void MOF_trace(const char* str);
-
-
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 14 "MOF.y"
-typedef union YYSTYPE {
     MOF_char16 char_value;
     struct MOF_String_Literal
     {
@@ -236,41 +213,120 @@ typedef union YYSTYPE {
 
     struct _ref_init
     {
-	char* alias;
-	class MOF_Object_Reference* obj_ref;
+      char* alias;
+      class MOF_Object_Reference* obj_ref;
     }
     ref_init;
 
     struct _decl_init
     {
-	int array_index;
-	class MOF_Literal* initializer;
+        int array_index;
+        class MOF_Literal* initializer;
     }
     decl_init;
+
+
+
+/* Line 214 of yacc.c  */
+#line 232 "cimple/tools/libmof/MOF_Yacc.cpp"
 } YYSTYPE;
-/* Line 190 of yacc.c.  */
-#line 252 "MOF_Yacc.cpp"
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 /* Copy the second part of user declarations.  */
 
 
-/* Line 213 of yacc.c.  */
-#line 264 "MOF_Yacc.cpp"
+/* Line 264 of yacc.c  */
+#line 244 "cimple/tools/libmof/MOF_Yacc.cpp"
 
-#if ! defined (yyoverflow) || YYERROR_VERBOSE
+#ifdef short
+# undef short
+#endif
 
-# ifndef YYFREE
-#  define YYFREE free
+#ifdef YYTYPE_UINT8
+typedef YYTYPE_UINT8 yytype_uint8;
+#else
+typedef unsigned char yytype_uint8;
+#endif
+
+#ifdef YYTYPE_INT8
+typedef YYTYPE_INT8 yytype_int8;
+#elif (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+typedef signed char yytype_int8;
+#else
+typedef short int yytype_int8;
+#endif
+
+#ifdef YYTYPE_UINT16
+typedef YYTYPE_UINT16 yytype_uint16;
+#else
+typedef unsigned short int yytype_uint16;
+#endif
+
+#ifdef YYTYPE_INT16
+typedef YYTYPE_INT16 yytype_int16;
+#else
+typedef short int yytype_int16;
+#endif
+
+#ifndef YYSIZE_T
+# ifdef __SIZE_TYPE__
+#  define YYSIZE_T __SIZE_TYPE__
+# elif defined size_t
+#  define YYSIZE_T size_t
+# elif ! defined YYSIZE_T && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  define YYSIZE_T size_t
+# else
+#  define YYSIZE_T unsigned int
 # endif
-# ifndef YYMALLOC
-#  define YYMALLOC malloc
+#endif
+
+#define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
+
+#ifndef YY_
+# if YYENABLE_NLS
+#  if ENABLE_NLS
+#   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
+#   define YY_(msgid) dgettext ("bison-runtime", msgid)
+#  endif
 # endif
+# ifndef YY_
+#  define YY_(msgid) msgid
+# endif
+#endif
+
+/* Suppress unused-variable warnings by "using" E.  */
+#if ! defined lint || defined __GNUC__
+# define YYUSE(e) ((void) (e))
+#else
+# define YYUSE(e) /* empty */
+#endif
+
+/* Identity function, used to suppress warnings about constant conditions.  */
+#ifndef lint
+# define YYID(n) (n)
+#else
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+static int
+YYID (int yyi)
+#else
+static int
+YYID (yyi)
+    int yyi;
+#endif
+{
+  return yyi;
+}
+#endif
+
+#if ! defined yyoverflow || YYERROR_VERBOSE
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -278,36 +334,78 @@ typedef union YYSTYPE {
 #  if YYSTACK_USE_ALLOCA
 #   ifdef __GNUC__
 #    define YYSTACK_ALLOC __builtin_alloca
+#   elif defined __BUILTIN_VA_ARG_INCR
+#    include <alloca.h> /* INFRINGES ON USER NAME SPACE */
+#   elif defined _AIX
+#    define YYSTACK_ALLOC __alloca
+#   elif defined _MSC_VER
+#    include <malloc.h> /* INFRINGES ON USER NAME SPACE */
+#    define alloca _alloca
 #   else
 #    define YYSTACK_ALLOC alloca
+#    if ! defined _ALLOCA_H && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+#     include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
+#     ifndef _STDLIB_H
+#      define _STDLIB_H 1
+#     endif
+#    endif
 #   endif
 #  endif
 # endif
 
 # ifdef YYSTACK_ALLOC
-   /* Pacify GCC's `empty if-body' warning. */
-#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
-# else
-#  if defined (__STDC__) || defined (__cplusplus)
-#   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
-#   define YYSIZE_T size_t
+   /* Pacify GCC's `empty if-body' warning.  */
+#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (YYID (0))
+#  ifndef YYSTACK_ALLOC_MAXIMUM
+    /* The OS might guarantee only one guard page at the bottom of the stack,
+       and a page size can be as small as 4096 bytes.  So we cannot safely
+       invoke alloca (N) if N exceeds 4096.  Use a slightly smaller number
+       to allow for a few compiler-allocated temporary stack slots.  */
+#   define YYSTACK_ALLOC_MAXIMUM 4032 /* reasonable circa 2006 */
 #  endif
+# else
 #  define YYSTACK_ALLOC YYMALLOC
 #  define YYSTACK_FREE YYFREE
+#  ifndef YYSTACK_ALLOC_MAXIMUM
+#   define YYSTACK_ALLOC_MAXIMUM YYSIZE_MAXIMUM
+#  endif
+#  if (defined __cplusplus && ! defined _STDLIB_H \
+       && ! ((defined YYMALLOC || defined malloc) \
+	     && (defined YYFREE || defined free)))
+#   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
+#   ifndef _STDLIB_H
+#    define _STDLIB_H 1
+#   endif
+#  endif
+#  ifndef YYMALLOC
+#   define YYMALLOC malloc
+#   if ! defined malloc && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+void *malloc (YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
+#   endif
+#  endif
+#  ifndef YYFREE
+#   define YYFREE free
+#   if ! defined free && ! defined _STDLIB_H && (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+void free (void *); /* INFRINGES ON USER NAME SPACE */
+#   endif
+#  endif
 # endif
-#endif /* ! defined (yyoverflow) || YYERROR_VERBOSE */
+#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
 
 
-#if (! defined (yyoverflow) \
-     && (! defined (__cplusplus) \
-	 || (defined (YYSTYPE_IS_TRIVIAL) && YYSTYPE_IS_TRIVIAL)))
+#if (! defined yyoverflow \
+     && (! defined __cplusplus \
+	 || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  short int yyss;
-  YYSTYPE yyvs;
-  };
+  yytype_int16 yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -315,24 +413,24 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (short int) + sizeof (YYSTYPE))			\
+     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
       + YYSTACK_GAP_MAXIMUM)
 
 /* Copy COUNT objects from FROM to TO.  The source and destination do
    not overlap.  */
 # ifndef YYCOPY
-#  if defined (__GNUC__) && 1 < __GNUC__
+#  if defined __GNUC__ && 1 < __GNUC__
 #   define YYCOPY(To, From, Count) \
       __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
 #  else
 #   define YYCOPY(To, From, Count)		\
       do					\
 	{					\
-	  register YYSIZE_T yyi;		\
+	  YYSIZE_T yyi;				\
 	  for (yyi = 0; yyi < (Count); yyi++)	\
 	    (To)[yyi] = (From)[yyi];		\
 	}					\
-      while (0)
+      while (YYID (0))
 #  endif
 # endif
 
@@ -341,48 +439,42 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
+	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
+	Stack = &yyptr->Stack_alloc;					\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
-    while (0)
+    while (YYID (0))
 
 #endif
 
-#if defined (__STDC__) || defined (__cplusplus)
-   typedef signed char yysigned_char;
-#else
-   typedef short int yysigned_char;
-#endif
-
-/* YYFINAL -- State number of the termination state. */
+/* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  31
 /* YYLAST -- Last index in YYTABLE.  */
 #define YYLAST   242
 
-/* YYNTOKENS -- Number of terminals. */
+/* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  57
-/* YYNNTS -- Number of nonterminals. */
+/* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  66
-/* YYNRULES -- Number of rules. */
+/* YYNRULES -- Number of rules.  */
 #define YYNRULES  144
-/* YYNRULES -- Number of states. */
+/* YYNRULES -- Number of states.  */
 #define YYNSTATES  222
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   311
 
-#define YYTRANSLATE(YYX) 						\
+#define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
-static const unsigned char yytranslate[] =
+static const yytype_uint8 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -421,7 +513,7 @@ static const unsigned char yytranslate[] =
 #if YYDEBUG
 /* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
    YYRHS.  */
-static const unsigned short int yyprhs[] =
+static const yytype_uint16 yyprhs[] =
 {
        0,     0,     3,     5,     6,     8,    10,    13,    15,    17,
       19,    21,    27,    29,    31,    33,    35,    37,    39,    41,
@@ -440,8 +532,8 @@ static const unsigned short int yyprhs[] =
      375,   377,   379,   381,   383
 };
 
-/* YYRHS -- A `-1'-separated list of the rules' RHS. */
-static const yysigned_char yyrhs[] =
+/* YYRHS -- A `-1'-separated list of the rules' RHS.  */
+static const yytype_int8 yyrhs[] =
 {
       58,     0,    -1,    59,    -1,    -1,    60,    -1,    61,    -1,
       60,    61,    -1,    62,    -1,    83,    -1,    66,    -1,   107,
@@ -485,7 +577,7 @@ static const yysigned_char yyrhs[] =
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
-static const unsigned short int yyrline[] =
+static const yytype_uint16 yyrline[] =
 {
        0,   214,   214,   221,   224,   231,   235,   242,   247,   252,
      257,   273,   280,   287,   307,   313,   319,   325,   331,   348,
@@ -505,9 +597,9 @@ static const unsigned short int yyrline[] =
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE
-/* YYTNME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
-   First, the terminals, then, starting at YYNTOKENS, nonterminals. */
+#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
+/* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
+   First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "TOK_ALIAS_IDENT", "TOK_ANY", "TOK_AS",
@@ -544,7 +636,7 @@ static const char *const yytname[] =
 # ifdef YYPRINT
 /* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
    token YYLEX-NUM.  */
-static const unsigned short int yytoknum[] =
+static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
@@ -556,7 +648,7 @@ static const unsigned short int yytoknum[] =
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
-static const unsigned char yyr1[] =
+static const yytype_uint8 yyr1[] =
 {
        0,    57,    58,    59,    59,    60,    60,    61,    61,    61,
       61,    62,    63,    64,    65,    65,    65,    65,    65,    66,
@@ -576,7 +668,7 @@ static const unsigned char yyr1[] =
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
-static const unsigned char yyr2[] =
+static const yytype_uint8 yyr2[] =
 {
        0,     2,     1,     0,     1,     1,     2,     1,     1,     1,
        1,     5,     1,     1,     1,     1,     1,     1,     1,     3,
@@ -598,7 +690,7 @@ static const unsigned char yyr2[] =
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
    STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
    means the default is an error.  */
-static const unsigned char yydefact[] =
+static const yytype_uint8 yydefact[] =
 {
        3,     0,     0,     0,     0,     0,     0,     2,     4,     5,
        7,     9,     0,     8,     0,    10,     0,    64,     0,    16,
@@ -625,8 +717,8 @@ static const unsigned char yydefact[] =
        0,    42
 };
 
-/* YYDEFGOTO[NTERM-NUM]. */
-static const short int yydefgoto[] =
+/* YYDEFGOTO[NTERM-NUM].  */
+static const yytype_int16 yydefgoto[] =
 {
       -1,     6,     7,     8,     9,    10,    28,    79,    24,    11,
       30,   130,   131,   132,   159,   211,   212,   186,   216,   125,
@@ -640,7 +732,7 @@ static const short int yydefgoto[] =
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
 #define YYPACT_NINF -120
-static const short int yypact[] =
+static const yytype_int16 yypact[] =
 {
       10,     8,    24,   108,    21,   108,    75,  -120,    10,  -120,
     -120,  -120,     1,  -120,    42,  -120,    49,    81,    72,  -120,
@@ -668,7 +760,7 @@ static const short int yypact[] =
 };
 
 /* YYPGOTO[NTERM-NUM].  */
-static const short int yypgoto[] =
+static const yytype_int16 yypgoto[] =
 {
     -120,  -120,  -120,  -120,   205,  -120,  -120,  -120,    -5,  -120,
     -120,  -120,  -120,  -120,  -120,  -120,     4,  -120,  -120,  -119,
@@ -684,7 +776,7 @@ static const short int yypgoto[] =
    number is the opposite.  If zero, do what YYDEFACT says.
    If YYTABLE_NINF, syntax error.  */
 #define YYTABLE_NINF -91
-static const short int yytable[] =
+static const yytype_int16 yytable[] =
 {
       29,    56,   133,    75,   151,    80,   167,   154,    95,    81,
       82,     1,   109,    98,    42,    55,    43,   100,    83,   108,
@@ -713,7 +805,7 @@ static const short int yytable[] =
        0,   210,   113
 };
 
-static const short int yycheck[] =
+static const yytype_int16 yycheck[] =
 {
        5,    37,    95,    43,   110,    48,     3,   126,    49,     7,
        8,    10,    53,    11,    27,    21,    29,    53,    16,    53,
@@ -744,7 +836,7 @@ static const short int yycheck[] =
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
-static const unsigned char yystos[] =
+static const yytype_uint8 yystos[] =
 {
        0,    10,    23,    28,    31,    33,    58,    59,    60,    61,
       62,    66,    77,    83,    84,   107,   108,    21,    26,     6,
@@ -771,22 +863,6 @@ static const unsigned char yystos[] =
       15,    76
 };
 
-#if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
-# define YYSIZE_T __SIZE_TYPE__
-#endif
-#if ! defined (YYSIZE_T) && defined (size_t)
-# define YYSIZE_T size_t
-#endif
-#if ! defined (YYSIZE_T)
-# if defined (__STDC__) || defined (__cplusplus)
-#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
-#  define YYSIZE_T size_t
-# endif
-#endif
-#if ! defined (YYSIZE_T)
-# define YYSIZE_T unsigned int
-#endif
-
 #define yyerrok		(yyerrstatus = 0)
 #define yyclearin	(yychar = YYEMPTY)
 #define YYEMPTY		(-2)
@@ -812,15 +888,15 @@ do								\
       yychar = (Token);						\
       yylval = (Value);						\
       yytoken = YYTRANSLATE (yychar);				\
-      YYPOPSTACK;						\
+      YYPOPSTACK (1);						\
       goto yybackup;						\
     }								\
   else								\
-    { 								\
-      yyerror ("syntax error: cannot back up");\
+    {								\
+      yyerror (YY_("syntax error: cannot back up")); \
       YYERROR;							\
     }								\
-while (0)
+while (YYID (0))
 
 
 #define YYTERROR	1
@@ -835,7 +911,7 @@ while (0)
 #ifndef YYLLOC_DEFAULT
 # define YYLLOC_DEFAULT(Current, Rhs, N)				\
     do									\
-      if (N)								\
+      if (YYID (N))                                                    \
 	{								\
 	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
 	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
@@ -849,7 +925,7 @@ while (0)
 	  (Current).first_column = (Current).last_column =		\
 	    YYRHSLOC (Rhs, 0).last_column;				\
 	}								\
-    while (0)
+    while (YYID (0))
 #endif
 
 
@@ -861,8 +937,8 @@ while (0)
 # if YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
-              (Loc).first_line, (Loc).first_column,	\
-              (Loc).last_line,  (Loc).last_column)
+	      (Loc).first_line, (Loc).first_column,	\
+	      (Loc).last_line,  (Loc).last_column)
 # else
 #  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
 # endif
@@ -889,37 +965,100 @@ while (0)
 do {						\
   if (yydebug)					\
     YYFPRINTF Args;				\
-} while (0)
+} while (YYID (0))
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)		\
-do {								\
-  if (yydebug)							\
-    {								\
-      YYFPRINTF (stderr, "%s ", Title);				\
-      yysymprint (stderr, 					\
-                  Type, Value);	\
-      YYFPRINTF (stderr, "\n");					\
-    }								\
-} while (0)
+# define YY_SYMBOL_PRINT(Title, Type, Value, Location)			  \
+do {									  \
+  if (yydebug)								  \
+    {									  \
+      YYFPRINTF (stderr, "%s ", Title);					  \
+      yy_symbol_print (stderr,						  \
+		  Type, Value); \
+      YYFPRINTF (stderr, "\n");						  \
+    }									  \
+} while (YYID (0))
+
+
+/*--------------------------------.
+| Print this symbol on YYOUTPUT.  |
+`--------------------------------*/
+
+/*ARGSUSED*/
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+static void
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+#else
+static void
+yy_symbol_value_print (yyoutput, yytype, yyvaluep)
+    FILE *yyoutput;
+    int yytype;
+    YYSTYPE const * const yyvaluep;
+#endif
+{
+  if (!yyvaluep)
+    return;
+# ifdef YYPRINT
+  if (yytype < YYNTOKENS)
+    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
+# else
+  YYUSE (yyoutput);
+# endif
+  switch (yytype)
+    {
+      default:
+	break;
+    }
+}
+
+
+/*--------------------------------.
+| Print this symbol on YYOUTPUT.  |
+`--------------------------------*/
+
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+static void
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+#else
+static void
+yy_symbol_print (yyoutput, yytype, yyvaluep)
+    FILE *yyoutput;
+    int yytype;
+    YYSTYPE const * const yyvaluep;
+#endif
+{
+  if (yytype < YYNTOKENS)
+    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
+  else
+    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
+
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
+  YYFPRINTF (yyoutput, ")");
+}
 
 /*------------------------------------------------------------------.
 | yy_stack_print -- Print the state stack from its BOTTOM up to its |
 | TOP (included).                                                   |
 `------------------------------------------------------------------*/
 
-#if defined (__STDC__) || defined (__cplusplus)
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (short int *bottom, short int *top)
+yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
 #else
 static void
-yy_stack_print (bottom, top)
-    short int *bottom;
-    short int *top;
+yy_stack_print (yybottom, yytop)
+    yytype_int16 *yybottom;
+    yytype_int16 *yytop;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (/* Nothing. */; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
@@ -927,37 +1066,45 @@ yy_stack_print (bottom, top)
 do {								\
   if (yydebug)							\
     yy_stack_print ((Bottom), (Top));				\
-} while (0)
+} while (YYID (0))
 
 
 /*------------------------------------------------.
 | Report that the YYRULE is going to be reduced.  |
 `------------------------------------------------*/
 
-#if defined (__STDC__) || defined (__cplusplus)
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static void
-yy_reduce_print (int yyrule)
+yy_reduce_print (YYSTYPE *yyvsp, int yyrule)
 #else
 static void
-yy_reduce_print (yyrule)
+yy_reduce_print (yyvsp, yyrule)
+    YYSTYPE *yyvsp;
     int yyrule;
 #endif
 {
+  int yynrhs = yyr2[yyrule];
   int yyi;
-  unsigned int yylno = yyrline[yyrule];
-  YYFPRINTF (stderr, "Reducing stack by rule %d (line %u), ",
-             yyrule - 1, yylno);
-  /* Print the symbols being reduced, and their result.  */
-  for (yyi = yyprhs[yyrule]; 0 <= yyrhs[yyi]; yyi++)
-    YYFPRINTF (stderr, "%s ", yytname [yyrhs[yyi]]);
-  YYFPRINTF (stderr, "-> %s\n", yytname [yyr1[yyrule]]);
+  unsigned long int yylno = yyrline[yyrule];
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
+	     yyrule - 1, yylno);
+  /* The symbols being reduced.  */
+  for (yyi = 0; yyi < yynrhs; yyi++)
+    {
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
+      yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
+		       &(yyvsp[(yyi + 1) - (yynrhs)])
+		       		       );
+      YYFPRINTF (stderr, "\n");
+    }
 }
 
 # define YY_REDUCE_PRINT(Rule)		\
 do {					\
   if (yydebug)				\
-    yy_reduce_print (Rule);		\
-} while (0)
+    yy_reduce_print (yyvsp, Rule); \
+} while (YYID (0))
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
@@ -979,7 +1126,7 @@ int yydebug;
    if the built-in stack extension method is used).
 
    Do not make this value too large; the results are undefined if
-   SIZE_MAX < YYSTACK_BYTES (YYMAXDEPTH)
+   YYSTACK_ALLOC_MAXIMUM < YYSTACK_BYTES (YYMAXDEPTH)
    evaluated with infinite-precision integer arithmetic.  */
 
 #ifndef YYMAXDEPTH
@@ -991,45 +1138,47 @@ int yydebug;
 #if YYERROR_VERBOSE
 
 # ifndef yystrlen
-#  if defined (__GLIBC__) && defined (_STRING_H)
+#  if defined __GLIBC__ && defined _STRING_H
 #   define yystrlen strlen
 #  else
 /* Return the length of YYSTR.  */
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static YYSIZE_T
-#   if defined (__STDC__) || defined (__cplusplus)
 yystrlen (const char *yystr)
-#   else
+#else
+static YYSIZE_T
 yystrlen (yystr)
-     const char *yystr;
-#   endif
+    const char *yystr;
+#endif
 {
-  register const char *yys = yystr;
-
-  while (*yys++ != '\0')
+  YYSIZE_T yylen;
+  for (yylen = 0; yystr[yylen]; yylen++)
     continue;
-
-  return yys - yystr - 1;
+  return yylen;
 }
 #  endif
 # endif
 
 # ifndef yystpcpy
-#  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
+#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
 #   define yystpcpy stpcpy
 #  else
 /* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
    YYDEST.  */
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static char *
-#   if defined (__STDC__) || defined (__cplusplus)
 yystpcpy (char *yydest, const char *yysrc)
-#   else
+#else
+static char *
 yystpcpy (yydest, yysrc)
-     char *yydest;
-     const char *yysrc;
-#   endif
+    char *yydest;
+    const char *yysrc;
+#endif
 {
-  register char *yyd = yydest;
-  register const char *yys = yysrc;
+  char *yyd = yydest;
+  const char *yys = yysrc;
 
   while ((*yyd++ = *yys++) != '\0')
     continue;
@@ -1039,53 +1188,171 @@ yystpcpy (yydest, yysrc)
 #  endif
 # endif
 
-#endif /* !YYERROR_VERBOSE */
+# ifndef yytnamerr
+/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
+   quotes and backslashes, so that it's suitable for yyerror.  The
+   heuristic is that double-quoting is unnecessary unless the string
+   contains an apostrophe, a comma, or backslash (other than
+   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
+   null, do not copy; instead, return the length of what the result
+   would have been.  */
+static YYSIZE_T
+yytnamerr (char *yyres, const char *yystr)
+{
+  if (*yystr == '"')
+    {
+      YYSIZE_T yyn = 0;
+      char const *yyp = yystr;
 
+      for (;;)
+	switch (*++yyp)
+	  {
+	  case '\'':
+	  case ',':
+	    goto do_not_strip_quotes;
+
+	  case '\\':
+	    if (*++yyp != '\\')
+	      goto do_not_strip_quotes;
+	    /* Fall through.  */
+	  default:
+	    if (yyres)
+	      yyres[yyn] = *yyp;
+	    yyn++;
+	    break;
+
+	  case '"':
+	    if (yyres)
+	      yyres[yyn] = '\0';
+	    return yyn;
+	  }
+    do_not_strip_quotes: ;
+    }
+
+  if (! yyres)
+    return yystrlen (yystr);
+
+  return yystpcpy (yyres, yystr) - yyres;
+}
+# endif
+
+/* Copy into YYRESULT an error message about the unexpected token
+   YYCHAR while in state YYSTATE.  Return the number of bytes copied,
+   including the terminating null byte.  If YYRESULT is null, do not
+   copy anything; just return the number of bytes that would be
+   copied.  As a special case, return 0 if an ordinary "syntax error"
+   message will do.  Return YYSIZE_MAXIMUM if overflow occurs during
+   size calculation.  */
+static YYSIZE_T
+yysyntax_error (char *yyresult, int yystate, int yychar)
+{
+  int yyn = yypact[yystate];
+
+  if (! (YYPACT_NINF < yyn && yyn <= YYLAST))
+    return 0;
+  else
+    {
+      int yytype = YYTRANSLATE (yychar);
+      YYSIZE_T yysize0 = yytnamerr (0, yytname[yytype]);
+      YYSIZE_T yysize = yysize0;
+      YYSIZE_T yysize1;
+      int yysize_overflow = 0;
+      enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
+      char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
+      int yyx;
+
+# if 0
+      /* This is so xgettext sees the translatable formats that are
+	 constructed on the fly.  */
+      YY_("syntax error, unexpected %s");
+      YY_("syntax error, unexpected %s, expecting %s");
+      YY_("syntax error, unexpected %s, expecting %s or %s");
+      YY_("syntax error, unexpected %s, expecting %s or %s or %s");
+      YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s");
+# endif
+      char *yyfmt;
+      char const *yyf;
+      static char const yyunexpected[] = "syntax error, unexpected %s";
+      static char const yyexpecting[] = ", expecting %s";
+      static char const yyor[] = " or %s";
+      char yyformat[sizeof yyunexpected
+		    + sizeof yyexpecting - 1
+		    + ((YYERROR_VERBOSE_ARGS_MAXIMUM - 2)
+		       * (sizeof yyor - 1))];
+      char const *yyprefix = yyexpecting;
+
+      /* Start YYX at -YYN if negative to avoid negative indexes in
+	 YYCHECK.  */
+      int yyxbegin = yyn < 0 ? -yyn : 0;
+
+      /* Stay within bounds of both yycheck and yytname.  */
+      int yychecklim = YYLAST - yyn + 1;
+      int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
+      int yycount = 1;
+
+      yyarg[0] = yytname[yytype];
+      yyfmt = yystpcpy (yyformat, yyunexpected);
+
+      for (yyx = yyxbegin; yyx < yyxend; ++yyx)
+	if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
+	  {
+	    if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
+	      {
+		yycount = 1;
+		yysize = yysize0;
+		yyformat[sizeof yyunexpected - 1] = '\0';
+		break;
+	      }
+	    yyarg[yycount++] = yytname[yyx];
+	    yysize1 = yysize + yytnamerr (0, yytname[yyx]);
+	    yysize_overflow |= (yysize1 < yysize);
+	    yysize = yysize1;
+	    yyfmt = yystpcpy (yyfmt, yyprefix);
+	    yyprefix = yyor;
+	  }
+
+      yyf = YY_(yyformat);
+      yysize1 = yysize + yystrlen (yyf);
+      yysize_overflow |= (yysize1 < yysize);
+      yysize = yysize1;
+
+      if (yysize_overflow)
+	return YYSIZE_MAXIMUM;
+
+      if (yyresult)
+	{
+	  /* Avoid sprintf, as that infringes on the user's name space.
+	     Don't have undefined behavior even if the translation
+	     produced a string with the wrong number of "%s"s.  */
+	  char *yyp = yyresult;
+	  int yyi = 0;
+	  while ((*yyp = *yyf) != '\0')
+	    {
+	      if (*yyp == '%' && yyf[1] == 's' && yyi < yycount)
+		{
+		  yyp += yytnamerr (yyp, yyarg[yyi++]);
+		  yyf += 2;
+		}
+	      else
+		{
+		  yyp++;
+		  yyf++;
+		}
+	    }
+	}
+      return yysize;
+    }
+}
+#endif /* YYERROR_VERBOSE */
 
 
-#if YYDEBUG
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
-
-#if defined (__STDC__) || defined (__cplusplus)
-static void
-yysymprint (FILE *yyoutput, int yytype, YYSTYPE *yyvaluep)
-#else
-static void
-yysymprint (yyoutput, yytype, yyvaluep)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE *yyvaluep;
-#endif
-{
-  /* Pacify ``unused variable'' warnings.  */
-  (void) yyvaluep;
-
-  if (yytype < YYNTOKENS)
-    YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
-  else
-    YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
-
-
-# ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
-# endif
-  switch (yytype)
-    {
-      default:
-        break;
-    }
-  YYFPRINTF (yyoutput, ")");
-}
-
-#endif /* ! YYDEBUG */
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
-#if defined (__STDC__) || defined (__cplusplus)
+/*ARGSUSED*/
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 static void
 yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
 #else
@@ -1096,8 +1363,7 @@ yydestruct (yymsg, yytype, yyvaluep)
     YYSTYPE *yyvaluep;
 #endif
 {
-  /* Pacify ``unused variable'' warnings.  */
-  (void) yyvaluep;
+  YYUSE (yyvaluep);
 
   if (!yymsg)
     yymsg = "Deleting";
@@ -1107,21 +1373,19 @@ yydestruct (yymsg, yytype, yyvaluep)
     {
 
       default:
-        break;
+	break;
     }
 }
-
 
 /* Prevent warnings from -Wmissing-prototypes.  */
-
 #ifdef YYPARSE_PARAM
-# if defined (__STDC__) || defined (__cplusplus)
+#if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
-# else
+#else
 int yyparse ();
-# endif
+#endif
 #else /* ! YYPARSE_PARAM */
-#if defined (__STDC__) || defined (__cplusplus)
+#if defined __STDC__ || defined __cplusplus
 int yyparse (void);
 #else
 int yyparse ();
@@ -1129,11 +1393,10 @@ int yyparse ();
 #endif /* ! YYPARSE_PARAM */
 
 
-
-/* The look-ahead symbol.  */
+/* The lookahead symbol.  */
 int yychar;
 
-/* The semantic value of the look-ahead symbol.  */
+/* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 
 /* Number of syntax errors so far.  */
@@ -1141,19 +1404,23 @@ int yynerrs;
 
 
 
-/*----------.
-| yyparse.  |
-`----------*/
+/*-------------------------.
+| yyparse or yypush_parse.  |
+`-------------------------*/
 
 #ifdef YYPARSE_PARAM
-# if defined (__STDC__) || defined (__cplusplus)
-int yyparse (void *YYPARSE_PARAM)
-# else
-int yyparse (YYPARSE_PARAM)
-  void *YYPARSE_PARAM;
-# endif
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
+int
+yyparse (void *YYPARSE_PARAM)
+#else
+int
+yyparse (YYPARSE_PARAM)
+    void *YYPARSE_PARAM;
+#endif
 #else /* ! YYPARSE_PARAM */
-#if defined (__STDC__) || defined (__cplusplus)
+#if (defined __STDC__ || defined __C99__FUNC__ \
+     || defined __cplusplus || defined _MSC_VER)
 int
 yyparse (void)
 #else
@@ -1163,65 +1430,70 @@ yyparse ()
 #endif
 #endif
 {
-  
-  register int yystate;
-  register int yyn;
+
+
+    int yystate;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus;
+
+    /* The stacks and their tools:
+       `yyss': related to states.
+       `yyvs': related to semantic values.
+
+       Refer to the stacks thru separate pointers, to allow yyoverflow
+       to reallocate them elsewhere.  */
+
+    /* The state stack.  */
+    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 *yyss;
+    yytype_int16 *yyssp;
+
+    /* The semantic value stack.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+
+    YYSIZE_T yystacksize;
+
+  int yyn;
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
-  int yytoken = 0;
-
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to reallocate them elsewhere.  */
-
-  /* The state stack.  */
-  short int yyssa[YYINITDEPTH];
-  short int *yyss = yyssa;
-  register short int *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  register YYSTYPE *yyvsp;
-
-
-
-#define YYPOPSTACK   (yyvsp--, yyssp--)
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
+  /* Lookahead token as an internal (translated) token number.  */
+  int yytoken;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
+#if YYERROR_VERBOSE
+  /* Buffer for error messages, and its allocated size.  */
+  char yymsgbuf[128];
+  char *yymsg = yymsgbuf;
+  YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
+#endif
 
-  /* When reducing, the number of symbols on the RHS of the reduced
-     rule.  */
-  int yylen;
+#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+
+  /* The number of symbols on the RHS of the reduced rule.
+     Keep to zero when no symbol should be popped.  */
+  int yylen = 0;
+
+  yytoken = 0;
+  yyss = yyssa;
+  yyvs = yyvsa;
+  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
+  yychar = YYEMPTY; /* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
-
   yyssp = yyss;
   yyvsp = yyvs;
-
-
-  yyvsp[0] = yylval;
 
   goto yysetstate;
 
@@ -1230,8 +1502,7 @@ yyparse ()
 `------------------------------------------------------------*/
  yynewstate:
   /* In all cases, when you get here, the value and location stacks
-     have just been pushed. so pushing a state here evens the stacks.
-     */
+     have just been pushed.  So pushing a state here evens the stacks.  */
   yyssp++;
 
  yysetstate:
@@ -1244,21 +1515,19 @@ yyparse ()
 
 #ifdef yyoverflow
       {
-	/* Give user a chance to reallocate the stack. Use copies of
+	/* Give user a chance to reallocate the stack.  Use copies of
 	   these so that the &'s don't force the real ones into
 	   memory.  */
 	YYSTYPE *yyvs1 = yyvs;
-	short int *yyss1 = yyss;
-
+	yytype_int16 *yyss1 = yyss;
 
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
 	   be undefined if yyoverflow is a macro.  */
-	yyoverflow ("parser stack overflow",
+	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
-
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -1266,24 +1535,23 @@ yyparse ()
       }
 #else /* no yyoverflow */
 # ifndef YYSTACK_RELOCATE
-      goto yyoverflowlab;
+      goto yyexhaustedlab;
 # else
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
-	goto yyoverflowlab;
+	goto yyexhaustedlab;
       yystacksize *= 2;
       if (YYMAXDEPTH < yystacksize)
 	yystacksize = YYMAXDEPTH;
 
       {
-	short int *yyss1 = yyss;
+	yytype_int16 *yyss1 = yyss;
 	union yyalloc *yyptr =
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
-	  goto yyoverflowlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+	  goto yyexhaustedlab;
+	YYSTACK_RELOCATE (yyss_alloc, yyss);
+	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -1294,7 +1562,6 @@ yyparse ()
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -1304,6 +1571,9 @@ yyparse ()
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
+  if (yystate == YYFINAL)
+    YYACCEPT;
+
   goto yybackup;
 
 /*-----------.
@@ -1311,19 +1581,17 @@ yyparse ()
 `-----------*/
 yybackup:
 
-/* Do appropriate processing given the current state.  */
-/* Read a look-ahead token if we need one and don't already have one.  */
-/* yyresume: */
+  /* Do appropriate processing given the current state.  Read a
+     lookahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
-
+  /* First try to decide what to do without reference to lookahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -1355,25 +1623,20 @@ yybackup:
       goto yyreduce;
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
-  /* Shift the look-ahead token.  */
-  YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
-
-  /* Discard the token being shifted unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
-
-  *++yyvsp = yylval;
-
-
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
+  /* Shift the lookahead token.  */
+  YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
+
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
+
   yystate = yyn;
+  *++yyvsp = yylval;
+
   goto yynewstate;
 
 
@@ -1409,1335 +1672,1620 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 215 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 215 "cimple/tools/libmof/MOF.y"
     {
-	/* printf("start rule reached\n"); */
+        /* printf("start rule reached\n"); */
     ;}
     break;
 
   case 3:
-#line 221 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 221 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_specification:1");
+        MOF_trace("MOF_specification:1");
     ;}
     break;
 
   case 4:
-#line 225 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 225 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_specification:2");
+        MOF_trace("MOF_specification:2");
     ;}
     break;
 
   case 5:
-#line 232 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 232 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_productions:1");
+        MOF_trace("MOF_productions:1");
     ;}
     break;
 
   case 6:
-#line 236 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 236 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_productions:2");
+        MOF_trace("MOF_productions:2");
     ;}
     break;
 
   case 7:
-#line 243 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 243 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_production:1");
-	// MOF_warning_printf("pragma ignored");
+        MOF_trace("MOF_production:1");
+        // MOF_warning_printf("pragma ignored");
     ;}
     break;
 
   case 8:
-#line 248 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 248 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_production:3");
-	MOF_Class_Decl::handle((yyvsp[0].class_decl));
+        MOF_trace("MOF_production:3");
+        MOF_Class_Decl::handle((yyvsp[(1) - (1)].class_decl));
     ;}
     break;
 
   case 9:
-#line 253 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 253 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_production:4");
-	MOF_Qualifier_Decl::handle((yyvsp[0].qual_decl));
+        MOF_trace("MOF_production:4");
+        MOF_Qualifier_Decl::handle((yyvsp[(1) - (1)].qual_decl));
     ;}
     break;
 
   case 10:
-#line 258 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 258 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("MOF_production:5");
-	MOF_Instance_Decl::handle((yyvsp[0].inst_decl));
+        MOF_trace("MOF_production:5");
+        MOF_Instance_Decl::handle((yyvsp[(1) - (1)].inst_decl));
     ;}
     break;
 
   case 11:
-#line 274 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 274 "cimple/tools/libmof/MOF.y"
     {
-	MOF_Pragma::handle((yyvsp[-3].string_value), (yyvsp[-1].string_literal).raw);
+        MOF_Pragma::handle((yyvsp[(2) - (5)].string_value), (yyvsp[(4) - (5)].string_literal).raw);
     ;}
     break;
 
   case 12:
-#line 281 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 281 "cimple/tools/libmof/MOF.y"
     {
-	(yyval.string_value) = (yyvsp[0].string_value);
+        (yyval.string_value) = (yyvsp[(1) - (1)].string_value);
     ;}
     break;
 
   case 13:
-#line 288 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 288 "cimple/tools/libmof/MOF.y"
     {
-        (yyval.string_literal) = (yyvsp[0].string_literal);
+        (yyval.string_literal) = (yyvsp[(1) - (1)].string_literal);
     ;}
     break;
 
   case 14:
-#line 308 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 308 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("name:1");
-	/* heap string */
-	(yyval.string_value) = (yyvsp[0].string_value);
+        MOF_trace("name:1");
+        /* heap string */
+        (yyval.string_value) = (yyvsp[(1) - (1)].string_value);
     ;}
     break;
 
   case 15:
-#line 314 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 314 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("name:2");
-	(yyval.string_value) = strdup((yyvsp[0].string_value));
-	MOF_ASSERT((yyval.string_value) != NULL);
+        MOF_trace("name:2");
+        (yyval.string_value) = strdup((yyvsp[(1) - (1)].string_value));
+        MOF_ASSERT((yyval.string_value) != NULL);
     ;}
     break;
 
   case 16:
-#line 320 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 320 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("name:3");
-	(yyval.string_value) = strdup((yyvsp[0].string_value));
-	MOF_ASSERT((yyval.string_value) != NULL);
+        MOF_trace("name:3");
+        (yyval.string_value) = strdup((yyvsp[(1) - (1)].string_value));
+        MOF_ASSERT((yyval.string_value) != NULL);
     ;}
     break;
 
   case 17:
-#line 326 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 326 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("name:4");
-	(yyval.string_value) = strdup((yyvsp[0].string_value));
-	MOF_ASSERT((yyval.string_value) != NULL);
+        MOF_trace("name:4");
+        (yyval.string_value) = strdup((yyvsp[(1) - (1)].string_value));
+        MOF_ASSERT((yyval.string_value) != NULL);
     ;}
     break;
 
   case 18:
-#line 332 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 332 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("name:5");
-	(yyval.string_value) = strdup((yyvsp[0].string_value));
-	MOF_ASSERT((yyval.string_value) != NULL);
+        MOF_trace("name:5");
+        (yyval.string_value) = strdup((yyvsp[(1) - (1)].string_value));
+        MOF_ASSERT((yyval.string_value) != NULL);
     ;}
     break;
 
   case 19:
-#line 349 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 349 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl:1");
-	(yyval.qual_decl) = (yyvsp[-1].qual_decl);
+        MOF_trace("qual_decl:1");
+        (yyval.qual_decl) = (yyvsp[(2) - (3)].qual_decl);
     ;}
     break;
 
   case 20:
-#line 357 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 357 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_body:1");
-	(yyval.qual_decl) = new MOF_Qualifier_Decl();
-	MOF_ASSERT((yyval.qual_decl) != NULL);
-	(yyval.qual_decl)->name = (yyvsp[-5].string_value);
-	(yyval.qual_decl)->data_type = (int)(yyvsp[-3].int_value);
-	(yyval.qual_decl)->array_index = (yyvsp[-2].decl_init).array_index;
-	(yyval.qual_decl)->initializer = (yyvsp[-2].decl_init).initializer;
-	(yyval.qual_decl)->scope = (yyvsp[-1].scope);
-	(yyval.qual_decl)->flavor = MOF_Flavor::fixup((yyvsp[0].flavor), true);
+        MOF_trace("qual_decl_body:1");
+        (yyval.qual_decl) = new MOF_Qualifier_Decl();
+        MOF_ASSERT((yyval.qual_decl) != NULL);
+        (yyval.qual_decl)->name = (yyvsp[(1) - (6)].string_value);
+        (yyval.qual_decl)->data_type = (int)(yyvsp[(3) - (6)].int_value);
+        (yyval.qual_decl)->array_index = (yyvsp[(4) - (6)].decl_init).array_index;
+        (yyval.qual_decl)->initializer = (yyvsp[(4) - (6)].decl_init).initializer;
+        (yyval.qual_decl)->scope = (yyvsp[(5) - (6)].scope);
+        (yyval.qual_decl)->flavor = MOF_Flavor::fixup((yyvsp[(6) - (6)].flavor), true);
     ;}
     break;
 
   case 21:
-#line 372 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 372 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_init:1");
-	(yyval.decl_init) = (yyvsp[0].decl_init);
+        MOF_trace("qual_decl_init:1");
+        (yyval.decl_init) = (yyvsp[(1) - (1)].decl_init);
     ;}
     break;
 
   case 22:
-#line 377 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 377 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_init:2");
-	(yyval.decl_init) = (yyvsp[0].decl_init);
+        MOF_trace("qual_decl_init:2");
+        (yyval.decl_init) = (yyvsp[(1) - (1)].decl_init);
     ;}
     break;
 
   case 23:
-#line 385 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 385 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_array_init:1");
-	(yyval.decl_init).array_index = (int)(yyvsp[-2].int_value);
-	(yyval.decl_init).initializer = (yyvsp[0].literal);
+        MOF_trace("qual_decl_array_init:1");
+        (yyval.decl_init).array_index = (int)(yyvsp[(1) - (3)].int_value);
+        (yyval.decl_init).initializer = (yyvsp[(3) - (3)].literal);
     ;}
     break;
 
   case 24:
-#line 391 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 391 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_array_init:2");
-	(yyval.decl_init).array_index = (int)(yyvsp[0].int_value);
-	(yyval.decl_init).initializer = NULL;
+        MOF_trace("qual_decl_array_init:2");
+        (yyval.decl_init).array_index = (int)(yyvsp[(1) - (1)].int_value);
+        (yyval.decl_init).initializer = NULL;
     ;}
     break;
 
   case 25:
-#line 400 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 400 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_scalar_init:1");
-	(yyval.decl_init).array_index = 0;
-	(yyval.decl_init).initializer = (yyvsp[0].literal);
+        MOF_trace("qual_decl_scalar_init:1");
+        (yyval.decl_init).array_index = 0;
+        (yyval.decl_init).initializer = (yyvsp[(2) - (2)].literal);
     ;}
     break;
 
   case 26:
-#line 406 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 406 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_scalar_init:2");
-	(yyval.decl_init).array_index = 0;
-	(yyval.decl_init).initializer = NULL;
+        MOF_trace("qual_decl_scalar_init:2");
+        (yyval.decl_init).array_index = 0;
+        (yyval.decl_init).initializer = NULL;
     ;}
     break;
 
   case 27:
-#line 415 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 415 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_scope:1");
-	(yyval.scope) = (yyvsp[-1].scope);
+        MOF_trace("qual_decl_scope:1");
+        (yyval.scope) = (yyvsp[(4) - (5)].scope);
     ;}
     break;
 
   case 28:
-#line 423 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 423 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope_list:1");
-	(yyval.scope) = (yyvsp[0].scope);
+        MOF_trace("scope_list:1");
+        (yyval.scope) = (yyvsp[(1) - (1)].scope);
     ;}
     break;
 
   case 29:
-#line 428 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 428 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope_list:2");
-	(yyval.scope) |= (yyvsp[0].scope);
+        MOF_trace("scope_list:2");
+        (yyval.scope) |= (yyvsp[(3) - (3)].scope);
     ;}
     break;
 
   case 30:
-#line 436 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 436 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:1");
-	(yyval.scope) = MOF_SCOPE_SCHEMA;
+        MOF_trace("scope:1");
+        (yyval.scope) = MOF_SCOPE_SCHEMA;
     ;}
     break;
 
   case 31:
-#line 441 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 441 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:2");
-	(yyval.scope) = MOF_SCOPE_CLASS;
+        MOF_trace("scope:2");
+        (yyval.scope) = MOF_SCOPE_CLASS;
     ;}
     break;
 
   case 32:
-#line 446 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 446 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:3");
-	(yyval.scope) = MOF_SCOPE_ASSOCIATION;
+        MOF_trace("scope:3");
+        (yyval.scope) = MOF_SCOPE_ASSOCIATION;
     ;}
     break;
 
   case 33:
-#line 451 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 451 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:4");
-	(yyval.scope) = MOF_SCOPE_INDICATION;
+        MOF_trace("scope:4");
+        (yyval.scope) = MOF_SCOPE_INDICATION;
     ;}
     break;
 
   case 34:
-#line 456 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 456 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:5");
-	(yyval.scope) = MOF_SCOPE_PROPERTY;
+        MOF_trace("scope:5");
+        (yyval.scope) = MOF_SCOPE_PROPERTY;
     ;}
     break;
 
   case 35:
-#line 461 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 461 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:6");
-	(yyval.scope) = MOF_SCOPE_REFERENCE;
+        MOF_trace("scope:6");
+        (yyval.scope) = MOF_SCOPE_REFERENCE;
     ;}
     break;
 
   case 36:
-#line 466 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 466 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:7");
-	(yyval.scope) = MOF_SCOPE_METHOD;
+        MOF_trace("scope:7");
+        (yyval.scope) = MOF_SCOPE_METHOD;
     ;}
     break;
 
   case 37:
-#line 471 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 471 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:8");
-	(yyval.scope) = MOF_SCOPE_PARAMETER;
+        MOF_trace("scope:8");
+        (yyval.scope) = MOF_SCOPE_PARAMETER;
     ;}
     break;
 
   case 38:
-#line 476 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 476 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scope:9");
-	(yyval.scope) = MOF_SCOPE_ANY;
+        MOF_trace("scope:9");
+        (yyval.scope) = MOF_SCOPE_ANY;
     ;}
     break;
 
   case 39:
-#line 484 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 484 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_flavor:1");
-	(yyval.flavor) = (yyvsp[-1].flavor);
+        MOF_trace("qual_decl_flavor:1");
+        (yyval.flavor) = (yyvsp[(4) - (5)].flavor);
     ;}
     break;
 
   case 40:
-#line 489 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 489 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_decl_flavor:2");
-	(yyval.flavor) = 0;
+        MOF_trace("qual_decl_flavor:2");
+        (yyval.flavor) = 0;
     ;}
     break;
 
   case 41:
-#line 497 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 497 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("flavor_list:1");
-	(yyval.flavor) = (yyvsp[0].flavor);
+        MOF_trace("flavor_list:1");
+        (yyval.flavor) = (yyvsp[(1) - (1)].flavor);
     ;}
     break;
 
   case 42:
-#line 502 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 502 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("flavor_list:2");
-	(yyval.flavor) = (yyvsp[-2].flavor);
-	(yyval.flavor) |= (yyvsp[0].flavor);
+        MOF_trace("flavor_list:2");
+        (yyval.flavor) = (yyvsp[(1) - (3)].flavor);
+        (yyval.flavor) |= (yyvsp[(3) - (3)].flavor);
     ;}
     break;
 
   case 43:
-#line 511 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 511 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("flavor:1");
-	(yyval.flavor) = MOF_FLAVOR_ENABLEOVERRIDE;
+        MOF_trace("flavor:1");
+        (yyval.flavor) = MOF_FLAVOR_ENABLEOVERRIDE;
     ;}
     break;
 
   case 44:
-#line 516 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 516 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("flavor:2");
-	(yyval.flavor) = MOF_FLAVOR_DISABLEOVERRIDE;
+        MOF_trace("flavor:2");
+        (yyval.flavor) = MOF_FLAVOR_DISABLEOVERRIDE;
     ;}
     break;
 
   case 45:
-#line 521 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 521 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("flavor:3");
-	(yyval.flavor) = MOF_FLAVOR_RESTRICTED;
+        MOF_trace("flavor:3");
+        (yyval.flavor) = MOF_FLAVOR_RESTRICTED;
     ;}
     break;
 
   case 46:
-#line 526 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 526 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("flavor:4");
-	(yyval.flavor) = MOF_FLAVOR_TOSUBCLASS;
+        MOF_trace("flavor:4");
+        (yyval.flavor) = MOF_FLAVOR_TOSUBCLASS;
     ;}
     break;
 
   case 47:
-#line 531 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 531 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("flavor:5");
-	(yyval.flavor) = MOF_FLAVOR_TRANSLATABLE;
+        MOF_trace("flavor:5");
+        (yyval.flavor) = MOF_FLAVOR_TRANSLATABLE;
     ;}
     break;
 
   case 48:
-#line 547 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 547 "cimple/tools/libmof/MOF.y"
     {
-	(yyval.qual) = (yyvsp[-1].qual);
-	MOF_trace("qual_list:1");
+        (yyval.qual) = (yyvsp[(2) - (3)].qual);
+        MOF_trace("qual_list:1");
     ;}
     break;
 
   case 49:
-#line 555 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 555 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_list_body:1");
-	(yyvsp[0].qual)->validate();
-	(yyval.qual) = (yyvsp[0].qual);
+        MOF_trace("qual_list_body:1");
+        (yyvsp[(1) - (1)].qual)->validate();
+        (yyval.qual) = (yyvsp[(1) - (1)].qual);
     ;}
     break;
 
   case 50:
-#line 561 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 561 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_list_body:2");
-	(yyvsp[0].qual)->validate();
-	(yyvsp[-2].qual)->append((yyvsp[0].qual));
-	(yyval.qual) = (yyvsp[-2].qual);
+        MOF_trace("qual_list_body:2");
+        (yyvsp[(3) - (3)].qual)->validate();
+        (yyvsp[(1) - (3)].qual)->append((yyvsp[(3) - (3)].qual));
+        (yyval.qual) = (yyvsp[(1) - (3)].qual);
     ;}
     break;
 
   case 51:
-#line 571 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 571 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual:1");
-	(yyval.qual) = new MOF_Qualifier();
-	MOF_ASSERT((yyval.qual) != NULL);
-	(yyval.qual)->name = (yyvsp[-2].string_value);
-	(yyval.qual)->params = (yyvsp[-1].literal);
-	(yyval.qual)->flavor = MOF_Flavor::fixup((yyvsp[0].flavor), false);
+        MOF_trace("qual:1");
+        (yyval.qual) = new MOF_Qualifier();
+        MOF_ASSERT((yyval.qual) != NULL);
+        (yyval.qual)->name = (yyvsp[(1) - (3)].string_value);
+        (yyval.qual)->params = (yyvsp[(2) - (3)].literal);
+        (yyval.qual)->flavor = MOF_Flavor::fixup((yyvsp[(3) - (3)].flavor), false);
     ;}
     break;
 
   case 52:
-#line 583 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 583 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_param:1");
-	(yyval.literal) = (yyvsp[-1].literal);
+        MOF_trace("qual_param:1");
+        (yyval.literal) = (yyvsp[(2) - (3)].literal);
     ;}
     break;
 
   case 53:
-#line 588 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 588 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_param:2");
-	(yyval.literal) = (yyvsp[0].literal);
+        MOF_trace("qual_param:2");
+        (yyval.literal) = (yyvsp[(1) - (1)].literal);
     ;}
     break;
 
   case 54:
-#line 593 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 593 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_param:3");
-	(yyval.literal) = NULL;
+        MOF_trace("qual_param:3");
+        (yyval.literal) = NULL;
     ;}
     break;
 
   case 55:
-#line 601 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 601 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_flavor:1");
-	(yyval.flavor) = (yyvsp[0].flavor);
+        MOF_trace("qual_flavor:1");
+        (yyval.flavor) = (yyvsp[(2) - (2)].flavor);
     ;}
     break;
 
   case 56:
-#line 606 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 606 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_flavor:2");
-	(yyval.flavor) = 0;
+        MOF_trace("qual_flavor:2");
+        (yyval.flavor) = 0;
     ;}
     break;
 
   case 57:
-#line 614 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 614 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_flavor_list:1");
-	(yyval.flavor) = (yyvsp[0].flavor);
+        MOF_trace("qual_flavor_list:1");
+        (yyval.flavor) = (yyvsp[(1) - (1)].flavor);
     ;}
     break;
 
   case 58:
-#line 619 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 619 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("qual_flavor_list:2");
-	(yyval.flavor) = (yyvsp[-1].flavor);
-	(yyval.flavor) |= (yyvsp[0].flavor);
+        MOF_trace("qual_flavor_list:2");
+        (yyval.flavor) = (yyvsp[(1) - (2)].flavor);
+        (yyval.flavor) |= (yyvsp[(2) - (2)].flavor);
     ;}
     break;
 
   case 59:
-#line 640 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 640 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("class_decl:1");
-	(yyval.class_decl) = (yyvsp[-2].class_decl);
-	(yyval.class_decl)->qualifiers = NULL;
-	(yyval.class_decl)->features = (yyvsp[-1].feature);
+        MOF_trace("class_decl:1");
+        (yyval.class_decl) = (yyvsp[(1) - (3)].class_decl);
+        (yyval.class_decl)->qualifiers = NULL;
+        (yyval.class_decl)->features = (yyvsp[(2) - (3)].feature);
     ;}
     break;
 
   case 60:
-#line 647 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 647 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("class_decl:2");
-	(yyval.class_decl) = (yyvsp[-2].class_decl);
-	(yyval.class_decl)->qualifiers = (yyvsp[-3].qual);
-	(yyval.class_decl)->features = (yyvsp[-1].feature);
+        MOF_trace("class_decl:2");
+        (yyval.class_decl) = (yyvsp[(2) - (4)].class_decl);
+        (yyval.class_decl)->qualifiers = (yyvsp[(1) - (4)].qual);
+        (yyval.class_decl)->features = (yyvsp[(3) - (4)].feature);
     ;}
     break;
 
   case 61:
-#line 657 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 657 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("class_head:1");
-	(yyval.class_decl) = new MOF_Class_Decl();
-	MOF_ASSERT((yyval.class_decl) != NULL);
-	(yyval.class_decl)->name = (yyvsp[-2].string_value);
-	(yyval.class_decl)->alias = (yyvsp[-1].string_value);
-	(yyval.class_decl)->super_class_name = (yyvsp[0].string_value);
+        MOF_trace("class_head:1");
+        (yyval.class_decl) = new MOF_Class_Decl();
+        MOF_ASSERT((yyval.class_decl) != NULL);
+        (yyval.class_decl)->name = (yyvsp[(2) - (4)].string_value);
+        (yyval.class_decl)->alias = (yyvsp[(3) - (4)].string_value);
+        (yyval.class_decl)->super_class_name = (yyvsp[(4) - (4)].string_value);
     ;}
     break;
 
   case 62:
-#line 669 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 669 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("class_body:1");
-	(yyval.feature) = (yyvsp[-1].feature);
+        MOF_trace("class_body:1");
+        (yyval.feature) = (yyvsp[(2) - (3)].feature);
     ;}
     break;
 
   case 63:
-#line 677 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 677 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("class_alias:1");
-	(yyval.string_value) = (yyvsp[0].string_value);
+        MOF_trace("class_alias:1");
+        (yyval.string_value) = (yyvsp[(2) - (2)].string_value);
     ;}
     break;
 
   case 64:
-#line 682 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 682 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("class_alias:2");
-	(yyval.string_value) = NULL;
+        MOF_trace("class_alias:2");
+        (yyval.string_value) = NULL;
     ;}
     break;
 
   case 65:
-#line 690 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 690 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("super_class_name:1");
-	(yyval.string_value) = (yyvsp[0].string_value);
+        MOF_trace("super_class_name:1");
+        (yyval.string_value) = (yyvsp[(2) - (2)].string_value);
     ;}
     break;
 
   case 66:
-#line 695 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 695 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("super_class_name:2");
-	(yyval.string_value) = NULL;
+        MOF_trace("super_class_name:2");
+        (yyval.string_value) = NULL;
     ;}
     break;
 
   case 67:
-#line 703 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 703 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("feature_list:1");
-	(yyval.feature) = NULL;
+        MOF_trace("feature_list:1");
+        (yyval.feature) = NULL;
     ;}
     break;
 
   case 68:
-#line 708 "MOF.y"
-    {
-	MOF_trace("feature_list:2");
 
-	if ((yyvsp[-1].feature))
-	    (yyvsp[-1].feature)->append((yyvsp[0].feature));
-	else
-	    (yyval.feature) = (yyvsp[0].feature);
+/* Line 1455 of yacc.c  */
+#line 708 "cimple/tools/libmof/MOF.y"
+    {
+        MOF_trace("feature_list:2");
+
+        if ((yyvsp[(1) - (2)].feature))
+            (yyvsp[(1) - (2)].feature)->append((yyvsp[(2) - (2)].feature));
+        else
+            (yyval.feature) = (yyvsp[(2) - (2)].feature);
     ;}
     break;
 
   case 69:
-#line 720 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 720 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("feature:1");
-	(yyval.feature) = (MOF_Feature*)(yyvsp[0].prop_decl);
+        MOF_trace("feature:1");
+        (yyval.feature) = (MOF_Feature*)(yyvsp[(1) - (1)].prop_decl);
     ;}
     break;
 
   case 70:
-#line 725 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 725 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("feature:2");
-	(yyval.feature) = (MOF_Feature*)(yyvsp[0].ref_decl);
+        MOF_trace("feature:2");
+        (yyval.feature) = (MOF_Feature*)(yyvsp[(1) - (1)].ref_decl);
     ;}
     break;
 
   case 71:
-#line 730 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 730 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("feature:3");
-	(yyval.feature) = (MOF_Feature*)(yyvsp[0].method_decl);
+        MOF_trace("feature:3");
+        (yyval.feature) = (MOF_Feature*)(yyvsp[(1) - (1)].method_decl);
     ;}
     break;
 
   case 72:
-#line 746 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 746 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl:1");
-	(yyval.prop_decl) = (yyvsp[-2].prop_decl);
-	(yyval.prop_decl)->array_index = (yyvsp[-1].decl_init).array_index;
-	(yyval.prop_decl)->initializer = (yyvsp[-1].decl_init).initializer;
+        MOF_trace("prop_decl:1");
+        (yyval.prop_decl) = (yyvsp[(1) - (3)].prop_decl);
+        (yyval.prop_decl)->array_index = (yyvsp[(2) - (3)].decl_init).array_index;
+        (yyval.prop_decl)->initializer = (yyvsp[(2) - (3)].decl_init).initializer;
     ;}
     break;
 
   case 73:
-#line 753 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 753 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl:2");
-	(yyvsp[-3].qual)->validate_list(MOF_SCOPE_PROPERTY);
-	(yyval.prop_decl) = (yyvsp[-2].prop_decl);
-	(yyval.prop_decl)->qualifiers = (yyvsp[-3].qual);
-	(yyval.prop_decl)->array_index = (yyvsp[-1].decl_init).array_index;
-	(yyval.prop_decl)->initializer = (yyvsp[-1].decl_init).initializer;
+        MOF_trace("prop_decl:2");
+        (yyvsp[(1) - (4)].qual)->validate_list(MOF_SCOPE_PROPERTY);
+        (yyval.prop_decl) = (yyvsp[(2) - (4)].prop_decl);
+        (yyval.prop_decl)->qualifiers = (yyvsp[(1) - (4)].qual);
+        (yyval.prop_decl)->array_index = (yyvsp[(3) - (4)].decl_init).array_index;
+        (yyval.prop_decl)->initializer = (yyvsp[(3) - (4)].decl_init).initializer;
     ;}
     break;
 
   case 74:
-#line 765 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 765 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl_head:1");
-	(yyval.prop_decl) = new MOF_Property_Decl();
-	MOF_ASSERT((yyval.prop_decl) != NULL);
-	(yyval.prop_decl)->type = MOF_FEATURE_PROP;
-	(yyval.prop_decl)->name = (yyvsp[0].string_value);
-	(yyval.prop_decl)->data_type = (int)(yyvsp[-1].int_value);
+        MOF_trace("prop_decl_head:1");
+        (yyval.prop_decl) = new MOF_Property_Decl();
+        MOF_ASSERT((yyval.prop_decl) != NULL);
+        (yyval.prop_decl)->type = MOF_FEATURE_PROP;
+        (yyval.prop_decl)->name = (yyvsp[(2) - (2)].string_value);
+        (yyval.prop_decl)->data_type = (int)(yyvsp[(1) - (2)].int_value);
     ;}
     break;
 
   case 75:
-#line 777 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 777 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl_body:1");
-	(yyval.decl_init) = (yyvsp[0].decl_init);
+        MOF_trace("prop_decl_body:1");
+        (yyval.decl_init) = (yyvsp[(1) - (1)].decl_init);
     ;}
     break;
 
   case 76:
-#line 782 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 782 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl_body:2");
-	(yyval.decl_init) = (yyvsp[0].decl_init);
+        MOF_trace("prop_decl_body:2");
+        (yyval.decl_init) = (yyvsp[(1) - (1)].decl_init);
     ;}
     break;
 
   case 77:
-#line 790 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 790 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl_array_init:1");
-	(yyval.decl_init).array_index = (int)(yyvsp[-2].int_value);
-	(yyval.decl_init).initializer = (yyvsp[0].literal);
+        MOF_trace("prop_decl_array_init:1");
+        (yyval.decl_init).array_index = (int)(yyvsp[(1) - (3)].int_value);
+        (yyval.decl_init).initializer = (yyvsp[(3) - (3)].literal);
     ;}
     break;
 
   case 78:
-#line 796 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 796 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl_array_init:2");
-	(yyval.decl_init).array_index = (int)(yyvsp[0].int_value);
-	(yyval.decl_init).initializer = NULL;
+        MOF_trace("prop_decl_array_init:2");
+        (yyval.decl_init).array_index = (int)(yyvsp[(1) - (1)].int_value);
+        (yyval.decl_init).initializer = NULL;
     ;}
     break;
 
   case 79:
-#line 805 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 805 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl_scalar_init:1");
-	(yyval.decl_init).array_index = 0;
-	(yyval.decl_init).initializer = (yyvsp[0].literal);
+        MOF_trace("prop_decl_scalar_init:1");
+        (yyval.decl_init).array_index = 0;
+        (yyval.decl_init).initializer = (yyvsp[(2) - (2)].literal);
     ;}
     break;
 
   case 80:
-#line 811 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 811 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_decl_scalar_init:2");
-	(yyval.decl_init).array_index = 0;
-	(yyval.decl_init).initializer = NULL;
+        MOF_trace("prop_decl_scalar_init:2");
+        (yyval.decl_init).array_index = 0;
+        (yyval.decl_init).initializer = NULL;
     ;}
     break;
 
   case 81:
-#line 828 "MOF.y"
-    {
-	MOF_trace("ref_decl:1");
-	(yyval.ref_decl) = (yyvsp[-2].ref_decl);
 
-	(yyval.ref_decl)->alias = (yyvsp[-1].ref_init).alias;
-	(yyval.ref_decl)->obj_ref = (yyvsp[-1].ref_init).obj_ref;
-	(yyval.ref_decl)->qualifiers = NULL;
+/* Line 1455 of yacc.c  */
+#line 828 "cimple/tools/libmof/MOF.y"
+    {
+        MOF_trace("ref_decl:1");
+        (yyval.ref_decl) = (yyvsp[(1) - (3)].ref_decl);
+
+        (yyval.ref_decl)->alias = (yyvsp[(2) - (3)].ref_init).alias;
+        (yyval.ref_decl)->obj_ref = (yyvsp[(2) - (3)].ref_init).obj_ref;
+        (yyval.ref_decl)->qualifiers = NULL;
     ;}
     break;
 
   case 82:
-#line 837 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 837 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("ref_decl:2");
-	(yyvsp[-3].qual)->validate_list(MOF_SCOPE_REFERENCE);
-	(yyval.ref_decl) = (yyvsp[-2].ref_decl);
-	(yyval.ref_decl)->qualifiers = (yyvsp[-3].qual);
-	(yyval.ref_decl)->alias = (yyvsp[-1].ref_init).alias;
-	(yyval.ref_decl)->obj_ref = (yyvsp[-1].ref_init).obj_ref;
+        MOF_trace("ref_decl:2");
+        (yyvsp[(1) - (4)].qual)->validate_list(MOF_SCOPE_REFERENCE);
+        (yyval.ref_decl) = (yyvsp[(2) - (4)].ref_decl);
+        (yyval.ref_decl)->qualifiers = (yyvsp[(1) - (4)].qual);
+        (yyval.ref_decl)->alias = (yyvsp[(3) - (4)].ref_init).alias;
+        (yyval.ref_decl)->obj_ref = (yyvsp[(3) - (4)].ref_init).obj_ref;
     ;}
     break;
 
   case 83:
-#line 849 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 849 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("ref_head:1");
-	(yyval.ref_decl) = new MOF_Reference_Decl();
-	MOF_ASSERT((yyval.ref_decl) != NULL);
-	(yyval.ref_decl)->class_name = (yyvsp[-1].string_value);
-	(yyval.ref_decl)->type = MOF_FEATURE_REF;
-	(yyval.ref_decl)->name = (yyvsp[0].string_value);
+        MOF_trace("ref_head:1");
+        (yyval.ref_decl) = new MOF_Reference_Decl();
+        MOF_ASSERT((yyval.ref_decl) != NULL);
+        (yyval.ref_decl)->class_name = (yyvsp[(1) - (2)].string_value);
+        (yyval.ref_decl)->type = MOF_FEATURE_REF;
+        (yyval.ref_decl)->name = (yyvsp[(2) - (2)].string_value);
     ;}
     break;
 
   case 84:
-#line 860 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 860 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("ref_body:1");
-	(yyval.ref_init) = (yyvsp[0].ref_init);
+        MOF_trace("ref_body:1");
+        (yyval.ref_init) = (yyvsp[(2) - (2)].ref_init);
     ;}
     break;
 
   case 85:
-#line 865 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 865 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("ref_body:2");
-	(yyval.ref_init).alias = NULL;
-	(yyval.ref_init).obj_ref = NULL;
+        MOF_trace("ref_body:2");
+        (yyval.ref_init).alias = NULL;
+        (yyval.ref_init).obj_ref = NULL;
     ;}
     break;
 
   case 86:
-#line 874 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 874 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("ref_init:1");
+        MOF_trace("ref_init:1");
 
-	/*
-	 * Create object reference for this alias (or at least try to):
-	 */
+        /*
+         * Create object reference for this alias (or at least try to):
+         */
 
-	(yyval.ref_init).alias = NULL;
-	(yyval.ref_init).obj_ref = MOF_Instance_Decl::alias_to_obj_ref((yyvsp[0].string_value));
+        (yyval.ref_init).alias = NULL;
+        (yyval.ref_init).obj_ref = MOF_Instance_Decl::alias_to_obj_ref((yyvsp[(1) - (1)].string_value));
     ;}
     break;
 
   case 87:
-#line 885 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 885 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("ref_init:2");
-	(yyval.ref_init).alias = NULL;
-	(yyval.ref_init).obj_ref = (yyvsp[0].obj_ref);
+        MOF_trace("ref_init:2");
+        (yyval.ref_init).alias = NULL;
+        (yyval.ref_init).obj_ref = (yyvsp[(1) - (1)].obj_ref);
     ;}
     break;
 
   case 88:
-#line 902 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 902 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("method_decl:1");
-	(yyval.method_decl) = (yyvsp[-2].method_decl);
-	(yyval.method_decl)->qualifiers = NULL;
-	(yyval.method_decl)->parameters = (yyvsp[-1].param);
+        MOF_trace("method_decl:1");
+        (yyval.method_decl) = (yyvsp[(1) - (3)].method_decl);
+        (yyval.method_decl)->qualifiers = NULL;
+        (yyval.method_decl)->parameters = (yyvsp[(2) - (3)].param);
     ;}
     break;
 
   case 89:
-#line 909 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 909 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("method_decl:2");
-	(yyvsp[-3].qual)->validate_list(MOF_SCOPE_METHOD);
-	(yyval.method_decl) = (yyvsp[-2].method_decl);
-	(yyval.method_decl)->qualifiers = (yyvsp[-3].qual);
-	(yyval.method_decl)->parameters = (yyvsp[-1].param);
+        MOF_trace("method_decl:2");
+        (yyvsp[(1) - (4)].qual)->validate_list(MOF_SCOPE_METHOD);
+        (yyval.method_decl) = (yyvsp[(2) - (4)].method_decl);
+        (yyval.method_decl)->qualifiers = (yyvsp[(1) - (4)].qual);
+        (yyval.method_decl)->parameters = (yyvsp[(3) - (4)].param);
     ;}
     break;
 
   case 90:
-#line 920 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 920 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("method_head:1");
-	(yyval.method_decl) = new MOF_Method_Decl();
-	MOF_ASSERT((yyval.method_decl) != NULL);
-	(yyval.method_decl)->type = MOF_FEATURE_METHOD;
-	(yyval.method_decl)->name = (yyvsp[0].string_value);
-	(yyval.method_decl)->data_type = (int)(yyvsp[-1].int_value);
+        MOF_trace("method_head:1");
+        (yyval.method_decl) = new MOF_Method_Decl();
+        MOF_ASSERT((yyval.method_decl) != NULL);
+        (yyval.method_decl)->type = MOF_FEATURE_METHOD;
+        (yyval.method_decl)->name = (yyvsp[(2) - (2)].string_value);
+        (yyval.method_decl)->data_type = (int)(yyvsp[(1) - (2)].int_value);
     ;}
     break;
 
   case 91:
-#line 932 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 932 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("method_body:1");
-	(yyval.param) = (yyvsp[-1].param);
+        MOF_trace("method_body:1");
+        (yyval.param) = (yyvsp[(2) - (3)].param);
     ;}
     break;
 
   case 92:
-#line 937 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 937 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("method_body:2");
-	(yyval.param) = NULL;
+        MOF_trace("method_body:2");
+        (yyval.param) = NULL;
     ;}
     break;
 
   case 93:
-#line 945 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 945 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param_list:1");
-	(yyval.param) = (yyvsp[0].param);
+        MOF_trace("param_list:1");
+        (yyval.param) = (yyvsp[(1) - (1)].param);
     ;}
     break;
 
   case 94:
-#line 950 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 950 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param_list:2");
-	(yyval.param) = (yyvsp[-2].param);
-	(yyval.param)->append((yyvsp[0].param));
+        MOF_trace("param_list:2");
+        (yyval.param) = (yyvsp[(1) - (3)].param);
+        (yyval.param)->append((yyvsp[(3) - (3)].param));
     ;}
     break;
 
   case 95:
-#line 967 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 967 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param:1");
-	(yyval.param) = (yyvsp[-1].param);
-	(yyval.param)->array_index = (int)(yyvsp[0].int_value);
+        MOF_trace("param:1");
+        (yyval.param) = (yyvsp[(1) - (2)].param);
+        (yyval.param)->array_index = (int)(yyvsp[(2) - (2)].int_value);
     ;}
     break;
 
   case 96:
-#line 973 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 973 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param:2");
-	(yyvsp[-2].qual)->validate_list(MOF_SCOPE_PARAMETER);
-	(yyval.param) = (yyvsp[-1].param);
-	(yyval.param)->qualifiers = (yyvsp[-2].qual);
-	(yyval.param)->array_index = (int)(yyvsp[0].int_value);
+        MOF_trace("param:2");
+        (yyvsp[(1) - (3)].qual)->validate_list(MOF_SCOPE_PARAMETER);
+        (yyval.param) = (yyvsp[(2) - (3)].param);
+        (yyval.param)->qualifiers = (yyvsp[(1) - (3)].qual);
+        (yyval.param)->array_index = (int)(yyvsp[(3) - (3)].int_value);
     ;}
     break;
 
   case 97:
-#line 984 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 984 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param_head:1");
-	(yyval.param) = (yyvsp[-1].param);
-	(yyval.param)->name = (yyvsp[0].string_value);
+        MOF_trace("param_head:1");
+        (yyval.param) = (yyvsp[(1) - (2)].param);
+        (yyval.param)->name = (yyvsp[(2) - (2)].string_value);
     ;}
     break;
 
   case 98:
-#line 993 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 993 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param_body:1");
-	(yyval.int_value) = (yyvsp[0].int_value);
+        MOF_trace("param_body:1");
+        (yyval.int_value) = (yyvsp[(1) - (1)].int_value);
     ;}
     break;
 
   case 99:
-#line 998 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 998 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param_body:2");
-	/* It's not an array at all */
-	(yyval.int_value) = 0;
+        MOF_trace("param_body:2");
+        /* It's not an array at all */
+        (yyval.int_value) = 0;
     ;}
     break;
 
   case 100:
-#line 1007 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1007 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param_data_type:1");
-	(yyval.param) = new MOF_Parameter();
-	(yyval.param)->data_type = (int)(yyvsp[0].int_value);
-	(yyval.param)->ref_name = NULL;
+        MOF_trace("param_data_type:1");
+        (yyval.param) = new MOF_Parameter();
+        (yyval.param)->data_type = (int)(yyvsp[(1) - (1)].int_value);
+        (yyval.param)->ref_name = NULL;
     ;}
     break;
 
   case 101:
-#line 1014 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1014 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("param_data_type:2");
-	(yyval.param) = new MOF_Parameter();
-	(yyval.param)->data_type = TOK_REF;
-	(yyval.param)->ref_name = (yyvsp[0].string_value);
+        MOF_trace("param_data_type:2");
+        (yyval.param) = new MOF_Parameter();
+        (yyval.param)->data_type = TOK_REF;
+        (yyval.param)->ref_name = (yyvsp[(1) - (1)].string_value);
     ;}
     break;
 
   case 102:
-#line 1032 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1032 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("inst_decl:1");
-	(yyval.inst_decl) = (yyvsp[-2].inst_decl);
-	(yyval.inst_decl)->qualifiers = NULL;
-	(yyval.inst_decl)->properties = (yyvsp[-1].prop);
+        MOF_trace("inst_decl:1");
+        (yyval.inst_decl) = (yyvsp[(1) - (3)].inst_decl);
+        (yyval.inst_decl)->qualifiers = NULL;
+        (yyval.inst_decl)->properties = (yyvsp[(2) - (3)].prop);
     ;}
     break;
 
   case 103:
-#line 1039 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1039 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("inst_decl:2");
-	(yyvsp[-3].qual)->validate_list(MOF_SCOPE_CLASS);
-	(yyval.inst_decl) = (yyvsp[-2].inst_decl);
-	(yyval.inst_decl)->qualifiers = (yyvsp[-3].qual);
-	(yyval.inst_decl)->properties = (yyvsp[-1].prop);
+        MOF_trace("inst_decl:2");
+        (yyvsp[(1) - (4)].qual)->validate_list(MOF_SCOPE_CLASS);
+        (yyval.inst_decl) = (yyvsp[(2) - (4)].inst_decl);
+        (yyval.inst_decl)->qualifiers = (yyvsp[(1) - (4)].qual);
+        (yyval.inst_decl)->properties = (yyvsp[(3) - (4)].prop);
     ;}
     break;
 
   case 104:
-#line 1050 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1050 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("inst_head:1");
-	(yyval.inst_decl) = new MOF_Instance_Decl();
-	MOF_ASSERT((yyval.inst_decl) != NULL);
-	(yyval.inst_decl)->class_name = (yyvsp[-1].string_value);
-	(yyval.inst_decl)->alias = (yyvsp[0].string_value);
+        MOF_trace("inst_head:1");
+        (yyval.inst_decl) = new MOF_Instance_Decl();
+        MOF_ASSERT((yyval.inst_decl) != NULL);
+        (yyval.inst_decl)->class_name = (yyvsp[(3) - (4)].string_value);
+        (yyval.inst_decl)->alias = (yyvsp[(4) - (4)].string_value);
     ;}
     break;
 
   case 105:
-#line 1061 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1061 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("inst_body:1");
-	(yyval.prop) = (yyvsp[-1].prop);
+        MOF_trace("inst_body:1");
+        (yyval.prop) = (yyvsp[(2) - (3)].prop);
     ;}
     break;
 
   case 106:
-#line 1069 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1069 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("inst_alias:1");
-	(yyval.string_value) = (yyvsp[0].string_value);
+        MOF_trace("inst_alias:1");
+        (yyval.string_value) = (yyvsp[(2) - (2)].string_value);
     ;}
     break;
 
   case 107:
-#line 1074 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1074 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("inst_alias:2");
-	(yyval.string_value) = NULL;
+        MOF_trace("inst_alias:2");
+        (yyval.string_value) = NULL;
     ;}
     break;
 
   case 108:
-#line 1090 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1090 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_list:1");
-	(yyval.prop) = (yyvsp[0].prop);
+        MOF_trace("prop_list:1");
+        (yyval.prop) = (yyvsp[(1) - (1)].prop);
     ;}
     break;
 
   case 109:
-#line 1095 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1095 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop_list:2");
-	(yyvsp[-1].prop)->append((yyvsp[0].prop));
-	(yyval.prop) = (yyvsp[-1].prop);
+        MOF_trace("prop_list:2");
+        (yyvsp[(1) - (2)].prop)->append((yyvsp[(2) - (2)].prop));
+        (yyval.prop) = (yyvsp[(1) - (2)].prop);
     ;}
     break;
 
   case 110:
-#line 1104 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1104 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop:1");
-	(yyval.prop) = (yyvsp[0].prop);
-	(yyval.prop)->qualifiers = NULL;
+        MOF_trace("prop:1");
+        (yyval.prop) = (yyvsp[(1) - (1)].prop);
+        (yyval.prop)->qualifiers = NULL;
     ;}
     break;
 
   case 111:
-#line 1110 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1110 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("prop:2");
-	(yyvsp[-1].qual)->validate_list(MOF_SCOPE_PROPERTY);
-	(yyval.prop) = (yyvsp[0].prop);
-	(yyval.prop)->qualifiers = (yyvsp[-1].qual);
+        MOF_trace("prop:2");
+        (yyvsp[(1) - (2)].qual)->validate_list(MOF_SCOPE_PROPERTY);
+        (yyval.prop) = (yyvsp[(2) - (2)].prop);
+        (yyval.prop)->qualifiers = (yyvsp[(1) - (2)].qual);
     ;}
     break;
 
   case 112:
-#line 1120 "MOF.y"
-    {
-	MOF_trace("prop_body:1");
 
-	(yyval.prop) = new MOF_Property();
-	MOF_ASSERT((yyval.prop) != NULL);
-	(yyval.prop)->name = (yyvsp[-3].string_value);
-	(yyval.prop)->initializer = (yyvsp[-1].literal);
+/* Line 1455 of yacc.c  */
+#line 1120 "cimple/tools/libmof/MOF.y"
+    {
+        MOF_trace("prop_body:1");
+
+        (yyval.prop) = new MOF_Property();
+        MOF_ASSERT((yyval.prop) != NULL);
+        (yyval.prop)->name = (yyvsp[(1) - (4)].string_value);
+        (yyval.prop)->initializer = (yyvsp[(3) - (4)].literal);
     ;}
     break;
 
   case 113:
-#line 1129 "MOF.y"
-    {
-	MOF_trace("prop_body:2");
 
-	(yyval.prop) = new MOF_Property();
-	MOF_ASSERT((yyval.prop) != NULL);
-	(yyval.prop)->name = (yyvsp[-3].string_value);
-	(yyval.prop)->initializer = NULL;
-	(yyval.prop)->alias = (yyvsp[-1].string_value);
+/* Line 1455 of yacc.c  */
+#line 1129 "cimple/tools/libmof/MOF.y"
+    {
+        MOF_trace("prop_body:2");
+
+        (yyval.prop) = new MOF_Property();
+        MOF_ASSERT((yyval.prop) != NULL);
+        (yyval.prop)->name = (yyvsp[(1) - (4)].string_value);
+        (yyval.prop)->initializer = NULL;
+        (yyval.prop)->alias = (yyvsp[(3) - (4)].string_value);
     ;}
     break;
 
   case 114:
-#line 1150 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1150 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("object_ref:1");
-	(yyval.string_value) = (yyvsp[-1].string_value);
+        MOF_trace("object_ref:1");
+        (yyval.string_value) = (yyvsp[(1) - (2)].string_value);
     ;}
     break;
 
   case 115:
-#line 1158 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1158 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("obj_ref:1");
+        MOF_trace("obj_ref:1");
 
-	if (REF_parse((yyvsp[0].string_literal).escaped, &(yyval.obj_ref)) != 0)
-	{
-	    MOF_error_printf("malformed object reference: \"%s\": %s", 
-		(yyvsp[0].string_literal).escaped, ref_error_message);
-	}
+        if (REF_parse((yyvsp[(1) - (1)].string_literal).escaped, &(yyval.obj_ref)) != 0)
+        {
+            MOF_error_printf("malformed object reference: \"%s\": %s", 
+                (yyvsp[(1) - (1)].string_literal).escaped, ref_error_message);
+        }
 
-	{
-	    char* p = MOF_Object_Reference::normalize((yyvsp[0].string_literal).escaped);
-	    MOF_ASSERT(p != NULL);
-	    free(p);
-	}
+        {
+            char* p = MOF_Object_Reference::normalize((yyvsp[(1) - (1)].string_literal).escaped);
+            MOF_ASSERT(p != NULL);
+            free(p);
+        }
 
-	free((yyvsp[0].string_literal).escaped);
-	free((yyvsp[0].string_literal).raw);
-	(yyval.obj_ref)->validate();
-	(yyval.obj_ref)->normalize();
-	/* MOF_obj_ref_print(stdout, $$); */
+        free((yyvsp[(1) - (1)].string_literal).escaped);
+        free((yyvsp[(1) - (1)].string_literal).raw);
+        (yyval.obj_ref)->validate();
+        (yyval.obj_ref)->normalize();
+        /* MOF_obj_ref_print(stdout, $$); */
     ;}
     break;
 
   case 116:
-#line 1191 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1191 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("array_index:1");
-	/* It's a varying length array (VLA) */
-	(yyval.int_value) = -1;
+        MOF_trace("array_index:1");
+        /* It's a varying length array (VLA) */
+        (yyval.int_value) = -1;
     ;}
     break;
 
   case 117:
-#line 1197 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1197 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("array_index:2");
+        MOF_trace("array_index:2");
 
-	/* subscript must be positive */
+        /* subscript must be positive */
 
-	if ((yyvsp[-1].int_value) <= 0)
-	    MOF_error("array subscript must be a positive number");
+        if ((yyvsp[(2) - (3)].int_value) <= 0)
+            MOF_error("array subscript must be a positive number");
 
-	(yyval.int_value) = (yyvsp[-1].int_value);
+        (yyval.int_value) = (yyvsp[(2) - (3)].int_value);
     ;}
     break;
 
   case 118:
-#line 1219 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1219 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:1");
-	(yyval.int_value) = TOK_UINT8;
+        MOF_trace("data_type:1");
+        (yyval.int_value) = TOK_UINT8;
     ;}
     break;
 
   case 119:
-#line 1224 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1224 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:2");
-	(yyval.int_value) = TOK_SINT8;
+        MOF_trace("data_type:2");
+        (yyval.int_value) = TOK_SINT8;
     ;}
     break;
 
   case 120:
-#line 1229 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1229 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:3");
-	(yyval.int_value) = TOK_UINT16;
+        MOF_trace("data_type:3");
+        (yyval.int_value) = TOK_UINT16;
     ;}
     break;
 
   case 121:
-#line 1234 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1234 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:4");
-	(yyval.int_value) = TOK_SINT16;
+        MOF_trace("data_type:4");
+        (yyval.int_value) = TOK_SINT16;
     ;}
     break;
 
   case 122:
-#line 1239 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1239 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:5");
-	(yyval.int_value) = TOK_UINT32;
+        MOF_trace("data_type:5");
+        (yyval.int_value) = TOK_UINT32;
     ;}
     break;
 
   case 123:
-#line 1244 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1244 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:6");
-	(yyval.int_value) = TOK_SINT32;
+        MOF_trace("data_type:6");
+        (yyval.int_value) = TOK_SINT32;
     ;}
     break;
 
   case 124:
-#line 1249 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1249 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:7");
-	(yyval.int_value) = TOK_UINT64;
+        MOF_trace("data_type:7");
+        (yyval.int_value) = TOK_UINT64;
     ;}
     break;
 
   case 125:
-#line 1254 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1254 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:8");
-	(yyval.int_value) = TOK_SINT64;
+        MOF_trace("data_type:8");
+        (yyval.int_value) = TOK_SINT64;
     ;}
     break;
 
   case 126:
-#line 1259 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1259 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:9");
-	(yyval.int_value) = TOK_REAL32;
+        MOF_trace("data_type:9");
+        (yyval.int_value) = TOK_REAL32;
     ;}
     break;
 
   case 127:
-#line 1264 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1264 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:10");
-	(yyval.int_value) = TOK_REAL64;
+        MOF_trace("data_type:10");
+        (yyval.int_value) = TOK_REAL64;
     ;}
     break;
 
   case 128:
-#line 1269 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1269 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:11");
-	(yyval.int_value) = TOK_CHAR16;
+        MOF_trace("data_type:11");
+        (yyval.int_value) = TOK_CHAR16;
     ;}
     break;
 
   case 129:
-#line 1274 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1274 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:12");
-	(yyval.int_value) = TOK_STRING;
+        MOF_trace("data_type:12");
+        (yyval.int_value) = TOK_STRING;
     ;}
     break;
 
   case 130:
-#line 1279 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1279 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:13");
-	(yyval.int_value) = TOK_BOOLEAN;
+        MOF_trace("data_type:13");
+        (yyval.int_value) = TOK_BOOLEAN;
     ;}
     break;
 
   case 131:
-#line 1284 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1284 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("data_type:14");
-	(yyval.int_value) = TOK_DATETIME;
+        MOF_trace("data_type:14");
+        (yyval.int_value) = TOK_DATETIME;
     ;}
     break;
 
   case 132:
-#line 1300 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1300 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("init:1");
-	(yyval.literal) = (yyvsp[0].literal);
+        MOF_trace("init:1");
+        (yyval.literal) = (yyvsp[(1) - (1)].literal);
     ;}
     break;
 
   case 133:
-#line 1305 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1305 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("init:2");
-	(yyval.literal) = (yyvsp[0].literal);
+        MOF_trace("init:2");
+        (yyval.literal) = (yyvsp[(1) - (1)].literal);
     ;}
     break;
 
   case 134:
-#line 1313 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1313 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("array_init:1");
-	(yyval.literal) = (yyvsp[-1].literal);
+        MOF_trace("array_init:1");
+        (yyval.literal) = (yyvsp[(2) - (3)].literal);
     ;}
     break;
 
   case 135:
-#line 1321 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1321 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scalar_init_list:1");
-	(yyval.literal) = (yyvsp[0].literal);
+        MOF_trace("scalar_init_list:1");
+        (yyval.literal) = (yyvsp[(1) - (1)].literal);
     ;}
     break;
 
   case 136:
-#line 1326 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1326 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("scalar_init_list:2");
-	(yyvsp[-2].literal)->append((yyvsp[0].literal));
-	(yyval.literal) = (yyvsp[-2].literal);
+        MOF_trace("scalar_init_list:2");
+        (yyvsp[(1) - (3)].literal)->append((yyvsp[(3) - (3)].literal));
+        (yyval.literal) = (yyvsp[(1) - (3)].literal);
     ;}
     break;
 
   case 137:
-#line 1343 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1343 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("literal:1");
-	(yyval.literal) = new MOF_Literal();
-	MOF_ASSERT((yyval.literal) != NULL);
-	(yyval.literal)->value_type = TOK_INT_VALUE;
-	(yyval.literal)->int_value = (yyvsp[0].int_value);
+        MOF_trace("literal:1");
+        (yyval.literal) = new MOF_Literal();
+        MOF_ASSERT((yyval.literal) != NULL);
+        (yyval.literal)->value_type = TOK_INT_VALUE;
+        (yyval.literal)->int_value = (yyvsp[(1) - (1)].int_value);
     ;}
     break;
 
   case 138:
-#line 1351 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1351 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("literal:2");
-	(yyval.literal) = new MOF_Literal();
-	MOF_ASSERT((yyval.literal) != NULL);
-	(yyval.literal)->value_type = TOK_REAL_VALUE;
-	(yyval.literal)->real_value = (yyvsp[0].real_value);
+        MOF_trace("literal:2");
+        (yyval.literal) = new MOF_Literal();
+        MOF_ASSERT((yyval.literal) != NULL);
+        (yyval.literal)->value_type = TOK_REAL_VALUE;
+        (yyval.literal)->real_value = (yyvsp[(1) - (1)].real_value);
     ;}
     break;
 
   case 139:
-#line 1359 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1359 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("literal:3");
-	(yyval.literal) = new MOF_Literal();
-	MOF_ASSERT((yyval.literal) != NULL);
-	(yyval.literal)->value_type = TOK_CHAR_VALUE;
-	(yyval.literal)->char_value = (yyvsp[0].char_value);
+        MOF_trace("literal:3");
+        (yyval.literal) = new MOF_Literal();
+        MOF_ASSERT((yyval.literal) != NULL);
+        (yyval.literal)->value_type = TOK_CHAR_VALUE;
+        (yyval.literal)->char_value = (yyvsp[(1) - (1)].char_value);
     ;}
     break;
 
   case 140:
-#line 1367 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1367 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("literal:4");
-	(yyval.literal) = new MOF_Literal();
-	MOF_ASSERT((yyval.literal) != NULL);
-	(yyval.literal)->value_type = TOK_BOOL_VALUE;
-	(yyval.literal)->bool_value = (yyvsp[0].bool_value) ? true : false;
+        MOF_trace("literal:4");
+        (yyval.literal) = new MOF_Literal();
+        MOF_ASSERT((yyval.literal) != NULL);
+        (yyval.literal)->value_type = TOK_BOOL_VALUE;
+        (yyval.literal)->bool_value = (yyvsp[(1) - (1)].bool_value) ? true : false;
     ;}
     break;
 
   case 141:
-#line 1375 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1375 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("literal:6");
-	(yyval.literal) = new MOF_Literal();
-	MOF_ASSERT((yyval.literal) != NULL);
-	(yyval.literal)->value_type = TOK_STRING_VALUE;
-	(yyval.literal)->string_value = (yyvsp[0].string_literal).escaped;
-        free((yyvsp[0].string_literal).raw);
+        MOF_trace("literal:6");
+        (yyval.literal) = new MOF_Literal();
+        MOF_ASSERT((yyval.literal) != NULL);
+        (yyval.literal)->value_type = TOK_STRING_VALUE;
+        (yyval.literal)->string_value = (yyvsp[(1) - (1)].string_literal).escaped;
+        free((yyvsp[(1) - (1)].string_literal).raw);
     ;}
     break;
 
   case 142:
-#line 1384 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1384 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("literal:5");
-	(yyval.literal) = new MOF_Literal();
-	MOF_ASSERT((yyval.literal) != NULL);
-	(yyval.literal)->value_type = TOK_NULL_VALUE;
+        MOF_trace("literal:5");
+        (yyval.literal) = new MOF_Literal();
+        MOF_ASSERT((yyval.literal) != NULL);
+        (yyval.literal)->value_type = TOK_NULL_VALUE;
     ;}
     break;
 
   case 143:
-#line 1402 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1402 "cimple/tools/libmof/MOF.y"
     {
-	MOF_trace("string_literal:1");
-	(yyval.string_literal) = (yyvsp[0].string_literal);
+        MOF_trace("string_literal:1");
+        (yyval.string_literal) = (yyvsp[(1) - (1)].string_literal);
     ;}
     break;
 
   case 144:
-#line 1407 "MOF.y"
+
+/* Line 1455 of yacc.c  */
+#line 1407 "cimple/tools/libmof/MOF.y"
     {
         /* Raw case */
         {
-            size_t n1 = strlen((yyvsp[-1].string_literal).raw);
-            size_t n2 = strlen((yyvsp[0].string_literal).raw);
+            size_t n1 = strlen((yyvsp[(1) - (2)].string_literal).raw);
+            size_t n2 = strlen((yyvsp[(2) - (2)].string_literal).raw);
 
             MOF_trace("string_literal:2");
 
-            (yyval.string_literal).raw = (char*)realloc((yyvsp[-1].string_literal).raw, n1 + n2 + 16);
+            (yyval.string_literal).raw = (char*)realloc((yyvsp[(1) - (2)].string_literal).raw, n1 + n2 + 16);
             MOF_ASSERT((yyval.string_literal).raw != NULL);
 
-            strcat((yyval.string_literal).raw, (yyvsp[0].string_literal).raw);
-            free((yyvsp[0].string_literal).raw);
+            strcat((yyval.string_literal).raw, (yyvsp[(2) - (2)].string_literal).raw);
+            free((yyvsp[(2) - (2)].string_literal).raw);
         }
 
         /* Escaped case */
         {
-            size_t n1 = strlen((yyvsp[-1].string_literal).escaped);
-            size_t n2 = strlen((yyvsp[0].string_literal).escaped);
+            size_t n1 = strlen((yyvsp[(1) - (2)].string_literal).escaped);
+            size_t n2 = strlen((yyvsp[(2) - (2)].string_literal).escaped);
 
             MOF_trace("string_literal:2");
 
-            (yyval.string_literal).escaped = (char*)realloc((yyvsp[-1].string_literal).escaped, n1 + n2 + 16);
+            (yyval.string_literal).escaped = (char*)realloc((yyvsp[(1) - (2)].string_literal).escaped, n1 + n2 + 16);
             MOF_ASSERT((yyval.string_literal).escaped != NULL);
 
-            strcat((yyval.string_literal).escaped, (yyvsp[0].string_literal).escaped);
-            free((yyvsp[0].string_literal).escaped);
+            strcat((yyval.string_literal).escaped, (yyvsp[(2) - (2)].string_literal).escaped);
+            free((yyvsp[(2) - (2)].string_literal).escaped);
         }
     ;}
     break;
 
 
+
+/* Line 1455 of yacc.c  */
+#line 3280 "cimple/tools/libmof/MOF_Yacc.cpp"
+      default: break;
     }
+  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
 
-/* Line 1037 of yacc.c.  */
-#line 2731 "MOF_Yacc.cpp"
-
-  yyvsp -= yylen;
-  yyssp -= yylen;
-
-
+  YYPOPSTACK (yylen);
+  yylen = 0;
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
-
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -2762,98 +3310,65 @@ yyerrlab:
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if YYERROR_VERBOSE
-      yyn = yypact[yystate];
-
-      if (YYPACT_NINF < yyn && yyn < YYLAST)
-	{
-	  YYSIZE_T yysize = 0;
-	  int yytype = YYTRANSLATE (yychar);
-	  const char* yyprefix;
-	  char *yymsg;
-	  int yyx;
-
-	  /* Start YYX at -YYN if negative to avoid negative indexes in
-	     YYCHECK.  */
-	  int yyxbegin = yyn < 0 ? -yyn : 0;
-
-	  /* Stay within bounds of both yycheck and yytname.  */
-	  int yychecklim = YYLAST - yyn;
-	  int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-	  int yycount = 0;
-
-	  yyprefix = ", expecting ";
-	  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-	    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-	      {
-		yysize += yystrlen (yyprefix) + yystrlen (yytname [yyx]);
-		yycount += 1;
-		if (yycount == 5)
-		  {
-		    yysize = 0;
-		    break;
-		  }
-	      }
-	  yysize += (sizeof ("syntax error, unexpected ")
-		     + yystrlen (yytname[yytype]));
-	  yymsg = (char *) YYSTACK_ALLOC (yysize);
-	  if (yymsg != 0)
-	    {
-	      char *yyp = yystpcpy (yymsg, "syntax error, unexpected ");
-	      yyp = yystpcpy (yyp, yytname[yytype]);
-
-	      if (yycount < 5)
-		{
-		  yyprefix = ", expecting ";
-		  for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-		    if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR)
-		      {
-			yyp = yystpcpy (yyp, yyprefix);
-			yyp = yystpcpy (yyp, yytname[yyx]);
-			yyprefix = " or ";
-		      }
-		}
-	      yyerror (yymsg);
+#if ! YYERROR_VERBOSE
+      yyerror (YY_("syntax error"));
+#else
+      {
+	YYSIZE_T yysize = yysyntax_error (0, yystate, yychar);
+	if (yymsg_alloc < yysize && yymsg_alloc < YYSTACK_ALLOC_MAXIMUM)
+	  {
+	    YYSIZE_T yyalloc = 2 * yysize;
+	    if (! (yysize <= yyalloc && yyalloc <= YYSTACK_ALLOC_MAXIMUM))
+	      yyalloc = YYSTACK_ALLOC_MAXIMUM;
+	    if (yymsg != yymsgbuf)
 	      YYSTACK_FREE (yymsg);
-	    }
-	  else
-	    yyerror ("syntax error; also virtual memory exhausted");
-	}
-      else
-#endif /* YYERROR_VERBOSE */
-	yyerror ("syntax error");
+	    yymsg = (char *) YYSTACK_ALLOC (yyalloc);
+	    if (yymsg)
+	      yymsg_alloc = yyalloc;
+	    else
+	      {
+		yymsg = yymsgbuf;
+		yymsg_alloc = sizeof yymsgbuf;
+	      }
+	  }
+
+	if (0 < yysize && yysize <= yymsg_alloc)
+	  {
+	    (void) yysyntax_error (yymsg, yystate, yychar);
+	    yyerror (yymsg);
+	  }
+	else
+	  {
+	    yyerror (YY_("syntax error"));
+	    if (yysize != 0)
+	      goto yyexhaustedlab;
+	  }
+      }
+#endif
     }
 
 
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
+      /* If just tried and failed to reuse lookahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
-        {
-          /* If at end of input, pop the error token,
-	     then the rest of the stack, then return failure.  */
+	{
+	  /* Return failure if at end of input.  */
 	  if (yychar == YYEOF)
-	     for (;;)
-	       {
-
-		 YYPOPSTACK;
-		 if (yyssp == yyss)
-		   YYABORT;
-		 yydestruct ("Error: popping",
-                             yystos[*yyssp], yyvsp);
-	       }
-        }
+	    YYABORT;
+	}
       else
 	{
-	  yydestruct ("Error: discarding", yytoken, &yylval);
+	  yydestruct ("Error: discarding",
+		      yytoken, &yylval);
 	  yychar = YYEMPTY;
 	}
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -2863,15 +3378,17 @@ yyerrlab:
 `---------------------------------------------------*/
 yyerrorlab:
 
-#ifdef __GNUC__
-  /* Pacify GCC when the user code never invokes YYERROR and the label
-     yyerrorlab therefore never appears in user code.  */
-  if (0)
+  /* Pacify compilers like GCC when the user code never invokes
+     YYERROR and the label yyerrorlab therefore never appears in user
+     code.  */
+  if (/*CONSTCOND*/ 0)
      goto yyerrorlab;
-#endif
 
-yyvsp -= yylen;
-  yyssp -= yylen;
+  /* Do not reclaim the symbols of the rule which action triggered
+     this YYERROR.  */
+  YYPOPSTACK (yylen);
+  yylen = 0;
+  YY_STACK_PRINT (yyss, yyssp);
   yystate = *yyssp;
   goto yyerrlab1;
 
@@ -2901,19 +3418,17 @@ yyerrlab1:
 	YYABORT;
 
 
-      yydestruct ("Error: popping", yystos[yystate], yyvsp);
-      YYPOPSTACK;
+      yydestruct ("Error: popping",
+		  yystos[yystate], yyvsp);
+      YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   *++yyvsp = yylval;
 
 
-  /* Shift the error token. */
+  /* Shift the error token.  */
   YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
 
   yystate = yyn;
@@ -2931,45 +3446,62 @@ yyacceptlab:
 | yyabortlab -- YYABORT comes here.  |
 `-----------------------------------*/
 yyabortlab:
-  yydestruct ("Error: discarding lookahead",
-              yytoken, &yylval);
-  yychar = YYEMPTY;
   yyresult = 1;
   goto yyreturn;
 
-#ifndef yyoverflow
-/*----------------------------------------------.
-| yyoverflowlab -- parser overflow comes here.  |
-`----------------------------------------------*/
-yyoverflowlab:
-  yyerror ("parser stack overflow");
+#if !defined(yyoverflow) || YYERROR_VERBOSE
+/*-------------------------------------------------.
+| yyexhaustedlab -- memory exhaustion comes here.  |
+`-------------------------------------------------*/
+yyexhaustedlab:
+  yyerror (YY_("memory exhausted"));
   yyresult = 2;
   /* Fall through.  */
 #endif
 
 yyreturn:
+  if (yychar != YYEMPTY)
+     yydestruct ("Cleanup: discarding lookahead",
+		 yytoken, &yylval);
+  /* Do not reclaim the symbols of the rule which action triggered
+     this YYABORT or YYACCEPT.  */
+  YYPOPSTACK (yylen);
+  YY_STACK_PRINT (yyss, yyssp);
+  while (yyssp != yyss)
+    {
+      yydestruct ("Cleanup: popping",
+		  yystos[*yyssp], yyvsp);
+      YYPOPSTACK (1);
+    }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-  return yyresult;
+#if YYERROR_VERBOSE
+  if (yymsg != yymsgbuf)
+    YYSTACK_FREE (yymsg);
+#endif
+  /* Make sure YYID is used.  */
+  return YYID (yyresult);
 }
 
 
-#line 1438 "MOF.y"
+
+/* Line 1675 of yacc.c  */
+#line 1438 "cimple/tools/libmof/MOF.y"
 
 
 /*
 **==============================================================================
 **
-** MOF_trace():
+** MOF_trace():  Ouputs statements for detailed debug of yacc progress
 **
 **==============================================================================
 */
 
 static void MOF_trace(const char* str)
 {
-#if 0
+#if MOF_DEBUG_MODE
     printf("MOF_trace(): \"%s\"\n", str);
 #endif
 }

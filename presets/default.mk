@@ -11,3 +11,5 @@ $(error Platform is not specified and cannot be guessed)
 endif
 $(info Platform detected as $(CIMPLE_PLATFORM))
 endif
+
+DEVELOPMENT=1

@@ -1,4 +1,4 @@
-lib$(PROVIDER_LIBRARY)_SOURCES += CIM_AffectedJobElement.cpp \
+libprovider_SOURCES = CIM_AffectedJobElement.cpp \
 	CIM_AvailableDiagnosticService.cpp \
 	CIM_Capabilities.cpp \
 	CIM_Card.cpp \
@@ -172,3 +172,10 @@ lib$(PROVIDER_LIBRARY)_SOURCES += CIM_AffectedJobElement.cpp \
 	sf_diag_helpers.cpp \
 	sf_sw_helpers.cpp \
 	sf_sys_helpers.cpp
+
+libprovider_DIR = .
+libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
+
+$(eval $(call component,libprovider,SHARED_LIBRARIES))
+
+$(libprovider_TARGET) : $(CIMPLE_LIBS)
