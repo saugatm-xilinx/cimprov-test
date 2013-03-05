@@ -52,7 +52,7 @@ libcimple_SOURCES = \
 
 libcimple_DIR = cimple/lib
 
-$(libcimple_DIR)/%.o : CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
+$(libcimple_DIR)/%.o $(libcimple_DIR)/%.d : CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
 
 ifeq ($(CIM_SERVER),esxi)
 CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE

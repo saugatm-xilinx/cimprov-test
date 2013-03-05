@@ -10,10 +10,10 @@
 #include <string>
 #include <cstdarg>
 #include <sys/types.h>
-#include <util/util.h>
+#include <util.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <tools/gencommon/gencommon.h>
+#include <gencommon.h>
 #include "MOF_Parser.h"
 #include "usage.h"
 #include <vector>
@@ -902,7 +902,7 @@ int main(int argc, char** argv)
     if (optind == argc && class_list_file.size() == 0)
     {
         fprintf(stderr,"Error: No arguments and no classlist file.\n");
-        fprintf(stderr,"%s",(char*)USAGE, arg0);
+        fprintf(stderr, "%s%s", arg0, (char*)USAGE);
         exit(1);
     }
 	
@@ -926,7 +926,7 @@ int main(int argc, char** argv)
 
     // Create providers.
 	
-	for (int j = 0; j < classes.size(); j++)
+	for (unsigned j = 0; j < classes.size(); j++)
         genprov(classes[j]);
 
     return 0;

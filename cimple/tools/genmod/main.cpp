@@ -33,13 +33,13 @@
 #include <cstdio>
 #include <string>
 #include <unistd.h>
-#include <util/util.h>
-#include <tools/gencommon/gencommon.h>
+#include <util.h>
+#include <gencommon.h>
 #include <MOF_Parser.h>
 #include <vector>
 #include <string>
 #include "usage.h"
-#include <util/UUID.h>
+#include <UUID.h>
 
 using namespace std;
 bool cmpi_opt = false;
@@ -441,7 +441,7 @@ static void gen_module_file(const char* module_name, vector<string>& classes)
 
     vector<const MOF_Class_Decl*> cds;
 
-    for (int i = 0; i < classes.size(); i++)
+    for (unsigned i = 0; i < classes.size(); i++)
     {
         // Lookup class.
 

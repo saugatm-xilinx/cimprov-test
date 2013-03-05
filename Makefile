@@ -73,6 +73,10 @@ include mk/interface-$(CIM_INTERFACE).mk
 ifeq ($(DEVELOPMENT),1)
 include cimple/tools/file2c/sources.mk
 include cimple/tools/libmof/sources.mk
+include cimple/tools/libgencommon/sources.mk
+include cimple/tools/genclass/sources.mk
+include cimple/tools/genmod/sources.mk
+include cimple/tools/genprov/sources.mk
 endif
 
 include sources.mk
@@ -89,7 +93,7 @@ install : all
 
 %.d: %.cpp
 	@set -e; rm -f $@; \
-	$(CXX) -MM $(TOOLS_CPPFLAGS) $(CPPFLAGS) $< > $@.$$$$; \
+	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$; \
 	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 

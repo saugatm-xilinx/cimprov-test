@@ -1,0 +1,48 @@
+Usage: genclass [OPTIONS] [CLASS_NAME]...
+
+This utility generates C++ definitions from MOF classes. For each class-name
+argument, it generates at least two files: CLASSNAME.h (containing the 
+corresponding C++ class) and CLASSNAME.cpp (containing opaque meta-data for
+the class). It also generates header and source files for any dependent 
+classes (ancestor and reference classes). The list of class names can be
+provided either on the command line and/or with the -F option pointing to
+a file containing the class names.
+
+Genclass to process the following MOF files:
+
+    1. 	First CIM_Schema.mof or first file of form cimv[0-9]*.mof (required).
+    2. 	Second repository.mof (optional).
+    3.	Finally any files given by the -M option (optional).
+
+Genclass requires the CIMPLE_MOF_PATH environment variable to be set, where
+it expects to find CIM_Schema.mof or cimv[0-9]*.mof (which contains the CIM 
+schema). The syntax of CIMPLE_MOF_PATH is similar to the Linux/Unix PATH 
+environment variable (i.e., a list of directories separated by colons). For 
+example:
+
+    export CIMPLE_MOF_PATH=/opt/cimple/schema/cim2131:/tmp/cim
+
+Genclass searches for user-defined MOF files in the following way:
+
+    1. 	First in the current directory.
+    2. 	Second under $CIMPLE_MOF_PATH.
+    3. 	Finally, under directories given by the -I options.
+
+OPTIONS:
+    -V      -- print the version number.
+    -I path -- add to MOF include path (can be repeated).
+    -M file -- add to list of MOF files to be parsed (can be repeated).
+    -r      -- generate repository.h and repository.cpp.
+    -h      -- Print this message.
+    -e      -- Generate enum tags for Values/ValueMap qualifiers.
+    -s      -- Generate classes for entire CIM schema.
+    -l      -- Export class symbols (for shared libraries).
+    -q      -- Generate non-boolean qualifiers and non-description qualifiers.
+    -d      -- Generate Description qualifiers.
+    -b      -- Generate boolean qualifiers (in addition to bit mask).
+    -f file -- Read class names from this file (one per line). (Deprecate)
+    -F file -- Read class names from this file (one per line).Same as -f file
+    -S      -- Create .genclass file that contains list of generated
+               .cpp files.
+    -v      -- Generate verbose output of processing by genclass
+

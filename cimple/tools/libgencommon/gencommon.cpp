@@ -32,7 +32,7 @@
 #include <string>
 #include <dirent.h>
 #include <cctype>
-#include <util/util.h>
+#include <util.h>
 #include "MOF_Parser.h"
 #include "gencommon.h"
 

@@ -42,7 +42,7 @@ libmof_SOURCES = \
 libmof_DIR = cimple/tools/libmof
 libmof_TARGET = libmof.a
 
-$(libmof_DIR)/%.o : CPPFLAGS += -I$(libmof_DIR) -DMOF_INTERNAL
+$(libmof_DIR)/%.o $(libmof_DIR)/%.d : CPPFLAGS += -I$(libmof_DIR) -DMOF_INTERNAL
 
 $(eval $(call component,libmof,STATIC_LIBRARIES))
 

@@ -3,6 +3,8 @@
 CLASSLIST=classes
 PRODUCTNAME=Solarflare
 
-genproj -e ${PRODUCTNAME} -F${CLASSLIST}
+./genclass -r -e -F ${CLASSLIST}
+./genprov -F${CLASSLIST}
+./genmod ${PRODUCTNAME} -F${CLASSLIST}
 #genmak -f ${PRODUCTNAME} *.cpp
 

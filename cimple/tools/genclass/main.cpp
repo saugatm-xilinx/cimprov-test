@@ -40,11 +40,11 @@
 #include <set>
 #include <cstdarg>
 #include <string>
-#include <util/util.h>
-#include <tools/gencommon/gencommon.h>
+#include <util.h>
+#include <gencommon.h>
 #include "usage.h"
-#include <mof/MOF_Parser.h>
-#include <mof/MOF_Options.h>
+#include <MOF_Parser.h>
+#include <MOF_Options.h>
 
 using namespace std;
 
