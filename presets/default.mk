@@ -1,7 +1,9 @@
 CIM_SERVER=pegasus
 
 ifeq ($(CIMPLE_PLATFORM),)
-BITNESS?=$(shell getconf LONG_BIT)
+ifeq ($(origin BITNESS), undefined)
+BITNESS:=$(shell getconf LONG_BIT)
+endif
 ifeq ($(BITNESS),32)
 CIMPLE_PLATFORM=LINUX_IX86_GNU
 else ifeq ($(BITNESS),64)

@@ -36,7 +36,7 @@
 */
 #define TR printf("TRACE %s\n", __LINE__);
 #include <cimple/config.h>
-#include <pegasus/utils/pegasus.h>
+#include <pegasus/pegasus.h>
 #include <Pegasus/Client/CIMClient.h>
 #include <Pegasus/Common/CIMPropertyList.h>
 #include <Pegasus/Common/StringConversion.h>
@@ -52,8 +52,8 @@
 #include <unistd.h>
 #include <cimple/cimple.h>
 #include <cimple/Provider_Handle.h>
-#include <pegasus/utils/Str.h>
-#include <util/util.h>
+#include <pegasus/Str.h>
+#include <util.h>
 #include "usage.h"
 
 #define INTEROP_NAMESPACE "root/PG_InterOp"

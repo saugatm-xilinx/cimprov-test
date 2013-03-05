@@ -13,5 +13,5 @@ libcimplepeg_TARGET = libcimplepeg.a
 $(eval $(call component,libcimplepeg,STATIC_LIBRARIES))
 
 
-CIMPLE_LIBS += $(libcimplepeg_TARGET)
+CIMPLE_LIBS := $(libcimplepeg_TARGET) $(CIMPLE_LIBS)
 

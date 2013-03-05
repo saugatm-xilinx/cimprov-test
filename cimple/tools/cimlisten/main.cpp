@@ -1,12 +1,12 @@
 #include <cassert>
 #include <getopt.h>
-#include <pegasus/utils/pegasus.h>
+#include <pegasus/pegasus.h>
 #include <cimple/Time.h>
 #include <Pegasus/Common/Config.h>
 #include <Pegasus/Client/CIMClient.h>
 #include <Pegasus/Listener/CIMListener.h>
 #include <Pegasus/Consumer/CIMIndicationConsumer.h>
-#include <pegasus/utils/print.h>
+#include <pegasus/print.h>
 
 PEGASUS_USING_PEGASUS;
 PEGASUS_USING_STD;
