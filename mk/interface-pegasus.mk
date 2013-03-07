@@ -12,7 +12,7 @@ $(error OpenPegasus is not installed or cannot be found!)
 endif
 endif
 
-CPPFLAGS += -DCIMPLE_PEGASUS_MODULE
+module.o module.d : CPPFLAGS += -DCIMPLE_PEGASUS_MODULE
 
 include cimple/pegasus/sources.mk
 include cimple/tools/regmod/sources.mk

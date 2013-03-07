@@ -4,7 +4,7 @@ ALL_HEADERS += $(wildcard ci/compat/*.h) $(wildcard ci/mgmt/*.h)
 ESXI_SUBDIR = esxi_solarflare
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(ESXI_SUBDIR)/$(ESXI_PROJECT_NAME)
-ESXI_GENERATED = $(lib$(PROVIDER_LIBRARY)_SOURCES) $(ALL_HEADERS)
+ESXI_GENERATED = $(libprovider_SOURCES) $(ALL_HEADERS)
 ESXI_GENERATED += repository.mof interop.mof
 ESXI_GENERATED += repository.reg.in interop.reg.in
 ESXI_GENERATED += Makefile.am
@@ -25,13 +25,13 @@ $(ESXI_SRC_PATH)/% : %
 	mkdir -p $(dir $@)
 	cp $< $@
 
-$(ESXI_SRC_PATH)/Makefile.am : Makefile
+$(ESXI_SRC_PATH)/Makefile.am : mk/rules-esxi.mk
 	echo "bin_PROGRAMS=lib$(PROVIDER_LIBRARY).so" >$@
-	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(lib$(PROVIDER_LIBRARY)_SOURCES))" >>$@
-	for src in $(wordlist 2,$(words $(lib$(PROVIDER_LIBRARY)_SOURCES)),$(lib$(PROVIDER_LIBRARY)_SOURCES)); do \
+	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(libprovider_SOURCES))" >>$@
+	for src in $(wordlist 2,$(words $(libprovider_SOURCES)),$(libprovider_SOURCES)); do \
 		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
 	done
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -I\$$(srcdir) -I\$$(srcdir)/cimple" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -DCIMPLE_CMPI_MODULE -I\$$(srcdir) -I\$$(srcdir)/cimple" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\\\"\$$(smash_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_INTEROP_NS=\\\"\$$(sfcb_interop_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CXXFLAGS=\$$(CFLAGS) $(CXXFLAGS)" >>$@
