@@ -1,3 +1,5 @@
+include mk/rules-reg.mk
+
 ALL_HEADERS = $(wildcard *.h) $(wildcard cimple/*.h) $(wildcard cimple/cmpi/*.h)
 ALL_HEADERS += $(wildcard ci/*.h) $(wildcard ci/tools/*.h) $(wildcard ci/tools/platform/*.h)
 ALL_HEADERS += $(wildcard ci/compat/*.h) $(wildcard ci/mgmt/*.h)
