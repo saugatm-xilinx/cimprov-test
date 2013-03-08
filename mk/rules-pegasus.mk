@@ -43,7 +43,7 @@ pegasus-build: $(PEGASUS_UPSTREAM_TARBALL) $(CIM_SCHEMA_ZIP)
 	unzip -o $(CIM_SCHEMA_ZIP) -d $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/DMTF
 	cp schemas/$(CIM_SCHEMA_DIR)/*.mof $(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)
 	make -C $(PEGASUS_ROOT) build
-	make -C $(PEGASUS_ROOT) repository
+	PATH=$(PEGASUS_HOME)/bin:$$PATH make -C $(PEGASUS_ROOT) repository
 	$(PEGASUS_HOME)/bin/cimmofl -aE -R$(PEGASUS_HOME) -Nrepository -n$(IMP_NAMESPACE) \
 					$(PEGASUS_ROOT)/Schemas/$(CIM_SCHEMA_DIR)/Core_Qualifiers.mof
 
