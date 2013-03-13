@@ -41,12 +41,11 @@ include cimple/tools/genprov/sources.mk
 
 .PHONY : bootstrap
 
-CLASSLIST = classes
+CLASSLIST = $(libcimobjects_DIR)/classes
 
-bootstrap : $(genmod_TARGET) $(genprov_TARGET)
-	$(CURDIR)/$(genclass_TARGET) -r -e -F $<
-	$(CURDIR)/$(genprov_TARGET)  -F$<
-	$(CURDIR)/$(genmod_TARGET) $(PROVIDER_LIBRARY) -F$<
+bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
+	$(abspath $(genprov_TARGET))  -F$<
+	$(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$<
 
 endif
 

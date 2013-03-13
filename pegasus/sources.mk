@@ -2,7 +2,7 @@ CIM_INTERFACE ?= pegasus
 
 ifeq ($(INTREE_PEGASUS),1)
 $(info Using in-tree Pegasus build)
-override PEGASUS_ROOT=$(CURDIR)/pegasus
+override PEGASUS_ROOT=$(abspath pegasus)
 override PEGASUS_HOME=$(PEGASUS_ROOT)/setup
 else
 ifeq ($(and $(PEGASUS_ROOT),$(PEGASUS_HOME),ok),ok)
@@ -64,7 +64,7 @@ export PEGASUS_ROOT
 export PEGASUS_HOME
 export PEGASUS_PLATFORM
 
-$(PEGASUS_COMPONENTS) : override PEGASUS_ROOT=$(CURDIR)/pegasus
+$(PEGASUS_COMPONENTS) : override PEGASUS_ROOT=$(abspath pegasus)
 $(PEGASUS_COMPONENTS) : override PEGASUS_HOME=$(PEGASUS_ROOT)/setup
 $(PEGASUS_COMPONENTS) : override PEGASUS_PLATFORM=$(CIMPLE_PLATFORM)
 $(PEGASUS_COMPONENTS) : export PEGASUS_DEBUG=true

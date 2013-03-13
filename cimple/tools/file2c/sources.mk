@@ -6,5 +6,5 @@ file2c_DEPENDS = libtools
 $(eval $(call component,file2c,BINARIES))
 
 %.h : %.txt $(file2c_TARGET)
-	$(CURDIR)/$(file2c_TARGET) $< -n `echo $(notdir $*) | tr a-z A-Z` >$@
+	$(abspath $(file2c_TARGET)) $< -n `echo $(notdir $*) | tr a-z A-Z` >$@
 
