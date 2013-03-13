@@ -143,7 +143,9 @@ def profile_check(prof_list, spec_list, ns):
                         logger.error(("Required property {0} " +
                                       "has NULL value").format(req_prop))
                 except Exception, e:
-                    logger.error("Failed to get property\n{0}".format(e))
+                    logger.error(("Failed to get property " +
+                                "{0} of {1}:\n{2}").format(
+                                            req_prop, inst.path, e))
                     global_passed = False
                     class_passed = False
 
@@ -168,8 +170,9 @@ def profile_check(prof_list, spec_list, ns):
                     assoc_count += 1
                 if assoc_count != assoc_spec[SC_ASSOC_NUM]:
                     logger.error(("{0}: unexpected assotiators number: " +
-                                  "{1} != {2}").format(title, assoc_count,
-                                                assoc_spec[SC_ASSOC_NUM]))
+                                  "{1} instead of {2}").format(
+                                            title, assoc_count,
+                                            assoc_spec[SC_ASSOC_NUM]))
                     global_passed = False
                     class_passed = False
 
@@ -181,8 +184,9 @@ def profile_check(prof_list, spec_list, ns):
             
             if (class_spec[SC_INST_NUM] != inst_count):
                 logger.error(("{0}: unexpected instance count: " +
-                              "{1} != {2}").format(class_spec[SC_NAME],
-                                inst_count, class_spec[SC_INST_NUM]))
+                              "{1} instead of {2}").format(
+                                class_spec[SC_NAME], inst_count,
+                                class_spec[SC_INST_NUM]))
                 global_passed = False
                 class_passed = False
         logger.info("Class {0} {1}".format(class_spec[SC_NAME],
@@ -199,7 +203,7 @@ def state_change(conn, inst_path, state):
     try:
         (rval, out_params) = conn.InvokeMethod('RequestStateChange',
                                     inst_path, RequestedState=state)
-    except Exception, e:                         
+    except Exception, e:
         logger.error("Failed to change state of {0} to {1}:\n{2}".format(
                                                 inst_path, state, e))
         (rval, out_params) = (RC_FAIL, {})
@@ -230,7 +234,7 @@ def req_state_change_check(ns, class_name, state, timeout):
         new_inst = wbemclient.GetInstance(inst.path)
         if new_inst[u'EnabledState'] != state:
             logger.error(("Oper state of instance {0} is unexpected: " +
-                        "{1} != {2}").format(inst.path,
+                        "{1} instead of {2}").format(inst.path,
                         new_inst[u'EnabledState'], state))
             passed = False
             continue
