@@ -1,4 +1,10 @@
-CIM_INTERFACE=pegasus
-PEGASUS_LIBDIR=$(PEGASUS_HOME)/lib
-PEGASUS_INCLUDES=$(PEGASUS_ROOT)/src
 
+define pegasus_tool
+
+$($(1)_DIR)/%.o $($(1)_DIR)/%.d : CPPFLAGS += $$(PEGASUS_CPPFLAGS)
+
+$($(1)_TARGET) : LDFLAGS += $$(PEGASUS_LDFLAGS) 
+
+$($(1)_TARGET) : LIBRARIES += $$(PEGASUS_LIBRARIES)
+
+endef

@@ -1,14 +1,10 @@
-INCLUDES += -I.
-
-DEFINES += -DMOF_INTERNAL
-
-libmof_parser_SOURCES =  MOF_Yacc.cpp \
+libmof_GENERATED =  MOF_Yacc.cpp \
     MOF_Lex.cpp \
     REF_Yacc.cpp \
     REF_Lex.cpp
 
 libmof_SOURCES = \
-	$(libmof_parser_SOURCES) \
+	$(libmof_GENERATED) \
     MOF_Buffer.cpp \
     MOF_Class_Decl.cpp \
     MOF_Data_Type.cpp \
@@ -41,17 +37,9 @@ libmof_SOURCES = \
 
 libmof_DIR = cimple/tools/libmof
 libmof_TARGET = libmof.a
-
-$(libmof_DIR)/%.o $(libmof_DIR)/%.d : CPPFLAGS += -I$(libmof_DIR) -DMOF_INTERNAL
+libmof_INCLUDES = $(libmof_DIR)
+libmof_CPPFLAGS = $(libmof_PROVIDE_CPPFLAGS) -DMOF_INTERNAL
 
 $(eval $(call component,libmof,STATIC_LIBRARIES))
 
-_libmof_parser_SOURCES = $(addprefix $(libmof_DIR)/,$(libmof_parser_SOURCES))
-$(filter-out $(_libmof_parser_SOURCES),$(_libmof_SOURCES)) : $(_libmof_parser_SOURCES)
-
-.PHONY : clean-libmof-parser
-clean-libmof : clean-libmof-parser
-
-clean-libmof-parser:
-	-rm -f $(addprefix $(libmof_DIR)/,$(libmof_parser_SOURCES))
-	-rm -f $(addprefix $(libmof_DIR)/,$(patsubst %.cpp,%.h,$(filter %_Yacc.cpp,$(libmof_parser_SOURCES))))
+libmof_EXTRA_CLEAN = rm $(patsubst %.cpp,%.h,$(filter %_Yacc.cpp,$(_libmof_GENERATED)))

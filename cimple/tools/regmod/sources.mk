@@ -1,10 +1,12 @@
 regmod_DIR = cimple/tools/regmod
 regmod_SOURCES = main.cpp
-regmod_TARGET = ./regmod
-
-cimple/tools/regmod/%.o : CPPFLAGS += $(TOOLS_CPPFLAGS)
+regmod_TARGET = regmod
+regmod_DEPENDS = $(PEGASUS_TOOLS_DEPS)
 
 $(eval $(call component,regmod,BINARIES))
 
-$(regmod_TARGET) : $(libtools_TARGET) $(CIMPLE_LIBS) 
+ifeq ($(INTREE_PEGASUS),1)
+$(regmod_TARGET) : $(PEGASUS_IMP_REPOSITORY)
+endif
+
 

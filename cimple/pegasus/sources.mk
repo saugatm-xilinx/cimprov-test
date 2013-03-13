@@ -10,8 +10,11 @@ libcimplepeg_DIR = cimple/pegasus
 
 libcimplepeg_TARGET = libcimplepeg.a
 
+libcimplepeg_DEPENDS = pegasus
+
 $(eval $(call component,libcimplepeg,STATIC_LIBRARIES))
 
-
-CIMPLE_LIBS := $(libcimplepeg_TARGET) $(CIMPLE_LIBS)
+ifeq ($(CIM_INTERFACE),pegasus)
+CIMPLE_COMPONENTS := libcimplepeg $(CIMPLE_COMPONENTS)
+endif
 

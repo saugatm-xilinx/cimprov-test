@@ -1,8 +1,8 @@
 libtools_DIR = cimple/tools/lib
-TOOLS_CPPFLAGS = -I$(libtools_DIR)
 libtools_SOURCES = UUID.cpp MAC.cpp crc.cpp util.cpp
 libtools_TARGET = libtools.a
+libtools_DEPENDS  = libcimple
 
-$(libtools_DIR)/%.o $(libtools_DIR)/%.d : CPPFLAGS += $(TOOLS_CPPFLAGS)
+libtools_INCLUDES = $(libtools_DIR)
 
 $(eval $(call component,libtools,STATIC_LIBRARIES))

@@ -51,15 +51,15 @@ libcimple_SOURCES = \
     FileSystem.cpp
 
 libcimple_DIR = cimple/lib
+libcimple_INCLUDES = cimple
 
-$(libcimple_DIR)/%.o $(libcimple_DIR)/%.d : CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
+libcimple_PROVIDE_CPPFLAGS = -DCIMPLE_DEBUG 
+libcimple_PROVIDE_CPPFLAGS += -DCIMPLE_PLATFORM_$(CIMPLE_PLATFORM)
 
-ifeq ($(CIM_SERVER),esxi)
-CPPFLAGS += -DCIMPLE_BUILDING_LIBCIMPLE
-endif
+libcimple_CPPFLAGS = $(libcimple_PROVIDE_CPPFLAGS) -DCIMPLE_BUILDING_LIBCIMPLE
 
 libcimple_TARGET = libcimple.a
 
 $(eval $(call component,libcimple,STATIC_LIBRARIES))
 
-CIMPLE_LIBS += $(libcimple_TARGET)
+CIMPLE_COMPONENTS += libcimple

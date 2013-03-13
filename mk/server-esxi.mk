@@ -1,1 +1,0 @@
-CIM_INTERFACE=cmpi

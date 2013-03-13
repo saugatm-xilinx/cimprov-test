@@ -1,8 +1,8 @@
 genmod_DIR = cimple/tools/genmod
 genmod_SOURCES = main.cpp
-genmod_TARGET = ./genmod
-
-cimple/tools/genmod/%.o cimple/tools/genmod/%.d : CPPFLAGS += $(TOOLS_CPPFLAGS) -I$(libmof_DIR) -I$(libgencommon_DIR)
+genmod_TARGET = genmod
+genmod_DEPENDS = file2c libtools libgencommon
+genmod_GENERATED = usage.h
 
 $(eval $(call component,genmod,BINARIES))
 
