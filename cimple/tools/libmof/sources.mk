@@ -39,6 +39,7 @@ libmof_DIR = cimple/tools/libmof
 libmof_TARGET = libmof.a
 libmof_INCLUDES = $(libmof_DIR)
 libmof_CPPFLAGS = $(libmof_PROVIDE_CPPFLAGS) -DMOF_INTERNAL
+libmof_SDK = 1
 
 $(eval $(call component,libmof,STATIC_LIBRARIES))
 

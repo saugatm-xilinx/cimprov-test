@@ -1,7 +1,7 @@
 esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
 
-esxi_archive_COMPONENTS = libcimple libcimplecmpi libcimobjects libprovider
+esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $($(comp)_SDK),,$(comp) ))
 
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)

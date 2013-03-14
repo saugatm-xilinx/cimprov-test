@@ -5,4 +5,6 @@ libtools_DEPENDS  = libcimple
 
 libtools_INCLUDES = $(libtools_DIR)
 
+libtools_SDK = 1
+
 $(eval $(call component,libtools,STATIC_LIBRARIES))

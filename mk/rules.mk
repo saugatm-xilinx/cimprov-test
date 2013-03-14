@@ -10,7 +10,7 @@ ifneq ($(realpath $(CIM_SCHEMA_PATCHDIR)),$(realpath $(CIM_SCHEMA_DIR)))
 endif
 
 
-%.d: %.cpp $(_ALL_GENERATED)
+%.d: %.cpp
 	@echo Producing $@
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$; \

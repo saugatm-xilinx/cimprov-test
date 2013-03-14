@@ -35,7 +35,6 @@ include cimple/tools/file2c/sources.mk
 include cimple/tools/libmof/sources.mk
 include cimple/tools/libgencommon/sources.mk
 include cimple/tools/genclass/sources.mk
-ifeq ($(DEVELOPMENT),1)
 include cimple/tools/genmod/sources.mk
 include cimple/tools/genprov/sources.mk
 
@@ -47,7 +46,6 @@ bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
 	$(abspath $(genprov_TARGET))  -F$<
 	$(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$<
 
-endif
 
 include libcimobjects/sources.mk
 

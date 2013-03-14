@@ -1,6 +1,7 @@
 genprov_DIR = cimple/tools/genprov
 genprov_SOURCES = main.cpp
 genprov_TARGET = genprov
+genprov_SDK = 1
 
 genprov_GENERATED = header_suffix.h \
 	header_prefix.h \

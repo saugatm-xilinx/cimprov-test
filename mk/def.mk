@@ -38,6 +38,8 @@ ALL_HEADERS += $$(_$(1)_HEADERS)
 $(1)_OBJS = $$(patsubst %.cpp,%.o,$$(_$(1)_SOURCES))
 $(2) += $$($(1)_TARGET)
 
+$$(patsubst %.o,%.d,$$($(1)_OBJS)) : $$(_ALL_GENERATED)
+
 $$($(1)_TARGET) : $$($(1)_OBJS) $$(foreach d,$$($(1)_DEPENDS),$$($$(d)_TARGET))
 
 ifneq ($(2),STATIC_LIBRARIES)
