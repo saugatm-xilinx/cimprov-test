@@ -2,7 +2,6 @@ esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
 
 esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $($(comp)_SDK),,$(comp) ))
-
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
@@ -46,8 +45,8 @@ $(ESXI_SRC_PATH)/% : %
 
 $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "bin_PROGRAMS=lib$(PROVIDER_LIBRARY).so" >$@
-	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(ALL_SOURCES))" >>$@
-	for src in $(wordlist 2,$(words $(ALL_SOURCES)),$(ALL_SOURCES)); do \
+	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(esxi_archive_GENERATED))" >>$@
+	for src in $(wordlist 2,$(words $(esxi_archive_GENERATED)),$(esxi_archive_GENERATED)); do \
 		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
 	done
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -DCIMPLE_CMPI_MODULE -I\$$(srcdir) -I\$$(srcdir)/cimple" >>$@

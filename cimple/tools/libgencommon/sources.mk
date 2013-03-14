@@ -1,6 +1,7 @@
 libgencommon_DIR = cimple/tools/libgencommon
 libgencommon_SOURCES = gencommon.cpp
 libgencommon_TARGET = libgencommon.a
+libgencommon_SDK = 1
 
 libgencommon_DEPENDS = libtools libmof
 libgencommon_INCLUDES = $(libgencommon_DIR)
