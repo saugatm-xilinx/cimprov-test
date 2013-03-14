@@ -32,7 +32,7 @@ _$(1)_SOURCES = $$(addprefix $$($(1)_DIR)/,$$($(1)_SOURCES))
 _$(1)_GENERATED = $$(addprefix $$($(1)_DIR)/,$$($(1)_GENERATED))
 _ALL_GENERATED += $$(_$(1)_GENERATED)
 ifneq ($(2),)
-ALL_SOURCES += $$(_$(1)_SOURCES
+ALL_SOURCES += $$(_$(1)_SOURCES)
 _$(1)_HEADERS = $$(foreach incdir,$$($(1)_INCLUDES),$$(wildcard $$(incdir)/*.h) )
 ALL_HEADERS += $$(_$(1)_HEADERS)
 $(1)_OBJS = $$(patsubst %.cpp,%.o,$$(_$(1)_SOURCES))
