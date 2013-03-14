@@ -45,8 +45,8 @@ $(ESXI_SRC_PATH)/% : %
 
 $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "bin_PROGRAMS=lib$(PROVIDER_LIBRARY).so" >$@
-	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(esxi_archive_GENERATED))" >>$@
-	for src in $(wordlist 2,$(words $(esxi_archive_GENERATED)),$(esxi_archive_GENERATED)); do \
+	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(ESXI_GENERATED))" >>$@
+	for src in $(wordlist 2,$(words $(ESXI_GENERATED)),$(ESXI_GENERATED)); do \
 		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
 	done
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -DCIMPLE_CMPI_MODULE -I\$$(srcdir) -I\$$(srcdir)/cimple" >>$@
