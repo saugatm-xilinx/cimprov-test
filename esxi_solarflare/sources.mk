@@ -1,9 +1,11 @@
 esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
 
+esxi_archive_COMPONENTS = libcimple libcimplecmpi libcimobjects libprovider
+
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
-ESXI_GENERATED = $(ALL_SOURCES) $(ALL_HEADERS)
+ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
 ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof
 ESXI_GENERATED += repository.reg.in interop.reg.in
 ESXI_GENERATED += Makefile.am
