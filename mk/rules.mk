@@ -5,7 +5,7 @@ $(CIM_SCHEMA_ZIP):
 $(CIM_SCHEMA_DIR) : $(CIM_SCHEMA_ZIP)
 	mkdir -p $(CIM_SCHEMA_DIR)/DMTF
 	unzip -o $(CIM_SCHEMA_ZIP) -d $(CIM_SCHEMA_DIR)/DMTF
-ifneq ($(CIM_SCHEMA_PATCHDIR),$(CIM_SCHEMA_DIR))
+ifneq ($(realpath $(CIM_SCHEMA_PATCHDIR)),$(realpath $(CIM_SCHEMA_DIR)))
 	cp $(CIM_SCHEMA_PATCHDIR)/*.mof $(CIM_SCHEMA_DIR)
 endif
 
