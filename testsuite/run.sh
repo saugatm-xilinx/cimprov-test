@@ -7,7 +7,7 @@ popd >/dev/null
 usage()
 {
 cat <<EOF
-USAGE: run.sh [options]
+USAGE: run.sh [options] [test_name[:param=value[,param=value]*]]*
 Options:
   --cfg=<CFG>           Configuration to be used
   --list-cfg            Print the list of known configurations
