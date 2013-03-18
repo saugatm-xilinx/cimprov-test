@@ -148,6 +148,7 @@ Invoke_Method_Status SF_ConcreteJob_Provider::GetError(
     return INVOKE_METHOD_OK;
 }
 
+#if CIM_SCHEMA_VERSION_MINOR == 26
 Invoke_Method_Status SF_ConcreteJob_Provider::GetErrors(
     const SF_ConcreteJob* self,
     Property< Array<CIM_Error*> >& Errors,
@@ -156,6 +157,7 @@ Invoke_Method_Status SF_ConcreteJob_Provider::GetErrors(
 {
     return INVOKE_METHOD_UNSUPPORTED;
 }
+#endif
 
 /*@END@*/
 

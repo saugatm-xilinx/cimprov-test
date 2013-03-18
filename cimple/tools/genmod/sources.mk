@@ -7,11 +7,6 @@ genmod_SDK = 1
 
 $(eval $(call component,genmod,BINARIES))
 
-$(_genmod_SOURCES) : $(genmod_DIR)/usage.h
+$(info genmod_CPPFLAGS = $(top_CPPFLAGS) $(genmod_CPPFLAGS) $(_genmod_DEP_CPPFLAGS))
 
-.PHONY : clean-genmod-extra
-clean-genmod : clean-genmod-extra
-
-clean-genmod-extra:
-	-rm -f $(genmod_DIR)/usage.h
 

@@ -21,23 +21,23 @@ INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToPr
 
 PROVIDER_LIBRARY=Solarflare
 
-CPPFLAGS += -D_GNU_SOURCE -I.
+override top_CPPFLAGS += -D_GNU_SOURCE -I.
 
 ifneq ($(CIM_SERVER),esxi)
-CXXFLAGS = -fPIC  -pthread
-CXXFLAGS += -Wall -W -Wno-unused -Werror
-CXXFLAGS += -g 
+override top_CXXFLAGS += -fPIC  -pthread
+override top_CXXFLAGS += -Wall -W -Wno-unused -Werror
+override top_CXXFLAGS += -g 
 
 ifeq ($(CIMPLE_PLATFORM),LINUX_IX86_GNU)
-CXXFLAGS += -m32
+override top_CXXFLAGS += -m32
 endif
 
 endif
-CXXFLAGS += -fvisibility=hidden
+override top_CXXFLAGS += -fvisibility=hidden
 
 ifneq ($(CIM_SERVER),esxi)
-CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
-CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
+override top_CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
+override top_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
 endif
 
-LIBRARIES = pthread
+override top_LIBRARIES += pthread

@@ -9,3 +9,4 @@ libgencommon_CPPFLAGS = $(libgencommon_PROVIDE_CPPFLAGS) -DGENCOMMON_INTERNAL
 libgencommon_CPPFLAGS += -DCIMPLE_DEFAULT_SCHEMA=\"$(CIM_SCHEMA_DIR)\" 
 
 $(eval $(call component,libgencommon,STATIC_LIBRARIES))
+

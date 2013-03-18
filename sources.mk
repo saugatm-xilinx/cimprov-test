@@ -38,7 +38,6 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_SoftwareInstallationService_Provider.cpp \
 	SF_SystemDevice_Provider.cpp \
 	SF_UseOfLog_Provider.cpp \
-	module.cpp \
 	sf_core.cpp \
 	sf_logging.cpp \
 	sf_platform.cpp \
@@ -51,11 +50,15 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	sf_intf_helpers.cpp \
 	sf_diag_helpers.cpp \
 	sf_sw_helpers.cpp \
-	sf_sys_helpers.cpp
+	sf_sys_helpers.cpp \
+	$(libprovider_GENERATED)
+
+libprovider_GENERATED = module.cpp
 
 libprovider_DIR = .
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
 libprovider_INCLUDES = $(libprovider_DIR)
+libprovider_CPPFLAGS = -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 
 ifeq ($(CIM_SERVER),esxi)
 
@@ -70,6 +73,9 @@ ALL_HEADERS += $(foreach inc,$(CI_INCLUDES),$(wildcard $(inc)/*.h) )
 
 endif
 
+module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_DIR) $(genmod_TARGET)
+	CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$< -M$(libcimobjects_DIR)/repository.mof
+
 
 ifeq ($(CIM_INTERFACE),pegasus)
 module.o module.d : CPPFLAGS += -DCIMPLE_PEGASUS_MODULE
@@ -80,6 +86,7 @@ module.o module.d : CPPFLAGS += -DCIMPLE_CMPI_MODULE
 endif
 
 libprovider_DEPENDS = libcimobjects
+libprovider_BUILD_DEPENDS = genmod
 
 $(eval $(call component,libprovider,SHARED_LIBRARIES))
 

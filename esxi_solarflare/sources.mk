@@ -49,12 +49,12 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	for src in $(wordlist 2,$(words $(ESXI_GENERATED)),$(ESXI_GENERATED)); do \
 		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
 	done
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -DCIMPLE_PLATFORM_$(CIMPLE_PLATFORM)" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE -I\$$(srcdir) -I\$$(srcdir)/cimple" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -I\$$(srcdir)/libcimobjects" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -I\$$(srcdir)" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+=$(patsubst -I%,-I\$$(srcdir)/%,$(libprovider_CPPFLAGS) $(_libprovider_DEP_CPPFLAGS))" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\\\"\$$(smash_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_INTEROP_NS=\\\"\$$(sfcb_interop_namespace)\\\"" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CXXFLAGS=\$$(CFLAGS) $(CXXFLAGS)" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CXXFLAGS=\$$(CFLAGS) -Wno-unused -Wno-unused-parameter $(CXXFLAGS)" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
 	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace)" >>$@
 	echo "if ENABLE_SFCB" >>$@

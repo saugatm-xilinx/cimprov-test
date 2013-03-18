@@ -44,8 +44,6 @@ CLASSLIST = $(libcimobjects_DIR)/classes
 
 bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
 	$(abspath $(genprov_TARGET))  -F$<
-	$(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$<
-
 
 include libcimobjects/sources.mk
 
@@ -54,7 +52,7 @@ ifeq ($(CIM_SERVER),esxi)
 include esxi_solarflare/sources.mk
 endif
 
-LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
+top_LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
 
 
 .PHONY: register unregister install

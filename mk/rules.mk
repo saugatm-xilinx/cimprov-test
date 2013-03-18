@@ -47,7 +47,7 @@ clean : $(CLEAN_TARGETS)
 $(CLEAN_TARGETS) : clean-% :
 	-test -n "$($*_OBJS)" && rm $($*_OBJS)
 	-test -n "$($*_OBJS)" && rm $(patsubst %.o,%.d,$($*_OBJS))
-	-test -n "$($*_PERSISTENT_TARGET)" && rm $($*_TARGET)
+	-test -z "$($*_PERSISTENT_TARGET)" && rm $($*_TARGET)
 	-test -n "$(_$*_GENERATED)" && rm $(_$*_GENERATED)
 	-$($*_EXTRA_CLEAN)
 
