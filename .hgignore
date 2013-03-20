@@ -6,3 +6,5 @@ TAGS
 *.o
 *.so
 *.d
+testsuite/pywbem
+testsuite/*.pyc
