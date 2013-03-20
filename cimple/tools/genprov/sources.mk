@@ -17,7 +17,7 @@ genprov_GENERATED = header_suffix.h \
 genprov_DEPENDS = libgencommon
 
 $(genprov_DIR)/%.h : $(genprov_DIR)/%.h.in $(file2c_TARGET)
-	$(file2c_TARGET) $< -n $* >$@
+	$(abspath $(file2c_TARGET)) $< -n $* >$@
 
 $(eval $(call component,genprov,BINARIES))
 
