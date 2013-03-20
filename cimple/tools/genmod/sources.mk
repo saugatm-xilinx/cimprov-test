@@ -7,6 +7,5 @@ genmod_SDK = 1
 
 $(eval $(call component,genmod,BINARIES))
 
-$(info genmod_CPPFLAGS = $(top_CPPFLAGS) $(genmod_CPPFLAGS) $(_genmod_DEP_CPPFLAGS))
 
 

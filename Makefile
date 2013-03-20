@@ -47,7 +47,7 @@ bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
 
 include libcimobjects/sources.mk
 
-include sources.mk
+include libprovider/sources.mk
 ifeq ($(CIM_SERVER),esxi)
 include esxi_solarflare/sources.mk
 endif

@@ -55,7 +55,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 
 libprovider_GENERATED = module.cpp
 
-libprovider_DIR = .
+libprovider_DIR = libprovider
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
 libprovider_INCLUDES = $(libprovider_DIR)
 libprovider_CPPFLAGS = -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
@@ -73,16 +73,16 @@ ALL_HEADERS += $(foreach inc,$(CI_INCLUDES),$(wildcard $(inc)/*.h) )
 
 endif
 
-module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_DIR) $(genmod_TARGET)
-	CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$< -M$(libcimobjects_DIR)/repository.mof
+$(libprovider_DIR)/module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_DIR) $(genmod_TARGET)
+	cd $(dir $@); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$(abspath $<) -M$(abspath $(libcimobjects_DIR)/repository.mof)
 
 
 ifeq ($(CIM_INTERFACE),pegasus)
-module.o module.d : CPPFLAGS += -DCIMPLE_PEGASUS_MODULE
+$(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_PEGASUS_MODULE
 
 endif
 ifeq ($(CIM_INTERFACE),cmpi)
-module.o module.d : CPPFLAGS += -DCIMPLE_CMPI_MODULE
+$(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_CMPI_MODULE
 endif
 
 libprovider_DEPENDS = libcimobjects

@@ -11,13 +11,15 @@ endif
 
 
 %.d: %.cpp
-	@echo Producing $@
+	@echo Producing $@ $(CPPFLAGS)
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$; \
 	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-include $(patsubst %.cpp,%.d,$(foreach comp,$(COMPONENTS),$(_$(comp)_SOURCES)))
+ifneq ($(MAKECMDGOALS),clean)
+include $(patsubst %.cpp,%.d,$(ALL_SOURCES))
+endif
 
 %_Yacc.cpp : %.y
 	$(BISON) --defines=$(patsubst %.cpp,%.h,$@) -p$(notdir $*)_ -o$@ $<

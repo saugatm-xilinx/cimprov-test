@@ -37,6 +37,7 @@ libmof_SOURCES = \
 
 libmof_DIR = cimple/tools/libmof
 libmof_TARGET = libmof.a
+libmof_DEPENDS = libtools
 libmof_INCLUDES = $(libmof_DIR)
 libmof_CPPFLAGS = $(libmof_PROVIDE_CPPFLAGS) -DMOF_INTERNAL
 libmof_SDK = 1
