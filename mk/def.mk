@@ -46,6 +46,7 @@ $(2) += $$($(1)_TARGET)
 $$($(1)_OBJS) $$(patsubst %.o,%.d,$$($(1)_OBJS)) : $$(_$(1)_GENERATED)
 
 $$($(1)_TARGET) : $$(foreach d,$$($(1)_DEPENDS) $$($(1)_BUILD_DEPENDS),$$($$(d)_TARGET)) $$($(1)_OBJS) 
+$$($(1)_TARGET) : override CXXFLAGS = $$(top_CXXFLAGS) $($(1)_CXXFLAGS)
 
 ifneq ($(2),STATIC_LIBRARIES)
 $$($(1)_TARGET) : override LDFLAGS = $$(top_LDFLAGS) $$($(1)_LDFLAGS) $$(_$(1)_DEP_LDFLAGS)
