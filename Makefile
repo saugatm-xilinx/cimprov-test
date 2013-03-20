@@ -63,12 +63,21 @@ all : $(libprovider_TARGET)
 
 else
 
+ifeq ($(ESXI_BUILD_HOST),)
+
 all : $(esxi_archive_TARGET)
+
+else
+
+all : $(esxi_vib_TARGET)
 
 endif
 
+endif
 
+ifneq ($(CIM_SERVER),esxi)
 install : all
 	cp lib$(PROVIDER_LIBRARY).so $(PROVIDER_LIBPATH)
+endif
 
 include mk/rules.mk
