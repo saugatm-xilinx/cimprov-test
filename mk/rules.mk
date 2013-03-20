@@ -11,7 +11,7 @@ endif
 
 
 %.d: %.cpp
-	@echo Producing $@ $(CPPFLAGS)
+	@echo Producing $@
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$; \
 	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
