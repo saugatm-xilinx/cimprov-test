@@ -379,13 +379,15 @@ namespace solarflare
     Instance *
     DiagnosticCompletionRecordHelper::instance(const SystemElement& se, unsigned idx) const
     {
+#if  CIM_SCHEMA_VERSION_MINOR == 26
         static unsigned const severityMap[] = {
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Fatal_NonRecoverable,
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Major,
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Minor,
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
-        };
+        }
+#endif
         
         char id[32];
         SF_DiagnosticCompletionRecord *le = static_cast<SF_DiagnosticCompletionRecord *>(reference(se, idx));
@@ -401,9 +403,11 @@ namespace solarflare
         le->ExpirationDate.set(Datetime::now());
         le->RecordType.null = false;
         le->RecordType.value = SF_DiagnosticCompletionRecord::_RecordType::enum_Results;
-        
+       
+#if  CIM_SCHEMA_VERSION_MINOR == 26 
         le->PerceivedSeverity.null = false;
         le->PerceivedSeverity.value = severityMap[entry.severity()];
+#endif
         
         le->LoopsPassed.set(entry.passed());
         le->LoopsFailed.set(entry.failed());

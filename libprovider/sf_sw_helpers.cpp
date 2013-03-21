@@ -183,8 +183,12 @@ namespace solarflare
             identity->RevisionNumber.set(sw.version().revision());
         if (sw.version().build() != VersionInfo::unknown)
         {
+#if CIM_SCHEMA_VERSION_MINOR == 26
             identity->LargeBuildNumber.set(sw.version().build());
             identity->IsLargeBuildNumber.set(true);
+#else
+            identity->BuildNumber.set(sw.version().build());
+#endif
         }
         identity->VersionString.set(sw.version().string());
         identity->ReleaseDate.set(sw.version().releaseDate());
@@ -257,9 +261,15 @@ namespace solarflare
                 CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_64_Bit
             },
             {
+#if CIM_SCHEMA_VERSION_MINOR == 26
                 CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_R2, 
                 CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_R2
+#else
+                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_64_Bit, 
+                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_64_Bit
+#endif
             },
+#if CIM_SCHEMA_VERSION_MINOR == 26
             {
                 CIM_OperatingSystem::_OSType::enum_RedHat_Enterprise_Linux,
                 CIM_OperatingSystem::_OSType::enum_RedHat_Enterprise_Linux_64_Bit
@@ -284,9 +294,24 @@ namespace solarflare
                 CIM_OperatingSystem::_OSType::enum_Linux_2_6_x,
                 CIM_OperatingSystem::_OSType::enum_Linux_2_6_x_64_Bit
             },
+#else
+#define GENERIC_LINUX {CIM_OperatingSystem::_OSType::enum_LINUX, CIM_OperatingSystem::_OSType::enum_LINUX}
+            GENERIC_LINUX,
+            GENERIC_LINUX,
+            GENERIC_LINUX,
+            GENERIC_LINUX,
+            GENERIC_LINUX,
+            GENERIC_LINUX,
+#undef GENERIC_LINUX
+#endif
             {
+#if CIM_SCHEMA_VERSION_MINOR == 26
                 CIM_OperatingSystem::_OSType::enum_VMware_ESXi,
                 CIM_OperatingSystem::_OSType::enum_VMware_ESXi,
+#else
+                CIM_OperatingSystem::_OSType::enum_Dedicated,
+                CIM_OperatingSystem::_OSType::enum_Dedicated,
+#endif
             }
         };
         identity->TargetOSTypes.null = false;
@@ -392,7 +417,12 @@ namespace solarflare
                 pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Windows_MSI;
                 break;
             case Package::VSphereBundle:
+#if CIM_SCHEMA_VERSION_MINOR == 26
                 pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_VMware_vSphere_Installation_Bundle;
+#else
+                pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Other;
+                identity->OtherExtendedResourceTypeDescription.set("vSphere Installation Bundle");
+#endif
                 break;
             case Package::Tarball:
                 pkgType = SF_SoftwareIdentity::_ExtendedResourceType::enum_Other;
@@ -470,8 +500,10 @@ namespace solarflare
 
         newSvc->Description.set(sw.description());
         newSvc->ElementName.set(sw.name());
+#if CIM_SCHEMA_VERSION_MINOR == 26
         newSvc->InstanceID.set(instanceID(sw.name()));
         newSvc->InstanceID.value.append(" Installer");
+#endif
         newSvc->OperationalStatus.null = false;
         newSvc->OperationalStatus.value.append(SF_SoftwareInstallationService::_OperationalStatus::enum_OK);
         newSvc->OperatingStatus.null = false;

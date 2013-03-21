@@ -73,7 +73,9 @@ namespace solarflare
         const solarflare::Port& p = static_cast<const solarflare::Port&>(se);
         SF_PhysicalConnector *phc = static_cast<SF_PhysicalConnector *>(reference(p, idx));
 
+#if  CIM_SCHEMA_VERSION_MINOR == 26
         phc->InstanceID.set(instanceID(p.name()));
+#endif
         phc->Name.set(p.name());
         phc->ElementName.set(p.name());
         phc->Description.set(p.description());

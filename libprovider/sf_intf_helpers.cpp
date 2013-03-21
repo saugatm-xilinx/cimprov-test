@@ -161,7 +161,9 @@ namespace solarflare
         newPort->Description.set(intf.description());
         newPort->ElementName.set(intf.ifName());
         newPort->Name.set(intf.name());
+#if  CIM_SCHEMA_VERSION_MINOR == 26
         newPort->InstanceID.set(instanceID(intf.name()));
+#endif
         newPort->EnabledState.null = false;
         newPort->EnabledState.value = (intf.ifStatus() ?
                                        (intf.port()->linkStatus() ? 
@@ -254,7 +256,9 @@ namespace solarflare
         newEP->Description.set(intf.description());
         newEP->ElementName.set(intf.ifName());
         newEP->NameFormat.set("Interface");
+#if CIM_SCHEMA_VERSION_MINOR == 26
         newEP->InstanceID.set(instanceID(intf.name()));
+#endif
         newEP->EnabledState.null = false;
         newEP->EnabledState.value = (intf.ifStatus() ?
                                      SF_LANEndpoint::_EnabledState::enum_Enabled : 

@@ -120,6 +120,7 @@ namespace solarflare
 
     cimple::Instance *LogEntryHelper::instance(const SystemElement& sys, unsigned idx) const
     {
+#if CIM_SCHEMA_VERSION_MINOR == 26
         static unsigned const severityMap[] = {
             SF_LogEntry::_PerceivedSeverity::enum_Fatal_NonRecoverable,
             SF_LogEntry::_PerceivedSeverity::enum_Major,
@@ -127,6 +128,7 @@ namespace solarflare
             SF_LogEntry::_PerceivedSeverity::enum_Information,
             SF_LogEntry::_PerceivedSeverity::enum_Information,
         };
+#endif
         
         char id[17];
         SF_LogEntry *le = static_cast<SF_LogEntry *>(reference(sys, idx));
@@ -140,8 +142,10 @@ namespace solarflare
         le->RecordFormat.set("");
         le->RecordData.set(entry.message());
         le->CreationTimeStamp.set(entry.stamp());
+#if CIM_SCHEMA_VERSION_MINOR == 26
         le->PerceivedSeverity.null = false;
         le->PerceivedSeverity.value = severityMap[entry.severity()];
+#endif
 
         return le;
     }

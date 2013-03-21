@@ -100,8 +100,10 @@ namespace solarflare
 
         const NIC& nic = static_cast<const NIC&>(se);
         solarflare::VitalProductData vpd = nic.vitalProductData();
-    
+   
+#if CIM_SCHEMA_VERSION_MINOR == 26 
         card->InstanceID.set(instanceID(nic.name()));
+#endif
         card->Name.set(nic.name());
         card->Description.set(nic.description());
         card->Manufacturer.set(vpd.manufacturer());
