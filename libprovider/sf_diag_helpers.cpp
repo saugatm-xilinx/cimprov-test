@@ -386,7 +386,7 @@ namespace solarflare
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Minor,
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
             SF_DiagnosticCompletionRecord::_PerceivedSeverity::enum_Information,
-        }
+        };
 #endif
         
         char id[32];
