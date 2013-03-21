@@ -2,7 +2,7 @@
 #
 AC_INIT(Solarflare, 1.0.0)
 AM_INIT_AUTOMAKE([foreign])
-AC_CONFIG_SRCDIR([sf_utils.cpp])
+AC_CONFIG_SRCDIR([libprovider/sf_utils.cpp])
 
 AM_CONFIG_HEADER([config_ac.h])
 AC_PREFIX_DEFAULT(/usr)
