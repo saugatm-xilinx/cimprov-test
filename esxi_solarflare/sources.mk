@@ -58,8 +58,8 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
 	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace)" >>$@
 	echo "if ENABLE_SFCB" >>$@
-	echo "dist_sfcb_interop_ns_DATA = interop.mof" >>$@
-	echo "dist_sfcb_ns_DATA = repository.mof" >>$@
+	echo "dist_sfcb_interop_ns_DATA = libcimobjects/interop.mof" >>$@
+	echo "dist_sfcb_ns_DATA = libcimobjects/repository.mof" >>$@
 	echo "dist_sfcb_reg_DATA = repository.reg interop.reg" >>$@
 	echo "endif" >>$@
 
