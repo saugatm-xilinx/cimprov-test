@@ -8,6 +8,7 @@ ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $
 ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof
 ESXI_GENERATED += repository.reg.in interop.reg.in
 ESXI_GENERATED += Makefile.am
+ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs/i386/libutils.a
 
 esxi_archive_GENERATED = $(addprefix $(ESXI_PROJECT_NAME)/,$(ESXI_GENERATED))
 _esxi_archive_GENERATED = $(addprefix $(esxi_archive_DIR)/,$(esxi_archive_GENERATED))
@@ -55,6 +56,8 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_INTEROP_NS=\\\"\$$(sfcb_interop_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CXXFLAGS=\$$(CFLAGS) -Wno-unused -Wno-unused-parameter $(CXXFLAGS)" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD=\$$(srcdir)/libprovider/esxi_libs/i386/libsfupdate.a " >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libutils.a " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
 	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace)" >>$@
 	echo "if ENABLE_SFCB" >>$@
