@@ -58,19 +58,21 @@ libprovider_GENERATED = module.cpp
 libprovider_DIR = libprovider
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
 libprovider_INCLUDES = $(libprovider_DIR)
-libprovider_CPPFLAGS = -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
+libprovider_CPPFLAGS = -Ilibprovider -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 
 ifeq ($(CIM_SERVER),esxi)
 
-CI_INCLUDES = ci ci/app ci/app/platform ci/compat \
-			  ci/driver ci/driver/efab ci/driver/efab/hardware \
-			  ci/driver/efab/hardware/falcon \
-			  ci/driver/platform ci/driver/resource \
-			  ci/efch ci/efhw ci/efrm ci/eftest \
-			  ci/internal ci/iscsi ci/mgmt ci/net ci/tools ci/tools/platform
+CI_INCLUDES = libprovider/ci libprovider/ci/app libprovider/ci/app/platform \
+		libprovider/ci/compat libprovider/ci/driver \
+		libprovider/ci/driver/efab libprovider/ci/driver/efab/hardware \
+		libprovider/ci/driver/efab/hardware/falcon \
+		libprovider/ci/driver/platform libprovider/ci/driver/resource \
+		libprovider/ci/efch libprovider/ci/efhw libprovider/ci/efrm \
+		libprovider/ci/eftest libprovider/ci/internal libprovider/ci/iscsi \
+		libprovider/ci/mgmt libprovider/ci/net libprovider/ci/tools \
+		libprovider/ci/tools/platform
 
-ALL_HEADERS += $(foreach inc,$(CI_INCLUDES),$(wildcard $(inc)/*.h) )
-
+libprovider_INCLUDES += $(CI_INCLUDES)
 endif
 
 $(libprovider_DIR)/module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_DIR) $(genmod_TARGET)

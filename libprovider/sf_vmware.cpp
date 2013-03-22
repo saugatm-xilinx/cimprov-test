@@ -6,9 +6,9 @@
 
 #define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
-#include <ci/tools/byteorder.h>
-#include <ci/tools/bitfield.h>
-#include <ci/mgmt/mc_flash_layout.h>
+#include "ci/tools/byteorder.h"
+#include "ci/tools/bitfield.h"
+#include "ci/mgmt/mc_flash_layout.h"
 #include "efx_regs_mcdi.h"
 
 #include <stdio.h>
