@@ -1461,7 +1461,7 @@ fail:
         }
 
         virtual VitalProductData vitalProductData() const;
-        Connector connector() const { return RJ45; }
+        Connector connector() const;
         uint64 supportedMTU() const { return 9000; }
 
         virtual bool forAllFw(ElementEnumerator& en)
@@ -1542,6 +1542,26 @@ fail:
             free(sn);
 
             return vpd;
+        }
+    }
+
+    NIC::Connector VMWareNIC::connector() const
+    {
+        VitalProductData        vpd = vitalProductData();
+        const char             *part = vpd.part().c_str();
+        char                    last = 'T';
+
+        if (*part != '\0')
+            last = part[strlen(part) - 1];
+
+        switch (last)
+        {
+            case 'F': return NIC::SFPPlus;
+            case 'K': // fallthrough
+            case 'H': return NIC::Mezzanine;
+            case 'T': return NIC::RJ45;
+
+            default: return NIC::RJ45;
         }
     }
 
