@@ -567,6 +567,7 @@ fail:
                 if (f == NULL)
                     continue;
                 fread(pci_conf, 1, PCI_CONF_LEN, f);
+                fclose(f);
                 vendor_id = CHAR2INT(pci_conf[1]) * 256 +
                             CHAR2INT(pci_conf[0]);
                 device_class = (CHAR2INT(pci_conf[11]) << 16) +
