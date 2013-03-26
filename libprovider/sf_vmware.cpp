@@ -677,13 +677,18 @@ fail:
                     {
                         tmp_port.pci_fn = nics_arr[i].ports[j].pci_fn;
                         tmp_port.dev_file = nics_arr[i].ports[j].dev_file;
+                        tmp_port.dev_name = nics_arr[i].ports[j].dev_name;
                         nics_arr[i].ports[j].pci_fn =
                                         nics_arr[i].ports[j + 1].pci_fn;
                         nics_arr[i].ports[j].dev_file =
                                         nics_arr[i].ports[j + 1].dev_file;
+                        nics_arr[i].ports[j].dev_name =
+                                        nics_arr[i].ports[j + 1].dev_name;
                         nics_arr[i].ports[j + 1].pci_fn = tmp_port.pci_fn;
                         nics_arr[i].ports[j + 1].dev_file =
                                                         tmp_port.dev_file;
+                        nics_arr[i].ports[j + 1].dev_name =
+                                                        tmp_port.dev_name;
                         k++;
                     }
                 }
@@ -1347,6 +1352,83 @@ fail:
         }
     }
 
+    class VMWareInterface : public Interface {
+        const NIC *owner;
+        Port *boundPort;
+    public:
+        VMWareInterface(const NIC *up, unsigned i) :
+            Interface(i),
+            owner(up),
+            boundPort(NULL) { };
+
+        virtual bool ifStatus() const;
+        virtual void enable(bool st);
+        virtual uint64 mtu() const;
+        virtual void mtu(uint64 u);
+        virtual String ifName() const;
+        virtual MACAddress currentMAC() const;
+        virtual void currentMAC(const MACAddress& mac);
+        virtual const NIC *nic() const { return owner; }
+        virtual PCIAddress pciAddress() const
+        {
+            return owner->pciAddress().fn(elementId());
+        }
+
+        virtual Port *port() { return boundPort; }
+        virtual const Port *port() const { return boundPort; }
+
+        void bindToPort(Port *p) { boundPort = p; }
+
+        virtual void initialize() {};
+    };
+
+    bool VMWareInterface::ifStatus() const
+    {
+        /* How to implement it?! */
+
+        return false;
+    }
+
+    void VMWareInterface::enable(bool st)
+    {
+        /* How to implement it?! */
+    }
+
+    uint64 VMWareInterface::mtu() const
+    {
+        /* How to implement it?! */
+
+        return 1500;
+    }
+
+    void VMWareInterface::mtu(uint64 u)
+    {
+        /* How to implement it?! */
+
+        return;
+    }
+
+    String VMWareInterface::ifName() const
+    {
+        if (boundPort == NULL)
+            return "";
+
+        return ((VMWarePort *)boundPort)->dev_name;
+    }
+
+    MACAddress VMWareInterface::currentMAC() const
+    {
+        if (boundPort == NULL)
+            return MACAddress(0, 0, 0, 0, 0, 0);
+
+        return boundPort->permanentMAC();
+    }
+
+    void VMWareInterface::currentMAC(const MACAddress& mac)
+    {
+        /* How to implement it?! */
+    }
+
     class VMWareNICFirmware : public NICFirmware {
         const NIC *owner;
     public:
@@ -1407,6 +1489,7 @@ fail:
     public:
         int portNum;
         VMWarePort **ports;
+        VMWareInterface **intfs;
 
     protected:
         virtual void setupPorts()
@@ -1418,6 +1501,13 @@ fail:
         }
         virtual void setupInterfaces()
         {
+            int i = 0;
+
+            for (i = 0; i < portNum; i++)
+            {
+                intfs[i]->initialize();
+                intfs[i]->bindToPort(ports[i]);
+            }
         }
         virtual void setupFirmware()
         {
@@ -1435,7 +1525,8 @@ fail:
             nicFw(this),
             rom(this, VersionInfo("2.3.4")),
             diag(this), pci_domain(descr.pci_domain),
-            pci_bus(descr.pci_bus), pci_device(descr.pci_device)
+            pci_bus(descr.pci_bus), pci_device(descr.pci_device),
+            portNum(0)
         {
             int i = 0;
 
@@ -1444,8 +1535,39 @@ fail:
             if (ports == NULL)
                 return;
 
+            intfs = (VMWareInterface **)calloc(descr.ports_count,
+                                            sizeof(VMWareInterface *));
+            if (intfs == NULL)
+            {
+                free(ports);
+                return;
+            }
+
             for (i = 0; i < descr.ports_count; i++)
+            {
                 ports[i] = new VMWarePort(this, i, descr.ports[i]);
+                if (ports[i] == NULL)
+                    break;
+                intfs[i] = new VMWareInterface(this, i);
+                if (intfs[i] == NULL)
+                    break;
+            }
+
+            if (i < descr.ports_count)
+            {
+                int j;
+
+                for (j = 0; j <= i; j++)
+                {
+                    free(ports[j]);
+                    free(intfs[j]);
+                }
+
+                free(ports);
+                free(intfs);
+
+                return;
+            }
 
             portNum = descr.ports_count;
         }
@@ -1501,13 +1623,26 @@ fail:
 
         virtual bool forAllInterfaces(ElementEnumerator& en)
         {
+            int i = 0;
+
+            for (i = 0; i < portNum; i++)
+                if (!en.process(*(intfs[i])))
+                    return false;
+
             return true;
         }
         
         virtual bool forAllInterfaces(ConstElementEnumerator& en) const
         {
+            int i = 0;
+
+            for (i = 0; i < portNum; i++)
+                if (!en.process(*(intfs[i])))
+                    return false;
+
             return true;
         }
+
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             return en.process(diag);
