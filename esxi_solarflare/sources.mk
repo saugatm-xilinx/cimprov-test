@@ -1,7 +1,7 @@
 esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
 
-esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $($(comp)_SDK),,$(comp) ))
+esxi_archive_COMPONENTS = $(foreach comp,$(filter-out esxi_archive,$(COMPONENTS)),$(if $($(comp)_SDK),,$(comp) ))
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
@@ -12,6 +12,12 @@ ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs
 
 esxi_archive_GENERATED = $(addprefix $(ESXI_PROJECT_NAME)/,$(ESXI_GENERATED))
 _esxi_archive_GENERATED = $(addprefix $(esxi_archive_DIR)/,$(esxi_archive_GENERATED))
+
+ifeq ($(MAKECMDGOALS),clean)
+_esxi_archive_GENERATED += $(foreach comp,$(esxi_archive_COMPONENTS), \
+								$(wildcard $(patsubst %,$(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)/%/*.h,$($(comp)_INCLUDES))))
+endif
+
 
 esxi_archive_SOURCES = $(esxi_archive_GENERATED) \
 					   esxi_bootstrap.sh \
@@ -65,6 +71,8 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "dist_sfcb_ns_DATA = libcimobjects/repository.mof" >>$@
 	echo "dist_sfcb_reg_DATA = repository.reg interop.reg" >>$@
 	echo "endif" >>$@
+
+COMPONENTS += esxi_archive
 
 ifneq ($(ESXI_BUILD_HOST),)
 
