@@ -14,4 +14,5 @@ TESTER_HOST = tester_vars_mod.TESTER_HOST
 TESTER_USER = tester_vars_mod.TESTER_USER
 TESTER_PASSWORD = tester_vars_mod.TESTER_PASSWORD
 TESTER_NS = tester_vars_mod.TESTER_NS
+TESTER_INTEROP_NS = tester_vars_mod.TESTER_INTEROP_NS
 LOGGER_NAME = tester_vars_mod.LOGGER_NAME

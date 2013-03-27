@@ -11,5 +11,5 @@ def test_function(param = {}):
     test_start(TEST_NAME, test_function.__doc__)
     spl = TESTER_NS.rsplit("/", 1)
     res = ns_check(spl[0], spl[1])
-    res = ns_check("root", "PG_InterOp") and res
+    res = ns_check("root", TESTER_INTEROP_NS) and res
     test_result(TEST_NAME, res)

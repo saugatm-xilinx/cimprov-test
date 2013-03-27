@@ -4,7 +4,7 @@ from test_lib import profile_check
 from tester_vars import *
 from tester_hlpr import *
 
-NS = 'root/PG_InterOp'
+NS = TESTER_INTEROP_NS
 
 PROFILE_LIST = ['Profile Registration']
 

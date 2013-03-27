@@ -6,9 +6,9 @@
 
 #define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
-#include <ci/tools/byteorder.h>
-#include <ci/tools/bitfield.h>
-#include <ci/mgmt/mc_flash_layout.h>
+#include "ci/tools/byteorder.h"
+#include "ci/tools/bitfield.h"
+#include "ci/mgmt/mc_flash_layout.h"
 #include "efx_regs_mcdi.h"
 
 #include <stdio.h>
@@ -33,6 +33,8 @@
 
 #include <errno.h>
 
+#include <pthread.h>
+
 #define CHUNK_LEN 0x80
 
 #define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
@@ -46,6 +48,7 @@ CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
 #define DEV_PATH            "/dev/"
 #define PATH_MAX_LEN        1024
 #define CMD_MAX_LEN         1024
+#define SFU_STR_MAX_LEN     1024
 #define VPD_FIELD_MAX_LEN   255
 #define PCI_CONF_LEN        12
 #define CLASS_NET_VALUE     0x20000
@@ -59,8 +62,201 @@ CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
 #define VPD_TAG_R    0x10
 #define VPD_TAG_W    0x11
 
+extern "C" {
+    extern int sfupdate_main(int argc, char *argv[]);
+}
+
 namespace solarflare 
 {
+    /**
+     * Is a symbol a space?
+     *
+     * @param c   symbol
+     * 
+     * @result 1 if space, 0 otherwise
+     */
+    static int isSpace(char c)
+    {
+        if (c == ' ' || c == '\t' || c == '\0')
+            return 1;
+        else
+            return 0;
+    }
+
+    /**
+     * Remove quotation symbols and related escaping
+     * from the string.
+     *
+     * @param s   String to be processed
+     */
+    static void removeQuotes(char *s)
+    {
+        int i;
+        int j;
+        int len;
+        int c1 = 0;
+        int c2 = 0;
+
+        if (s == NULL)
+            return;
+
+        len = strlen(s);
+
+        for (i = 0; i < len; i++)
+        {
+            c1 = c2;
+            c2 = s[i];
+
+            if ((c1 != '\\' && (c2 == '\'' || c2 == '"')) ||
+                (c1 == '\\' && c2 =='\\') ||
+                (c1 == '\\' && c2 == '"'))
+            {
+                if (c1 == '\\' && c2 == '"')
+                    i--;
+
+                for (j = i; j < len; j++)
+                    s[j] = s[j + 1];
+                len--;
+                c2 = s[i];
+            }
+        }
+    }
+
+    /**
+     * Parse command line string to obtain array of arguments of
+     * the form passed to main() normally.
+     *
+     * @param s     Command line to be parsed
+     * @param argc  Where to save number of arguments
+     * @param argv  Where to save pointer to the array of
+     *              arguments (allocated as a single block in
+     *              memory)
+     *
+     * @return 0 on success or value less than 0 on error
+     */
+    static int parseArgvString(const char *s, int *argc, char ***argv)
+    {
+        char  c1 = 0;
+        char  c2 = 0;
+        int   i;
+        int   len;
+        int   single_quote = 0;
+        int   double_quote = 0;
+        char *start;
+
+        char **args = NULL;
+        int    count = 0;
+        int    max_count = 0;
+        char  *buf;
+
+        int rc = 0;
+
+        if (s == NULL || argc == NULL || argv == NULL)
+            return -1;
+
+        buf = strdup(s);
+        len = strlen(buf);
+
+        for (i = 0; i <= len; i++)
+        {
+            c1 = c2;
+            c2 = buf[i];
+
+            if (!single_quote && !double_quote)
+            {
+                if (!isSpace(c1) && isSpace(c2))
+                {
+                    if (count >= max_count - 1)
+                    {
+                        void *p = NULL;
+
+                        max_count = (max_count + 1) * 2;
+                        p = realloc(args, sizeof(char **) * max_count);
+                        if (p == NULL)
+                        {
+                            rc = -1;
+                            goto fail;
+                        }
+                        args = (char **)p;
+                    }
+
+                    args[count] = start;
+                    buf[i] = '\0';
+                    removeQuotes(args[count]);
+
+                    count++;
+                }
+                else if (isSpace(c1) && !isSpace(c2))
+                    start = buf + i;
+            }
+
+            if (c2 == '"' && c1 != '\\' && !single_quote)
+            {
+                if (!double_quote)
+                    double_quote = 1;
+                else
+                    double_quote = 0;
+            }
+            if (c2 == '\'' && c1 != '\\' && !double_quote)
+            {
+                if (!single_quote)
+                    single_quote = 1;
+                else
+                    single_quote = 0;
+            }
+        }
+
+        if (single_quote || double_quote)
+        {
+            rc = -2;
+            goto fail;
+        }
+
+        args[count] = NULL;
+
+        *argv = (char **)calloc(1, (count + 1) * sizeof(char **) + len);
+        memcpy(((char *)*argv) + (count + 1) * sizeof(char **), buf, len);
+
+        for (i = 0; i < count; i++)
+            (*argv)[i] = args[i] +
+                          (((char *)*argv) +
+                                      (count + 1) * sizeof(char **) - buf);
+
+        *argc = count;
+
+fail:
+
+        free(args);
+        free(buf);
+        return rc;
+    }
+
+    /**
+     * Debugging function checking number of free FDs.
+     *
+     * @return number of free FDs
+     */
+    static int freeFDsNum()
+    {
+#define _MAX_FDS 1024
+        int fds[_MAX_FDS];
+        int i = 0;
+        int j = 0;
+
+        for (i = 0; i < _MAX_FDS; i++)
+        {
+            fds[i] = open("/dev/null", O_WRONLY); 
+            if (fds[i] < 0)
+                break;
+        }
+
+        for (j = 0; j < i; j++)
+            close(fds[j]);
+
+        return i;
+#undef _MAX_FDS
+    }
+
     /**
      * Auxiliary type for MCDI data processing.
      */
@@ -101,7 +297,7 @@ namespace solarflare
      * @param nics      Array pointer
      * @param count     Number of elements in the array
      */
-    void freeNICs(NICDescr *nics, int count)
+    static void freeNICs(NICDescr *nics, int count)
     {
         int i;
         int j;
@@ -126,7 +322,7 @@ namespace solarflare
      *
      * @return 0 on success or error code
      */
-    int getNICs(NICDescr **nics, int *nics_count)
+    static int getNICs(NICDescr **nics, int *nics_count)
     {
         DIR                 *bus_dir;
         DIR                 *device_dir;
@@ -371,6 +567,7 @@ namespace solarflare
                 if (f == NULL)
                     continue;
                 fread(pci_conf, 1, PCI_CONF_LEN, f);
+                fclose(f);
                 vendor_id = CHAR2INT(pci_conf[1]) * 256 +
                             CHAR2INT(pci_conf[0]);
                 device_class = (CHAR2INT(pci_conf[11]) << 16) +
@@ -481,13 +678,18 @@ namespace solarflare
                     {
                         tmp_port.pci_fn = nics_arr[i].ports[j].pci_fn;
                         tmp_port.dev_file = nics_arr[i].ports[j].dev_file;
+                        tmp_port.dev_name = nics_arr[i].ports[j].dev_name;
                         nics_arr[i].ports[j].pci_fn =
                                         nics_arr[i].ports[j + 1].pci_fn;
                         nics_arr[i].ports[j].dev_file =
                                         nics_arr[i].ports[j + 1].dev_file;
+                        nics_arr[i].ports[j].dev_name =
+                                        nics_arr[i].ports[j + 1].dev_name;
                         nics_arr[i].ports[j + 1].pci_fn = tmp_port.pci_fn;
                         nics_arr[i].ports[j + 1].dev_file =
                                                         tmp_port.dev_file;
+                        nics_arr[i].ports[j + 1].dev_name =
+                                                        tmp_port.dev_name;
                         k++;
                     }
                 }
@@ -508,7 +710,7 @@ namespace solarflare
      *
      * @param s     Char array pointer
      */
-    void trim(char *s)
+    static void trim(char *s)
     {
         int i;
 
@@ -532,9 +734,9 @@ namespace solarflare
      *
      * @return 0 on success or error code
      */
-    int getVPDTag(uint8_t *vpd, uint32_t len,
-                  int *tag_name, unsigned int *tag_len,
-                  uint8_t **tag_start)
+    static int getVPDTag(uint8_t *vpd, uint32_t len,
+                         int *tag_name, unsigned int *tag_len,
+                         uint8_t **tag_start)
     {
         if (vpd[0] & 0x80) // 10000000b
         {
@@ -570,9 +772,9 @@ namespace solarflare
      *
      * @return 0 on success or error code
      */
-    int parseVPD(uint8_t *vpd, uint32_t len,
-                 char **product_name, char **product_number,
-                 char **serial_number)
+    static int parseVPD(uint8_t *vpd, uint32_t len,
+                        char **product_name, char **product_number,
+                        char **serial_number)
     {
         int             tag_name;
         unsigned int    tag_len;
@@ -686,10 +888,9 @@ namespace solarflare
      *
      * @return 0 on success or error code
      */
-    int
-    readNVRAMBytes(int fd, uint8_t *data, unsigned int offset,
-                   unsigned int len,
-                   const char *ifname, int port_number)
+    static int readNVRAMBytes(int fd, uint8_t *data, unsigned int offset,
+                              unsigned int len,
+                              const char *ifname, int port_number)
     {
         unsigned int    end = offset + len;
         unsigned int    chunk;
@@ -750,10 +951,9 @@ namespace solarflare
      *
      * @return 0 on success or error code
      */
-    int
-    getVPD(const char *ifname, int port_number,
-           char **product_name, char **product_number,
-           char **serial_number)
+    static int getVPD(const char *ifname, int port_number,
+                      char **product_name, char **product_number,
+                      char **serial_number)
     {
         int       rc;
         int       fd;
@@ -774,11 +974,17 @@ namespace solarflare
         if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
                            sizeof(partial_hdr),
                            ifname, port_number) < 0)
+        {
+            close(fd);
             return -2;
+        }
 
         if (CI_BSWAP_LE32(partial_hdr.magic) !=
                                     SIENA_MC_STATIC_CONFIG_MAGIC)
-            return -3; 
+        {
+            close(fd);
+            return -3;
+        }
 
         vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
         vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
@@ -787,6 +993,7 @@ namespace solarflare
         if (readNVRAMBytes(fd, vpd, vpd_off, vpd_len,
                            ifname, port_number) < 0)
         {
+            close(fd);
             free(vpd);
             return -4;
         }
@@ -794,6 +1001,7 @@ namespace solarflare
         if ((rc = parseVPD(vpd, vpd_len, product_name,
                            product_number, serial_number)) < 0)
         {
+            close(fd);
             free(product_name);
             free(product_number);
             free(serial_number);
@@ -808,6 +1016,106 @@ namespace solarflare
     }
 
     /**
+     * Wrapper function working like popen("sfupdate ...").
+     *
+     * @param cmd_line Command line (should start with "sfupdate")
+     *
+     * @return FD from which output of sfupdate can be read on
+     *         succens or negative value on failure
+     */
+    static int sfupdatePOpen(const char *cmd_line)
+    {
+        int     argc;
+        char  **argv = NULL;
+        int     saved_stdout_fd = -1;
+        int     saved_stderr_fd = -1;
+        int     pipefds[2] = {-1, -1};
+        int     rc = 0;
+        int     restore_stdout = 0;
+        int     restore_stderr = 0;
+
+        static pthread_mutex_t sfupdate_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+        if (parseArgvString(cmd_line, &argc, &argv) < 0 ||
+            argv == NULL)
+            return -1;
+
+        saved_stdout_fd = dup(STDOUT_FILENO);
+        if (saved_stdout_fd < 0)
+        {
+            rc = -2;
+            goto fail;
+        }
+
+        saved_stderr_fd = dup(STDERR_FILENO);
+        if (saved_stderr_fd < 0)
+        {
+            rc = -3;
+            goto fail;
+        }
+
+        if (pipe(pipefds) < 0)
+        {
+            rc = -4;
+            goto fail;
+        }
+
+        fflush(stdout);
+        fflush(stderr);
+
+        if (dup2(pipefds[1], STDOUT_FILENO) < 0)
+        {
+            rc = -7;
+            goto fail;
+        }
+        else
+            restore_stdout = 1;
+
+        if (dup2(pipefds[1], STDERR_FILENO) < 0)
+        {
+            rc = -8;
+            goto fail;
+        }
+        else
+            restore_stderr = 1;
+
+        pthread_mutex_lock(&sfupdate_mutex);
+        if ((rc = sfupdate_main(argc, argv)) != 0)
+        {
+            pthread_mutex_unlock(&sfupdate_mutex);
+            rc = -9;
+            goto fail;
+        }
+        pthread_mutex_unlock(&sfupdate_mutex);
+
+    fail:
+        fflush(stdout);
+        fflush(stderr);
+
+        free(argv);
+
+        if (restore_stdout > 0)
+            if (dup2(saved_stdout_fd, STDOUT_FILENO) < 0 && rc == 0)
+                rc = -15;
+        if (restore_stderr > 0)
+            if (dup2(saved_stderr_fd, STDERR_FILENO) < 0 && rc == 0)
+                rc = -16;
+        if (saved_stdout_fd >= 0)
+            close(saved_stdout_fd);
+        if (saved_stderr_fd >= 0)
+            close(saved_stderr_fd);
+
+        close(pipefds[1]);
+        if (rc == 0)
+            return pipefds[0];
+        else
+        {
+            close(pipefds[0]);
+            return rc;
+        }
+    }
+
+    /**
      * Perform ethool command.
      *
      * @param dev_file          Path to device file
@@ -817,8 +1125,8 @@ namespace solarflare
      *
      * @return zero on success, -1 on error
      */
-    int vmwareEthtoolCmd(const char *dev_file, const char *dev_name,
-                         unsigned cmd, void *edata)
+    static int vmwareEthtoolCmd(const char *dev_file, const char *dev_name,
+                                unsigned cmd, void *edata)
     {
         int          fd;
         struct ifreq ifr;
@@ -1012,26 +1320,114 @@ namespace solarflare
 
     MACAddress VMWarePort::permanentMAC() const
     {
-        struct ethtool_perm_addr    *edata;
-        
-        edata = (ethtool_perm_addr *)calloc(1,
-                    sizeof(struct ethtool_perm_addr) + ETH_ALEN);
-        if (!edata)
+        /**
+         * ETHTOOL_GPERMADDR is not supported on ESXi, and
+         * we cannot use popen("esxcli...") since fork() is
+         * forbidden, so we need to use vendor-specific
+         * interface here.
+         */
+        int       fd;
+
+        siena_mc_static_config_hdr_t partial_hdr;
+
+        fd = open("/dev/sfc_control", O_RDWR);
+        if (fd < 0)
             return MACAddress(0, 0, 0, 0, 0, 0);
-        
-        edata->size = ETH_ALEN;
-        if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
-                             ETHTOOL_GPERMADDR, edata) < 0)
+
+        if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
+                           sizeof(partial_hdr),
+                           dev_name.c_str(), pci_fn) < 0)
         {
-            free(edata);
+            close(fd);
             return MACAddress(0, 0, 0, 0, 0, 0);
         }
+        else
+        {
+            close(fd);
+            return MACAddress(partial_hdr.mac_addr_base[0],
+                              partial_hdr.mac_addr_base[1],
+                              partial_hdr.mac_addr_base[2],
+                              partial_hdr.mac_addr_base[3],
+                              partial_hdr.mac_addr_base[4],
+                              partial_hdr.mac_addr_base[5]);
+        }
+    }
 
-        MACAddress mac = MACAddress(edata->data[0], edata->data[1],
-                                    edata->data[2], edata->data[3],
-                                    edata->data[4], edata->data[5]);
-        free(edata);
-        return mac;
+    class VMWareInterface : public Interface {
+        const NIC *owner;
+        Port *boundPort;
+    public:
+        VMWareInterface(const NIC *up, unsigned i) :
+            Interface(i),
+            owner(up),
+            boundPort(NULL) { };
+
+        virtual bool ifStatus() const;
+        virtual void enable(bool st);
+        virtual uint64 mtu() const;
+        virtual void mtu(uint64 u);
+        virtual String ifName() const;
+        virtual MACAddress currentMAC() const;
+        virtual void currentMAC(const MACAddress& mac);
+        virtual const NIC *nic() const { return owner; }
+        virtual PCIAddress pciAddress() const
+        {
+            return owner->pciAddress().fn(elementId());
+        }
+
+        virtual Port *port() { return boundPort; }
+        virtual const Port *port() const { return boundPort; }
+
+        void bindToPort(Port *p) { boundPort = p; }
+
+        virtual void initialize() {};
+    };
+
+    bool VMWareInterface::ifStatus() const
+    {
+        /* How to implement it?! */
+
+        return false;
+    }
+
+    void VMWareInterface::enable(bool st)
+    {
+        /* How to implement it?! */
+    }
+
+    uint64 VMWareInterface::mtu() const
+    {
+        /* How to implement it?! */
+
+        return 1500;
+    }
+
+    void VMWareInterface::mtu(uint64 u)
+    {
+        /* How to implement it?! */
+
+        return;
+    }
+
+    String VMWareInterface::ifName() const
+    {
+        if (boundPort == NULL)
+            return "";
+
+        return ((VMWarePort *)boundPort)->dev_name;
+    }
+
+    MACAddress VMWareInterface::currentMAC() const
+    {
+        if (boundPort == NULL)
+            return MACAddress(0, 0, 0, 0, 0, 0);
+
+        return boundPort->permanentMAC();
+    }
+
+    void VMWareInterface::currentMAC(const MACAddress& mac)
+    {
+        /* How to implement it?! */
     }
 
     class VMWareNICFirmware : public NICFirmware {
@@ -1094,6 +1490,7 @@ namespace solarflare
     public:
         int portNum;
         VMWarePort **ports;
+        VMWareInterface **intfs;
 
     protected:
         virtual void setupPorts()
@@ -1105,6 +1502,13 @@ namespace solarflare
         }
         virtual void setupInterfaces()
         {
+            int i = 0;
+
+            for (i = 0; i < portNum; i++)
+            {
+                intfs[i]->initialize();
+                intfs[i]->bindToPort(ports[i]);
+            }
         }
         virtual void setupFirmware()
         {
@@ -1122,7 +1526,8 @@ namespace solarflare
             nicFw(this),
             rom(this, VersionInfo("2.3.4")),
             diag(this), pci_domain(descr.pci_domain),
-            pci_bus(descr.pci_bus), pci_device(descr.pci_device)
+            pci_bus(descr.pci_bus), pci_device(descr.pci_device),
+            portNum(0)
         {
             int i = 0;
 
@@ -1131,8 +1536,39 @@ namespace solarflare
             if (ports == NULL)
                 return;
 
+            intfs = (VMWareInterface **)calloc(descr.ports_count,
+                                            sizeof(VMWareInterface *));
+            if (intfs == NULL)
+            {
+                free(ports);
+                return;
+            }
+
             for (i = 0; i < descr.ports_count; i++)
+            {
                 ports[i] = new VMWarePort(this, i, descr.ports[i]);
+                if (ports[i] == NULL)
+                    break;
+                intfs[i] = new VMWareInterface(this, i);
+                if (intfs[i] == NULL)
+                    break;
+            }
+
+            if (i < descr.ports_count)
+            {
+                int j;
+
+                for (j = 0; j <= i; j++)
+                {
+                    free(ports[j]);
+                    free(intfs[j]);
+                }
+
+                free(ports);
+                free(intfs);
+
+                return;
+            }
 
             portNum = descr.ports_count;
         }
@@ -1148,7 +1584,7 @@ namespace solarflare
         }
 
         virtual VitalProductData vitalProductData() const;
-        Connector connector() const { return RJ45; }
+        Connector connector() const;
         uint64 supportedMTU() const { return 9000; }
 
         virtual bool forAllFw(ElementEnumerator& en)
@@ -1170,9 +1606,7 @@ namespace solarflare
 
             for (i = 0; i < portNum; i++)
                 if (!en.process(*(ports[i])))
-                {
                     return false;
-                }
 
             return true;
         }
@@ -1183,22 +1617,33 @@ namespace solarflare
 
             for (i = 0; i < portNum; i++)
                 if (!en.process(*(ports[i])))
-                {
                     return false;
-                }
 
             return true;
         }
 
         virtual bool forAllInterfaces(ElementEnumerator& en)
         {
+            int i = 0;
+
+            for (i = 0; i < portNum; i++)
+                if (!en.process(*(intfs[i])))
+                    return false;
+
             return true;
         }
         
         virtual bool forAllInterfaces(ConstElementEnumerator& en) const
         {
+            int i = 0;
+
+            for (i = 0; i < portNum; i++)
+                if (!en.process(*(intfs[i])))
+                    return false;
+
             return true;
         }
+
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             return en.process(diag);
@@ -1233,6 +1678,26 @@ namespace solarflare
             free(sn);
 
             return vpd;
+        }
+    }
+
+    NIC::Connector VMWareNIC::connector() const
+    {
+        VitalProductData        vpd = vitalProductData();
+        const char             *part = vpd.part().c_str();
+        char                    last = 'T';
+
+        if (*part != '\0')
+            last = part[strlen(part) - 1];
+
+        switch (last)
+        {
+            case 'F': return NIC::SFPPlus;
+            case 'K': // fallthrough
+            case 'H': return NIC::Mezzanine;
+            case 'T': return NIC::RJ45;
+
+            default: return NIC::RJ45;
         }
     }
 
@@ -1419,9 +1884,7 @@ namespace solarflare
         int         rc;
 
         if ((rc = getNICs(&nics, &count)) < 0)
-        {
             return false;
-        }
 
         for (i = 0; i < count; i++)
         {
@@ -1479,6 +1942,54 @@ namespace solarflare
 
     VersionInfo VMWareBootROM::version() const
     {
-        return VersionInfo("");
+        int   rc = 0;
+        char  cmd[CMD_MAX_LEN];
+        char  str[SFU_STR_MAX_LEN];
+        char *s = NULL;
+        char *version = NULL;
+        int   fd = -1;
+        FILE *f = NULL;
+
+        rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s",
+                      ((VMWareNIC *)owner)->ports[0]->dev_name.c_str());
+        if (rc < 0 || rc >= CMD_MAX_LEN)
+            return VersionInfo("");
+
+        fd = sfupdatePOpen(cmd);
+        if (fd < 0)
+            return VersionInfo("");
+
+        f = fdopen(fd, "r");
+        if (f == NULL)
+        {
+            close(fd);
+            return VersionInfo("");
+        }
+
+        while (1)
+        {
+            if (fgets(str, SFU_STR_MAX_LEN, f) != str)
+                break;
+
+            if (strstr(str, "Boot ROM version:") != NULL)
+            {
+                s = strstr(str, ":");
+                if (s == NULL)
+                    continue;
+                s++;
+                while (*s == ' ')
+                    s++;
+                trim(s);
+                version = s;
+                break;
+            }
+        }
+
+        fclose(f);
+
+        if (version != NULL)
+            return VersionInfo(version);
+        else
+            return VersionInfo("");
     }
 }

@@ -84,7 +84,7 @@ def ns_check(parent_ns, check_ns):
 ################
 
 def profile_registered(profile_name):
-    ns = 'root/PG_InterOp'
+    ns = TESTER_INTEROP_NS
     
     wbemclient = pywbem.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD), ns)

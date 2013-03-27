@@ -40,7 +40,7 @@ while test -n "$1" ; do
     shift 1
 done
 
-export CIMPROV_CLASSES=${CIMPROV_CLASSES:-$RUNDIR/../classes}
+export CIMPROV_CLASSES=${CIMPROV_CLASSES:-$RUNDIR/../libcimobjects/classes}
 export PYTHONPATH=${PYTHONPATH-$RUNDIR/pywbem}
 export TESTER_CFG=${TESTER_CFG:-default}
 
