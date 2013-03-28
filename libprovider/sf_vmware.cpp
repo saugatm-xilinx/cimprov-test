@@ -1,8 +1,11 @@
 #include "sf_platform.h"
+#include "sf_provider.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
+#include <cimple/Ref.h>
 #include <cimple.h>
+#include "CIM_EthernetPort.h"
 
 #define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
@@ -68,6 +71,11 @@ extern "C" {
 
 namespace solarflare 
 {
+    using cimple::Instance;
+    using cimple::CIM_EthernetPort;
+    using cimple::Ref;
+    using cimple::cast;
+
     /**
      * Is a symbol a space?
      *
@@ -1397,9 +1405,32 @@ fail:
 
     uint64 VMWareInterface::mtu() const
     {
-        /* How to implement it?! */
+        Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
+        Ref<Instance>         cimInstance;
+        Ref<CIM_EthernetPort> cimEthPort;
 
-        return 1500;
+        cimple::Instance_Enumerator ie;
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+            return 0;
+
+        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
+        {
+            cimEthPort.reset(cast<CIM_EthernetPort *>(cimInstance.ptr()));
+            if (!(cimEthPort->DeviceID.null) &&
+                strcmp(cimEthPort->DeviceID.value.c_str(),
+                       ((VMWarePort *)boundPort)->dev_name.c_str()) == 0)
+                break;
+        }
+
+        if (!cimEthPort)
+            return 0;
+
+        if (cimEthPort->ActiveMaximumTransmissionUnit.null)
+            return 0;
+        else
+            return cimEthPort->ActiveMaximumTransmissionUnit.value;
     }
 
     void VMWareInterface::mtu(uint64 u)
