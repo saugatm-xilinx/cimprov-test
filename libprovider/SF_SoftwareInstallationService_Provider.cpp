@@ -158,6 +158,11 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
             return INVOKE_METHOD_OK;
         }
     }
+    else
+    {
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
 
     solarflare::SWElement *sw = solarflare::Lookup::findSoftware(*self, *scope);
     if (sw == NULL)
@@ -187,6 +192,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
             }
         }
     }
+
     if (sw->install(URI.value.c_str()))
         return_value.set(OK);
     else
