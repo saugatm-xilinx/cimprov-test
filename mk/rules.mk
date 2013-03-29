@@ -46,7 +46,7 @@ CLEAN_TARGETS = $(addprefix clean-,$(COMPONENTS))
 
 clean : $(CLEAN_TARGETS)
 
-$(CLEAN_TARGETS) : clean-% :
+$(CLEAN_TARGETS) $(EXTRA_CLEAN_TARGETS) : clean-% :
 	-test -n "$($*_OBJS)" && rm $($*_OBJS)
 	-test -n "$($*_OBJS)" && rm $(patsubst %.o,%.d,$($*_OBJS))
 	-test -z "$($*_PERSISTENT_TARGET)" && rm $($*_TARGET)
