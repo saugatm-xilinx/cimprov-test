@@ -1,3 +1,4 @@
 override CIM_SERVER=esxi
 override CIMPLE_PLATFORM=LINUX_IX86_GNU
+override PROVIDER_PLATFORM=vmware
 

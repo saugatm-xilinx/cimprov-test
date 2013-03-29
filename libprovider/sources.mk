@@ -41,7 +41,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	sf_core.cpp \
 	sf_logging.cpp \
 	sf_platform.cpp \
-	sf_sample.cpp \
+	sf_$(PROVIDER_PLATFORM).cpp \
 	sf_threads.cpp \
 	sf_utils.cpp \
 	sf_helpers.cpp \

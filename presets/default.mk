@@ -14,4 +14,4 @@ endif
 $(info Platform detected as $(CIMPLE_PLATFORM))
 endif
 
-DEVELOPMENT=1
+PROVIDER_PLATFORM = linux
