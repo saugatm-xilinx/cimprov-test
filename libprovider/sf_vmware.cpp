@@ -1,8 +1,11 @@
 #include "sf_platform.h"
+#include "sf_provider.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
+#include <cimple/Ref.h>
 #include <cimple.h>
+#include "CIM_EthernetPort.h"
 
 #define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
@@ -68,6 +71,11 @@ extern "C" {
 
 namespace solarflare 
 {
+    using cimple::Instance;
+    using cimple::CIM_EthernetPort;
+    using cimple::Ref;
+    using cimple::cast;
+
     /**
      * Is a symbol a space?
      *
@@ -1116,6 +1124,24 @@ fail:
     }
 
     /**
+     * Compare the beginning of the first string with
+     * the second one.
+     *
+     * @param x   The first string
+     * @param y   The second string
+     *
+     * @return The same as strncmp(x, y, strlen(y))
+     */
+    static inline int strcmp_start(const char *x, const char *y)
+    {
+        return strncmp(x, y, strlen(y));
+    }
+
+    /* Predeclaration */
+    static int vmwareInstallFirmware(const NIC *owner,
+                                     const char *fileName);
+
+    /**
      * Perform ethool command.
      *
      * @param dev_file          Path to device file
@@ -1397,14 +1423,41 @@ fail:
 
     uint64 VMWareInterface::mtu() const
     {
-        /* How to implement it?! */
+        Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
+        Ref<Instance>         cimInstance;
+        Ref<CIM_EthernetPort> cimEthPort;
 
-        return 1500;
+        cimple::Instance_Enumerator ie;
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+            return 0;
+
+        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
+        {
+            cimEthPort.reset(cast<CIM_EthernetPort *>(cimInstance.ptr()));
+            if (!(cimEthPort->DeviceID.null) &&
+                strcmp(cimEthPort->DeviceID.value.c_str(),
+                       ((VMWarePort *)boundPort)->dev_name.c_str()) == 0)
+                break;
+        }
+
+        if (!cimEthPort)
+            return 0;
+
+        if (cimEthPort->ActiveMaximumTransmissionUnit.null)
+            return 0;
+        else
+            return cimEthPort->ActiveMaximumTransmissionUnit.value;
     }
 
     void VMWareInterface::mtu(uint64 u)
     {
-        /* How to implement it?! */
+        /*
+         * This should not be implemented - MTU
+         * is set for vSwitch as a whole, change is
+         * propagated to its uplinks automatically.
+         */
 
         return;
     }
@@ -1437,8 +1490,11 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *)
+        virtual bool syncInstall(const char *file_name)
         {
+            if (vmwareInstallFirmware(owner, file_name) < 0)
+                return false;
+
             return true;
         }
         virtual void initialize() {};
@@ -1452,7 +1508,13 @@ fail:
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *file_name)
+        {
+            if (vmwareInstallFirmware(owner, file_name) < 0)
+                return false;
+
+            return true;
+        }
         virtual void initialize() {};
     };
 
@@ -1483,11 +1545,13 @@ fail:
         VMWareNICFirmware nicFw;
         VMWareBootROM rom;
         VMWareDiagnostic diag;
+
         int pci_domain;
         int pci_bus;
         int pci_device;
 
     public:
+
         int portNum;
         VMWarePort **ports;
         VMWareInterface **intfs;
@@ -1706,6 +1770,48 @@ fail:
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
 
+    /**
+     * Install firmware on a NIC from given image.
+     *
+     * @param owner       NIC class pointer
+     * @param fileName    From where to get firmware image
+     *
+     * @return 0 on success, < 0 on failure
+     */
+    static int vmwareInstallFirmware(const NIC *owner,
+                                     const char *fileName)
+    {
+        int   rc = 0;
+        char  cmd[CMD_MAX_LEN];
+        int   fd = -1;
+
+        if (((VMWareNIC *)owner)->portNum <= 0)
+            return -1;
+
+        if (strcmp_start(fileName, "file://") == 0)
+        {
+            rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
+                          "--write --image=%s",
+                          ((VMWareNIC *)owner)->ports[0]->dev_name.c_str(),
+                          fileName + strlen("file://"));
+            if (rc < 0 || rc >= CMD_MAX_LEN)
+            {
+                return -2;
+            }
+        }
+        else /* TFTP to be implemented */
+            return -3;
+
+        fd = sfupdatePOpen(cmd);
+        if (fd < 0)
+        {
+            return -4;
+        }
+
+        close(fd);
+        return 0;
+    }
+
     class VMWareDriver : public Driver {
         const Package *owner;
         VersionInfo vers;
@@ -1849,14 +1955,33 @@ fail:
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
     class VMWareSystem : public System {
+        VMWareNIC **sf_nics;
+        int sf_nics_count;
+
         VMWareKernelPackage kernelPackage;
         VMWareManagementPackage mgmtPackage;
-        VMWareSystem() {};
-    protected:
-        void setupNICs()
+
+        VMWareSystem()
         {
-            // Do nothing
+            sf_nics = NULL;
+            sf_nics_count = 0;
         };
+
+        ~VMWareSystem()
+        {
+            if (sf_nics != NULL)
+            {
+                int i;
+
+                for (i = 0; i < sf_nics_count; i++)
+                    delete sf_nics[i];
+                free(sf_nics);
+                sf_nics_count = 0;
+            }
+        };
+
+    protected:
+        void setupNICs();
 
         void setupPackages()
         {
@@ -1873,36 +1998,63 @@ fail:
         bool forAllPackages(ElementEnumerator& en);
     };
 
-    bool VMWareSystem::forAllNICs(ConstElementEnumerator& en) const
+    void VMWareSystem::setupNICs()
     {
         NICDescr   *nics;
         int         count;
         int         i;
-        bool        res;
-        bool        ret;
-        VMWareNIC  *nic;
         int         rc;
 
         if ((rc = getNICs(&nics, &count)) < 0)
-            return false;
+            return;
 
-        for (i = 0; i < count; i++)
+        if (count != sf_nics_count)
         {
-            nic = new VMWareNIC(i, nics[i]);
-            nic->initialize();
-            res = en.process(*nic);
-            ret = ret && res;
-            delete nic;
-        }
+            for (i = 0; i < sf_nics_count; i++)
+                delete sf_nics[i];
+            free(sf_nics);
+            sf_nics_count = 0;
 
-        freeNICs(nics, count);
+            sf_nics = (VMWareNIC **)calloc(count, sizeof(*sf_nics));
+            if (sf_nics == NULL)
+            {
+                freeNICs(nics, count);
+                return;
+            }
+
+            for (i = 0; i < count; i++)
+            {
+                sf_nics[i] = new VMWareNIC(i, nics[i]);
+                sf_nics[i]->initialize();
+            }
+
+            sf_nics_count = count;
+            freeNICs(nics, count);
+        }
+        else
+            freeNICs(nics, count);
+    }
+
+    bool VMWareSystem::forAllNICs(ConstElementEnumerator& en) const
+    {
+        int         i;
+        bool        res;
+        bool        ret;
+
+        for (i = 0; i < sf_nics_count; i++)
+        {
+            res = en.process(*(sf_nics[i]));
+            ret = ret && res;
+        }
 
         return true;
     }
 
     bool VMWareSystem::forAllNICs(ElementEnumerator& en)
     {
-        return forAllNICs((ConstElementEnumerator&) en); 
+        setupNICs();
+
+        return forAllNICs((ConstElementEnumerator&) en);
     }
     
     bool VMWareSystem::forAllPackages(ConstElementEnumerator& en) const
