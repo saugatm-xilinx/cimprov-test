@@ -28,7 +28,6 @@
 #include <linux/sockios.h>
 #include <mtd/mtd-user.h>
 
-#define SF_LIBPROV_VERSION              "0.1"
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"
 #define SYS_SF_DRV_PATH                 SYS_SF_MOD_PATH "/drivers/pci:sfc"

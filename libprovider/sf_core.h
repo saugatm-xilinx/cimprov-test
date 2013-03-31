@@ -7,6 +7,8 @@
 #include "sf_utils.h"
 #include "sf_threads.h"
 
+#define SF_LIBPROV_VERSION      "0.1"
+
 // Platform-independent classes.
 
 namespace solarflare 
