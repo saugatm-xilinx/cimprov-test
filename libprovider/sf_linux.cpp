@@ -1,13 +1,5 @@
-///
-/// TODO and questions list:
-///
-/// - SKU/FRU - there is no such attribute in SF VPD?
-/// - Autoneg getting returns operstate - should it return if autoneg
-///  is supported instead?
-/// - Indications
-///
-
 #include "sf_platform.h"
+#include "sf_logging.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
@@ -36,6 +28,7 @@
 #include <linux/sockios.h>
 #include <mtd/mtd-user.h>
 
+#define SF_LIBPROV_VERSION              "0.1"
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"
 #define SYS_SF_DRV_PATH                 SYS_SF_MOD_PATH "/drivers/pci:sfc"
@@ -52,26 +45,12 @@
 #define VPD_TAG_W                       0x91
 #define VPD_TAG_END                     0x78
 
-#ifdef LINUX_LOG_ENABLE
-#    define LINUX_LOG_ERR(ARGS)         CIMPLE_ERR(ARGS)
-#    define LINUX_LOG_WARN(ARGS)        CIMPLE_WARN(ARGS)
-#    define LINUX_LOG_DBG(ARGS)         CIMPLE_DBG(ARGS)
-#else
-#    define LINUX_LOG_ERR(ARGS)         do {} while(0)
-#    define LINUX_LOG_WARN(ARGS)        do {} while(0)
-#    define LINUX_LOG_DBG(ARGS)         do {} while(0)
-#endif
+#define LINUX_LOG_ERR(_fmt, _args...)   Logger::errorLog.format(_fmt, ##_args)
+#define LINUX_LOG_EVT(_fmt, _args...)   Logger::eventLog.format(_fmt, ##_args)
+#define LINUX_LOG_DBG(_fmt, _args...)   Logger::debugLog.format(_fmt, ##_args)
 
 namespace solarflare
 {
-#ifdef LINUX_LOG_ENABLE
-    using cimple::Log_Call_Frame;
-    using cimple::_log_enabled_state;
-    using cimple::LL_DBG;
-    using cimple::LL_WARN;
-    using cimple::LL_ERR;
-#endif
-
     ///
     /// Get device attribute from sysfs file.
     ///
@@ -100,16 +79,16 @@ namespace solarflare
         fd = open(path, O_RDONLY);
         if (fd < 0)
         {
-            LINUX_LOG_ERR(("Failed to open file %s: %s",
-                            path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to open file %s: %s",
+                            path, strerror(errno));
             return -1;
         }
         size = read(fd, buf, maxlen);
         close(fd);
         if (size < 0)
         {
-            LINUX_LOG_ERR(("Failed to read file %s: %s",
-                            path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to read file %s: %s",
+                            path, strerror(errno));
             return -1;
         }
         if (size == 0 || size == maxlen)
@@ -165,8 +144,8 @@ namespace solarflare
         sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
         if (sock < 0)
         {
-            LINUX_LOG_ERR(("Failed to create PF_INET socket: %s",
-                             strerror(errno)));
+            LINUX_LOG_ERR("Failed to create PF_INET socket: %s",
+                             strerror(errno));
             return -1;
         }
 
@@ -175,8 +154,8 @@ namespace solarflare
         ((struct ethtool_value *)edata)->cmd = cmd;
         if (ioctl(sock, SIOCETHTOOL, &ifr) < 0)
         {
-            LINUX_LOG_ERR(("Failed to perform SIOCETHTOOL ioctl with "
-                            "cmd value <%u>: %s", cmd, strerror(errno)));
+            LINUX_LOG_ERR("Failed to perform SIOCETHTOOL ioctl with "
+                            "cmd value <%u>: %s", cmd, strerror(errno));
             close(sock);
             return -1;
         }
@@ -572,7 +551,7 @@ namespace solarflare
         mtd_list = fopen("/proc/mtd", "r");
         if (!mtd_list)
         {
-            LINUX_LOG_ERR(("Failed to open /proc/mtd"));
+            LINUX_LOG_ERR("Failed to open /proc/mtd");
             return VersionInfo("");
         }
 
@@ -603,8 +582,8 @@ namespace solarflare
         fd = open(dev_path, O_RDONLY);
         if (fd < 0)
         {
-            LINUX_LOG_ERR(("Failed to open file %s: %s",
-                            dev_path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to open file %s: %s",
+                            dev_path, strerror(errno));
             return VersionInfo("");
         }
 
@@ -613,8 +592,8 @@ namespace solarflare
 
         if (read_bytes < 0)
         {
-            LINUX_LOG_ERR(("Failed to read file %s: %s",
-                            dev_path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to read file %s: %s",
+                            dev_path, strerror(errno));
             return VersionInfo("");
         }
 
@@ -1091,9 +1070,13 @@ namespace solarflare
     public:
         LinuxManagementPackage() :
             Package("CIM Provider RPM", "sfcprovider"),
-            providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
+            providerLibrary(this, "CIM Provider library", "libSolarflare.so",
+                            SF_LIBPROV_VERSION) {}
         virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("0.1"); }
+        virtual VersionInfo version() const
+        {
+            return VersionInfo(SF_LIBPROV_VERSION);
+            }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
