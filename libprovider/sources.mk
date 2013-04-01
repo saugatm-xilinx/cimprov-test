@@ -70,7 +70,7 @@ CI_INCLUDES = libprovider/ci libprovider/ci/app libprovider/ci/app/platform \
 		libprovider/ci/efch libprovider/ci/efhw libprovider/ci/efrm \
 		libprovider/ci/eftest libprovider/ci/internal libprovider/ci/iscsi \
 		libprovider/ci/mgmt libprovider/ci/net libprovider/ci/tools \
-		libprovider/ci/tools/platform
+		libprovider/ci/tools/platform libprovider/curl/
 
 libprovider_INCLUDES += $(CI_INCLUDES)
 endif

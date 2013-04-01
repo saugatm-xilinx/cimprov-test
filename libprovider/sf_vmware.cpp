@@ -38,6 +38,11 @@
 
 #include <pthread.h>
 
+#include "curl/curl.h"
+
+#include <arpa/inet.h>
+
+
 #define CHUNK_LEN 0x80
 
 #define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
@@ -1771,6 +1776,121 @@ fail:
     }
 
     /**
+     * Callback data for receiving file from curl library.
+     */
+    typedef struct write_cb_data {
+        char       *data;     /**< Where to store received data */
+        size_t      length;   /**< Received data length */
+        size_t      cur_pos;  /**< Current position */
+    } write_cb_data;
+
+    /**
+     * Callback for receiving a file from curl library.
+     *
+     * @param buffer  Received data buffer
+     * @param size    Size of data element
+     * @param nmemb   Number of elements
+     * @param userp   Pointer to callback data
+     *
+     * @return Number of successfully processed bytes
+     */
+    static size_t write_cb(void *buffer, size_t size,
+                           size_t nmemb, void *userp)
+    {
+        size_t         bytes_num = size * nmemb;
+        write_cb_data *data = (write_cb_data *)userp;
+        char          *curl_data = (char *)buffer;
+        size_t         i;
+
+        if (!data)
+            return 0;
+
+        if (bytes_num > data->length - data->cur_pos)
+        {
+            void *p = realloc(data->data,
+                                 data->length + bytes_num -
+                                    (data->length - data->cur_pos));
+            if (p == NULL)
+            {
+                free(data->data);
+                data->data = NULL;
+                data->length = 0;
+                data->cur_pos = 0;
+                return 0;
+            }
+
+            data->data = (char *)p;
+            data->length += bytes_num - (data->length - data->cur_pos);
+        }
+
+        for (i = 0; i < bytes_num; i++, data->cur_pos++)
+            data->data[data->cur_pos] = curl_data[i];
+
+        return bytes_num;
+    }
+
+    /**
+     * Get data via TFTP protocol.
+     *
+     * @param uri         Data URI
+     * @param file_data   Where to store a pointer to received data
+     * @param file_length Where to store received data length
+     */
+    static int tftp_get_data(const char *uri, char **file_data,
+                             size_t *file_length)
+    {
+        write_cb_data   data;
+        CURL           *curl;
+        int             rc = 0;
+
+        if (uri == NULL || file_data == NULL || file_length == NULL)
+            return -1;
+
+        *file_data = NULL;
+        *file_length = 0;
+
+        memset(&data, 0, sizeof(data));
+
+        curl = curl_easy_init();
+        if (curl == NULL)
+            return -2;
+
+        if (curl_easy_setopt(curl, CURLOPT_URL, uri) != CURLE_OK)
+        {
+            rc = -3;
+            goto curl_fail;
+        }
+        if (curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+                             write_cb) != CURLE_OK)
+        {
+            rc = -4;
+            goto curl_fail;
+        }
+        if (curl_easy_setopt(curl, CURLOPT_WRITEDATA,
+                             &data) != CURLE_OK)
+        {
+            rc = -5;
+            goto curl_fail;
+        }
+
+        CURLcode rc_curl;
+        if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
+        {
+            if (data.data != NULL)
+                free(data.data);
+            rc = -6;
+            goto curl_fail;
+        }
+
+        *file_data = data.data;
+        *file_length = data.length;
+
+curl_fail:
+        curl_easy_cleanup(curl);
+        return rc;
+    }
+
+    /**
      * Install firmware on a NIC from given image.
      *
      * @param owner       NIC class pointer
@@ -1784,6 +1904,8 @@ fail:
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
+        char  tmp_file[] = "/tmp/sf_firmware_XXXXXX";
+        int   tmp_file_used = 0;
 
         if (((VMWareNIC *)owner)->portNum <= 0)
             return -1;
@@ -1799,16 +1921,59 @@ fail:
                 return -2;
             }
         }
-        else /* TFTP to be implemented */
-            return -3;
+        else if (strcmp_start(fileName, "tftp://") == 0)
+        {
+            char *data;
+            size_t len;
+
+            rc = tftp_get_data(fileName, &data, &len);
+            if (rc != 0)
+                return -3;
+
+            fd = mkstemp(tmp_file);
+            if (fd < 0)
+            {
+                free(data);
+                return -4;
+            }
+            else if ((rc = write(fd, data, len)) != len)
+            {
+                close(fd);
+                free(data);
+                unlink(tmp_file);
+                return -5;
+            }
+
+            close(fd);
+            free(data);
+
+            rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
+                          "--write --image=%s",
+                          ((VMWareNIC *)owner)->ports[0]->dev_name.c_str(),
+                          tmp_file);
+            if (rc < 0 || rc >= CMD_MAX_LEN)
+            {
+                unlink(tmp_file);
+                return -6;
+            }
+
+            tmp_file_used = 1;
+        }
+        else /* SFTP to be implemented */
+            return -7;
 
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
         {
-            return -4;
+            if (tmp_file_used)
+                unlink(tmp_file);
+            return -8;
         }
 
         close(fd);
+        if (tmp_file_used)
+            unlink(tmp_file);
+
         return 0;
     }
 
@@ -1952,8 +2117,6 @@ fail:
     };
 
     /// @brief stub-only System implementation
-    /// @note all structures are initialised statically,
-    /// so initialize() does nothing 
     class VMWareSystem : public System {
         VMWareNIC **sf_nics;
         int sf_nics_count;
@@ -1965,6 +2128,8 @@ fail:
         {
             sf_nics = NULL;
             sf_nics_count = 0;
+
+            curl_global_init(CURL_GLOBAL_ALL);
         };
 
         ~VMWareSystem()
@@ -1978,6 +2143,8 @@ fail:
                 free(sf_nics);
                 sf_nics_count = 0;
             }
+
+            curl_global_cleanup();
         };
 
     protected:
