@@ -6,6 +6,7 @@
 #include <cimple/Ref.h>
 #include <cimple.h>
 #include "CIM_EthernetPort.h"
+#include "CIM_SoftwareIdentity.h"
 
 #define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
@@ -42,7 +43,6 @@
 
 #include <arpa/inet.h>
 
-
 #define CHUNK_LEN 0x80
 
 #define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
@@ -78,6 +78,7 @@ namespace solarflare
 {
     using cimple::Instance;
     using cimple::CIM_EthernetPort;
+    using cimple::CIM_SoftwareIdentity;
     using cimple::Ref;
     using cimple::cast;
 
@@ -242,6 +243,41 @@ fail:
         free(args);
         free(buf);
         return rc;
+    }
+
+    /**
+     * Get reference to a corresponding CIM_EthernetPort value
+     * by device name.
+     *
+     * @param dev_name    Device name
+     *
+     * @return Reference to CIM_EthernetPort value
+     */
+    Ref<CIM_EthernetPort> getCIMEthPort(const char *dev_name)
+    {
+        Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
+        Ref<Instance>         cimInstance;
+        Ref<CIM_EthernetPort> cimEthPort;
+
+        cimple::Instance_Enumerator ie;
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+        {
+            cimEthPort.reset(cast<CIM_EthernetPort *>(NULL));
+            return cimEthPort;
+        }
+
+        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
+        {
+            cimEthPort.reset(cast<CIM_EthernetPort *>(cimInstance.ptr()));
+            if (!(cimEthPort->DeviceID.null) &&
+                strcmp(cimEthPort->DeviceID.value.c_str(), dev_name) == 0)
+                break;
+            cimEthPort.reset(cast<CIM_EthernetPort *>(NULL));
+        }
+
+        return cimEthPort;
     }
 
     /**
@@ -1428,24 +1464,10 @@ fail:
 
     uint64 VMWareInterface::mtu() const
     {
-        Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
-        Ref<Instance>         cimInstance;
         Ref<CIM_EthernetPort> cimEthPort;
 
-        cimple::Instance_Enumerator ie;
-
-        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
-                                          cimModel.ptr(), ie) != 0)
-            return 0;
-
-        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
-        {
-            cimEthPort.reset(cast<CIM_EthernetPort *>(cimInstance.ptr()));
-            if (!(cimEthPort->DeviceID.null) &&
-                strcmp(cimEthPort->DeviceID.value.c_str(),
-                       ((VMWarePort *)boundPort)->dev_name.c_str()) == 0)
-                break;
-        }
+        cimEthPort =
+          getCIMEthPort(((VMWarePort *)boundPort)->dev_name.c_str());
 
         if (!cimEthPort)
             return 0;
@@ -1654,6 +1676,7 @@ fail:
 
         virtual VitalProductData vitalProductData() const;
         Connector connector() const;
+
         uint64 supportedMTU() const { return 9000; }
 
         virtual bool forAllFw(ElementEnumerator& en)
@@ -1927,13 +1950,6 @@ curl_fail:
         int                      fd;
         char                     device_path[PATH_MAX_LEN];
 
-        /**
-         * BUG HERE: what if there is no SF NICs?
-         * Is there a way to determine driver version
-         * not via ETHTOOL_GDRVINFO and not via using
-         * esxcli (the latter is impossible since fork() is not
-         * permitted here)?
-         */
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
             return VersionInfo("");
@@ -1976,7 +1992,37 @@ curl_fail:
 
         closedir(device_dir);
 
-        return VersionInfo("");
+        /*
+         * We failed to get it via ethtool - we try to get it
+         * from VMWare root/cimv2 standard objects.
+         */
+        Ref<CIM_SoftwareIdentity> cimModel =
+                                      CIM_SoftwareIdentity::create();
+        Ref<Instance>             cimInstance;
+        Ref<CIM_SoftwareIdentity> cimSoftId;
+        String                    strVersion;
+
+        cimple::Instance_Enumerator ie;
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+            return VersionInfo("");
+
+        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
+        {
+            cimSoftId.reset(cast<CIM_SoftwareIdentity *>
+                                            (cimInstance.ptr()));
+            if (!(cimSoftId->Description.null) &&
+                strcmp_start(cimSoftId->Description.value.c_str(),
+                            "Solarflare Network Driver") == 0)
+                break;
+            cimSoftId.reset(cast<CIM_SoftwareIdentity *>(NULL));
+        }
+
+        if (!cimSoftId)
+            return VersionInfo("");
+
+        return VersionInfo(cimSoftId->VersionString.value.c_str());
     }
 
     class VMWareLibrary : public Library {
