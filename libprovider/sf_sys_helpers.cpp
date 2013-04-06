@@ -6,10 +6,12 @@
 #include "CIM_OperatingSystem.h"
 #include "SF_LogEntry.h"
 #include "SF_RecordLog.h"
+#include "SF_RecordLogCapabilities.h"
 #include "SF_UseOfLog.h"
 #include "SF_LogManagesRecord.h"
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
+#include "SF_ElementCapabilities.h"
 
 namespace solarflare 
 {
@@ -21,6 +23,8 @@ namespace solarflare
     using cimple::is_a;
     using cimple::SF_LogEntry;
     using cimple::SF_RecordLog;
+    using cimple::SF_RecordLogCapabilities;
+    using cimple::SF_ElementCapabilities;
     using cimple::SF_UseOfLog;
     using cimple::SF_LogManagesRecord;
     using cimple::SF_RegisteredProfile;
@@ -43,6 +47,13 @@ namespace solarflare
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
         virtual Instance *reference(const SystemElement&, unsigned idx) const;
         virtual bool match(const SystemElement&, const Instance& inst, unsigned idx) const;
+    };
+
+    class RecordLogCapabilitiesHelper : public CIMHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+        virtual Instance *reference(const SystemElement&, unsigned idx) const;
     };
 
     class RecordLogUseOfLogHelper : public CIMHelper {
@@ -219,6 +230,40 @@ namespace solarflare
         return CIMHelper::instanceID(Logger::knownLogs[idx]->description()) == logObj->InstanceID.value;
     }
 
+    unsigned RecordLogCapabilitiesHelper::nObjects(const SystemElement&) const
+    {
+        unsigned n = 0;
+        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+            n++;
+        return n;
+    }
+
+    Instance *RecordLogCapabilitiesHelper::reference(const SystemElement&, unsigned idx) const
+    {
+        SF_RecordLogCapabilities *newRlc = SF_RecordLogCapabilities::create(true);
+        newRlc->InstanceID.set(CIMHelper::instanceID(Logger::knownLogs[idx]->description()));
+        newRlc->InstanceID.value.append(" Capabilities");
+
+        return newRlc;
+    }
+
+    Instance *RecordLogCapabilitiesHelper::instance(const SystemElement& sys, unsigned idx) const
+    {
+        SF_RecordLogCapabilities *newRlc = static_cast<SF_RecordLogCapabilities *>(reference(sys, idx));
+        const Logger *log = Logger::knownLogs[idx];
+
+        
+        newRlc->Description.set(log->description());
+        newRlc->ElementName.set(log->description());
+        
+        newRlc->SupportedRecordTypes.null = false;
+        newRlc->SupportedRecordTypes.value.append(SF_RecordLogCapabilities::_SupportedRecordTypes::enum_Record_Data);
+        newRlc->ElementNameEditSupported.set(false);
+        newRlc->RequestedStatesSupported.null = false;
+
+        return newRlc;
+    }
+
     unsigned RecordLogUseOfLogHelper::nObjects(const SystemElement& sys) const
     {
         static const RecordLogHelper delegate;
@@ -349,14 +394,20 @@ namespace solarflare
     {
         static const LogEntryHelper logEntryHelper;
         static const RecordLogHelper recordLogHelper;
+        static const RecordLogCapabilitiesHelper recordLogCapabilitiesHelper;
         static const RecordLogUseOfLogHelper useOfLogHelper;
         static const RecordLogManagesRecordHelper logManagesRecordHelper;
         static const RegisteredProfileHelper registeredProfileHelper;
         static const ReferencedProfileHelper referencedProfileHelper;
+        static const ElementCapabilitiesHelper capsLink(SF_RecordLog::static_meta_class,
+                                                        SF_RecordLogCapabilities::static_meta_class);
+
         if (&cls == &SF_LogEntry::static_meta_class)
             return &logEntryHelper;
         if (&cls == &SF_RecordLog::static_meta_class)
             return &recordLogHelper;
+        if (&cls == &SF_RecordLogCapabilities::static_meta_class)
+            return &recordLogCapabilitiesHelper;          
         if (&cls == &SF_UseOfLog::static_meta_class)
             return &useOfLogHelper;
         if (&cls == &SF_LogManagesRecord::static_meta_class)
@@ -365,6 +416,8 @@ namespace solarflare
             return &registeredProfileHelper;
         if (&cls == &SF_ReferencedProfile::static_meta_class)
             return &referencedProfileHelper;
+        if (&cls == &SF_ElementCapabilities::static_meta_class)
+            return &capsLink;
         return NULL;
     }
 

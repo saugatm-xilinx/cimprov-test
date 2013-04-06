@@ -89,6 +89,9 @@ class SF_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabiliti
 class SF_RecordLog : CIM_RecordLog {
 };
 
+class SF_RecordLogCapabilities : CIM_RecordLogCapabilities {
+};
+
 class SF_DiagnosticLog : CIM_DiagnosticLog {
 };
 

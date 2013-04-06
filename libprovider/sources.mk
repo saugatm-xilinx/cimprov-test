@@ -31,6 +31,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_PortController_Provider.cpp \
 	SF_RecordAppliesToElement_Provider.cpp \
 	SF_RecordLog_Provider.cpp \
+	SF_RecordLogCapabilities_Provider.cpp \
 	SF_ReferencedProfile_Provider.cpp \
 	SF_RegisteredProfile_Provider.cpp \
 	SF_ServiceAffectsElement_Provider.cpp \
