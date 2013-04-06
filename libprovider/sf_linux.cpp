@@ -1108,13 +1108,53 @@ namespace solarflare
         };
     public:
         static LinuxSystem target;
-        bool is64bit() const { return true; }
-        OSType osType() const { return RHEL; }
+        bool is64bit() const;
+        OSType osType() const;
         bool forAllNICs(ConstElementEnumerator& en) const;
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
     };
+
+    bool LinuxSystem::is64bit() const
+    {
+        long wordBits = sysconf(_SC_LONG_BIT);
+        
+        if (wordBits == -1)
+        {
+            LINUX_LOG_ERR("Failed to determine OS bitness");
+            return false;
+        }
+        if (wordBits == 64)
+            return true;
+
+        return false;
+    }
+
+    System::OSType LinuxSystem::osType() const
+    {
+        char    buf[SYS_PATH_MAX_LEN];
+        ssize_t len;
+
+        if (access("/etc/debian_version", F_OK) == 0)
+            return Debian;
+
+        if ((len = readlink("/etc/system-release",
+                            buf, sizeof(buf) - 1)) != -1)
+        {
+            buf[len] = '\0';
+            if (strcmp(buf, "redhat-release") == 0)
+                return RHEL;
+            if (strcmp(buf, "centos-release") == 0)
+                return CentOS;
+            if (strcmp(buf, "sles-release") == 0)
+                return SLES;
+            if (strcmp(buf, "oracle-release") == 0)
+                return OracleEL;
+        }
+        
+        return GenericLinux;
+    }
 
     bool LinuxSystem::forAllNICs(ConstElementEnumerator& en) const
     {
