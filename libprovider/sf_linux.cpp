@@ -916,6 +916,8 @@ namespace solarflare
         if (*part != '\0')
             last = part[strlen(part) - 1];
 
+       // Mapping is taken from:
+       // http://www.solarflare.com/Content/UserFiles/Media/Solarflare_Onload_Performant_10GbE_Adapters_Chart_detail.png
         switch (last)
         {
             case 'F': return NIC::SFPPlus;
