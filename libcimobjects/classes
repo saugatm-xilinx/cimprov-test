@@ -28,6 +28,7 @@ SF_LogEntry
 SF_LogManagesRecord
 SF_UseOfLog
 SF_DiagnosticLog
+SF_DiagnosticLogCapabilities
 SF_DiagnosticCompletionRecord
 SF_DiagnosticTest
 SF_DiagnosticServiceCapabilities

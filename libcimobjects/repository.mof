@@ -95,9 +95,11 @@ class SF_RecordLogCapabilities : CIM_RecordLogCapabilities {
 class SF_DiagnosticLog : CIM_DiagnosticLog {
 };
 
-class SF_DiagnosticCompletionRecord : CIM_DiagnosticCompletionRecord {
+class SF_DiagnosticLogCapabilities : CIM_RecordLogCapabilities {
 };
 
+class SF_DiagnosticCompletionRecord : CIM_DiagnosticCompletionRecord {
+};
 
 class SF_LogEntry : CIM_LogEntry {
 };

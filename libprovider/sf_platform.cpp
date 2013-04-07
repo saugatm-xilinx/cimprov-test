@@ -32,10 +32,8 @@ namespace solarflare
 
     String Diagnostic::name() const
     {
-        String n = System::target.prefix();
+        String n = nic()->name();
 
-        n.append(":");
-        n.append(nic()->name());
         n.append(" ");
         n.append(genericName());
         return n;

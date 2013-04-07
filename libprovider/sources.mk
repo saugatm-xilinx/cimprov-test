@@ -9,6 +9,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_ControlledBy_Provider.cpp \
 	SF_DiagnosticCompletionRecord_Provider.cpp \
 	SF_DiagnosticLog_Provider.cpp \
+	SF_DiagnosticLogCapabilities_Provider.cpp \
 	SF_DiagnosticServiceCapabilities_Provider.cpp \
 	SF_DiagnosticSettingData_Provider.cpp \
 	SF_DiagnosticTest_Provider.cpp \
