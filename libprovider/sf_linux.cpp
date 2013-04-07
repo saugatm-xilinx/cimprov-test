@@ -627,24 +627,27 @@ namespace solarflare
     }
 
     class LinuxDiagnostic : public Diagnostic {
+        bool online;
         const NIC *owner;
         const Interface *boundIface;
         Result testPassed;
         static const char sampleDescr[];
-        static const String diagGenName;
+        static const String diagOnlineName;
+        static const String diagOfflineName;
     public:
-        LinuxDiagnostic(const NIC *o, const Interface *bi) :
-            Diagnostic(sampleDescr), owner(o), boundIface(bi),
+        LinuxDiagnostic(bool on, const NIC *o, const Interface *bi) :
+            Diagnostic(sampleDescr), online(on), owner(o), boundIface(bi),
             testPassed(NotKnown) {}
         virtual Result syncTest();
         virtual Result result() const { return testPassed; }
         virtual const NIC *nic() const { return owner; }
         virtual void initialize() {};
-        virtual const String& genericName() const { return diagGenName; }
+        virtual const String& genericName() const;
     };
 
     const char LinuxDiagnostic::sampleDescr[] = "Linux Diagnostic";
-    const String LinuxDiagnostic::diagGenName = "Diagnostic";
+    const String LinuxDiagnostic::diagOnlineName = "Diagnostic Online";
+    const String LinuxDiagnostic::diagOfflineName = "Diagnostic Offline";
 
     Diagnostic::Result LinuxDiagnostic::syncTest()
     {
@@ -659,8 +662,9 @@ namespace solarflare
                            drv_data.testinfo_len * sizeof(*test_data->data));
         if (!test_data)
             return NotKnown;
-
-        test_data->flags = ETH_TEST_FL_OFFLINE;
+        
+        if (!online)
+            test_data->flags = ETH_TEST_FL_OFFLINE;
         test_data->len = drv_data.testinfo_len;
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_TEST, &drv_data) < 0)
@@ -675,6 +679,11 @@ namespace solarflare
         return testPassed;
     }
 
+    const String& LinuxDiagnostic::genericName() const
+    {
+        return online ? diagOnlineName : diagOfflineName;
+    }
+
     class LinuxNIC : public NIC {
         int portNum;
         LinuxPort port0;
@@ -683,7 +692,8 @@ namespace solarflare
         LinuxInterface intf1;
         LinuxNICFirmware nicFw;
         LinuxBootROM rom;
-        LinuxDiagnostic diag;
+        LinuxDiagnostic diagOnline;
+        LinuxDiagnostic diagOffline;
     protected:
         virtual void setupPorts()
         {
@@ -710,7 +720,8 @@ namespace solarflare
         }
         virtual void setupDiagnostics()
         {
-            diag.initialize();
+            diagOnline.initialize();
+            diagOffline.initialize();
         }
     public:
         String sysfsPath;
@@ -721,7 +732,9 @@ namespace solarflare
             port0(this, 0), port1(this, 1),
             intf0(this, 0, ifPath0), intf1(this, 1, ifPath1),
             nicFw(this, &intf0), rom(this, &intf0),
-            diag(this, &intf0), sysfsPath(NICPath)
+            diagOnline(true, this, &intf0),
+            diagOffline(false, this, &intf0),
+            sysfsPath(NICPath)
         {}
 
         virtual VitalProductData vitalProductData() const;
@@ -777,12 +790,16 @@ namespace solarflare
         }
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
-            return en.process(diag);
+            if (!en.process(diagOnline))
+                return false;
+            return en.process(diagOffline);
         }
 
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
-            return en.process(diag);
+            if (!en.process(diagOnline))
+                return false;
+            return en.process(diagOffline);
         }
 
         virtual PCIAddress pciAddress() const;
