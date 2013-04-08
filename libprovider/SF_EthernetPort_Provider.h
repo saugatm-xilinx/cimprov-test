@@ -10,6 +10,28 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_EthernetPort_Provider
 {
+    class SpeedChanger : public solarflare::Action 
+    {
+        solarflare::Port::Speed reqSpeed;
+        bool ok;
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        SpeedChanger(solarflare::Port::Speed rs,
+                     const Instance *inst) :
+            solarflare::Action(inst), reqSpeed(rs), ok(false) {}
+        bool isOk() const { return ok; }
+    };
+
+    class StateChanger : public solarflare::Action 
+    {
+        unsigned reqState;
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        StateChanger(unsigned rs, const Instance *inst) :
+            solarflare::Action(inst), reqState(rs) {}
+    };
 public:
     typedef SF_EthernetPort Class;
 

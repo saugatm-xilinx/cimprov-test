@@ -51,29 +51,63 @@ Delete_Instance_Status SF_EthernetPort_Provider::delete_instance(
     return DELETE_INSTANCE_UNSUPPORTED;
 }
 
+void SF_EthernetPort_Provider::SpeedChanger::handler(solarflare::SystemElement& se, unsigned)
+{
+    solarflare::Interface &intf = static_cast<solarflare::Interface&>(se);
+    
+    if (reqSpeed == solarflare::Port::SpeedUnknown ||
+            reqSpeed > intf.nic()->maxLinkSpeed())
+    {
+        ok = false;
+        return;
+    }
+    intf.port()->linkSpeed(reqSpeed);
+    ok = true;
+}
+
 Modify_Instance_Status SF_EthernetPort_Provider::modify_instance(
     const SF_EthernetPort* model,
     const SF_EthernetPort* instance)
 {
-    solarflare::Interface *intf = solarflare::Lookup::findInterface(*model);
-
-    if (intf == NULL)
-        return MODIFY_INSTANCE_NOT_FOUND;
     
     if (!instance->RequestedSpeed.null)
     {
-        solarflare::Port::Speed sp = 
-        solarflare::Port::speedValue(instance->RequestedSpeed.value);
+        SpeedChanger changer(
+            solarflare::Port::speedValue(instance->RequestedSpeed.value),
+            model);
         
-        if (sp == solarflare::Port::SpeedUnknown ||
-            sp > intf->nic()->maxLinkSpeed())
-            return MODIFY_INSTANCE_INVALID_PARAMETER;
-
-        intf->port()->linkSpeed(sp);
+        if (!changer.forInterface())
+            return MODIFY_INSTANCE_NOT_FOUND;
     }
 
     return MODIFY_INSTANCE_OK;
 }
+
+void SF_EthernetPort_Provider::StateChanger::handler(solarflare::SystemElement& se, unsigned)
+{
+    solarflare::Interface &intf = static_cast<solarflare::Interface&>(se);
+    
+    switch (reqState)
+    {
+        case SF_EthernetPort::_RequestedState::enum_Enabled:
+            intf.enable(true);
+            break;
+        case SF_EthernetPort::_RequestedState::enum_Disabled:
+            intf.enable(false);
+            break;
+        case SF_EthernetPort::_RequestedState::enum_Reset:
+            if (intf.ifStatus())
+            {
+                intf.enable(false);
+                intf.enable(true);
+            }
+            break;
+        default:
+            // cannot happen, do nothing
+            break;
+    }
+}
+
 
 Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
     const SF_EthernetPort* self,
@@ -90,8 +124,8 @@ Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
         InvalidParameter = 5,
         BadTimeout = 4098,
     };
-    solarflare::Interface *intf = solarflare::Lookup::findInterface(*self);
-    if (intf == NULL || RequestedState.null)
+
+    if (RequestedState.null)
     {
         return_value.set(InvalidParameter);
     }
@@ -101,22 +135,20 @@ Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
     }
     else
     {
-        return_value.set(OK);
         switch (RequestedState.value)
         {
             case SF_EthernetPort::_RequestedState::enum_Enabled:
-                intf->enable(true);
-                break;
             case SF_EthernetPort::_RequestedState::enum_Disabled:
-                intf->enable(false);
-                break;
             case SF_EthernetPort::_RequestedState::enum_Reset:
-                if (intf->ifStatus())
+            {
+                StateChanger changer(RequestedState.value, self);
+                if (changer.forInterface())
                 {
-                    intf->enable(false);
-                    intf->enable(true);
+                    return_value.set(OK);
+                    break;
                 }
-                break;
+            }
+                // fall through
             default:
                 return_value.set(InvalidParameter);
         }

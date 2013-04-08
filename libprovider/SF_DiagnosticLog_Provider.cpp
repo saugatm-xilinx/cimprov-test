@@ -56,6 +56,33 @@ Modify_Instance_Status SF_DiagnosticLog_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+void SF_DiagnosticLog_Provider::ChangeState::handler(solarflare::SystemElement& se,
+                                                     unsigned)
+{
+    solarflare::Diagnostic &diag = static_cast<solarflare::Diagnostic&>(se);
+    solarflare::Logger &log = diag.log();
+
+    switch (reqState)
+    {
+        case SF_DiagnosticLog::_RequestedState::enum_Enabled:
+            log.enable(true);
+            break;
+        case SF_DiagnosticLog::_RequestedState::enum_Disabled:
+            log.enable(false);
+            break;
+        case SF_DiagnosticLog::_RequestedState::enum_Reset:
+            if (log.isEnabled())
+            {
+                log.enable(false);
+                log.enable(true);
+            }
+            break;
+        default:
+            // cannot happen
+            break;
+    }
+}
+
 Invoke_Method_Status SF_DiagnosticLog_Provider::RequestStateChange(
     const SF_DiagnosticLog* self,
     const Property<uint16>& RequestedState,
@@ -71,8 +98,7 @@ Invoke_Method_Status SF_DiagnosticLog_Provider::RequestStateChange(
         InvalidParameter = 5,
         BadTimeout = 4098,
     };
-    solarflare::Diagnostic *diag = solarflare::Lookup::findDiagnostic(*self);
-    if (diag == NULL || RequestedState.null)
+    if (RequestedState.null)
     {
         return_value.set(InvalidParameter);
     }
@@ -82,24 +108,20 @@ Invoke_Method_Status SF_DiagnosticLog_Provider::RequestStateChange(
     }
     else
     {
-        solarflare::Logger &log = diag->log();
-        
-        return_value.set(OK);
         switch (RequestedState.value)
         {
             case SF_DiagnosticLog::_RequestedState::enum_Enabled:
-                log.enable(true);
-                break;
             case SF_DiagnosticLog::_RequestedState::enum_Disabled:
-                log.enable(false);
-                break;
             case SF_DiagnosticLog::_RequestedState::enum_Reset:
-                if (log.isEnabled())
+            {
+                ChangeState changer(RequestedState.value, self);
+                if (changer.forDiagnostic())
                 {
-                    log.enable(false);
-                    log.enable(true);
+                    return_value.set(OK);
+                    break;
                 }
-                break;
+                // fall through
+            }
             default:
                 return_value.set(InvalidParameter);
         }
@@ -107,18 +129,26 @@ Invoke_Method_Status SF_DiagnosticLog_Provider::RequestStateChange(
     return INVOKE_METHOD_OK;
 }
 
+void SF_DiagnosticLog_Provider::LogClearer::handler(solarflare::SystemElement& se,
+                                                     unsigned)
+{
+    solarflare::Diagnostic &diag = static_cast<solarflare::Diagnostic&>(se);
+    solarflare::Logger &log = diag.log();
+    log.clear();
+}
+
+
 Invoke_Method_Status SF_DiagnosticLog_Provider::ClearLog(
     const SF_DiagnosticLog* self,
     Property<uint32>& return_value)
 {
-    solarflare::Diagnostic *diag = solarflare::Lookup::findDiagnostic(*self);
-    if (diag == NULL)
+    LogClearer clearer(self);
+    
+    if (!clearer.forDiagnostic())
         return_value.set(2); // Error
     else
-    {
-        diag->log().clear();
         return_value.set(0); // OK
-    }
+
     return INVOKE_METHOD_OK;
 }
 

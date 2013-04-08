@@ -124,55 +124,40 @@ namespace solarflare
         }
     };
 
-    class Lookup : public ElementEnumerator
+    class Action : public ElementEnumerator
     {
-        SystemElement *obj;
-        unsigned idx;
         const Instance *sample;
+    protected:
+        virtual void handler(SystemElement&, unsigned) = 0;
     public:
-        Lookup(const Instance *s) :
-            obj(NULL), idx(unsigned(-1)), sample(s) {}
-        SystemElement *found() const { return obj; }
-        unsigned foundIndex() const { return idx; }
+        Action(const Instance *s) :
+            sample(s) {}
         virtual bool process(SystemElement& el);
-        static SWElement *findSoftware(const Instance& inst,
-                                       SoftwareContainer& scope = System::target)
+        bool forSoftware(SoftwareContainer& scope = System::target)
         {
-            Lookup finder(&inst);
-            scope.forAllSoftware(finder);
-            return static_cast<SWElement *>(finder.found());
+            return !scope.forAllSoftware(*this);
         }
-        static NIC *findNIC(const Instance& inst)
+        bool forNIC()
         {
-            Lookup finder(&inst);
-            System::target.forAllNICs(finder);
-            return static_cast<NIC *>(finder.found());
+            return !System::target.forAllNICs(*this);
         }
-        static Interface *findInterface(const Instance& inst)
+        bool forInterface()
         {
-            Lookup finder(&inst);
-            System::target.forAllInterfaces(finder);
-            return static_cast<Interface *>(finder.found());
+            return !System::target.forAllInterfaces(*this);
         }
-        static Port *findPort(const Instance& inst)
+        bool forPort()
         {
-            Lookup finder(&inst);
-            System::target.forAllPorts(finder);
-            return static_cast<Port *>(finder.found());
+            return !System::target.forAllPorts(*this);
         }
-        static Diagnostic *findDiagnostic(const Instance& inst)
+        bool forDiagnostic()
         {
-            Lookup finder(&inst);
-            System::target.forAllDiagnostics(finder);
-            return static_cast<Diagnostic *>(finder.found());
+            return !System::target.forAllDiagnostics(*this);
         }
-        static Thread *findThread(const Instance& inst);
-        static SystemElement *findAny(const Instance& inst);
-        static Logger *findRecordLog(const Instance& inst)
+        bool forThread();
+        bool forAny();
+        bool forSystem()
         {
-            Lookup finder(&inst);
-            finder.process(System::target);
-            return finder.found() ? Logger::knownLogs[finder.foundIndex()] : NULL;
+            return !process(System::target);
         }
     };
 

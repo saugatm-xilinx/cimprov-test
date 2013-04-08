@@ -80,7 +80,7 @@ namespace solarflare
                 ourSys->Name.value == sysname);
     }
 
-    bool Lookup::process(SystemElement& se)
+    bool Action::process(SystemElement& se)
     {
         const CIMHelper *helper = se.cimDispatch(*sample->meta_class);
         if (helper == NULL)
@@ -92,41 +92,36 @@ namespace solarflare
         {
             if (helper->match(se, *sample, i))
             {
-                obj = &se;
-                idx = i;
+                handler(se, i);
                 return false;
             }
         }
         return true;
     }
 
-    Thread *Lookup::findThread(const Instance& inst)
+    bool Action::forThread()
     {
-        Lookup finder(&inst);
-        System::target.forAllDiagnostics(finder);
-        if (!finder.found())
-            System::target.forAllSoftware(finder);
-        return (finder.found() ?
-                finder.found()->embeddedThread() :
-                NULL);
+        if (System::target.forAllDiagnostics(*this))
+            return !System::target.forAllSoftware(*this);
+        else
+            return true;
     }
 
-    SystemElement *Lookup::findAny(const Instance& inst)
+    bool Action::forAny()
     {
-        Lookup finder(&inst);
-        if (!finder.process(System::target))
-            return finder.found();
-        if (!System::target.forAllSoftware(finder))
-            return finder.found();
-        if (!System::target.forAllNICs(finder))
-        return finder.found();
-        if (!System::target.forAllInterfaces(finder))
-            return finder.found();
-        if (!System::target.forAllPorts(finder))
-            return finder.found();
-        if (!System::target.forAllDiagnostics(finder))
-            return finder.found();
-        return NULL;
+        if (!process(System::target))
+            return true;
+        if (!System::target.forAllSoftware(*this))
+            return true;
+        if (!System::target.forAllNICs(*this))
+            return true;
+        if (!System::target.forAllInterfaces(*this))
+            return true;
+        if (!System::target.forAllPorts(*this))
+            return true;
+        if (!System::target.forAllDiagnostics(*this))
+            return true;
+        return false;
     }
 
     Instance *ConcreteJobAbstractHelper::reference(const SystemElement& obj, unsigned) const

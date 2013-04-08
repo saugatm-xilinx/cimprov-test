@@ -66,6 +66,34 @@ Invoke_Method_Status SF_ConcreteJob_Provider::KillJob(
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
+void SF_ConcreteJob_Provider::StopThread::handler(solarflare::SystemElement& se, unsigned)
+{
+    solarflare::Thread *thr = se.embeddedThread();
+    if (thr != NULL)
+        thr->stop();
+}
+
+void SF_ConcreteJob_Provider::GetThreadError::handler(solarflare::SystemElement& se, unsigned)
+{
+    solarflare::Thread *thr = se.embeddedThread();
+    if (thr != NULL)
+    {
+        switch (thr->currentState())
+        {
+            case solarflare::Thread::Failed:
+            case solarflare::Thread::Aborting:
+            case solarflare::Thread::Aborted:
+                errdest = CIM_Error::create(true);
+                errdest->ErrorType.null = false;
+                errdest->ErrorType.value = CIM_Error::_ErrorType::enum_Unknown;
+                break;
+            default:
+                /* nothing */
+                break;
+        }
+    }
+}
+
 Invoke_Method_Status SF_ConcreteJob_Provider::RequestStateChange(
     const SF_ConcreteJob* self,
     const Property<uint16>& RequestedState,
@@ -85,8 +113,7 @@ Invoke_Method_Status SF_ConcreteJob_Provider::RequestStateChange(
         Terminate = 4,
         Kill = 5,
     };
-    solarflare::Thread *thr = solarflare::Lookup::findThread(*self);
-    if (thr == NULL || RequestedState.null)
+    if (RequestedState.null)
     {
         return_value.set(InvalidParameter);
     }
@@ -96,13 +123,19 @@ Invoke_Method_Status SF_ConcreteJob_Provider::RequestStateChange(
     }
     else
     {
-        return_value.set(OK);
         switch (RequestedState.value)
         {
             case Terminate:
             case Kill:
-                thr->stop();
-                break;
+            {
+                StopThread stopper(self);
+                if (stopper.forThread())
+                {
+                    return_value.set(OK);
+                    break;
+                }
+                // fallthrough
+            }
             default:
                 return_value.set(InvalidParameter);
         }
@@ -122,27 +155,15 @@ Invoke_Method_Status SF_ConcreteJob_Provider::GetError(
         OK = 0,
         Failed = 4,
     };
-    solarflare::Thread *thr = solarflare::Lookup::findThread(*self);
-    if (thr == NULL)
+    GetThreadError geterror(Error, self);
+        
+    if (geterror.forThread())
     {
-        return_value.set(Failed);
+        return_value.set(OK);
     }
     else
     {
-        return_value.set(OK);
-        switch (thr->currentState())
-        {
-            case solarflare::Thread::Failed:
-            case solarflare::Thread::Aborting:
-            case solarflare::Thread::Aborted:
-                Error = CIM_Error::create(true);
-                Error->ErrorType.null = false;
-                Error->ErrorType.value = CIM_Error::_ErrorType::enum_Unknown;
-                break;
-            default:
-                /* nothing */
-                break;
-        }
+        return_value.set(Failed);
     }
     
     return INVOKE_METHOD_OK;

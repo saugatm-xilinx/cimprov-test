@@ -4,12 +4,31 @@
 
 #include <cimple/cimple.h>
 #include "SF_ConcreteJob.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_ConcreteJob_Provider
 {
+    class StopThread : public solarflare::Action
+    {
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        StopThread(const Instance *inst) : solarflare::Action(inst) {}
+    };
+
+    class GetThreadError : public solarflare::Action
+    {
+        CIM_Error *&errdest;
+    public:
+        GetThreadError(CIM_Error *&d, const Instance *inst) : 
+            solarflare::Action(inst),
+            errdest(d) {}
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    };
+
 public:
 
     typedef SF_ConcreteJob Class;
