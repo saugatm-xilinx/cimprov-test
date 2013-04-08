@@ -108,6 +108,21 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromSoftwar
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
+void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::SystemElement& se,
+                                                                 unsigned)
+{
+    solarflare::SWElement& sw = static_cast<solarflare::SWElement&>(se);
+    sw.install(uri);
+}
+
+void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::SystemElement& se,
+                                                                    unsigned)
+{
+    solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
+    Installer installer(uri, service);
+    ok = installer.forSoftware(nic);
+}
+
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     const SF_SoftwareInstallationService* self,
     CIM_ConcreteJob*& Job,
@@ -125,47 +140,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         InvalidParameter = 5,
         JobCreated = 4096
     };
-    solarflare::SoftwareContainer *scope = NULL;
 
     if (URI.null)
-    {
-        return_value.set(InvalidParameter);
-        return INVOKE_METHOD_OK;
-    }
-
-    if (Target == NULL)
-    {
-        return_value.set(Error);
-        return INVOKE_METHOD_OK;
-    }
-    else if (const CIM_ComputerSystem *sys = 
-             cast<const CIM_ComputerSystem *>(Target))
-    {
-        if (solarflare::CIMHelper::isOurSystem(sys))
-            scope = &solarflare::System::target;
-        else
-        {
-            return_value.set(Error);
-            return INVOKE_METHOD_OK;
-        }
-    }
-    else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
-    {
-        scope = solarflare::Lookup::findNIC(*card);
-        if (scope == NULL)
-        {
-            return_value.set(Error);
-            return INVOKE_METHOD_OK;
-        }
-    }
-    else
-    {
-        return_value.set(InvalidParameter);
-        return INVOKE_METHOD_OK;
-    }
-
-    solarflare::SWElement *sw = solarflare::Lookup::findSoftware(*self, *scope);
-    if (sw == NULL)
     {
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
@@ -193,10 +169,39 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         }
     }
 
-    if (sw->install(URI.value.c_str()))
-        return_value.set(OK);
-    else
+
+    if (Target == NULL)
+    {
         return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+    else if (const CIM_ComputerSystem *sys = 
+             cast<const CIM_ComputerSystem *>(Target))
+    {
+        if (!solarflare::CIMHelper::isOurSystem(sys))
+        {
+            return_value.set(Error);
+            return INVOKE_METHOD_OK;
+        }
+        Installer installer(URI.value.c_str(), self);
+        if (installer.forSoftware())
+            return_value.set(OK);
+        else
+            return_value.set(InvalidParameter);
+    }
+    else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
+    {
+        NICInstaller installer(URI.value.c_str(), self, card);
+        if (installer.forNIC() && installer.isOk())
+            return_value.set(OK);
+        else
+            return_value.set(InvalidParameter);
+    }
+    else
+    {
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
 
     return INVOKE_METHOD_OK;
 }

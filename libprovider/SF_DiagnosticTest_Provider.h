@@ -4,12 +4,40 @@
 
 #include <cimple/cimple.h>
 #include "SF_DiagnosticTest.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_DiagnosticTest_Provider
 {
+    class CheckNIC : public solarflare::Action
+    {
+        const solarflare::NIC *nic;
+        bool ok;
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        CheckNIC(const solarflare::NIC *n,
+                 const Instance *inst) :
+            solarflare::Action(inst),
+            nic(n), ok(false) {}
+        bool isOk() const { return ok; }
+    };
+
+    class Runner : public solarflare::Action
+    {
+        const CIM_ManagedElement *nicElem;
+        CIM_ConcreteJob*& job;
+        bool ok;
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        Runner(CIM_ConcreteJob*& j, const CIM_ManagedElement *ne, const Instance *inst) : 
+            solarflare::Action(inst), nicElem(ne), job(j), ok(false) {}
+        bool isOk() const { return ok; }
+    };
+
+
 public:
 
     typedef SF_DiagnosticTest Class;

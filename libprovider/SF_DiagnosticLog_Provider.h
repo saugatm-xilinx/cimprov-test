@@ -4,12 +4,28 @@
 
 #include <cimple/cimple.h>
 #include "SF_DiagnosticLog.h"
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
 class SF_DiagnosticLog_Provider
 {
+    class ChangeState : public solarflare::Action
+    {
+        unsigned reqState;
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        ChangeState(unsigned rqs, const Instance *inst) : solarflare::Action(inst), reqState(rqs) {}
+    };
+
+    class LogClearer : public solarflare::Action 
+    {
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        LogClearer(const Instance *inst) : solarflare::Action(inst) {}
+    };
 public:
 
     typedef SF_DiagnosticLog Class;

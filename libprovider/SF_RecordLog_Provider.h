@@ -11,6 +11,22 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_RecordLog_Provider
 {
+    class ChangeState : public solarflare::Action
+    {
+        unsigned reqState;
+    protected:
+        virtual void handler(solarflare::SystemElement&, unsigned idx);
+    public:
+        ChangeState(unsigned rqs, const Instance *inst) : solarflare::Action(inst), reqState(rqs) {}
+    };
+
+    class LogClearer : public solarflare::Action 
+    {
+    protected:
+        virtual void handler(solarflare::SystemElement&, unsigned idx);
+    public:
+        LogClearer(const Instance *inst) : solarflare::Action(inst) {}
+    };
 public:
 
     typedef SF_RecordLog Class;

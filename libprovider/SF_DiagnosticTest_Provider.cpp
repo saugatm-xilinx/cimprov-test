@@ -95,6 +95,26 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnostic(
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
+void SF_DiagnosticTest_Provider::CheckNIC::handler(solarflare::SystemElement &se,
+                                                   unsigned)
+{
+    ok = (&se == nic);
+}
+
+void SF_DiagnosticTest_Provider::Runner::handler(solarflare::SystemElement &se,
+                                                 unsigned)
+{
+    solarflare::Diagnostic &diag = static_cast<solarflare::Diagnostic&>(se);
+    SF_DiagnosticTest_Provider::CheckNIC checker(diag.nic(), nicElem);
+    
+    ok = checker.forNIC() && checker.isOk();
+    if (ok)
+    {
+        diag.run(false);
+        job = cast<CIM_ConcreteJob *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
+    }
+}
+
 Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
     const SF_DiagnosticTest* self,
     const CIM_ManagedElement* ManagedElement,
@@ -103,7 +123,6 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
     CIM_ConcreteJob*& Job,
     Property<uint32>& return_value)
 {
-    solarflare::Diagnostic *diag = solarflare::Lookup::findDiagnostic(*self);
     enum Result 
     {
         OK = 0,
@@ -113,24 +132,17 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
         InvalidParameter = 5
     };
     
-    if (diag == NULL || ManagedElement == NULL)
+    if (ManagedElement == NULL)
     {
         return_value.set(InvalidParameter);
     }
     else
     {
-        const CIM_Card *card = cast<CIM_Card *>(ManagedElement);
-        
-        if (card == NULL || solarflare::Lookup::findNIC(*card) != diag->nic())
-        {
+        Runner runner(Job, ManagedElement, self);
+        if (!runner.forDiagnostic() || !runner.isOk())
             return_value.set(InvalidParameter);
-        }
         else
-        {
-            diag->run(false);
-            Job = cast<CIM_ConcreteJob *>(diag->cimReference(SF_ConcreteJob::static_meta_class));
             return_value.set(OK);
-        }
     }
 
     return INVOKE_METHOD_OK;

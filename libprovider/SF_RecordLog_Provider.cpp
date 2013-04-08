@@ -57,6 +57,33 @@ Modify_Instance_Status SF_RecordLog_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+void SF_RecordLog_Provider::ChangeState::handler(solarflare::SystemElement&,
+                                                     unsigned idx)
+{
+    solarflare::Logger *log = solarflare::Logger::knownLogs[idx];
+
+    switch (reqState)
+    {
+        case SF_RecordLog::_RequestedState::enum_Enabled:
+            log->enable(true);
+            break;
+        case SF_RecordLog::_RequestedState::enum_Disabled:
+            log->enable(false);
+            break;
+        case SF_RecordLog::_RequestedState::enum_Reset:
+            if (log->isEnabled())
+            {
+                log->enable(false);
+                log->enable(true);
+            }
+            break;
+        default:
+            // cannot happen
+            break;
+    }
+}
+
+
 Invoke_Method_Status SF_RecordLog_Provider::RequestStateChange(
     const SF_RecordLog* self,
     const Property<uint16>& RequestedState,
@@ -72,8 +99,7 @@ Invoke_Method_Status SF_RecordLog_Provider::RequestStateChange(
         InvalidParameter = 5,
         BadTimeout = 4098,
     };
-    solarflare::Logger *log = solarflare::Lookup::findRecordLog(*self);
-    if (log == NULL || RequestedState.null)
+    if (RequestedState.null)
     {
         return_value.set(InvalidParameter);
     }
@@ -83,22 +109,20 @@ Invoke_Method_Status SF_RecordLog_Provider::RequestStateChange(
     }
     else
     {
-        return_value.set(OK);
         switch (RequestedState.value)
         {
             case SF_RecordLog::_RequestedState::enum_Enabled:
-                log->enable(true);
-                break;
             case SF_RecordLog::_RequestedState::enum_Disabled:
-                log->enable(false);
-                break;
             case SF_RecordLog::_RequestedState::enum_Reset:
-                if (log->isEnabled())
+            {
+                ChangeState changer(RequestedState.value, self);
+                if (changer.forSystem())
                 {
-                    log->enable(false);
-                    log->enable(true);
+                    return_value.set(OK);
+                    break;
                 }
-                break;
+                // fall through
+            }
             default:
                 return_value.set(InvalidParameter);
         }
@@ -106,18 +130,23 @@ Invoke_Method_Status SF_RecordLog_Provider::RequestStateChange(
     return INVOKE_METHOD_OK;
 }
 
+void SF_RecordLog_Provider::LogClearer::handler(solarflare::SystemElement&,
+                                                unsigned idx)
+{
+    solarflare::Logger::knownLogs[idx]->clear();
+}
+
+
 Invoke_Method_Status SF_RecordLog_Provider::ClearLog(
     const SF_RecordLog* self,
     Property<uint32>& return_value)
 {
-    solarflare::Logger *log = solarflare::Lookup::findRecordLog(*self);
-    if (log == NULL)
+    LogClearer clearer(self);
+    if (!clearer.forSystem())
         return_value.set(2); // Error
     else
-    {
-        log->clear();
         return_value.set(0); // OK
-    }
+    
 
     return INVOKE_METHOD_OK;
 }
