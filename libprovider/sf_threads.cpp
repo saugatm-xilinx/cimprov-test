@@ -36,6 +36,15 @@ namespace solarflare
         stateLock.unlock();
         return s;
     }
+
+    Datetime Thread::startTime() const
+    {
+        Datetime t;
+        stateLock.lock();
+        t = startedAt;
+        stateLock.unlock();
+        return t;
+    }
     
     void Thread::start()
     {
@@ -43,6 +52,7 @@ namespace solarflare
         if (state == Running || state == Aborting)
             return;
         state = Running;
+        startedAt = cimple::Datetime::now();
         if (!Thread::create_detached(*this, doThread, this))
             state = Aborted;
     }
