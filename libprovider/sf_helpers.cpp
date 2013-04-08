@@ -137,9 +137,11 @@ namespace solarflare
     {
         Thread *th = const_cast<SystemElement&>(obj).embeddedThread();
         SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj, idx));
-
+        
+        job->Name.set(job->InstanceID.value);
         job->OperationalStatus.null = false;
         job->JobState.null = false;
+
         switch (th->currentState())
         {
             case Thread::NotRun:
@@ -171,6 +173,8 @@ namespace solarflare
         }
         job->PercentComplete.set(th->percentage());
         job->DeleteOnCompletion.set(false);
+        job->StartTime.set(th->startTime());
+        job->ElapsedTime.set(Datetime(Datetime::now().usec() - job->StartTime.value.usec()));
         return job;
     }
 

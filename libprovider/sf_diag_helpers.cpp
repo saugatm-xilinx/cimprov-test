@@ -366,6 +366,8 @@ namespace solarflare
     
         link->ServiceProvided = cast<cimple::CIM_DiagnosticService *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
         link->UserOfService = cast<cimple::CIM_ManagedElement *>(diag.nic()->cimReference(SF_NICCard::static_meta_class));
+        link->EstimatedDurationOfService.null = false;
+        link->EstimatedDurationOfService.value = SF_AvailableDiagnosticService::_EstimatedDurationOfService::enum_Unknown;
 
         return link;
     }

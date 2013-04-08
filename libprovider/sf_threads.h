@@ -42,6 +42,9 @@ namespace solarflare
         /// An adaptor between cimple::Thread interface and threadProc()
         static void *doThread(void *self);
 
+        /// Start time
+        Datetime startedAt;
+
     protected:
         /// The actual thread routine. When Thread class is subclassed this
         /// method should be overridden to perform subclass-specific
@@ -64,6 +67,9 @@ namespace solarflare
 
         /// @return current thread run state
         State currentState() const;
+
+        /// @return start time of the thread
+        Datetime startTime() const;
 
         /// Makes the thread running. The state is set to Running.
         void start();
