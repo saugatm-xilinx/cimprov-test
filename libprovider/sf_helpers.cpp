@@ -1,5 +1,8 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
+#include "IBMPSG_ComputerSystem.h"
+#include "PG_ComputerSystem.h"
+#include "OMC_UnitaryComputerSystem.h"
 #include "SF_ConcreteJob.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
 #include "SF_ElementCapabilities.h"
@@ -45,24 +48,33 @@ namespace solarflare
     {
         static const char * const namespaces[] =
         {ibmseNS, solarflareNS, baseNS, NULL};
+        static const Meta_Class * const csysMetaclasses[] = 
+        {
+            &cimple::IBMPSG_ComputerSystem::static_meta_class,
+            &cimple::OMC_UnitaryComputerSystem::static_meta_class,
+            &cimple::PG_ComputerSystem::static_meta_class,
+            &CIM_ComputerSystem::static_meta_class,
+            NULL
+        };
 
         if (cimSystem)
             return cast<CIM_ComputerSystem *>(cimSystem.ptr());
 
-        Ref<CIM_ComputerSystem> system = CIM_ComputerSystem::create();
         Ref<Instance> sysInstance;
 
-        for (const char * const *ns = namespaces; *ns != NULL; ns++)
+        for (const Meta_Class * const *mcs = csysMetaclasses; 
+             *mcs != NULL && !bool(sysInstance); mcs++)
         {
-            cimple::Instance_Enumerator ie;
-
-            if (cimple::cimom::enum_instances(*ns, system.ptr(), ie) != 0)
-                continue;
-
-            sysInstance = ie();
-            if (sysInstance)
+            Ref<CIM_ComputerSystem> system = cimple::create(*mcs);
+            for (const char * const *ns = namespaces; 
+                 *ns != NULL && !bool(sysInstance); ns++)
             {
-                break;
+                cimple::Instance_Enumerator ie;
+                
+                if (cimple::cimom::enum_instances(*ns, system.ptr(), ie) != 0)
+                    continue;
+                
+                sysInstance = ie();
             }
         }
         if (sysInstance)

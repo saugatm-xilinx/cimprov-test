@@ -152,6 +152,77 @@ class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
 class SF_ReferencedProfile : CIM_ReferencedProfile {
 };
 
+class IBMPSG_ComputerSystem : CIM_UnitaryComputerSystem
+{
+string Model;
+string LPARID;
+};
 
+class PG_ComputerSystem : CIM_UnitaryComputerSystem
+{  
+    [
+        Description ("The pager number of the primary system owner"
+                     "available if DMI is installed, else blank."),
+        MappingStrings {"MIF.DMTF|General Information|001.9"}
+    ]  
+    string PrimaryOwnerPager;
 
+    [
+        Description ("The name of the secondary owner of the system"
+                     "available if DMI is installed, else blank."),
+        MappingStrings {"MIF.DMTF|General Information|001.7"}
+    ] 
+    string SecondaryOwnerName;
+
+    [
+        Description ("The phone number of the secondary system owner,"
+                     "available if DMI is installed, else blank."),
+        MappingStrings {"MIF.DMTF|General Information|001.8"}
+    ]  
+    string SecondaryOwnerContact;
+
+    [Description ("The pager number of the secondary system owner,"
+                  "available if DMI is installed, else blank."),
+     MappingStrings {"MIF.DMTF|General Information|001.10"}
+    ]  
+    string SecondaryOwnerPager;
+
+    [Description ("The serial number of the system, fetched by the"
+                  "uname() system service."),
+     MappingStrings {"MIF.DMTF|General Information|001.13"}
+    ]  
+    string SerialNumber;
+
+    [Description ("The identification number of the system,"
+                  "currently blank."),
+     MappingStrings {"MIF.DMTF|General Information|001.13"}
+    ]  
+    string IdentificationNumber;
+};
+
+class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
+{
+      [Override("Caption")]
+   string Caption;
+      [Override("CreationClassName")]
+   string CreationClassName;
+      [Override("Dedicated")]
+   uint16 Dedicated[];
+      [Override("ElementName")]
+   string ElementName;
+      [Override("EnabledDefault")]
+   uint16 EnabledDefault = 2;
+      [Override("EnabledState")]
+   uint16 EnabledState = 5;
+      [Override("Name")]
+   string Name;
+      [Override("NameFormat")]
+   string NameFormat;
+      [Override("OtherDedicatedDescriptions")]
+   string OtherDedicatedDescriptions[];
+      [Override("RequestedState")]
+   uint16 RequestedState = 12;
+      [Override("ResetCapability")]
+   uint16 ResetCapability;
+};
 
