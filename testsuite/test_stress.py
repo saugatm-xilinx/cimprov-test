@@ -116,6 +116,5 @@ def test_function(param = {}):
 
                     logger.setLevel(log_level)
                     # Check that we are still alive
-                    spl = TESTER_NS.rsplit("/", 1)
-                    test_result(TEST_NAME, ns_check(spl[0], spl[1]))
+                    test_result(TEST_NAME, ns_check(TESTER_NS))
 

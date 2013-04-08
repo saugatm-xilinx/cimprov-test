@@ -212,6 +212,10 @@ namespace solarflare
         newPort->ActiveMaximumTransmissionUnit.set(intf.mtu());
         newPort->Speed.set(Port::speedBPS(intf.port()->linkSpeed()));
         newPort->MaxSpeed.set(Port::speedBPS(intf.nic()->maxLinkSpeed()));
+        newPort->Capabilities.null = false;
+        newPort->Capabilities.value.append(SF_EthernetPort::_Capabilities::enum_Unknown);
+        newPort->EnabledCapabilities.null = false;
+        newPort->EnabledCapabilities.value.append(SF_EthernetPort::_EnabledCapabilities::enum_Unknown);
         
         return newPort;
     }

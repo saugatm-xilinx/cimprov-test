@@ -9,6 +9,10 @@ ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/inter
 ESXI_GENERATED += repository.reg.in interop.reg.in
 ESXI_GENERATED += Makefile.am
 ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs/i386/libutils.a
+ESXI_GENERATED += libprovider/esxi_libs/i386/libcurl.a
+ESXI_GENERATED += libprovider/esxi_libs/i386/libssl.so.0.9.8
+ESXI_GENERATED += libprovider/esxi_libs/i386/librt.so.1
+ESXI_GENERATED += libprovider/esxi_libs/i386/libcrypto.so.0.9.8
 
 esxi_archive_GENERATED = $(addprefix $(ESXI_PROJECT_NAME)/,$(ESXI_GENERATED))
 _esxi_archive_GENERATED = $(addprefix $(esxi_archive_DIR)/,$(esxi_archive_GENERATED))
@@ -64,6 +68,10 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "lib$(PROVIDER_LIBRARY)_so_CXXFLAGS=\$$(CFLAGS) -Wno-unused -Wno-unused-parameter $(CXXFLAGS)" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD=\$$(srcdir)/libprovider/esxi_libs/i386/libsfupdate.a " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libutils.a " >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libcurl.a " >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libssl.so.0.9.8 " >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/librt.so.1 " >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libcrypto.so.0.9.8 " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
 	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace)" >>$@
 	echo "if ENABLE_SFCB" >>$@

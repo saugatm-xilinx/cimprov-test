@@ -7,6 +7,7 @@
 #include "SF_ElementConformsToProfile.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_SystemDevice.h"
+#include "SF_CardRealizesController.h"
 
 namespace solarflare 
 {
@@ -24,6 +25,7 @@ namespace solarflare
     using cimple::SF_ElementConformsToProfile;
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_SystemDevice;
+    using cimple::SF_CardRealizesController;
 
     class NICCardHelper : public CIMHelper {
     public:
@@ -52,7 +54,11 @@ namespace solarflare
     class NICConformsToProfile : public CIMHelper {
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
-    
+
+    class CardRealizesControllerHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+    };
 
     const CIMHelper *NIC::cimDispatch(const Meta_Class& cls) const
     {
@@ -64,6 +70,7 @@ namespace solarflare
         static const DriverElementSoftwareIdentityHelper driverSoftwareIdentity;
         static const PortControllerSystemDeviceHelper systemDevice;
         static const NICConformsToProfile conforming;
+        static const CardRealizesControllerHelper cardRealizesControllerHelper;
         
         if (&cls == &SF_NICCard::static_meta_class)
             return &nicCardHelper;
@@ -79,6 +86,8 @@ namespace solarflare
             return &systemDevice;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conforming;
+        if (&cls == &SF_CardRealizesController::static_meta_class)
+            return &cardRealizesControllerHelper;
         return NULL;
     }
 
@@ -227,6 +236,16 @@ namespace solarflare
     {
         return DMTFProfileInfo::PhysicalAssetProfile.                   \
         conformingElement(se.cimReference(SF_NICCard::static_meta_class));
+    }
+
+    Instance *CardRealizesControllerHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        const NIC& nic = static_cast<const NIC&>(se);
+        SF_CardRealizesController* link = SF_CardRealizesController::create(true);
+
+        link->Antecedent = cast<cimple::CIM_PhysicalElement *>(nic.cimReference(SF_NICCard::static_meta_class));
+        link->Dependent =  cast<cimple::CIM_LogicalDevice *>(nic.cimReference(SF_PortController::static_meta_class));
+        return link;
     }
 
 } // namespace

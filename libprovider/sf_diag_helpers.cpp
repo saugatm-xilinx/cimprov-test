@@ -6,6 +6,7 @@
 #include "SF_PortController.h"
 #include "SF_NICCard.h"
 #include "SF_DiagnosticLog.h"
+#include "SF_DiagnosticLogCapabilities.h"
 #include "SF_DiagnosticCompletionRecord.h"
 #include "SF_UseOfLog.h"
 #include "SF_LogManagesRecord.h"
@@ -38,6 +39,7 @@ namespace solarflare
     using cimple::SF_UseOfLog;
     using cimple::SF_LogManagesRecord;
     using cimple::SF_RecordAppliesToElement;
+    using cimple::SF_DiagnosticLogCapabilities;
     using cimple::SF_DiagnosticServiceCapabilities;
     using cimple::SF_ElementCapabilities;
     using cimple::SF_ElementSoftwareIdentity;
@@ -61,6 +63,12 @@ namespace solarflare
     };
 
     class DiagnosticServiceCapabilitiesHelper : public CIMHelper {
+    public:
+        virtual Instance *reference(const SystemElement& obj, unsigned) const;
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+    };
+
+    class DiagnosticLogCapabilitiesHelper : public CIMHelper {
     public:
         virtual Instance *reference(const SystemElement& obj, unsigned) const;
         virtual Instance *instance(const SystemElement&, unsigned) const;
@@ -126,12 +134,24 @@ namespace solarflare
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
 
-
     class DiagnosticConformsToProfile : public CIMHelper {
         virtual unsigned nObjects(const SystemElement &se) const;
         virtual Instance *instance(const SystemElement &se, unsigned) const;
     };
-    
+
+    class LogAndServiceCapsLinkHelper : public CIMHelper {
+        ElementCapabilitiesHelper logCaps;
+        ElementCapabilitiesHelper serviceCaps;
+    public:
+        LogAndServiceCapsLinkHelper() :
+            logCaps(SF_DiagnosticLog::static_meta_class,
+                    SF_DiagnosticLogCapabilities::static_meta_class),
+            serviceCaps(SF_DiagnosticTest::static_meta_class,
+                        SF_DiagnosticServiceCapabilities::static_meta_class) {}
+        virtual unsigned nObjects(const SystemElement&) const { return 2; }
+        virtual Instance *instance(const SystemElement& obj, unsigned) const;
+    };
+        
     const CIMHelper* Diagnostic::cimDispatch(const Meta_Class& cls) const
     {
         static const DiagnosticTestHelper diagnosticTest;
@@ -145,9 +165,9 @@ namespace solarflare
         static const DiagnosticRecordAppliesToElementHelper recordAppliesToElement;
         static const DiagnosticCompletionRecordHelper diagnosticCompletionRecord;
         static const DiagnosticConformsToProfile conforming;
+        static const DiagnosticLogCapabilitiesHelper logCaps;
         static const DiagnosticServiceCapabilitiesHelper serviceCaps;
-        static const ElementCapabilitiesHelper capsLink(SF_DiagnosticTest::static_meta_class,
-                                                        SF_DiagnosticServiceCapabilities::static_meta_class);
+        static const LogAndServiceCapsLinkHelper capsLink;
         static const DiagnosticElementSoftwareIdentityHelper elementSoftwareIdentity;
         static const DiagnosticHostedServiceHelper hostedService;
         static const DiagnosticServiceAffectsElementHelper serviceAffectsElement;
@@ -175,6 +195,8 @@ namespace solarflare
             return &logManagesRecord;
         if (&cls == &SF_RecordAppliesToElement::static_meta_class)
             return &recordAppliesToElement;
+        if (&cls == &SF_DiagnosticLogCapabilities::static_meta_class)
+            return &logCaps;
         if (&cls == &SF_DiagnosticServiceCapabilities::static_meta_class)
             return &serviceCaps;
         if (&cls == &SF_ElementCapabilities::static_meta_class)
@@ -198,7 +220,7 @@ namespace solarflare
         SF_DiagnosticTest *newSvc = SF_DiagnosticTest::create(true);
         
         newSvc->CreationClassName.set("SF_DiagnosticTest");
-        newSvc->Name.set(diag.name());
+        newSvc->Name.set(instanceID(diag.name()));
         newSvc->SystemCreationClassName.set(system->CreationClassName.value);
         newSvc->SystemName.set(system->Name.value);
         
@@ -493,6 +515,18 @@ namespace solarflare
         return link;
     }
 
+    Instance *LogAndServiceCapsLinkHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        switch (idx)
+        {
+            case 0:
+                return logCaps.instance(se, 0);
+            case 1:
+                return serviceCaps.instance(se, 0);
+            default:
+                return NULL;
+        }
+    }
 
     Instance *DiagnosticServiceCapabilitiesHelper::reference(const SystemElement& se, unsigned) const
     {
@@ -522,6 +556,31 @@ namespace solarflare
         newSvc->SupportedExecutionControls.value.append(SF_DiagnosticServiceCapabilities::_SupportedExecutionControls::enum_Terminate_Job);
         
         return newSvc;
+    }
+
+    Instance *DiagnosticLogCapabilitiesHelper::reference(const SystemElement& se, unsigned) const
+    {
+        SF_DiagnosticLogCapabilities *newDlc = SF_DiagnosticLogCapabilities::create(true);
+
+        newDlc->InstanceID.set(instanceID(se.name()));
+        newDlc->InstanceID.value.append(" Capabilities");
+        return newDlc;
+    }
+
+    Instance *DiagnosticLogCapabilitiesHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        const solarflare::Diagnostic& diag = static_cast<const Diagnostic&>(se);
+        SF_DiagnosticLogCapabilities *newDlc = static_cast<SF_DiagnosticLogCapabilities *>(reference(se, idx));
+
+        newDlc->Description.set(diag.description());
+        newDlc->ElementName.set(diag.name());
+
+        newDlc->SupportedRecordTypes.null = false;
+        newDlc->SupportedRecordTypes.value.append(SF_DiagnosticLogCapabilities::_SupportedRecordTypes::enum_Record_Data);
+        newDlc->ElementNameEditSupported.set(false);
+        newDlc->RequestedStatesSupported.null = false;
+
+        return newDlc;
     }
 
     Instance *DiagnosticElementSoftwareIdentityHelper::instance(const solarflare::SystemElement& se, unsigned) const

@@ -30,10 +30,10 @@ namespace solarflare
             diagThread.start();
     }
 
-    String Diagnostic::name() const 
+    String Diagnostic::name() const
     {
         String n = nic()->name();
-        
+
         n.append(" ");
         n.append(genericName());
         return n;

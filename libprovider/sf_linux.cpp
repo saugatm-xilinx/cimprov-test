@@ -1,13 +1,5 @@
-///
-/// TODO and questions list:
-///
-/// - SKU/FRU - there is no such attribute in SF VPD?
-/// - Autoneg getting returns operstate - should it return if autoneg
-///  is supported instead?
-/// - Indications
-///
-
 #include "sf_platform.h"
+#include "sf_logging.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
@@ -52,26 +44,12 @@
 #define VPD_TAG_W                       0x91
 #define VPD_TAG_END                     0x78
 
-#ifdef LINUX_LOG_ENABLE
-#    define LINUX_LOG_ERR(ARGS)         CIMPLE_ERR(ARGS)
-#    define LINUX_LOG_WARN(ARGS)        CIMPLE_WARN(ARGS)
-#    define LINUX_LOG_DBG(ARGS)         CIMPLE_DBG(ARGS)
-#else
-#    define LINUX_LOG_ERR(ARGS)         do {} while(0)
-#    define LINUX_LOG_WARN(ARGS)        do {} while(0)
-#    define LINUX_LOG_DBG(ARGS)         do {} while(0)
-#endif
+#define LINUX_LOG_ERR(_fmt, _args...)   Logger::errorLog.format(_fmt, ##_args)
+#define LINUX_LOG_EVT(_fmt, _args...)   Logger::eventLog.format(_fmt, ##_args)
+#define LINUX_LOG_DBG(_fmt, _args...)   Logger::debugLog.format(_fmt, ##_args)
 
 namespace solarflare
 {
-#ifdef LINUX_LOG_ENABLE
-    using cimple::Log_Call_Frame;
-    using cimple::_log_enabled_state;
-    using cimple::LL_DBG;
-    using cimple::LL_WARN;
-    using cimple::LL_ERR;
-#endif
-
     ///
     /// Get device attribute from sysfs file.
     ///
@@ -100,16 +78,16 @@ namespace solarflare
         fd = open(path, O_RDONLY);
         if (fd < 0)
         {
-            LINUX_LOG_ERR(("Failed to open file %s: %s",
-                            path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to open file %s: %s",
+                            path, strerror(errno));
             return -1;
         }
         size = read(fd, buf, maxlen);
         close(fd);
         if (size < 0)
         {
-            LINUX_LOG_ERR(("Failed to read file %s: %s",
-                            path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to read file %s: %s",
+                            path, strerror(errno));
             return -1;
         }
         if (size == 0 || size == maxlen)
@@ -165,8 +143,8 @@ namespace solarflare
         sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
         if (sock < 0)
         {
-            LINUX_LOG_ERR(("Failed to create PF_INET socket: %s",
-                             strerror(errno)));
+            LINUX_LOG_ERR("Failed to create PF_INET socket: %s",
+                             strerror(errno));
             return -1;
         }
 
@@ -175,8 +153,8 @@ namespace solarflare
         ((struct ethtool_value *)edata)->cmd = cmd;
         if (ioctl(sock, SIOCETHTOOL, &ifr) < 0)
         {
-            LINUX_LOG_ERR(("Failed to perform SIOCETHTOOL ioctl with "
-                            "cmd value <%u>: %s", cmd, strerror(errno)));
+            LINUX_LOG_ERR("Failed to perform SIOCETHTOOL ioctl with "
+                            "cmd value <%u>: %s", cmd, strerror(errno));
             close(sock);
             return -1;
         }
@@ -572,7 +550,7 @@ namespace solarflare
         mtd_list = fopen("/proc/mtd", "r");
         if (!mtd_list)
         {
-            LINUX_LOG_ERR(("Failed to open /proc/mtd"));
+            LINUX_LOG_ERR("Failed to open /proc/mtd");
             return VersionInfo("");
         }
 
@@ -603,8 +581,8 @@ namespace solarflare
         fd = open(dev_path, O_RDONLY);
         if (fd < 0)
         {
-            LINUX_LOG_ERR(("Failed to open file %s: %s",
-                            dev_path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to open file %s: %s",
+                            dev_path, strerror(errno));
             return VersionInfo("");
         }
 
@@ -613,8 +591,8 @@ namespace solarflare
 
         if (read_bytes < 0)
         {
-            LINUX_LOG_ERR(("Failed to read file %s: %s",
-                            dev_path, strerror(errno)));
+            LINUX_LOG_ERR("Failed to read file %s: %s",
+                            dev_path, strerror(errno));
             return VersionInfo("");
         }
 
@@ -649,24 +627,27 @@ namespace solarflare
     }
 
     class LinuxDiagnostic : public Diagnostic {
+        bool online;
         const NIC *owner;
         const Interface *boundIface;
         Result testPassed;
         static const char sampleDescr[];
-        static const String diagGenName;
+        static const String diagOnlineName;
+        static const String diagOfflineName;
     public:
-        LinuxDiagnostic(const NIC *o, const Interface *bi) :
-            Diagnostic(sampleDescr), owner(o), boundIface(bi),
+        LinuxDiagnostic(bool on, const NIC *o, const Interface *bi) :
+            Diagnostic(sampleDescr), online(on), owner(o), boundIface(bi),
             testPassed(NotKnown) {}
         virtual Result syncTest();
         virtual Result result() const { return testPassed; }
         virtual const NIC *nic() const { return owner; }
         virtual void initialize() {};
-        virtual const String& genericName() const { return diagGenName; }
+        virtual const String& genericName() const;
     };
 
     const char LinuxDiagnostic::sampleDescr[] = "Linux Diagnostic";
-    const String LinuxDiagnostic::diagGenName = "Diagnostic";
+    const String LinuxDiagnostic::diagOnlineName = "Diagnostic Online";
+    const String LinuxDiagnostic::diagOfflineName = "Diagnostic Offline";
 
     Diagnostic::Result LinuxDiagnostic::syncTest()
     {
@@ -681,8 +662,9 @@ namespace solarflare
                            drv_data.testinfo_len * sizeof(*test_data->data));
         if (!test_data)
             return NotKnown;
-
-        test_data->flags = ETH_TEST_FL_OFFLINE;
+        
+        if (!online)
+            test_data->flags = ETH_TEST_FL_OFFLINE;
         test_data->len = drv_data.testinfo_len;
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_TEST, &drv_data) < 0)
@@ -697,6 +679,11 @@ namespace solarflare
         return testPassed;
     }
 
+    const String& LinuxDiagnostic::genericName() const
+    {
+        return online ? diagOnlineName : diagOfflineName;
+    }
+
     class LinuxNIC : public NIC {
         int portNum;
         LinuxPort port0;
@@ -705,7 +692,8 @@ namespace solarflare
         LinuxInterface intf1;
         LinuxNICFirmware nicFw;
         LinuxBootROM rom;
-        LinuxDiagnostic diag;
+        LinuxDiagnostic diagOnline;
+        LinuxDiagnostic diagOffline;
     protected:
         virtual void setupPorts()
         {
@@ -732,7 +720,8 @@ namespace solarflare
         }
         virtual void setupDiagnostics()
         {
-            diag.initialize();
+            diagOnline.initialize();
+            diagOffline.initialize();
         }
     public:
         String sysfsPath;
@@ -743,7 +732,9 @@ namespace solarflare
             port0(this, 0), port1(this, 1),
             intf0(this, 0, ifPath0), intf1(this, 1, ifPath1),
             nicFw(this, &intf0), rom(this, &intf0),
-            diag(this, &intf0), sysfsPath(NICPath)
+            diagOnline(true, this, &intf0),
+            diagOffline(false, this, &intf0),
+            sysfsPath(NICPath)
         {}
 
         virtual VitalProductData vitalProductData() const;
@@ -799,12 +790,16 @@ namespace solarflare
         }
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
-            return en.process(diag);
+            if (!en.process(diagOnline))
+                return false;
+            return en.process(diagOffline);
         }
 
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
-            return en.process(diag);
+            if (!en.process(diagOnline))
+                return false;
+            return en.process(diagOffline);
         }
 
         virtual PCIAddress pciAddress() const;
@@ -921,6 +916,8 @@ namespace solarflare
         if (*part != '\0')
             last = part[strlen(part) - 1];
 
+       // Mapping is taken from:
+       // http://www.solarflare.com/Content/UserFiles/Media/Solarflare_Onload_Performant_10GbE_Adapters_Chart_detail.png
         switch (last)
         {
             case 'F': return NIC::SFPPlus;
@@ -1091,9 +1088,13 @@ namespace solarflare
     public:
         LinuxManagementPackage() :
             Package("CIM Provider RPM", "sfcprovider"),
-            providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
+            providerLibrary(this, "CIM Provider library", "libSolarflare.so",
+                            SF_LIBPROV_VERSION) {}
         virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("0.1"); }
+        virtual VersionInfo version() const
+        {
+            return VersionInfo(SF_LIBPROV_VERSION);
+            }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
@@ -1126,13 +1127,53 @@ namespace solarflare
         };
     public:
         static LinuxSystem target;
-        bool is64bit() const { return true; }
-        OSType osType() const { return RHEL; }
+        bool is64bit() const;
+        OSType osType() const;
         bool forAllNICs(ConstElementEnumerator& en) const;
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
     };
+
+    bool LinuxSystem::is64bit() const
+    {
+        long wordBits = sysconf(_SC_LONG_BIT);
+        
+        if (wordBits == -1)
+        {
+            LINUX_LOG_ERR("Failed to determine OS bitness");
+            return false;
+        }
+        if (wordBits == 64)
+            return true;
+
+        return false;
+    }
+
+    System::OSType LinuxSystem::osType() const
+    {
+        char    buf[SYS_PATH_MAX_LEN];
+        ssize_t len;
+
+        if (access("/etc/debian_version", F_OK) == 0)
+            return Debian;
+
+        if ((len = readlink("/etc/system-release",
+                            buf, sizeof(buf) - 1)) != -1)
+        {
+            buf[len] = '\0';
+            if (strcmp(buf, "redhat-release") == 0)
+                return RHEL;
+            if (strcmp(buf, "centos-release") == 0)
+                return CentOS;
+            if (strcmp(buf, "sles-release") == 0)
+                return SLES;
+            if (strcmp(buf, "oracle-release") == 0)
+                return OracleEL;
+        }
+        
+        return GenericLinux;
+    }
 
     bool LinuxSystem::forAllNICs(ConstElementEnumerator& en) const
     {

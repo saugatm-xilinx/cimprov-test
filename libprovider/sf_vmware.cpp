@@ -6,6 +6,7 @@
 #include <cimple/Ref.h>
 #include <cimple.h>
 #include "CIM_EthernetPort.h"
+#include "CIM_SoftwareIdentity.h"
 
 #define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
@@ -37,6 +38,10 @@
 #include <errno.h>
 
 #include <pthread.h>
+
+#include "curl/curl.h"
+
+#include <arpa/inet.h>
 
 #define CHUNK_LEN 0x80
 
@@ -73,6 +78,7 @@ namespace solarflare
 {
     using cimple::Instance;
     using cimple::CIM_EthernetPort;
+    using cimple::CIM_SoftwareIdentity;
     using cimple::Ref;
     using cimple::cast;
 
@@ -237,6 +243,41 @@ fail:
         free(args);
         free(buf);
         return rc;
+    }
+
+    /**
+     * Get reference to a corresponding CIM_EthernetPort value
+     * by device name.
+     *
+     * @param dev_name    Device name
+     *
+     * @return Reference to CIM_EthernetPort value
+     */
+    Ref<CIM_EthernetPort> getCIMEthPort(const char *dev_name)
+    {
+        Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
+        Ref<Instance>         cimInstance;
+        Ref<CIM_EthernetPort> cimEthPort;
+
+        cimple::Instance_Enumerator ie;
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+        {
+            cimEthPort.reset(cast<CIM_EthernetPort *>(NULL));
+            return cimEthPort;
+        }
+
+        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
+        {
+            cimEthPort.reset(cast<CIM_EthernetPort *>(cimInstance.ptr()));
+            if (!(cimEthPort->DeviceID.null) &&
+                strcmp(cimEthPort->DeviceID.value.c_str(), dev_name) == 0)
+                break;
+            cimEthPort.reset(cast<CIM_EthernetPort *>(NULL));
+        }
+
+        return cimEthPort;
     }
 
     /**
@@ -1423,24 +1464,10 @@ fail:
 
     uint64 VMWareInterface::mtu() const
     {
-        Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
-        Ref<Instance>         cimInstance;
         Ref<CIM_EthernetPort> cimEthPort;
 
-        cimple::Instance_Enumerator ie;
-
-        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
-                                          cimModel.ptr(), ie) != 0)
-            return 0;
-
-        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
-        {
-            cimEthPort.reset(cast<CIM_EthernetPort *>(cimInstance.ptr()));
-            if (!(cimEthPort->DeviceID.null) &&
-                strcmp(cimEthPort->DeviceID.value.c_str(),
-                       ((VMWarePort *)boundPort)->dev_name.c_str()) == 0)
-                break;
-        }
+        cimEthPort =
+          getCIMEthPort(((VMWarePort *)boundPort)->dev_name.c_str());
 
         if (!cimEthPort)
             return 0;
@@ -1649,6 +1676,7 @@ fail:
 
         virtual VitalProductData vitalProductData() const;
         Connector connector() const;
+
         uint64 supportedMTU() const { return 9000; }
 
         virtual bool forAllFw(ElementEnumerator& en)
@@ -1771,6 +1799,50 @@ fail:
     }
 
     /**
+     * Get data via TFTP protocol.
+     *
+     * @param uri         Data URI
+     * @param f           File to write loaded data
+     *
+     * @return 0 on success, < 0 on failure
+     */
+    static int tftp_get_file(const char *uri, FILE *f)
+    {
+        CURL           *curl;
+        int             rc = 0;
+
+        if (uri == NULL || f == NULL)
+            return -1;
+
+        curl = curl_easy_init();
+        if (curl == NULL)
+            return -2;
+
+        if (curl_easy_setopt(curl, CURLOPT_URL, uri) != CURLE_OK)
+        {
+            rc = -3;
+            goto curl_fail;
+        }
+        if (curl_easy_setopt(curl, CURLOPT_WRITEDATA,
+                             f) != CURLE_OK)
+        {
+            rc = -5;
+            goto curl_fail;
+        }
+
+        CURLcode rc_curl;
+        if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
+        {
+            rc = -6;
+            goto curl_fail;
+        }
+
+curl_fail:
+        curl_easy_cleanup(curl);
+        return rc;
+    }
+
+    /**
      * Install firmware on a NIC from given image.
      *
      * @param owner       NIC class pointer
@@ -1784,6 +1856,8 @@ fail:
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
+        char  tmp_file[] = "/tmp/sf_firmware_XXXXXX";
+        int   tmp_file_used = 0;
 
         if (((VMWareNIC *)owner)->portNum <= 0)
             return -1;
@@ -1799,16 +1873,56 @@ fail:
                 return -2;
             }
         }
-        else /* TFTP to be implemented */
-            return -3;
+        else if (strcmp_start(fileName, "tftp://") == 0)
+        {
+            FILE *f;
+
+            fd = mkstemp(tmp_file);
+            if (fd < 0)
+                return -3;
+
+            f = fdopen(fd, "w");
+            if (f == NULL)
+            {
+                close(fd);
+                return -4;
+            }
+
+            rc = tftp_get_file(fileName, f);
+            if (rc != 0)
+            {
+                fclose(f);
+                return -5;
+            }
+            fclose(f);
+
+            rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
+                          "--write --image=%s",
+                          ((VMWareNIC *)owner)->ports[0]->dev_name.c_str(),
+                          tmp_file);
+            if (rc < 0 || rc >= CMD_MAX_LEN)
+            {
+                unlink(tmp_file);
+                return -6;
+            }
+
+            tmp_file_used = 1;
+        }
+        else /* SFTP to be implemented */
+            return -7;
 
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
         {
-            return -4;
+            if (tmp_file_used)
+                unlink(tmp_file);
+            return -8;
         }
 
         close(fd);
+        if (tmp_file_used)
+            unlink(tmp_file);
+
         return 0;
     }
 
@@ -1836,13 +1950,6 @@ fail:
         int                      fd;
         char                     device_path[PATH_MAX_LEN];
 
-        /**
-         * BUG HERE: what if there is no SF NICs?
-         * Is there a way to determine driver version
-         * not via ETHTOOL_GDRVINFO and not via using
-         * esxcli (the latter is impossible since fork() is not
-         * permitted here)?
-         */
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
             return VersionInfo("");
@@ -1885,7 +1992,37 @@ fail:
 
         closedir(device_dir);
 
-        return VersionInfo("");
+        /*
+         * We failed to get it via ethtool - we try to get it
+         * from VMWare root/cimv2 standard objects.
+         */
+        Ref<CIM_SoftwareIdentity> cimModel =
+                                      CIM_SoftwareIdentity::create();
+        Ref<Instance>             cimInstance;
+        Ref<CIM_SoftwareIdentity> cimSoftId;
+        String                    strVersion;
+
+        cimple::Instance_Enumerator ie;
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+            return VersionInfo("");
+
+        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
+        {
+            cimSoftId.reset(cast<CIM_SoftwareIdentity *>
+                                            (cimInstance.ptr()));
+            if (!(cimSoftId->Description.null) &&
+                strcmp_start(cimSoftId->Description.value.c_str(),
+                            "Solarflare Network Driver") == 0)
+                break;
+            cimSoftId.reset(cast<CIM_SoftwareIdentity *>(NULL));
+        }
+
+        if (!cimSoftId)
+            return VersionInfo("");
+
+        return VersionInfo(cimSoftId->VersionString.value.c_str());
     }
 
     class VMWareLibrary : public Library {
@@ -1952,8 +2089,6 @@ fail:
     };
 
     /// @brief stub-only System implementation
-    /// @note all structures are initialised statically,
-    /// so initialize() does nothing 
     class VMWareSystem : public System {
         VMWareNIC **sf_nics;
         int sf_nics_count;
@@ -1965,6 +2100,8 @@ fail:
         {
             sf_nics = NULL;
             sf_nics_count = 0;
+
+            curl_global_init(CURL_GLOBAL_ALL);
         };
 
         ~VMWareSystem()
@@ -1978,6 +2115,8 @@ fail:
                 free(sf_nics);
                 sf_nics_count = 0;
             }
+
+            curl_global_cleanup();
         };
 
     protected:

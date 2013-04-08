@@ -5,9 +5,11 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_ConcreteJob_Provider.cpp \
 	SF_ConnectorOnNIC_Provider.cpp \
 	SF_ConnectorRealizesPort_Provider.cpp \
+	SF_CardRealizesController_Provider.cpp \
 	SF_ControlledBy_Provider.cpp \
 	SF_DiagnosticCompletionRecord_Provider.cpp \
 	SF_DiagnosticLog_Provider.cpp \
+	SF_DiagnosticLogCapabilities_Provider.cpp \
 	SF_DiagnosticServiceCapabilities_Provider.cpp \
 	SF_DiagnosticSettingData_Provider.cpp \
 	SF_DiagnosticTest_Provider.cpp \
@@ -30,6 +32,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_PortController_Provider.cpp \
 	SF_RecordAppliesToElement_Provider.cpp \
 	SF_RecordLog_Provider.cpp \
+	SF_RecordLogCapabilities_Provider.cpp \
 	SF_ReferencedProfile_Provider.cpp \
 	SF_RegisteredProfile_Provider.cpp \
 	SF_ServiceAffectsElement_Provider.cpp \
@@ -70,7 +73,7 @@ CI_INCLUDES = libprovider/ci libprovider/ci/app libprovider/ci/app/platform \
 		libprovider/ci/efch libprovider/ci/efhw libprovider/ci/efrm \
 		libprovider/ci/eftest libprovider/ci/internal libprovider/ci/iscsi \
 		libprovider/ci/mgmt libprovider/ci/net libprovider/ci/tools \
-		libprovider/ci/tools/platform
+		libprovider/ci/tools/platform libprovider/curl/
 
 libprovider_INCLUDES += $(CI_INCLUDES)
 endif

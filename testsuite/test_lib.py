@@ -64,18 +64,19 @@ def enum_check(cli, class_list):
 # Namespace
 ##################
 
-def ns_check(parent_ns, check_ns):
+def ns_check(check_ns):
+    spl = check_ns.rsplit("/", 1)
     wbemclient = pywbem.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD),
-                                       parent_ns)
-    logger.info('Checking %s/%s existance...',  parent_ns, check_ns)
+                                       spl[0])
+    logger.info('Checking %s/%s existance...',  spl[0], spl[1])
     try:
         ns_list = wbemclient.EnumerateInstanceNames('__Namespace')
     except:
         logger.error('Failed to enumerate namespaces names')
         return False
     for ns in ns_list:
-        if ns[u'Name'] == check_ns:
+        if ns[u'Name'] == spl[1]:
             return True
     return False
 

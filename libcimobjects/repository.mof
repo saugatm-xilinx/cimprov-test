@@ -46,6 +46,10 @@ class SF_SystemDevice : CIM_SystemDevice {
 class SF_ConnectorRealizesPort : CIM_Realizes {
 };
 
+[Association]
+class SF_CardRealizesController : CIM_Realizes {
+};
+
 class SF_LANEndpoint : CIM_LANEndpoint {
 };
 
@@ -85,12 +89,17 @@ class SF_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabiliti
 class SF_RecordLog : CIM_RecordLog {
 };
 
+class SF_RecordLogCapabilities : CIM_RecordLogCapabilities {
+};
+
 class SF_DiagnosticLog : CIM_DiagnosticLog {
+};
+
+class SF_DiagnosticLogCapabilities : CIM_RecordLogCapabilities {
 };
 
 class SF_DiagnosticCompletionRecord : CIM_DiagnosticCompletionRecord {
 };
-
 
 class SF_LogEntry : CIM_LogEntry {
 };

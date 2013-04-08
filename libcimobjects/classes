@@ -12,6 +12,7 @@ SF_PortController
 SF_EnabledLogicalElementCapabilities
 SF_SystemDevice
 SF_ConnectorRealizesPort
+SF_CardRealizesController
 SF_LANEndpoint
 SF_NICSAPImplementation
 SF_SoftwareInstallationService
@@ -22,10 +23,12 @@ SF_HostedService
 SF_ControlledBy
 SF_HostedAccessPoint
 SF_RecordLog
+SF_RecordLogCapabilities
 SF_LogEntry
 SF_LogManagesRecord
 SF_UseOfLog
 SF_DiagnosticLog
+SF_DiagnosticLogCapabilities
 SF_DiagnosticCompletionRecord
 SF_DiagnosticTest
 SF_DiagnosticServiceCapabilities
