@@ -40,6 +40,7 @@ namespace solarflare
 
         static const char solarflareNS[];
         static const char ibmseNS[];
+        static const char ibmsdNS[];
         static const char interopNS[];
         static const char baseNS[];
         static void initialize()

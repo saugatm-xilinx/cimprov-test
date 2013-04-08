@@ -1,6 +1,8 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
 #include "IBMPSG_ComputerSystem.h"
+#include "IBMSD_ComputerSystem.h"
+#include "IBMSD_SPComputerSystem.h"
 #include "PG_ComputerSystem.h"
 #include "OMC_UnitaryComputerSystem.h"
 #include "SF_ConcreteJob.h"
@@ -31,6 +33,7 @@ namespace solarflare
 
     const char CIMHelper::solarflareNS[] = SF_IMPLEMENTATION_NS;
     const char CIMHelper::ibmseNS[] = "root/ibmse";
+    const char CIMHelper::ibmsdNS[] = "root/ibmsd";
     const char CIMHelper::interopNS[] = SF_INTEROP_NS;
     const char CIMHelper::baseNS[] = "root/cimv2";
 
@@ -51,6 +54,8 @@ namespace solarflare
         static const Meta_Class * const csysMetaclasses[] = 
         {
             &cimple::IBMPSG_ComputerSystem::static_meta_class,
+            &cimple::IBMSD_ComputerSystem::static_meta_class,
+            &cimple::IBMSD_SPComputerSystem::static_meta_class,
             &cimple::OMC_UnitaryComputerSystem::static_meta_class,
             &cimple::PG_ComputerSystem::static_meta_class,
             &CIM_ComputerSystem::static_meta_class,

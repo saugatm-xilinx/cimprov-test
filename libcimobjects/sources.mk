@@ -3,7 +3,8 @@ libcimobjects_DIR = libcimobjects
 libcimobjects_INCLUDES = $(libcimobjects_DIR)
 libcimobjects_DEPENDS = $(CIMPLE_COMPONENTS)
 
-libcimobjects_EXTRA_MOF = CIM_OperatingSystem IBMPSG_ComputerSystem PG_ComputerSystem OMC_UnitaryComputerSystem
+libcimobjects_EXTRA_MOF = CIM_OperatingSystem IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem \
+						 PG_ComputerSystem OMC_UnitaryComputerSystem
 
 include $(libcimobjects_DIR)/classes.mk
 

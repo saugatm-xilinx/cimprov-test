@@ -158,6 +158,15 @@ string Model;
 string LPARID;
 };
 
+class IBMSD_ComputerSystem : CIM_ComputerSystem
+{
+string UUID;
+};
+
+class IBMSD_SPComputerSystem : CIM_ComputerSystem
+{
+};
+
 class PG_ComputerSystem : CIM_UnitaryComputerSystem
 {  
     [
