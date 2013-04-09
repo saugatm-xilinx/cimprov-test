@@ -152,6 +152,10 @@ class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
 class SF_ReferencedProfile : CIM_ReferencedProfile {
 };
 
+[Association]
+class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
+};
+
 class IBMPSG_ComputerSystem : CIM_UnitaryComputerSystem
 {
 string Model;

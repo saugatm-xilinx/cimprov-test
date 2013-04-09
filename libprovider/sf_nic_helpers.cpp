@@ -8,6 +8,7 @@
 #include "SF_SoftwareIdentity.h"
 #include "SF_SystemDevice.h"
 #include "SF_CardRealizesController.h"
+#include "SF_ComputerSystemPackage.h"
 
 namespace solarflare 
 {
@@ -26,6 +27,7 @@ namespace solarflare
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_SystemDevice;
     using cimple::SF_CardRealizesController;
+    using cimple::SF_ComputerSystemPackage;
 
     class NICCardHelper : public CIMHelper {
     public:
@@ -60,6 +62,11 @@ namespace solarflare
         virtual Instance *instance(const SystemElement&, unsigned) const;
     };
 
+    class ComputerSystemPackageHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+    };
+
     const CIMHelper *NIC::cimDispatch(const Meta_Class& cls) const
     {
         static const NICCardHelper nicCardHelper;
@@ -71,6 +78,7 @@ namespace solarflare
         static const PortControllerSystemDeviceHelper systemDevice;
         static const NICConformsToProfile conforming;
         static const CardRealizesControllerHelper cardRealizesControllerHelper;
+        static const ComputerSystemPackageHelper computerSystemPackageHelper;
         
         if (&cls == &SF_NICCard::static_meta_class)
             return &nicCardHelper;
@@ -88,6 +96,8 @@ namespace solarflare
             return &conforming;
         if (&cls == &SF_CardRealizesController::static_meta_class)
             return &cardRealizesControllerHelper;
+        if (&cls == &SF_ComputerSystemPackage::static_meta_class)
+            return &computerSystemPackageHelper;
         return NULL;
     }
 
@@ -245,6 +255,16 @@ namespace solarflare
 
         link->Antecedent = cast<cimple::CIM_PhysicalElement *>(nic.cimReference(SF_NICCard::static_meta_class));
         link->Dependent =  cast<cimple::CIM_LogicalDevice *>(nic.cimReference(SF_PortController::static_meta_class));
+        return link;
+    }
+
+    Instance *ComputerSystemPackageHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        const NIC& nic = static_cast<const NIC&>(se);
+        SF_ComputerSystemPackage* link = SF_ComputerSystemPackage::create(true);
+
+        link->Antecedent = cast<cimple::CIM_PhysicalPackage *>(nic.cimReference(SF_NICCard::static_meta_class));
+        link->Dependent =  findSystem()->clone();
         return link;
     }
 
