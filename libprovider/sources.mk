@@ -109,19 +109,19 @@ endif
 ifeq ($(CIM_SERVER),pegasus)
 
 register: install $(regmod_TARGET) $(PEGASUS_START_CONF)
-	$(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO)
-	$(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
+	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO)
+	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
 
 unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
-	$(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
-	$(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO)
+	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
+	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO)
 endif
 
 ifeq ($(CIM_SERVER),sfcb)
 
 register: repository.reg interop.reg install
-	$(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg repository.mof
-	$(SFCBSTAGE) -n $(INTEROP_NAMESPACE) -r interop.reg repository.mof
-	$(SFCBREPOS)
+	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg repository.mof
+	$(RUNASROOT) $(SFCBSTAGE) -n $(INTEROP_NAMESPACE) -r interop.reg repository.mof
+	$(RUNASROOT) $(SFCBREPOS)
 
 endif

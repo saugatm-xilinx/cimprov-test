@@ -5,4 +5,5 @@ override PEGASUS_ROOT=/usr
 override PEGASUS_HOME=/opt/ibm/icc
 override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
 override PROVIDER_PLATFORM = linux
+RUNASROOT = sudo 
 CURL = curl -u$(LOGNAME)
