@@ -280,7 +280,7 @@ namespace solarflare
         if (!isOurSystem(test->SystemCreationClassName.value, test->SystemName.value))
             return false;
         
-        return test->Name.value == se.name();
+        return test->Name.value == instanceID(se.name());
     }
     
 
