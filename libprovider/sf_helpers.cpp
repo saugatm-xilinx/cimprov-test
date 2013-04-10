@@ -97,6 +97,11 @@ namespace solarflare
                 ourSys->Name.value == sysname);
     }
 
+    CIMInstanceNotify<cimple::SF_JobCreated> onJobCreated(cimple::SF_ConcreteJob::static_meta_class);
+    CIMJobChangeStateNotify<cimple::SF_JobStarted> onJobStarted(cimple::SF_ConcreteJob::_OperationalStatus::enum_Dormant);
+    CIMJobChangeStateNotify<cimple::SF_JobError> onJobError(cimple::SF_ConcreteJob::_OperationalStatus::enum_OK);
+    CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess(cimple::SF_ConcreteJob::_OperationalStatus::enum_OK);
+
     bool Action::process(SystemElement& se)
     {
         const CIMHelper *helper = se.cimDispatch(*sample->meta_class);

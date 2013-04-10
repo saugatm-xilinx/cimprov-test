@@ -113,6 +113,10 @@ void SF_DiagnosticTest_Provider::Runner::handler(solarflare::SystemElement &se,
         diag.run(false);
         job = cast<CIM_ConcreteJob *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
     }
+    else
+    {
+        CIMPLE_ERR(("NIC does not match"));
+    }
 }
 
 Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
@@ -134,13 +138,17 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
     
     if (ManagedElement == NULL)
     {
+        CIMPLE_ERR(("No ManagedElement!"));
         return_value.set(InvalidParameter);
     }
     else
     {
         Runner runner(Job, ManagedElement, self);
         if (!runner.forDiagnostic() || !runner.isOk())
+        {
+            CIMPLE_ERR(("ManagedElement invalid or not found!"));
             return_value.set(InvalidParameter);
+        }
         else
             return_value.set(OK);
     }

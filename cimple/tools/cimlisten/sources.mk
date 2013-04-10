@@ -5,6 +5,6 @@ cimlisten_DEPENDS = $(PEGASUS_TOOLS_DEPS)
 
 $(eval $(call component,cimlisten,BINARIES))
 
-$(cimlisten_TARGET) : LIBRARIES += peglistener
+cimlisten_LIBRARIES = peglistener
 
 

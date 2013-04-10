@@ -6,6 +6,13 @@
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 #include "SF_ElementConformsToProfile.h"
+#include "CIM_InstIndication.h"
+#include "CIM_InstModification.h"
+#include "SF_ConcreteJob.h"
+#include "SF_JobCreated.h"
+#include "SF_JobStarted.h"
+#include "SF_JobError.h"
+#include "SF_JobSuccess.h"
 
 /// This file contains some helpers and utilities
 /// for writing CIMPLE providers. None of the code is platform-dependent
@@ -60,6 +67,90 @@ namespace solarflare
             return cimple::key_eq(findSystem(), sys);
         }
     };
+
+    
+    template <class CIMClass>
+    class CIMNotify {
+        cimple::Indication_Handler<CIMClass> *handler;
+
+    protected:
+        virtual void send(CIMClass *obj)
+        {
+            if (handler != NULL)
+                handler->handle(obj);
+            else
+                CIMClass::destroy(obj);
+        }
+        CIMNotify() : handler(NULL) {}
+        virtual ~CIMNotify()
+        {
+            delete handler;
+        }
+    public:
+        void enable(cimple::Indication_Handler<CIMClass> *hnd)
+        {
+            delete handler;
+            handler = hnd;
+        }
+        void disable()
+        {
+            enable(NULL);
+        }
+    };
+
+    template <class CIMClass>
+    class CIMInstanceNotify : public CIMNotify<CIMClass> {
+        const cimple::Meta_Class& sourceMC;
+    protected:
+        virtual CIMClass *makeIndication(const SystemElement& se)
+        {
+            const CIMHelper *helper = se.cimDispatch(sourceMC);
+            CIMClass *indication = CIMClass::create(true);
+
+            if (helper == NULL)
+                return NULL;
+            
+            indication->SourceInstance = helper->instance(se, 0);
+            indication->SourceInstanceModelPath.null = false;
+            cimple::instance_to_model_path(indication->SourceInstance, 
+                                           indication->SourceInstanceModelPath.value);
+            return indication;
+        }
+    public:
+        CIMInstanceNotify(const cimple::Meta_Class& mc) :
+            sourceMC(mc) {}
+        ~CIMInstanceNotify() {}
+        
+        void notify(const SystemElement& se)
+        {
+            send(makeIndication(se));
+        }
+    };
+
+    template <class CIMClass>
+    class CIMJobChangeStateNotify : public CIMInstanceNotify<CIMClass> {
+        unsigned prevState;
+    protected:
+        virtual CIMClass *makeIndication(const SystemElement& se)
+        {
+            CIMClass *indication = CIMInstanceNotify<CIMClass>::makeIndication(se);
+            indication->PreviousInstance = cimple::clone(indication->SourceInstance);
+            cimple::CIM_ConcreteJob *pi = cimple::cast<cimple::CIM_ConcreteJob *>(indication->PreviousInstance);
+            pi->OperationalStatus.null = false;
+            pi->OperationalStatus.value.append(prevState);
+            return indication;
+        }
+    public:
+        CIMJobChangeStateNotify(unsigned ps) :
+            CIMInstanceNotify<CIMClass>(cimple::SF_ConcreteJob::static_meta_class),
+            prevState(ps) {}
+        
+    };
+
+    extern CIMInstanceNotify<cimple::SF_JobCreated> onJobCreated;
+    extern CIMJobChangeStateNotify<cimple::SF_JobStarted> onJobStarted;
+    extern CIMJobChangeStateNotify<cimple::SF_JobError> onJobError;
+    extern CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess;
 
     template <class CIMClass>
     class EnumInstances : public ConstElementEnumerator {

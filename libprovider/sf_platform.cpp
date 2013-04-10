@@ -1,4 +1,4 @@
-#include "sf_platform.h"
+#include "sf_provider.h"
 
 #if defined(linux)
 #include <unistd.h>
@@ -7,6 +7,19 @@
 namespace solarflare 
 {
     const unsigned Diagnostic::maxRecordedEvents = 128;
+
+    bool Diagnostic::DiagnosticThread::threadProc()
+    {
+        bool ok;
+        onJobCreated.notify(*owner);
+        onJobStarted.notify(*owner);
+        ok = owner->syncTest();
+        if (ok)
+            onJobSuccess.notify(*owner);
+        else
+            onJobError.notify(*owner);
+        return ok;
+    }
 
     unsigned Diagnostic::DiagnosticThread::percentage() const
     {

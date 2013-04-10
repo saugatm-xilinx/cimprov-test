@@ -35,17 +35,13 @@ namespace solarflare
         class DiagnosticThread : public Thread {
             Diagnostic *owner;
         protected:
-            virtual bool threadProc()
-            {
-                return owner->syncTest();
-            }
+            virtual bool threadProc();
             virtual void terminate()
             {
                 owner->stop();
             };
         public:
-            DiagnosticThread(Diagnostic *own) : 
-                owner(own) {}
+            DiagnosticThread(Diagnostic *own) : owner(own) {};
             virtual unsigned percentage() const;
         };
         /// Diagnostic thread object

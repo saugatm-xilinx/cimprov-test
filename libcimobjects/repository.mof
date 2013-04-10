@@ -239,3 +239,22 @@ class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
    uint16 ResetCapability;
 };
 
+[Indication]
+class SF_JobCreated : CIM_InstCreation
+{
+};
+
+[Indication]
+class SF_JobStarted : CIM_InstModification
+{
+};
+
+[Indication]
+class SF_JobError : CIM_InstModification
+{
+};
+
+[Indication]
+class SF_JobSuccess : CIM_InstModification
+{
+};

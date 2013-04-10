@@ -42,6 +42,10 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_SystemDevice_Provider.cpp \
 	SF_UseOfLog_Provider.cpp \
 	SF_ComputerSystemPackage_Provider.cpp \
+	SF_JobStarted_Provider.cpp \
+	SF_JobCreated_Provider.cpp \
+	SF_JobError_Provider.cpp \
+	SF_JobSuccess_Provider.cpp \
 	sf_core.cpp \
 	sf_logging.cpp \
 	sf_platform.cpp \

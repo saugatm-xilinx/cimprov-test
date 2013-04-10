@@ -42,3 +42,7 @@ SF_RegisteredProfile
 SF_ElementConformsToProfile
 SF_ReferencedProfile
 SF_ComputerSystemPackage
+SF_JobCreated
+SF_JobStarted
+SF_JobError
+SF_JobSuccess
