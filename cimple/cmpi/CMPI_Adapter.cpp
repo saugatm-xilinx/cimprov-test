@@ -1415,6 +1415,10 @@ static bool _indication_proc(Instance* inst, void* client_data)
             // the broker is released.
             CMRelease(ci);
         }
+        else
+        {
+            CIMPLE_ERR(("cannot create a CMPI instance: %s", _rc_to_str(rc)));
+        }
     }
 
     // Keep them coming!

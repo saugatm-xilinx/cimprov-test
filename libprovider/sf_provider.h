@@ -76,6 +76,7 @@ namespace solarflare
     protected:
         virtual void send(CIMClass *obj)
         {
+            using namespace cimple;
             if (handler != NULL)
                 handler->handle(obj);
             else
