@@ -153,6 +153,12 @@ namespace solarflare
     extern CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess;
 
     template <class CIMClass>
+    class CIMAlertNotify : public CIMNotify<CIMClass> {
+    public:
+        CIMAlertNotify() {}
+    };
+
+    template <class CIMClass>
     class EnumInstances : public ConstElementEnumerator {
         cimple::Enum_Instances_Handler<CIMClass> *handler;
     public:

@@ -46,6 +46,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_JobCreated_Provider.cpp \
 	SF_JobError_Provider.cpp \
 	SF_JobSuccess_Provider.cpp \
+	SF_Alert_Provider.cpp \
 	sf_core.cpp \
 	sf_logging.cpp \
 	sf_platform.cpp \

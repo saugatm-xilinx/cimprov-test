@@ -46,3 +46,4 @@ SF_JobCreated
 SF_JobStarted
 SF_JobError
 SF_JobSuccess
+SF_Alert

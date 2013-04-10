@@ -98,7 +98,7 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnostic(
 void SF_DiagnosticTest_Provider::CheckNIC::handler(solarflare::SystemElement &se,
                                                    unsigned)
 {
-    ok = (&se == nic);
+    ok = (se.name() == nic->name());
 }
 
 void SF_DiagnosticTest_Provider::Runner::handler(solarflare::SystemElement &se,

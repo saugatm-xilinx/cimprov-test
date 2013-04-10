@@ -258,3 +258,8 @@ class SF_JobError : CIM_InstModification
 class SF_JobSuccess : CIM_InstModification
 {
 };
+
+[Indication]
+class SF_Alert : CIM_AlertIndication
+{
+};
