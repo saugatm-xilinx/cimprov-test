@@ -667,7 +667,7 @@ namespace solarflare
             test_data->flags = ETH_TEST_FL_OFFLINE;
         test_data->len = drv_data.testinfo_len;
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                            ETHTOOL_TEST, &drv_data) < 0)
+                            ETHTOOL_TEST, test_data) < 0)
         {
             free(test_data);
             return NotKnown;
