@@ -1,2 +1,2 @@
 #pragma include ("DMTF/cimv217.mof")
- 
+#pragma include ("DMTF/System/CIM_RecordLogCapabilities.mof") 

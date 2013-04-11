@@ -1,3 +1,4 @@
 CIM_INTERFACE=cmpi
 override CIM_SCHEMA_VERSION_MINOR = 17
+CIM_SCHEMA_ADDON_MOFS = DMTF/System/CIM_RecordLogCapabilities.mof
 CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))

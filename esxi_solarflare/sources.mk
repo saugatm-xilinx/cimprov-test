@@ -42,6 +42,11 @@ _esxi_archive_SOURCES = $(addprefix $(esxi_archive_DIR)/,$(esxi_archive_SOURCES)
 $(esxi_archive_TARGET) : $(_esxi_archive_SOURCES)
 	cd $(esxi_archive_DIR); tar -czf ../$@ *
 
+$(ESXI_SRC_PATH)/$(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof \
+													   $(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS))
+	mkdir -p $(dir $@)
+	cat $^ >$@
+
 $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g' <$< >$@
