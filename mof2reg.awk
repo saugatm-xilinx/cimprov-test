@@ -1,4 +1,12 @@
-$1 == "class" {
+BEGIN {
+    split(CLASSLIST, classes);
+    for (i in classes)
+    {
+        IMPLEMENTED[classes[i]] = 1;
+    }
+}
+
+$1 == "class" && IMPLEMENTED[$2] {
     print "[" $2 "]"
     print "\tprovider:", $2 "_Provider"
     print "\tlocation:", PRODUCTNAME

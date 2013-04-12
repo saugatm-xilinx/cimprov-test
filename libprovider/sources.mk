@@ -103,11 +103,11 @@ $(eval $(call component,libprovider,SHARED_LIBRARIES))
 
 ifneq ($(CIM_SERVER),pegasus)
 
-repository.reg : $(libcimobjects_DIR)/repository.mof mof2reg.awk
-	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) $< >$@
+repository.reg : $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/classes mof2reg.awk
+	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
 
-interop.reg : $(libcimobjects_DIR)/interop.mof mof2reg.awk
-	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(INTEROP_NAMESPACE) $< >$@
+interop.reg : $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/classes mof2reg.awk
+	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(INTEROP_NAMESPACE) -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
 
 endif
 
