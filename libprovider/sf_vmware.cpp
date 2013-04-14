@@ -8,7 +8,6 @@
 #include "CIM_EthernetPort.h"
 #include "CIM_SoftwareIdentity.h"
 
-#define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
 #include "ci/tools/byteorder.h"
 #include "ci/tools/bitfield.h"
@@ -46,34 +45,54 @@
 #include <string>
 #include <vector>
 
+// Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80
 
+// These macros are used for setting proper value
+// for SIOCEFX ioctl.
 #define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
 CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
                     CI_DWORD_0, (_val))
-
 #define PAYLOAD_DWORD(_payload, _ofst) \
   CI_DWORD_FIELD((_payload).dword[_ofst], CI_DWORD_0)
 
+// Common paths for obtaining information about devices
 #define PROC_BUS_PATH       "/proc/bus/pci/"
 #define DEV_PATH            "/dev/"
+#define DEV_SFC_CONTROL     "/dev/sfc_control"
+
+// Maximum length of path
 #define PATH_MAX_LEN        1024
+// Maximum length of command line
 #define CMD_MAX_LEN         1024
+// Maximum length of string of sfupdate output
 #define SFU_STR_MAX_LEN     1024
+// Maximum length of VPD field
 #define VPD_FIELD_MAX_LEN   255
+// Maximum length of PCI configuration string
 #define PCI_CONF_LEN        12
+
+// These values are used to distinguish our network
+// interfaces from other devices
 #define CLASS_NET_VALUE     0x20000
 #define VENDOR_SF_VALUE     0x1924 
+
+#define EFX_MAX_MTU (9 * 1024)
+
+// Convert character to integer properly
 #define CHAR2INT(x)         ((int)(x & 0x000000ff))
 
-#define BUF_MAX_LEN                     32
-
+// VPD tags (used for VPD processing)
 #define VPD_TAG_ID   0x02
 #define VPD_TAG_END  0x0f
 #define VPD_TAG_R    0x10
 #define VPD_TAG_W    0x11
 
+// Macro to disable compiler warning about an unused parameter
 #define UNUSED(_x) (void )(_x)
+
+// Default version string
+#define DEFAULT_VERSION_STR ""
 
 extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
@@ -96,12 +115,43 @@ namespace solarflare
      * 
      * @result 1 if space, 0 otherwise
      */
-    static int isSpace(char c)
+    static int isSpace(const char c)
     {
         if (c == ' ' || c == '\t' || c == '\0')
             return 1;
         else
             return 0;
+    }
+
+    /**
+     * Remove space symbols from the end of a string.
+     *
+     * @param s     Char array pointer
+     */
+    static void trim(char *s)
+    {
+        int i;
+
+        for (i = strlen(s) - 1; i >= 0; i--)
+            if (s[i] == ' ' || s[i] == '\n' ||
+                s[i] == '\r')
+                s[i] = '\0';
+            else
+                break;
+    }
+
+    /**
+     * Compare the beginning of the first string with
+     * the second one.
+     *
+     * @param x   The first string
+     * @param y   The second string
+     *
+     * @return The same as strncmp(x, y, strlen(y))
+     */
+    static inline int strcmp_start(const char *x, const char *y)
+    {
+        return strncmp(x, y, strlen(y));
     }
 
     /**
@@ -164,14 +214,14 @@ namespace solarflare
 
     /**
      * Parse command line string to obtain array of arguments of
-     * the form passed to main() normally.
+     * the form passed to the main function of a Linux program normally.
      *
      * @param s       Command line to be parsed
-     * @param argc    Where to save number of arguments
-     * @param argv    Where to save pointer to the array of
+     * @param argc    [out] Where to save number of arguments
+     * @param argv    [out] Where to save pointer to the array of
      *                arguments
-     * @param values  Where to save pointer to the buffer with
-     *                values of arguments
+     * @param values  [out] Where to save pointer to the buffer
+     *                with values of arguments
      *
      * @return 0 on success or value less than 0 on error
      */
@@ -255,7 +305,7 @@ namespace solarflare
 
         if (single_quote || double_quote)
         {
-            rc = -2;
+            rc = -1;
             goto fail;
         }
 
@@ -339,9 +389,9 @@ fail:
      * Auxiliary type for MCDI data processing.
      */
     typedef union {
-        uint8_t u8[MCDI_CTL_SDU_LEN_MAX];
-        uint16_t u16[MCDI_CTL_SDU_LEN_MAX/2];
-        ci_dword_t dword[MCDI_CTL_SDU_LEN_MAX/4];
+        uint8_t     u8[MCDI_CTL_SDU_LEN_MAX];
+        uint16_t    u16[MCDI_CTL_SDU_LEN_MAX/2];
+        ci_dword_t  dword[MCDI_CTL_SDU_LEN_MAX/4];
     } payload_t;
 
     /**
@@ -423,8 +473,7 @@ fail:
     /**
      * Get descriptions for all Solarflare NICs on the machine.
      *
-     * @param nics          Where to save NIC descriptions array handle
-     * @param nics_count    Where to save number of SF NICs
+     * @param nics          [out] Where to save NIC descriptions
      *
      * @return 0 on success or error code
      */
@@ -465,7 +514,7 @@ fail:
          */
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
-            return -3;
+            return -1;
 
         for (device = readdir(device_dir);
              device != NULL;
@@ -508,7 +557,7 @@ fail:
                 if (str == NULL)
                 {
                     closedir(device_dir);
-                    return -5;
+                    return -1;
                 }
                 tmp_dev.pci_dev_id = strtol(str + 1, NULL, 16);
                 *str = '\0';
@@ -537,7 +586,7 @@ fail:
 
         bus_dir = opendir(PROC_BUS_PATH);
         if (bus_dir == NULL)
-            return -6;
+            return -1;
 
         /**
          * Filter out ourt NIC ports, group them by NICs.
@@ -574,7 +623,7 @@ fail:
                     closedir(device_dir);
                     closedir(bus_dir);
                     nics.clear();
-                    return -7;
+                    return -1;
                 }
                 cur_bus = strtol(str + 1, NULL, 16);
             }
@@ -631,7 +680,7 @@ fail:
                     closedir(device_dir);
                     closedir(bus_dir);
                     nics.clear();
-                    return -8;
+                    return -1;
                 }
 
                 for (j = 0; j < (int)nics.size(); j++)
@@ -697,30 +746,13 @@ fail:
     }
 
     /**
-     * Remove space symbols from the end of a string.
-     *
-     * @param s     Char array pointer
-     */
-    static void trim(char *s)
-    {
-        int i;
-
-        for (i = strlen(s) - 1; i >= 0; i--)
-            if (s[i] == ' ' || s[i] == '\n' ||
-                s[i] == '\r')
-                s[i] = '\0';
-            else
-                break;
-    }
-
-    /**
      * Parse VPD tag.
      *
      * @param vpd       Pointer to buffer with VPD data
      * @param len       Length of VPD data
-     * @param tag_name  Where to save tag name
-     * @param tag_len   Where to save tag data len
-     * @param tag_start Where to save address of the first
+     * @param tag_name  [out] Where to save tag name
+     * @param tag_len   [out] Where to save tag data len
+     * @param tag_start [out] Where to save address of the first
      *                  byte of tag data
      *
      * @return 0 on success or error code
@@ -729,24 +761,30 @@ fail:
                          int *tag_name, unsigned int *tag_len,
                          uint8_t **tag_start)
     {
+        /* The first bit shows whether it is large (1) or
+         * small (0) resource data type tag bit definition. */
         if (vpd[0] & 0x80) // 10000000b
         {
-             if (len < 2)
+            if (len < 2)
                 return -1;
+            /* Get large item name */
             *tag_name = vpd[0] & 0x7f; // 01111111b
             *tag_len = (vpd[1] & 0x000000ff) +
                        ((vpd[2] & 0x000000ff) >> 8);
             *tag_start = vpd + 3;
             if (len < *tag_len + 3)
-                return -2;
+                return -1;
         }
         else
         {
+            /* Small resource data type tag bit definition:
+             * 0xxxxyyyb, where xxxx - small item name,
+             * yyy - length. */
             *tag_name = ((vpd[0] & 0xf8) >> 3); // 01111000b
             *tag_len = (vpd[0] & 0x07); // 00000111b
             *tag_start = vpd + 1;
             if (len < *tag_len + 1)
-                return -3;
+                return -1;
         }
 
         return 0;
@@ -757,9 +795,9 @@ fail:
      *
      * @param vpd               Buffer with VPD data
      * @param len               Length of VPD data
-     * @param product_name      Where to save product name
-     * @param product_number    Where to save product number
-     * @param serial_number     Where to save serial number
+     * @param product_name      [out] Where to save product name
+     * @param product_number    [out] Where to save product number
+     * @param serial_number     [out] Where to save serial number
      *
      * @return 0 on success or error code
      */
@@ -828,7 +866,7 @@ fail:
                             if (field_len < 1)
                             {
                                 delete[] field_value;
-                                return -10;
+                                return -1;
                             }
 
                             sum = 0;
@@ -857,7 +895,7 @@ fail:
                 tag_name != VPD_TAG_R &&
                 tag_name != VPD_TAG_W &&
                 tag_name != VPD_TAG_END)
-                return -11;
+                return -1;
 
             vpd = tag_start + tag_len;
             len = end - vpd;
@@ -927,7 +965,7 @@ fail:
             ptr += mcdi_req->len;
             offset += mcdi_req->len;
             if (mcdi_req->len == 0)
-                return -2;
+                return -1;
         }
 
         return 0;
@@ -956,7 +994,7 @@ fail:
 
         siena_mc_static_config_hdr_t partial_hdr;
 
-        fd = open("/dev/sfc_control", O_RDWR);
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
             return -1;
 
@@ -965,14 +1003,14 @@ fail:
                            ifname, port_number) < 0)
         {
             close(fd);
-            return -2;
+            return -1;
         }
 
         if (CI_BSWAP_LE32(partial_hdr.magic) !=
                                     SIENA_MC_STATIC_CONFIG_MAGIC)
         {
             close(fd);
-            return -3;
+            return -1;
         }
 
         vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
@@ -984,7 +1022,7 @@ fail:
         {
             close(fd);
             delete[] vpd;
-            return -4;
+            return -1;
         }
 
         if ((rc = parseVPD(vpd, vpd_len, product_name,
@@ -992,7 +1030,7 @@ fail:
         {
             close(fd);
             delete[] vpd;
-            return -5;
+            return -1;
         }
 
         delete[] vpd;
@@ -1002,9 +1040,14 @@ fail:
     }
 
     /**
-     * Wrapper function working like popen("sfupdate ...").
+     * Wrapper function working like popen("sfupdate ..."). It
+     * redirects stdout and stderr to pipe and calls main function
+     * of sfupdate with arguments obtained from a given command line.
+     * After sfupdate main function terminated, original file
+     * descriptors for stdout and stderr are restored.
      *
-     * @param cmd_line Command line (should start with "sfupdate")
+     * @param cmd_line Command line (should start with "sfupdate",
+     *                 for example "sfupdate --adapter=vmnic2")
      *
      * @return FD from which output of sfupdate can be read on
      *         succens or negative value on failure
@@ -1030,20 +1073,20 @@ fail:
         saved_stdout_fd = dup(STDOUT_FILENO);
         if (saved_stdout_fd < 0)
         {
-            rc = -2;
+            rc = -1;
             goto fail;
         }
 
         saved_stderr_fd = dup(STDERR_FILENO);
         if (saved_stderr_fd < 0)
         {
-            rc = -3;
+            rc = -1;
             goto fail;
         }
 
         if (pipe(pipefds) < 0)
         {
-            rc = -4;
+            rc = -1;
             goto fail;
         }
 
@@ -1052,7 +1095,7 @@ fail:
 
         if (dup2(pipefds[1], STDOUT_FILENO) < 0)
         {
-            rc = -7;
+            rc = -1;
             goto fail;
         }
         else
@@ -1060,7 +1103,7 @@ fail:
 
         if (dup2(pipefds[1], STDERR_FILENO) < 0)
         {
-            rc = -8;
+            rc = -1;
             goto fail;
         }
         else
@@ -1070,7 +1113,7 @@ fail:
         if ((rc = sfupdate_main(argc, argv)) != 0)
         {
             pthread_mutex_unlock(&sfupdate_mutex);
-            rc = -9;
+            rc = -1;
             goto fail;
         }
         pthread_mutex_unlock(&sfupdate_mutex);
@@ -1084,10 +1127,10 @@ fail:
 
         if (restore_stdout > 0)
             if (dup2(saved_stdout_fd, STDOUT_FILENO) < 0 && rc == 0)
-                rc = -15;
+                rc = -1;
         if (restore_stderr > 0)
             if (dup2(saved_stderr_fd, STDERR_FILENO) < 0 && rc == 0)
-                rc = -16;
+                rc = -1;
         if (saved_stdout_fd >= 0)
             close(saved_stdout_fd);
         if (saved_stderr_fd >= 0)
@@ -1101,20 +1144,6 @@ fail:
             close(pipefds[0]);
             return rc;
         }
-    }
-
-    /**
-     * Compare the beginning of the first string with
-     * the second one.
-     *
-     * @param x   The first string
-     * @param y   The second string
-     *
-     * @return The same as strncmp(x, y, strlen(y))
-     */
-    static inline int strcmp_start(const char *x, const char *y)
-    {
-        return strncmp(x, y, strlen(y));
     }
 
     /* Predeclaration */
@@ -1337,7 +1366,7 @@ fail:
 
         siena_mc_static_config_hdr_t partial_hdr;
 
-        fd = open("/dev/sfc_control", O_RDWR);
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
@@ -1392,14 +1421,15 @@ fail:
 
     bool VMWareInterface::ifStatus() const
     {
-        /* How to implement it?! */
+        /* Implementation is blocked by SF bug 35613 */
 
         return false;
     }
 
     void VMWareInterface::enable(bool st)
     {
-        /* How to implement it?! */
+        /* Implementation is blocked by SF bug 35613 */
+
         UNUSED(st);
     }
 
@@ -1498,10 +1528,9 @@ fail:
 
     class VMWareBootROM : public BootROM {
         const NIC *owner;
-        VersionInfo vers;
     public:
-        VMWareBootROM(const NIC *o, const VersionInfo &v) :
-            owner(o), vers(v) {}
+        VMWareBootROM(const NIC *o) :
+            owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *file_name)
@@ -1524,6 +1553,8 @@ fail:
             Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
         virtual Result syncTest() 
         {
+            /* ETHTOOL_TEST is not available on ESXi -
+             * see bug 35580 */
             testPassed = Passed;
             log().logStatus("passed");
             return Passed;
@@ -1583,7 +1614,7 @@ fail:
         VMWareNIC(unsigned idx, NICDescr &descr) :
             NIC(idx),
             nicFw(this),
-            rom(this, VersionInfo("2.3.4")),
+            rom(this),
             diag(this), pci_domain(descr.pci_domain),
             pci_bus(descr.pci_bus), pci_device(descr.pci_device)
         {
@@ -1599,7 +1630,7 @@ fail:
         virtual VitalProductData vitalProductData() const;
         Connector connector() const;
 
-        uint64 supportedMTU() const { return 9000; }
+        uint64 supportedMTU() const { return EFX_MAX_MTU; }
 
         virtual bool forAllFw(ElementEnumerator& en)
         {
@@ -1686,7 +1717,7 @@ fail:
                 return VitalProductData("", "", "", "", "", "");
 
             VitalProductData vpd(sn.c_str(), "", sn.c_str(), pn.c_str(),
-                                 p_name.c_str(), pn.c_str() /* ??? */);
+                                 p_name.c_str(), pn.c_str());
 
             return vpd;
         }
@@ -1735,24 +1766,24 @@ fail:
 
         curl = curl_easy_init();
         if (curl == NULL)
-            return -2;
+            return -1;
 
         if (curl_easy_setopt(curl, CURLOPT_URL, uri) != CURLE_OK)
         {
-            rc = -3;
+            rc = -1;
             goto curl_fail;
         }
         if (curl_easy_setopt(curl, CURLOPT_WRITEDATA,
                              f) != CURLE_OK)
         {
-            rc = -5;
+            rc = -1;
             goto curl_fail;
         }
 
         CURLcode rc_curl;
         if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
         {
-            rc = -6;
+            rc = -1;
             goto curl_fail;
         }
 
@@ -1772,6 +1803,8 @@ curl_fail:
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName)
     {
+#define FILE_PROTO "file://"
+#define TFTP_PROTO "tftp://"
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
@@ -1781,37 +1814,37 @@ curl_fail:
         if (((VMWareNIC *)owner)->ports.size() <= 0)
             return -1;
 
-        if (strcmp_start(fileName, "file://") == 0)
+        if (strcmp_start(fileName, FILE_PROTO) == 0)
         {
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
                           ((VMWareNIC *)owner)->ports[0].dev_name.c_str(),
-                          fileName + strlen("file://"));
+                          fileName + strlen(FILE_PROTO));
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
-                return -2;
+                return -1;
             }
         }
-        else if (strcmp_start(fileName, "tftp://") == 0)
+        else if (strcmp_start(fileName, TFTP_PROTO) == 0)
         {
             FILE *f;
 
             fd = mkstemp(tmp_file);
             if (fd < 0)
-                return -3;
+                return -1;
 
             f = fdopen(fd, "w");
             if (f == NULL)
             {
                 close(fd);
-                return -4;
+                return -1;
             }
 
             rc = tftp_get_file(fileName, f);
             if (rc != 0)
             {
                 fclose(f);
-                return -5;
+                return -1;
             }
             fclose(f);
 
@@ -1822,20 +1855,20 @@ curl_fail:
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
                 unlink(tmp_file);
-                return -6;
+                return -1;
             }
 
             tmp_file_used = 1;
         }
         else /* SFTP to be implemented */
-            return -7;
+            return -1;
 
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
         {
             if (tmp_file_used)
                 unlink(tmp_file);
-            return -8;
+            return -1;
         }
 
         close(fd);
@@ -1843,16 +1876,17 @@ curl_fail:
             unlink(tmp_file);
 
         return 0;
+#undef FILE_PROTO
+#undef TFTP_PROTO
     }
 
     class VMWareDriver : public Driver {
         const Package *owner;
-        VersionInfo vers;
         static const String drvName;
     public:
-        VMWareDriver(const Package *pkg, const String& d, const String& sn, 
-                     const VersionInfo& v) :
-            Driver(d, sn), owner(pkg), vers(v) {}
+        VMWareDriver(const Package *pkg, const String& d,
+                     const String& sn) :
+            Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
         virtual bool syncInstall(const char *) { return false; }
@@ -1871,7 +1905,7 @@ curl_fail:
 
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         for (device = readdir(device_dir);
              device != NULL;
@@ -1912,7 +1946,8 @@ curl_fail:
         closedir(device_dir);
 
         /*
-         * We failed to get it via ethtool - we try to get it
+         * We failed to get it via ethtool (possible reason: no
+         * Solarflare interfaces are presented) - we try to get it
          * from VMWare root/cimv2 standard objects.
          */
         Ref<CIM_SoftwareIdentity> cimModel =
@@ -1925,7 +1960,7 @@ curl_fail:
 
         if (cimple::cimom::enum_instances(CIMHelper::baseNS,
                                           cimModel.ptr(), ie) != 0)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
         {
@@ -1939,7 +1974,7 @@ curl_fail:
         }
 
         if (!cimSoftId)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         return VersionInfo(cimSoftId->VersionString.value.c_str());
     }
@@ -1968,7 +2003,7 @@ curl_fail:
     public:
         VMWareKernelPackage() :
             Package("NET Driver RPM", "sfc"),
-            kernelDriver(this, "NET Driver", "sfc", "3.3") {}
+            kernelDriver(this, "NET Driver", "sfc") {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("3.3"); }
         virtual bool syncInstall(const char *) { return true; }
@@ -2094,14 +2129,14 @@ curl_fail:
         struct ethtool_drvinfo edata;
 
         if (((VMWareNIC *)owner)->ports.size() <= 0)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         if (vmwareEthtoolCmd(((VMWareNIC *)owner)->
                                         ports[0].dev_file.c_str(),
                              ((VMWareNIC *)owner)->
                                         ports[0].dev_name.c_str(),
                              ETHTOOL_GDRVINFO, &edata) < 0)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         return VersionInfo(edata.fw_version);
     }
@@ -2119,17 +2154,17 @@ curl_fail:
         rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s",
                       ((VMWareNIC *)owner)->ports[0].dev_name.c_str());
         if (rc < 0 || rc >= CMD_MAX_LEN)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         f = fdopen(fd, "r");
         if (f == NULL)
         {
             close(fd);
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
         }
 
         while (1)
@@ -2156,6 +2191,6 @@ curl_fail:
         if (version != NULL)
             return VersionInfo(version);
         else
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
     }
 }
