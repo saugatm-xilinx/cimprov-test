@@ -1441,10 +1441,36 @@ fail:
 
     MACAddress VMWareInterface::currentMAC() const
     {
+        int fd = 0;
+        struct ifreq req;
+        unsigned char *mac_address;
+
         if (boundPort == NULL)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
-        return boundPort->permanentMAC();
+        fd = open(((VMWarePort *)boundPort)->dev_file.c_str(), O_RDWR);
+        if (fd < 0)
+            return MACAddress(0, 0, 0, 0, 0, 0);
+
+        memset(&req, 0, sizeof(req));
+        strncpy(req.ifr_name,
+                ((VMWarePort *)boundPort)->dev_name.c_str(),
+                sizeof(req.ifr_name));
+
+        if (ioctl(fd, SIOCGIFHWADDR, &req) != 0)
+        {
+            close(fd);
+            return MACAddress(0, 0, 0, 0, 0, 0);
+        }
+        close(fd);
+
+        mac_address = (unsigned char *)req.ifr_hwaddr.sa_data;
+        return MACAddress(mac_address[0],
+                          mac_address[1],
+                          mac_address[2],
+                          mac_address[3],
+                          mac_address[4],
+                          mac_address[5]);
     }
 
     void VMWareInterface::currentMAC(const MACAddress& mac)

@@ -67,19 +67,24 @@ libprovider_GENERATED = module.cpp
 libprovider_DIR = libprovider
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
 libprovider_INCLUDES = $(libprovider_DIR)
-libprovider_CPPFLAGS = -Ilibprovider -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
+libprovider_CPPFLAGS = -Ilibprovider -Ilibprovider/v5_import -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 
 ifeq ($(CIM_SERVER),esxi)
 
-CI_INCLUDES = libprovider/ci libprovider/ci/app libprovider/ci/app/platform \
-		libprovider/ci/compat libprovider/ci/driver \
-		libprovider/ci/driver/efab libprovider/ci/driver/efab/hardware \
-		libprovider/ci/driver/efab/hardware/falcon \
-		libprovider/ci/driver/platform libprovider/ci/driver/resource \
-		libprovider/ci/efch libprovider/ci/efhw libprovider/ci/efrm \
-		libprovider/ci/eftest libprovider/ci/internal libprovider/ci/iscsi \
-		libprovider/ci/mgmt libprovider/ci/net libprovider/ci/tools \
-		libprovider/ci/tools/platform libprovider/curl/
+CI_INCLUDES = libprovider/v5_import libprovider/v5_import/ci libprovider/v5_import/ci/app \
+	      libprovider/v5_import/ci/app/platform \
+		libprovider/v5_import/ci/compat libprovider/v5_import/ci/driver \
+		libprovider/v5_import/ci/driver/efab \
+		libprovider/v5_import/ci/driver/efab/hardware \
+		libprovider/v5_import/ci/driver/efab/hardware/falcon \
+		libprovider/v5_import/ci/driver/platform \
+		libprovider/v5_import/ci/driver/resource \
+		libprovider/v5_import/ci/efch libprovider/v5_import/ci/efhw \
+		libprovider/v5_import/ci/efrm libprovider/v5_import/ci/eftest \
+		libprovider/v5_import/ci/internal libprovider/v5_import/ci/iscsi \
+		libprovider/v5_import/ci/mgmt libprovider/v5_import/ci/net \
+		libprovider/v5_import/ci/tools \
+		libprovider/v5_import/ci/tools/platform libprovider/curl/
 
 libprovider_INCLUDES += $(CI_INCLUDES)
 endif
