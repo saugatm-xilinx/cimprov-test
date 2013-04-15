@@ -108,13 +108,13 @@ namespace solarflare
     using cimple::Ref;
     using cimple::cast;
 
-    /**
-     * Is a symbol a space?
-     *
-     * @param c   symbol
-     * 
-     * @result 1 if space, 0 otherwise
-     */
+    ///
+    /// Is a symbol a space?
+    ///
+    /// @param c   symbol
+    /// 
+    /// @result 1 if space, 0 otherwise
+    ///
     static int isSpace(const char c)
     {
         if (c == ' ' || c == '\t' || c == '\0')
@@ -123,11 +123,11 @@ namespace solarflare
             return 0;
     }
 
-    /**
-     * Remove space symbols from the end of a string.
-     *
-     * @param s     Char array pointer
-     */
+    ///
+    /// Remove space symbols from the end of a string.
+    ///
+    /// @param s     Char array pointer
+    ///
     static void trim(char *s)
     {
         int i;
@@ -140,26 +140,26 @@ namespace solarflare
                 break;
     }
 
-    /**
-     * Compare the beginning of the first string with
-     * the second one.
-     *
-     * @param x   The first string
-     * @param y   The second string
-     *
-     * @return The same as strncmp(x, y, strlen(y))
-     */
+    ///
+    /// Compare the beginning of the first string with
+    /// the second one.
+    ///
+    /// @param x   The first string
+    /// @param y   The second string
+    ///
+    /// @return The same as strncmp(x, y, strlen(y))
+    ///
     static inline int strcmp_start(const char *x, const char *y)
     {
         return strncmp(x, y, strlen(y));
     }
 
-    /**
-     * Remove quotation symbols and related escaping
-     * from the string.
-     *
-     * @param s   String to be processed
-     */
+    ///
+    /// Remove quotation symbols and related escaping
+    /// from the string.
+    ///
+    /// @param s   String to be processed
+    ///
     static void removeQuotes(char *s)
     {
         int i;
@@ -212,19 +212,19 @@ namespace solarflare
         }
     }
 
-    /**
-     * Parse command line string to obtain array of arguments of
-     * the form passed to the main function of a Linux program normally.
-     *
-     * @param s       Command line to be parsed
-     * @param argc    [out] Where to save number of arguments
-     * @param argv    [out] Where to save pointer to the array of
-     *                arguments
-     * @param values  [out] Where to save pointer to the buffer
-     *                with values of arguments
-     *
-     * @return 0 on success or value less than 0 on error
-     */
+    ///
+    /// Parse command line string to obtain array of arguments of
+    /// the form passed to the main function of a Linux program normally.
+    ///
+    /// @param s       Command line to be parsed
+    /// @param argc    [out] Where to save number of arguments
+    /// @param argv    [out] Where to save pointer to the array of
+    ///                arguments
+    /// @param values  [out] Where to save pointer to the buffer
+    ///                with values of arguments
+    ///
+    /// @return 0 on success or value less than 0 on error
+    ///
     static int parseArgvString(const char *s, int *argc,
                                char ***argv, char **values)
     {
@@ -324,14 +324,14 @@ fail:
         return rc;
     }
 
-    /**
-     * Get reference to a corresponding CIM_EthernetPort value
-     * by device name.
-     *
-     * @param dev_name    Device name
-     *
-     * @return Reference to CIM_EthernetPort value
-     */
+    ///
+    /// Get reference to a corresponding CIM_EthernetPort value
+    /// by device name.
+    ///
+    /// @param dev_name    Device name
+    ///
+    /// @return Reference to CIM_EthernetPort value
+    ///
     Ref<CIM_EthernetPort> getCIMEthPort(const char *dev_name)
     {
         Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
@@ -359,11 +359,11 @@ fail:
         return cimEthPort;
     }
 
-    /**
-     * Debugging function checking number of free FDs.
-     *
-     * @return number of free FDs
-     */
+    ///
+    /// Debugging function checking number of free FDs.
+    ///
+    /// @return number of free FDs
+    ///
     static int freeFDsNum()
     {
 #define _MAX_FDS 1024
@@ -385,66 +385,66 @@ fail:
 #undef _MAX_FDS
     }
 
-    /**
-     * Auxiliary type for MCDI data processing.
-     */
+    ///
+    /// Auxiliary type for MCDI data processing.
+    ///
     typedef union {
         uint8_t     u8[MCDI_CTL_SDU_LEN_MAX];
         uint16_t    u16[MCDI_CTL_SDU_LEN_MAX/2];
         ci_dword_t  dword[MCDI_CTL_SDU_LEN_MAX/4];
     } payload_t;
 
-    /**
-     * Description of Ethernet port.
-     */
+    ///
+    /// Description of Ethernet port.
+    ///
     class PortDescr
     {
     public:
-        int     pci_fn;     /**< PCI function */
-        string  dev_file;   /**< Path to device file */
-        string  dev_name;   /**< Device name */
+        int     pci_fn;     ///< PCI function
+        string  dev_file;   ///< Path to device file
+        string  dev_name;   ///< Device name
     };
 
-    /**
-     * Description of NIC.
-     */
+    ///
+    /// Description of NIC.
+    ///
     class NICDescr
     {
     public:
-        int pci_domain;                 /**< PCI domain ID */
-        int pci_bus;                    /**< PCI bus ID */
-        int pci_device;                 /**< PCI device ID */
+        int pci_domain;                 ///< PCI domain ID
+        int pci_bus;                    ///< PCI bus ID
+        int pci_device;                 ///< PCI device ID
 
-        vector<PortDescr> ports;        /**< NIC ports */
+        vector<PortDescr> ports;        ///< NIC ports
     };
 
-    /**
-     * Vector of NIC descriptions.
-     */
+    ///
+    /// Vector of NIC descriptions.
+    ///
     typedef vector<NICDescr> NICDescrs;
 
-    /**
-     * Device description.
-     */
+    ///
+    /// Device description.
+    ///
     class DeviceDescr
     {
     public:
-        int     pci_domain_id;  /**< PCI domain ID */
-        int     pci_bus_id;     /**< PCI bus ID */
-        int     pci_dev_id;     /**< PCI device ID */
-        int     pci_fn_id;      /**< PCI function */
-        string  dev_name;       /**< Device name */
-        string  dev_file;       /**< Path to device file */
+        int     pci_domain_id;  ///< PCI domain ID
+        int     pci_bus_id;     ///< PCI bus ID
+        int     pci_dev_id;     ///< PCI device ID
+        int     pci_fn_id;      ///< PCI function
+        string  dev_name;       ///< Device name
+        string  dev_file;       ///< Path to device file
     };
 
-    /**
-     * Check whether a given name is correct ESXi
-     * interface name.
-     *
-     * @param name  Name to be checked
-     * 
-     * @return 0 is name is no correct, 1 otherwise
-     */
+    ///
+    /// Check whether a given name is correct ESXi
+    /// interface name.
+    ///
+    /// @param name  Name to be checked
+    ///
+    /// @return 0 is name is no correct, 1 otherwise
+    ///
     static int isPortName(const char *name)
     {
         #define ESXI_PORT_NAME_PREF "vmnic"
@@ -470,13 +470,13 @@ fail:
         #undef ESXI_PORT_NAME_PREF
     }
 
-    /**
-     * Get descriptions for all Solarflare NICs on the machine.
-     *
-     * @param nics          [out] Where to save NIC descriptions
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Get descriptions for all Solarflare NICs on the machine.
+    ///
+    /// @param nics          [out] Where to save NIC descriptions
+    ///
+    /// @return 0 on success or error code
+    ///
     static int getNICs(NICDescrs &nics)
     {
         DIR                 *bus_dir;
@@ -509,9 +509,7 @@ fail:
 
         struct ethtool_drvinfo drvinfo;
 
-        /**
-         * Obtain all available network ports.
-         */
+        // Obtain all available network ports.
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
             return -1;
@@ -588,9 +586,8 @@ fail:
         if (bus_dir == NULL)
             return -1;
 
-        /**
-         * Filter out ourt NIC ports, group them by NICs.
-         */
+        // Filter out our NIC ports, group them by NICs.
+
         for (bus = readdir(bus_dir);
              bus != NULL;
              bus = readdir(bus_dir))
@@ -710,9 +707,8 @@ fail:
 
         closedir(bus_dir);
 
-        /*
-         * Sort ports in ascending order in relation to PCI function.
-         */
+        // Sort ports in ascending order in relation to PCI function.
+
         for (i = 0; i < (int)nics.size(); i++)
         {
             PortDescr tmp_port;
@@ -745,29 +741,29 @@ fail:
         return 0;
     }
 
-    /**
-     * Parse VPD tag.
-     *
-     * @param vpd       Pointer to buffer with VPD data
-     * @param len       Length of VPD data
-     * @param tag_name  [out] Where to save tag name
-     * @param tag_len   [out] Where to save tag data len
-     * @param tag_start [out] Where to save address of the first
-     *                  byte of tag data
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Parse VPD tag.
+    ///
+    /// @param vpd       Pointer to buffer with VPD data
+    /// @param len       Length of VPD data
+    /// @param tag_name  [out] Where to save tag name
+    /// @param tag_len   [out] Where to save tag data len
+    /// @param tag_start [out] Where to save address of the first
+    ///                  byte of tag data
+    ///
+    /// @return 0 on success or error code
+    ///
     static int getVPDTag(uint8_t *vpd, uint32_t len,
                          int *tag_name, unsigned int *tag_len,
                          uint8_t **tag_start)
     {
-        /* The first bit shows whether it is large (1) or
-         * small (0) resource data type tag bit definition. */
+        // The first bit shows whether it is large (1) or
+        // small (0) resource data type tag bit definition.
         if (vpd[0] & 0x80) // 10000000b
         {
             if (len < 2)
                 return -1;
-            /* Get large item name */
+            // Get large item name
             *tag_name = vpd[0] & 0x7f; // 01111111b
             *tag_len = (vpd[1] & 0x000000ff) +
                        ((vpd[2] & 0x000000ff) >> 8);
@@ -777,9 +773,9 @@ fail:
         }
         else
         {
-            /* Small resource data type tag bit definition:
-             * 0xxxxyyyb, where xxxx - small item name,
-             * yyy - length. */
+            // Small resource data type tag bit definition:
+            // 0xxxxyyyb, where xxxx - small item name,
+            // yyy - length.
             *tag_name = ((vpd[0] & 0xf8) >> 3); // 01111000b
             *tag_len = (vpd[0] & 0x07); // 00000111b
             *tag_start = vpd + 1;
@@ -790,17 +786,17 @@ fail:
         return 0;
     }
 
-    /**
-     * Parse VPD data.
-     *
-     * @param vpd               Buffer with VPD data
-     * @param len               Length of VPD data
-     * @param product_name      [out] Where to save product name
-     * @param product_number    [out] Where to save product number
-     * @param serial_number     [out] Where to save serial number
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Parse VPD data.
+    ///
+    /// @param vpd               Buffer with VPD data
+    /// @param len               Length of VPD data
+    /// @param product_name      [out] Where to save product name
+    /// @param product_number    [out] Where to save product number
+    /// @param serial_number     [out] Where to save serial number
+    ///
+    /// @return 0 on success or error code
+    ///
     static int parseVPD(uint8_t *vpd, uint32_t len,
                         string &product_name, string &product_number,
                         string &serial_number)
@@ -907,18 +903,18 @@ fail:
         return 0;
     }
 
-    /**
-     * Read NVRAM data from NIC.
-     *
-     * @param fd        File descriptor to be used for ioctl()
-     * @param data      Where to save obtained data
-     * @param offset    Offset of data to be read
-     * @param len       Length of data to be read
-     * @param ifname    Interface name
-     * @param type      This value is determined by port number
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Read NVRAM data from NIC.
+    ///
+    /// @param fd        File descriptor to be used for ioctl()
+    /// @param data      Where to save obtained data
+    /// @param offset    Offset of data to be read
+    /// @param len       Length of data to be read
+    /// @param ifname    Interface name
+    /// @param type      This value is determined by port number
+    ///
+    /// @return 0 on success or error code
+    ///
     static int readNVRAMBytes(int fd, uint8_t *data, unsigned int offset,
                               unsigned int len,
                               const char *ifname, int port_number)
@@ -971,17 +967,17 @@ fail:
         return 0;
     }
 
-    /**
-     * Get VPD.
-     *
-     * @param ifname            Interface name
-     * @param port_number       Port number
-     * @param product_name      Where to save product name
-     * @param product_number    Where to save product number
-     * @param serial_number     Where to save serial number
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Get VPD.
+    ///
+    /// @param ifname            Interface name
+    /// @param port_number       Port number
+    /// @param product_name      Where to save product name
+    /// @param product_number    Where to save product number
+    /// @param serial_number     Where to save serial number
+    ///
+    /// @return 0 on success or error code
+    ///
     static int getVPD(const char *ifname, int port_number,
                       string &product_name, string &product_number,
                       string &serial_number)
@@ -1039,19 +1035,19 @@ fail:
         return 0;
     }
 
-    /**
-     * Wrapper function working like popen("sfupdate ..."). It
-     * redirects stdout and stderr to pipe and calls main function
-     * of sfupdate with arguments obtained from a given command line.
-     * After sfupdate main function terminated, original file
-     * descriptors for stdout and stderr are restored.
-     *
-     * @param cmd_line Command line (should start with "sfupdate",
-     *                 for example "sfupdate --adapter=vmnic2")
-     *
-     * @return FD from which output of sfupdate can be read on
-     *         succens or negative value on failure
-     */
+    ///
+    /// Wrapper function working like popen("sfupdate ..."). It
+    /// redirects stdout and stderr to pipe and calls main function
+    /// of sfupdate with arguments obtained from a given command line.
+    /// After sfupdate main function terminated, original file
+    /// descriptors for stdout and stderr are restored.
+    ///
+    /// @param cmd_line Command line (should start with "sfupdate",
+    ///                 for example "sfupdate --adapter=vmnic2")
+    ///
+    /// @return FD from which output of sfupdate can be read on
+    ///         succens or negative value on failure
+    ///
     static int sfupdatePOpen(const char *cmd_line)
     {
         int     argc;
@@ -1146,20 +1142,20 @@ fail:
         }
     }
 
-    /* Predeclaration */
+    // Predeclaration
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName);
 
-    /**
-     * Perform ethool command.
-     *
-     * @param dev_file          Path to device file
-     * @param dev_name          Device name
-     * @param cmd               Ethtool command
-     * @param edata             Location for get, data for set method
-     *
-     * @return zero on success, -1 on error
-     */
+    ///
+    /// Perform ethool command.
+    ///
+    /// @param dev_file          Path to device file
+    /// @param dev_name          Device name
+    /// @param cmd               Ethtool command
+    /// @param edata             Location for get, data for set method
+    ///
+    /// @return zero on success, -1 on error
+    ///
     static int vmwareEthtoolCmd(const char *dev_file, const char *dev_name,
                                 unsigned cmd, void *edata)
     {
@@ -1356,12 +1352,11 @@ fail:
 
     MACAddress VMWarePort::permanentMAC() const
     {
-        /**
-         * ETHTOOL_GPERMADDR is not supported on ESXi, and
-         * we cannot use popen("esxcli...") since fork() is
-         * forbidden, so we need to get them from standard
-         * objects in root/cimv2 namespace of VMWare CIM server.
-         */
+        // ETHTOOL_GPERMADDR is not supported on ESXi, and
+        // we cannot use popen("esxcli...") since fork() is
+        // forbidden, so we need to get them from standard
+        // objects in root/cimv2 namespace of VMWare CIM server.
+
         Ref<CIM_EthernetPort> cimEthPort;
 
         cimEthPort = getCIMEthPort(dev_name.c_str());
@@ -1386,8 +1381,8 @@ fail:
             mac_val = cimEthPort->PermanentAddress.value.c_str();
             if (strstr(mac_val, ":") == NULL)
             {
-                /* MAC address is represented as hexadecimal number
-                 * without ':' separators - fix this. */
+                // MAC address is represented as hexadecimal number
+                // without ':' separators - fix this.
                 if (strlen(mac_val) < 12)
                     return MACAddress(0, 0, 0, 0, 0, 0);
                 snprintf(mac_str, MAC_STR_SIZE,
@@ -1440,14 +1435,14 @@ fail:
 
     bool VMWareInterface::ifStatus() const
     {
-        /* Implementation is blocked by SF bug 35613 */
+        // Implementation is blocked by SF bug 35613
 
         return false;
     }
 
     void VMWareInterface::enable(bool st)
     {
-        /* Implementation is blocked by SF bug 35613 */
+        // Implementation is blocked by SF bug 35613
 
         UNUSED(st);
     }
@@ -1470,11 +1465,10 @@ fail:
 
     void VMWareInterface::mtu(uint64 u)
     {
-        /*
-         * This should not be implemented - MTU
-         * is set for vSwitch as a whole, change is
-         * propagated to its uplinks automatically.
-         */
+        // This should not be implemented - MTU
+        // is set for vSwitch as a whole, change is
+        // propagated to its uplinks automatically.
+
         UNUSED(u);
 
         return;
@@ -1524,7 +1518,8 @@ fail:
 
     void VMWareInterface::currentMAC(const MACAddress& mac)
     {
-        /* How to implement it?! */
+        // See SF bug 35613
+
         UNUSED(mac);
     }
 
@@ -1572,8 +1567,8 @@ fail:
             Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
         virtual Result syncTest() 
         {
-            /* ETHTOOL_TEST is not available on ESXi -
-             * see bug 35580 */
+            // ETHTOOL_TEST is not available on ESXi -
+            // see bug 35580
             testPassed = Passed;
             log().logStatus("passed");
             return Passed;
@@ -1767,14 +1762,14 @@ fail:
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
 
-    /**
-     * Get data via TFTP protocol.
-     *
-     * @param uri         Data URI
-     * @param f           File to write loaded data
-     *
-     * @return 0 on success, < 0 on failure
-     */
+    ///
+    /// Get data via TFTP protocol.
+    ///
+    /// @param uri         Data URI
+    /// @param f           File to write loaded data
+    ///
+    /// @return 0 on success, < 0 on failure
+    ///
     static int tftp_get_file(const char *uri, FILE *f)
     {
         CURL           *curl;
@@ -1811,14 +1806,14 @@ curl_fail:
         return rc;
     }
 
-    /**
-     * Install firmware on a NIC from given image.
-     *
-     * @param owner       NIC class pointer
-     * @param fileName    From where to get firmware image
-     *
-     * @return 0 on success, < 0 on failure
-     */
+    ///
+    /// Install firmware on a NIC from given image.
+    ///
+    /// @param owner       NIC class pointer
+    /// @param fileName    From where to get firmware image
+    ///
+    /// @return 0 on success, < 0 on failure
+    ///
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName)
     {
@@ -1879,7 +1874,7 @@ curl_fail:
 
             tmp_file_used = 1;
         }
-        else /* SFTP to be implemented */
+        else // SFTP to be implemented
             return -1;
 
         fd = sfupdatePOpen(cmd);
@@ -1964,11 +1959,10 @@ curl_fail:
 
         closedir(device_dir);
 
-        /*
-         * We failed to get it via ethtool (possible reason: no
-         * Solarflare interfaces are presented) - we try to get it
-         * from VMWare root/cimv2 standard objects.
-         */
+        // We failed to get it via ethtool (possible reason: no
+        // Solarflare interfaces are presented) - we try to get it
+        // from VMWare root/cimv2 standard objects.
+
         Ref<CIM_SoftwareIdentity> cimModel =
                                       CIM_SoftwareIdentity::create();
         Ref<Instance>             cimInstance;
