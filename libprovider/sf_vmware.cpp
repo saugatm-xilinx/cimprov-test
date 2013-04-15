@@ -1359,33 +1359,52 @@ fail:
         /**
          * ETHTOOL_GPERMADDR is not supported on ESXi, and
          * we cannot use popen("esxcli...") since fork() is
-         * forbidden, so we need to use vendor-specific
-         * interface here.
+         * forbidden, so we need to get them from standard
+         * objects in root/cimv2 namespace of VMWare CIM server.
          */
-        int       fd;
+        Ref<CIM_EthernetPort> cimEthPort;
 
-        siena_mc_static_config_hdr_t partial_hdr;
+        cimEthPort = getCIMEthPort(dev_name.c_str());
 
-        fd = open(DEV_SFC_CONTROL, O_RDWR);
-        if (fd < 0)
+        if (!cimEthPort)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
-        if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
-                           sizeof(partial_hdr),
-                           dev_name.c_str(), pci_fn) < 0)
-        {
-            close(fd);
+        if (cimEthPort->PermanentAddress.null)
             return MACAddress(0, 0, 0, 0, 0, 0);
-        }
         else
         {
-            close(fd);
-            return MACAddress(partial_hdr.mac_addr_base[0],
-                              partial_hdr.mac_addr_base[1],
-                              partial_hdr.mac_addr_base[2],
-                              partial_hdr.mac_addr_base[3],
-                              partial_hdr.mac_addr_base[4],
-                              partial_hdr.mac_addr_base[5]);
+#define MAC_STR_SIZE (6 * 3)
+            unsigned int  a0;
+            unsigned int  a1;
+            unsigned int  a2;
+            unsigned int  a3;
+            unsigned int  a4;
+            unsigned int  a5;
+            const char   *mac_val;
+            char          mac_str[MAC_STR_SIZE];
+
+            mac_val = cimEthPort->PermanentAddress.value.c_str();
+            if (strstr(mac_val, ":") == NULL)
+            {
+                /* MAC address is represented as hexadecimal number
+                 * without ':' separators - fix this. */
+                if (strlen(mac_val) < 12)
+                    return MACAddress(0, 0, 0, 0, 0, 0);
+                snprintf(mac_str, MAC_STR_SIZE,
+                         "%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
+                         mac_val[0], mac_val[1], mac_val[2], mac_val[3],
+                         mac_val[4], mac_val[5], mac_val[6], mac_val[7],
+                         mac_val[8], mac_val[9], mac_val[10], mac_val[11]);
+                mac_val = mac_str;
+            }
+
+            if (sscanf(mac_val,
+                       "%x:%x:%x:%x:%x:%x",
+                       &a0, &a1, &a2, &a3, &a4, &a5) != 6)
+                return MACAddress(0, 0, 0, 0, 0, 0);
+
+            return MACAddress(a0, a1, a2, a3, a4, a5);
+#undef MAC_STR_SIZE
         }
     }
 
