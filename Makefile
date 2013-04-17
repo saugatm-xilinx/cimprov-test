@@ -77,7 +77,12 @@ endif
 
 ifneq ($(CIM_SERVER),esxi)
 install : all
-	cp lib$(PROVIDER_LIBRARY).so $(PROVIDER_LIBPATH)
+	cp lib$(PROVIDER_LIBRARY).so $(DESTDIR)$(PROVIDER_LIBPATH)
 endif
+
+ifneq ($(PROVIDER_ROOT),)
+install-aux : $(libcimobjects_DIR)/repository.mof regmod
+	cp regmod $(DESTDIR)$(PROVIDER_ROOT)/bin
+	cp $(libcimobjects_DIR)/repository.mof $(DESTDIR)$(PROVIDER_ROOT)/mof
 
 include mk/rules.mk
