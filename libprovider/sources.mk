@@ -84,7 +84,7 @@ CI_INCLUDES = libprovider/ci libprovider/ci/app libprovider/ci/app/platform \
 libprovider_INCLUDES += $(CI_INCLUDES)
 endif
 
-$(libprovider_DIR)/module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_DIR) $(genmod_TARGET)
+$(libprovider_DIR)/module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_ROOTFILE) $(genmod_TARGET)
 	cd $(dir $@); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$(abspath $<) -M$(abspath $(libcimobjects_DIR)/repository.mof)
 
 

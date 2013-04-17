@@ -2,15 +2,17 @@
 $(CIM_SCHEMA_ZIP):
 	$(CURL) $(CIM_SCHEMA_REPOSITORY)/$(CIM_SCHEMA_ZIP) -o $@
 
-$(CIM_SCHEMA_DIR) : $(CIM_SCHEMA_ZIP)
+$(CIM_SCHEMA_ROOTFILE) : $(CIM_SCHEMA_ZIP)
 	mkdir -p $(CIM_SCHEMA_DIR)/DMTF
-	unzip -o $(CIM_SCHEMA_ZIP) -d $(CIM_SCHEMA_DIR)/DMTF
+	unzip -q -o $(CIM_SCHEMA_ZIP) -d $(CIM_SCHEMA_DIR)/DMTF
 ifneq ($(realpath $(CIM_SCHEMA_PATCHDIR)),$(realpath $(CIM_SCHEMA_DIR)))
 	cp $(CIM_SCHEMA_PATCHDIR)/*.mof $(CIM_SCHEMA_DIR)
 endif
+	touch $@
 
+ifeq ($(MAKECMDGOALS),dist)
 PROVIDER_TARBALL_DIR = cimprovider-$(PROVIDER_LIBRARY)-$(PROVIDER_VERSION)
-PROVIDER_DIST_FILES = $(shell $(HG) manifest)
+PROVIDER_DIST_FILES := $(shell $(HG) manifest)
 PROVIDER_DIST_FILES += $(CIM_SCHEMA_ZIP)
 
 .PHONY : dist
@@ -23,6 +25,7 @@ $(PROVIDER_TARBALL_DIR).tar.gz : $(addprefix $(PROVIDER_TARBALL_DIR)/,$(PROVIDER
 $(PROVIDER_TARBALL_DIR)/% : %
 	mkdir -p $(dir $@)
 	cp $< $@
+endif
 
 %.d: %.cpp
 	@echo Producing $@
