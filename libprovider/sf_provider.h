@@ -13,6 +13,7 @@
 #include "SF_JobStarted.h"
 #include "SF_JobError.h"
 #include "SF_JobSuccess.h"
+#include "SF_Alert.h"
 
 /// This file contains some helpers and utilities
 /// for writing CIMPLE providers. None of the code is platform-dependent
@@ -155,9 +156,28 @@ namespace solarflare
 
     template <class CIMClass>
     class CIMAlertNotify : public CIMNotify<CIMClass> {
+        const cimple::Meta_Class& alertMC;
     public:
-        CIMAlertNotify() {}
+        CIMAlertNotify(const cimple::Meta_Class amc) : alertMC(amc) {}
+#if 0
+        virtual void alert(const SystemElement& se)
+        {
+            const CIMHelper *helper = se.cimDispatch(sourceMC);
+            CIMClass *indication = CIMClass::create(true);
+
+            if (helper == NULL)
+                return;
+            
+            indication->SourceInstance = helper->instance(se, 0);
+            indication->SourceInstanceModelPath.null = false;
+            cimple::instance_to_model_path(indication->SourceInstance, 
+                                           indication->SourceInstanceModelPath.value);
+            return indication;
+        }
+#endif
     };
+
+    extern CIMAlertNotify<cimple::SF_Alert> onAlert;
 
     template <class CIMClass>
     class EnumInstances : public ConstElementEnumerator {

@@ -9,6 +9,20 @@ ifneq ($(realpath $(CIM_SCHEMA_PATCHDIR)),$(realpath $(CIM_SCHEMA_DIR)))
 	cp $(CIM_SCHEMA_PATCHDIR)/*.mof $(CIM_SCHEMA_DIR)
 endif
 
+PROVIDER_TARBALL_DIR = cimprovider-$(PROVIDER_LIBRARY)-$(PROVIDER_VERSION)
+PROVIDER_DIST_FILES = $(shell $(HG) manifest)
+PROVIDER_DIST_FILES += $(CIM_SCHEMA_ZIP)
+
+.PHONY : dist
+
+dist : $(PROVIDER_TARBALL_DIR).tar.gz
+
+$(PROVIDER_TARBALL_DIR).tar.gz : $(addprefix $(PROVIDER_TARBALL_DIR)/,$(PROVIDER_DIST_FILES))
+	tar czf $@ $^
+
+$(PROVIDER_TARBALL_DIR)/% : %
+	mkdir -p $(dir $@)
+	cp $< $@
 
 %.d: %.cpp
 	@echo Producing $@

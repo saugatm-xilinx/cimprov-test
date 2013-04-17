@@ -20,6 +20,8 @@ endif
 INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
 
 PROVIDER_LIBRARY=Solarflare
+PROVIDER_VERSION=0.1
+
 
 override top_CPPFLAGS += -D_GNU_SOURCE -I.
 

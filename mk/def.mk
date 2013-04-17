@@ -3,6 +3,7 @@ SED=sed
 CURL=curl --negotiate -u :
 BISON=bison
 FLEX=flex
+HG=hg
 
 override top_CPPFLAGS := $(CPPFLAGS)
 override top_CXXFLAGS := $(or $(CXXFLAGS),$(CFLAGS))
