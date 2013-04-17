@@ -1,0 +1,7 @@
+libsfupdate.a and libutils.a were built from patched dd4df25fa81b
+revision of v5-incoming repository on VMWare Workbench.
+
+libcrypto.so.0.9.8, librt.so.1 and libssl.so.0.9.8 were taken from
+ESXi 5 host.
+
+libcurl.a was built from sources of 7.29.0 version of libcurl.

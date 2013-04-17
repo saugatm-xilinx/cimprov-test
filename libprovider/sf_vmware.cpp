@@ -8,7 +8,6 @@
 #include "CIM_EthernetPort.h"
 #include "CIM_SoftwareIdentity.h"
 
-#define EFX_NOT_UPSTREAM
 #include "efx_ioctl.h"
 #include "ci/tools/byteorder.h"
 #include "ci/tools/bitfield.h"
@@ -43,36 +42,63 @@
 
 #include <arpa/inet.h>
 
+#include <string>
+#include <vector>
+
+// Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80
 
+// These macros are used for setting proper value
+// for SIOCEFX ioctl.
 #define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
 CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
                     CI_DWORD_0, (_val))
-
 #define PAYLOAD_DWORD(_payload, _ofst) \
   CI_DWORD_FIELD((_payload).dword[_ofst], CI_DWORD_0)
 
+// Common paths for obtaining information about devices
 #define PROC_BUS_PATH       "/proc/bus/pci/"
 #define DEV_PATH            "/dev/"
+#define DEV_SFC_CONTROL     "/dev/sfc_control"
+
+// Maximum length of path
 #define PATH_MAX_LEN        1024
+// Maximum length of command line
 #define CMD_MAX_LEN         1024
+// Maximum length of string of sfupdate output
 #define SFU_STR_MAX_LEN     1024
+// Maximum length of VPD field
 #define VPD_FIELD_MAX_LEN   255
+// Maximum length of PCI configuration string
 #define PCI_CONF_LEN        12
+
+// These values are used to distinguish our network
+// interfaces from other devices
 #define CLASS_NET_VALUE     0x20000
 #define VENDOR_SF_VALUE     0x1924 
+
+#define EFX_MAX_MTU (9 * 1024)
+
+// Convert character to integer properly
 #define CHAR2INT(x)         ((int)(x & 0x000000ff))
 
-#define BUF_MAX_LEN                     32
-
+// VPD tags (used for VPD processing)
 #define VPD_TAG_ID   0x02
 #define VPD_TAG_END  0x0f
 #define VPD_TAG_R    0x10
 #define VPD_TAG_W    0x11
 
+// Macro to disable compiler warning about an unused parameter
+#define UNUSED(_x) (void )(_x)
+
+// Default version string
+#define DEFAULT_VERSION_STR ""
+
 extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
 }
+
+using namespace std;
 
 namespace solarflare 
 {
@@ -82,14 +108,14 @@ namespace solarflare
     using cimple::Ref;
     using cimple::cast;
 
-    /**
-     * Is a symbol a space?
-     *
-     * @param c   symbol
-     * 
-     * @result 1 if space, 0 otherwise
-     */
-    static int isSpace(char c)
+    ///
+    /// Is a symbol a space?
+    ///
+    /// @param c   symbol
+    /// 
+    /// @result 1 if space, 0 otherwise
+    ///
+    static int isSpace(const char c)
     {
         if (c == ' ' || c == '\t' || c == '\0')
             return 1;
@@ -97,12 +123,43 @@ namespace solarflare
             return 0;
     }
 
-    /**
-     * Remove quotation symbols and related escaping
-     * from the string.
-     *
-     * @param s   String to be processed
-     */
+    ///
+    /// Remove space symbols from the end of a string.
+    ///
+    /// @param s     Char array pointer
+    ///
+    static void trim(char *s)
+    {
+        int i;
+
+        for (i = strlen(s) - 1; i >= 0; i--)
+            if (s[i] == ' ' || s[i] == '\n' ||
+                s[i] == '\r')
+                s[i] = '\0';
+            else
+                break;
+    }
+
+    ///
+    /// Compare the beginning of the first string with
+    /// the second one.
+    ///
+    /// @param x   The first string
+    /// @param y   The second string
+    ///
+    /// @return The same as strncmp(x, y, strlen(y))
+    ///
+    static inline int strcmp_start(const char *x, const char *y)
+    {
+        return strncmp(x, y, strlen(y));
+    }
+
+    ///
+    /// Remove quotation symbols and related escaping
+    /// from the string.
+    ///
+    /// @param s   String to be processed
+    ///
     static void removeQuotes(char *s)
     {
         int i;
@@ -110,6 +167,8 @@ namespace solarflare
         int len;
         int c1 = 0;
         int c2 = 0;
+        int single_quote = 0;
+        int double_quote = 0;
 
         if (s == NULL)
             return;
@@ -122,41 +181,61 @@ namespace solarflare
             c2 = s[i];
 
             if ((c1 != '\\' && (c2 == '\'' || c2 == '"')) ||
-                (c1 == '\\' && c2 =='\\') ||
-                (c1 == '\\' && c2 == '"'))
+                (c1 == '\\' && double_quote && c2 == '"'))
             {
-                if (c1 == '\\' && c2 == '"')
+                if (c1 != '\\' && c2 == '\'')
+                {
+                    if (!double_quote)
+                        single_quote = !single_quote;
+                    else
+                        continue;
+                }
+                else if (c1 != '\\' && c2 == '"')
+                {
+                    if (!single_quote)
+                        double_quote = !double_quote;
+                    else
+                        continue;
+                }
+
+                if (c1 == '\\')
                     i--;
 
                 for (j = i; j < len; j++)
                     s[j] = s[j + 1];
                 len--;
+
+                if (c1 == '\\')
+                    i++;
                 c2 = s[i];
             }
         }
     }
 
-    /**
-     * Parse command line string to obtain array of arguments of
-     * the form passed to main() normally.
-     *
-     * @param s     Command line to be parsed
-     * @param argc  Where to save number of arguments
-     * @param argv  Where to save pointer to the array of
-     *              arguments (allocated as a single block in
-     *              memory)
-     *
-     * @return 0 on success or value less than 0 on error
-     */
-    static int parseArgvString(const char *s, int *argc, char ***argv)
+    ///
+    /// Parse command line string to obtain array of arguments of
+    /// the form passed to the main function of a Linux program normally.
+    ///
+    /// @param s       Command line to be parsed
+    /// @param argc    [out] Where to save number of arguments
+    /// @param argv    [out] Where to save pointer to the array of
+    ///                arguments
+    /// @param values  [out] Where to save pointer to the buffer
+    ///                with values of arguments
+    ///
+    /// @return 0 on success or value less than 0 on error
+    ///
+    static int parseArgvString(const char *s, int *argc,
+                               char ***argv, char **values)
     {
         char  c1 = 0;
         char  c2 = 0;
         int   i;
+        int   j;
         int   len;
         int   single_quote = 0;
         int   double_quote = 0;
-        char *start;
+        char *start = NULL;
 
         char **args = NULL;
         int    count = 0;
@@ -165,11 +244,12 @@ namespace solarflare
 
         int rc = 0;
 
-        if (s == NULL || argc == NULL || argv == NULL)
+        if (s == NULL || argc == NULL || argv == NULL || values == NULL)
             return -1;
 
-        buf = strdup(s);
-        len = strlen(buf);
+        len = strlen(s);
+        buf = new char[len + 1];
+        strcpy(buf, s);
 
         for (i = 0; i <= len; i++)
         {
@@ -182,16 +262,19 @@ namespace solarflare
                 {
                     if (count >= max_count - 1)
                     {
-                        void *p = NULL;
+                        char **p = NULL;
 
                         max_count = (max_count + 1) * 2;
-                        p = realloc(args, sizeof(char **) * max_count);
+                        p = new char*[max_count];
                         if (p == NULL)
                         {
                             rc = -1;
                             goto fail;
                         }
-                        args = (char **)p;
+                        for (j = 0; j < count; j++)
+                            p[j] = args[j];
+                        delete[] args;
+                        args = p;
                     }
 
                     args[count] = start;
@@ -222,37 +305,33 @@ namespace solarflare
 
         if (single_quote || double_quote)
         {
-            rc = -2;
+            rc = -1;
             goto fail;
         }
 
+        if (count == 0)
+            args = new char *;
         args[count] = NULL;
 
-        *argv = (char **)calloc(1, (count + 1) * sizeof(char **) + len);
-        memcpy(((char *)*argv) + (count + 1) * sizeof(char **), buf, len);
-
-        for (i = 0; i < count; i++)
-            (*argv)[i] = args[i] +
-                          (((char *)*argv) +
-                                      (count + 1) * sizeof(char **) - buf);
-
+        *argv = args;
+        *values = buf;
         *argc = count;
 
+        return 0;
 fail:
-
-        free(args);
-        free(buf);
+        delete[] args;
+        delete[] buf;
         return rc;
     }
 
-    /**
-     * Get reference to a corresponding CIM_EthernetPort value
-     * by device name.
-     *
-     * @param dev_name    Device name
-     *
-     * @return Reference to CIM_EthernetPort value
-     */
+    ///
+    /// Get reference to a corresponding CIM_EthernetPort value
+    /// by device name.
+    ///
+    /// @param dev_name    Device name
+    ///
+    /// @return Reference to CIM_EthernetPort value
+    ///
     Ref<CIM_EthernetPort> getCIMEthPort(const char *dev_name)
     {
         Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
@@ -280,11 +359,11 @@ fail:
         return cimEthPort;
     }
 
-    /**
-     * Debugging function checking number of free FDs.
-     *
-     * @return number of free FDs
-     */
+    ///
+    /// Debugging function checking number of free FDs.
+    ///
+    /// @return number of free FDs
+    ///
     static int freeFDsNum()
     {
 #define _MAX_FDS 1024
@@ -306,72 +385,99 @@ fail:
 #undef _MAX_FDS
     }
 
-    /**
-     * Auxiliary type for MCDI data processing.
-     */
+    ///
+    /// Auxiliary type for MCDI data processing.
+    ///
     typedef union {
-        uint8_t u8[MCDI_CTL_SDU_LEN_MAX];
-        uint16_t u16[MCDI_CTL_SDU_LEN_MAX/2];
-        ci_dword_t dword[MCDI_CTL_SDU_LEN_MAX/4];
+        uint8_t     u8[MCDI_CTL_SDU_LEN_MAX];
+        uint16_t    u16[MCDI_CTL_SDU_LEN_MAX/2];
+        ci_dword_t  dword[MCDI_CTL_SDU_LEN_MAX/4];
     } payload_t;
 
-    /**
-     * Description of Ethernet port.
-     */
-    typedef struct PortDescr {
-        int     pci_fn;     /**< PCI function */
-        char   *dev_file;   /**< Path to device file */
-        char   *dev_name;   /**< Device name */
-    } PortDescr;
-
-    /**
-     * Description of NIC.
-     */
-    typedef struct NICDescr {
-        int pci_domain;                 /**< PCI domain ID */
-        int pci_bus;                    /**< PCI bus ID */
-        int pci_device;                 /**< PCI device ID */
-
-        PortDescr   *ports;             /**< Array with Ethernet ports */
-        int          ports_count;       /**< Number of elements in the
-                                             array */
-        int          ports_max_count;   /**< For how many elements space was
-                                             allocated memory in the
-                                             array */
-    } NICDescr;
-
-    /**
-     * Free array with NIC descriptions.
-     *
-     * @param nics      Array pointer
-     * @param count     Number of elements in the array
-     */
-    static void freeNICs(NICDescr *nics, int count)
+    ///
+    /// Description of Ethernet port.
+    ///
+    class PortDescr
     {
-        int i;
-        int j;
+    public:
+        int     pci_fn;     ///< PCI function
+        string  dev_file;   ///< Path to device file
+        string  dev_name;   ///< Device name
+    };
 
-        for (i = 0; i < count; i++)
-        {
-            for (j = 0; j < nics[i].ports_count; j++)
-            {
-                free(nics[i].ports[j].dev_file);
-                free(nics[i].ports[j].dev_name);
-            }
-            free(nics[i].ports);
-        }
-        free(nics);
+    ///
+    /// Description of NIC.
+    ///
+    class NICDescr
+    {
+    public:
+        int pci_domain;                 ///< PCI domain ID
+        int pci_bus;                    ///< PCI bus ID
+        int pci_device;                 ///< PCI device ID
+
+        vector<PortDescr> ports;        ///< NIC ports
+    };
+
+    ///
+    /// Vector of NIC descriptions.
+    ///
+    typedef vector<NICDescr> NICDescrs;
+
+    ///
+    /// Device description.
+    ///
+    class DeviceDescr
+    {
+    public:
+        int     pci_domain_id;  ///< PCI domain ID
+        int     pci_bus_id;     ///< PCI bus ID
+        int     pci_dev_id;     ///< PCI device ID
+        int     pci_fn_id;      ///< PCI function
+        string  dev_name;       ///< Device name
+        string  dev_file;       ///< Path to device file
+    };
+
+    ///
+    /// Check whether a given name is correct ESXi
+    /// interface name.
+    ///
+    /// @param name  Name to be checked
+    ///
+    /// @return 0 is name is no correct, 1 otherwise
+    ///
+    static int isPortName(const char *name)
+    {
+        #define ESXI_PORT_NAME_PREF "vmnic"
+        char *endptr;
+
+        if (name == NULL)
+            return 0;
+
+        if (strlen(name) > IFNAMSIZ)
+            return 0;
+
+        if (strncmp(name, ESXI_PORT_NAME_PREF,
+                    strlen(ESXI_PORT_NAME_PREF)) != 0)
+            return 0;
+
+        if (strtol(name + strlen(ESXI_PORT_NAME_PREF),
+                   &endptr, 10) < 0 ||
+            endptr == NULL ||
+            *endptr != '\0')
+          return 0;
+
+        return 1;
+        #undef ESXI_PORT_NAME_PREF
     }
 
-    /**
-     * Get descriptions for all Solarflare NICs on the machine.
-     *
-     * @param nics          Where to save NIC descriptions array handle
-     * @param nics_count    Where to save number of SF NICs
-     *
-     * @return 0 on success or error code
-     */
-    static int getNICs(NICDescr **nics, int *nics_count)
+    ///
+    /// Get descriptions for all Solarflare NICs on the machine.
+    ///
+    /// @param nics          [out] Where to save NIC descriptions
+    ///
+    /// @return 0 on success or error code
+    ///
+    static int getNICs(NICDescrs &nics)
     {
         DIR                 *bus_dir;
         DIR                 *device_dir;
@@ -384,14 +490,9 @@ fail:
         int                  vendor_id;
         int                  device_class;
 
-        int         *pci_domain_id = NULL;
-        int         *pci_bus_id = NULL;
-        int         *pci_dev_id = NULL;
-        int         *pci_fn_id = NULL;
-        char       **dev_name = NULL;
-        char       **dev_file = NULL;
-        int          dev_count = 0;
-        int          dev_max_num = 0;
+        vector<DeviceDescr> devs;
+
+        int          rc;
 
         int     cur_domain;
         int     cur_bus;
@@ -402,98 +503,33 @@ fail:
         int     k;
         int     fd;
 
-#define DEV_ARRAYS_FREE \
-        do {                                                            \
-            int i_;                                                     \
-            free(pci_domain_id);                                        \
-            free(pci_bus_id);                                           \
-            free(pci_dev_id);                                           \
-            free(pci_fn_id);                                            \
-            if (dev_name != NULL)                                       \
-            {                                                           \
-                for (i_ = 0; i_ < dev_count; i_++)                      \
-                {                                                       \
-                    free(dev_name[i_]);                                 \
-                    free(dev_file[i_]);                                 \
-                    dev_name[i_] = NULL;                                \
-                    dev_file[i_] = NULL;                                \
-                }                                                       \
-            }                                                           \
-            free(dev_name);                                             \
-            free(dev_file);                                             \
-        } while (0)
-
-#define DEV_ARRAYS_REALLOC \
-        do {                                                             \
-            void    *tmp_;                                               \
-                                                                         \
-            if (dev_max_num == 0)                                        \
-                dev_max_num = 10;                                        \
-            else                                                         \
-                dev_max_num *= 2;                                        \
-                                                                         \
-            if (!((tmp_ = realloc(pci_domain_id,                         \
-                                  dev_max_num * sizeof(int))) != NULL && \
-                  (pci_domain_id = (int *)tmp_) != NULL &&               \
-                  (tmp_ = realloc(pci_bus_id,                            \
-                                  dev_max_num * sizeof(int))) != NULL && \
-                  (pci_bus_id = (int *)tmp_) != NULL &&                  \
-                  (tmp_ = realloc(pci_dev_id,                            \
-                                  dev_max_num * sizeof(int))) != NULL && \
-                  (pci_dev_id = (int *)tmp_) != NULL &&                  \
-                  (tmp_ = realloc(pci_fn_id,                             \
-                                  dev_max_num *                          \
-                                            sizeof(int))) != NULL &&     \
-                  (pci_fn_id = (int *)tmp_) != NULL &&                   \
-                  (tmp_ = realloc(dev_name,                              \
-                                  dev_max_num *                          \
-                                        sizeof(char *))) != NULL &&      \
-                  (dev_name = (char **)tmp_) != NULL &&                  \
-                  (tmp_ = realloc(dev_file,                              \
-                                  dev_max_num *                          \
-                                        sizeof(char *))) != NULL &&      \
-                  (dev_file = (char **)tmp_) != NULL))                   \
-            {                                                            \
-                DEV_ARRAYS_FREE;                                         \
-                return -2;                                               \
-            }                                                            \
-        } while (0)
-
-        struct ifconf   ifconf;
         struct ifreq    ifr;
-        int             s;
 
         char    *str;
 
         struct ethtool_drvinfo drvinfo;
 
-        NICDescr   *nics_arr = NULL;
-        int          nics_num = 0;
-        int          nics_max_num = 0;
-        void        *tmp;
-
-        if (nics == NULL || nics_count == NULL)
-            return -1;
-
-        *nics = NULL;
-        *nics_count = 0;
-
+        // Obtain all available network ports.
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
-            return -3;
+            return -1;
 
         for (device = readdir(device_dir);
              device != NULL;
              device = readdir(device_dir))
         {
-            if (device->d_name[0] == '.')
-                continue;
-            if (strlen(device->d_name) > IFNAMSIZ)
+            if (!isPortName(device->d_name))
                 continue;
 
-            if (snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                         DEV_PATH, device->d_name) >= PATH_MAX_LEN)
-                continue;
+            rc = snprintf(device_path, PATH_MAX_LEN, "%s/%s",
+                          DEV_PATH, device->d_name);
+
+            if (rc < 0 || rc >= PATH_MAX_LEN)
+            {
+                closedir(device_dir);
+                return -1;
+            }
+
             fd = open(device_path, O_RDWR);
             if (fd < 0)
                 continue;
@@ -505,62 +541,52 @@ fail:
             strcpy(ifr.ifr_name, device->d_name);
             if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
             {
+                DeviceDescr tmp_dev;
+
                 close(fd);
 
-                if (dev_count >= dev_max_num)
-                    DEV_ARRAYS_REALLOC;
-
-                dev_name[dev_count] = strdup(device->d_name);
-                if (dev_name[dev_count] == NULL)
-                {
-                    DEV_ARRAYS_FREE;
-                    closedir(device_dir);
-                    return -4;
-                }
+                tmp_dev.dev_name = device->d_name;
                 str = strchr(drvinfo.bus_info, '.');
                 if (str == NULL)
                     continue;
-                pci_fn_id[dev_count] = strtol(str + 1, NULL, 16);
+                tmp_dev.pci_fn_id = strtol(str + 1, NULL, 16);
                 *str = '\0';
                 str = strrchr(drvinfo.bus_info, ':');
                 if (str == NULL)
                 {
-                    DEV_ARRAYS_FREE;
                     closedir(device_dir);
-                    return -5;
+                    return -1;
                 }
-                pci_dev_id[dev_count] = strtol(str + 1, NULL, 16);
+                tmp_dev.pci_dev_id = strtol(str + 1, NULL, 16);
                 *str = '\0';
                 str = strrchr(drvinfo.bus_info, ':');
                 if (str == NULL)
                 {
-                    pci_domain_id[dev_count] = 0;
-                    pci_bus_id[dev_count] = strtol(drvinfo.bus_info,
-                                                   NULL, 16);
+                    tmp_dev.pci_domain_id = 0;
+                    tmp_dev.pci_bus_id = strtol(drvinfo.bus_info,
+                                                NULL, 16);
                 }
                 else
                 {
-                    pci_bus_id[dev_count] = strtol(str + 1,
-                                                   NULL, 16);
+                    tmp_dev.pci_bus_id = strtol(str + 1, NULL, 16);
                     *str = '\0';
-                    pci_domain_id[dev_count] = strtol(drvinfo.bus_info,
-                                                      NULL, 16);
+                    tmp_dev.pci_domain_id = strtol(drvinfo.bus_info,
+                                                   NULL, 16);
                 }
-                dev_file[dev_count] = strdup(device_path);
-                dev_count++;
+                tmp_dev.dev_file = device_path;
+                devs.push_back(tmp_dev);
             }
             else
                 close(fd);
         }
 
         closedir(device_dir);
-        
+
         bus_dir = opendir(PROC_BUS_PATH);
         if (bus_dir == NULL)
-        {
-            DEV_ARRAYS_FREE;
-            return -6;
-        }
+            return -1;
+
+        // Filter out our NIC ports, group them by NICs.
 
         for (bus = readdir(bus_dir);
              bus != NULL;
@@ -568,9 +594,13 @@ fail:
         {
             if (bus->d_name[0] == '.')
                 continue;
-            if (snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                         PROC_BUS_PATH, bus->d_name) >= PATH_MAX_LEN)
-                continue;
+            rc = snprintf(device_path, PATH_MAX_LEN, "%s/%s",
+                          PROC_BUS_PATH, bus->d_name);
+            if (rc < 0 || rc >= PATH_MAX_LEN)
+            {
+                nics.clear();
+                return -1;
+            }
 
             device_dir = opendir(device_path);
             if (device_dir == NULL)
@@ -589,9 +619,8 @@ fail:
                 {
                     closedir(device_dir);
                     closedir(bus_dir);
-                    DEV_ARRAYS_FREE;
-                    freeNICs(nics_arr, nics_num);
-                    return -7;
+                    nics.clear();
+                    return -1;
                 }
                 cur_bus = strtol(str + 1, NULL, 16);
             }
@@ -600,6 +629,9 @@ fail:
                  device != NULL;
                  device = readdir(device_dir))
             {
+                NICDescr  tmp_nic;
+                PortDescr tmp_port;
+
                 if (device->d_name[0] == '.')
                     continue;
 
@@ -615,7 +647,11 @@ fail:
                 f = fopen(func_path, "r");
                 if (f == NULL)
                     continue;
-                fread(pci_conf, 1, PCI_CONF_LEN, f);
+                if (fread(pci_conf, 1, PCI_CONF_LEN, f) < PCI_CONF_LEN)
+                {
+                    fclose(f);
+                    continue;
+                }
                 fclose(f);
                 vendor_id = CHAR2INT(pci_conf[1]) * 256 +
                             CHAR2INT(pci_conf[0]);
@@ -627,203 +663,143 @@ fail:
                     device_class != CLASS_NET_VALUE)
                     break;
 
-                for (i = 0; i < dev_count; i++)
+                for (i = 0; i < (int)devs.size(); i++)
                 {
-                    if (cur_domain == pci_domain_id[i] &&
-                        cur_bus == pci_bus_id[i] &&
-                        cur_dev == pci_dev_id[i] &&
-                        cur_fn == pci_fn_id[i])
+                    if (cur_domain == devs[i].pci_domain_id &&
+                        cur_bus == devs[i].pci_bus_id &&
+                        cur_dev == devs[i].pci_dev_id &&
+                        cur_fn == devs[i].pci_fn_id)
                         break;
                 }
                 
-                if (i == dev_count)
+                if (i == (int)devs.size())
                 {
                     closedir(device_dir);
                     closedir(bus_dir);
-                    DEV_ARRAYS_FREE;
-                    freeNICs(nics_arr, nics_num);
-                    return -8;
+                    nics.clear();
+                    return -1;
                 }
 
-                for (j = 0; j < nics_num; j++)
+                for (j = 0; j < (int)nics.size(); j++)
                 {
-                    if (nics_arr[j].pci_domain == cur_domain &&
-                        nics_arr[j].pci_bus == cur_bus &&
-                        nics_arr[j].pci_device == cur_dev)
+                    if (nics[j].pci_domain == cur_domain &&
+                        nics[j].pci_bus == cur_bus &&
+                        nics[j].pci_device == cur_dev)
                         break;
                 }
 
-                if (j == nics_num)
+                if (j == (int)nics.size())
                 {
-                    if (nics_num >= nics_max_num)
-                    {
-                        nics_max_num = (nics_max_num + 1) * 2;
-                        tmp = realloc(nics_arr, nics_max_num *
-                                                sizeof(NICDescr));
-                        if (tmp == NULL)
-                        {
-                            closedir(device_dir);
-                            closedir(bus_dir);
-                            DEV_ARRAYS_FREE;
-                            freeNICs(nics_arr, nics_num);
-                            return -9;
-                        }
-                        nics_arr = (NICDescr *)tmp;
-                    }
-
-                    nics_arr[nics_num].pci_domain = cur_domain;
-                    nics_arr[nics_num].pci_bus = cur_bus;
-                    nics_arr[nics_num].pci_device = cur_dev;
-                    nics_arr[nics_num].ports = NULL;
-                    nics_arr[nics_num].ports_count = 0;
-                    nics_arr[nics_num].ports_max_count = 0;
-                    nics_num++;
+                    tmp_nic.pci_domain = cur_domain;
+                    tmp_nic.pci_bus = cur_bus;
+                    tmp_nic.pci_device = cur_dev;
+                    nics.push_back(tmp_nic);
                 }
 
-                if (nics_arr[j].ports_count >= nics_arr[j].ports_max_count)
-                {
-                    nics_arr[j].ports_max_count =
-                                    (nics_arr[j].ports_max_count + 1) * 2;
-                    tmp = realloc(nics_arr[j].ports,
-                                  nics_arr[j].ports_max_count *
-                                  sizeof(PortDescr));
-                    if (tmp == NULL)
-                    {
-                        closedir(device_dir);
-                        closedir(bus_dir);
-                        DEV_ARRAYS_FREE;
-                        freeNICs(nics_arr, nics_num);
-                        return -10;
-                    }
-                    nics_arr[j].ports = (PortDescr *)tmp;
-                }
-
-                k = nics_arr[j].ports_count;
-                nics_arr[j].ports[k].pci_fn = cur_fn;
-                nics_arr[j].ports[k].dev_file = strdup(dev_file[i]);
-                nics_arr[j].ports[k].dev_name = strdup(dev_name[i]);
-                nics_arr[j].ports_count++;
+                tmp_port.pci_fn = cur_fn;
+                tmp_port.dev_file = devs[i].dev_file;
+                tmp_port.dev_name = devs[i].dev_name;
+                nics[j].ports.push_back(tmp_port);
             }
 
             closedir(device_dir);
         }
 
         closedir(bus_dir);
-        DEV_ARRAYS_FREE;
 
-        /*
-         * Sort ports in ascending order in relation to PCI function.
-         */
-        for (i = 0; i < nics_num; i++)
+        // Sort ports in ascending order in relation to PCI function.
+
+        for (i = 0; i < (int)nics.size(); i++)
         {
             PortDescr tmp_port;
 
             do {
                 k = 0;
-                for (j = 0; j < nics_arr[i].ports_count - 1; j++)
+                for (j = 0; j < (int)nics[i].ports.size() - 1; j++)
                 {
-                    if (nics_arr[i].ports[j].pci_fn >
-                            nics_arr[i].ports[j + 1].pci_fn)
+                    if (nics[i].ports[j].pci_fn >
+                            nics[i].ports[j + 1].pci_fn)
                     {
-                        tmp_port.pci_fn = nics_arr[i].ports[j].pci_fn;
-                        tmp_port.dev_file = nics_arr[i].ports[j].dev_file;
-                        tmp_port.dev_name = nics_arr[i].ports[j].dev_name;
-                        nics_arr[i].ports[j].pci_fn =
-                                        nics_arr[i].ports[j + 1].pci_fn;
-                        nics_arr[i].ports[j].dev_file =
-                                        nics_arr[i].ports[j + 1].dev_file;
-                        nics_arr[i].ports[j].dev_name =
-                                        nics_arr[i].ports[j + 1].dev_name;
-                        nics_arr[i].ports[j + 1].pci_fn = tmp_port.pci_fn;
-                        nics_arr[i].ports[j + 1].dev_file =
-                                                        tmp_port.dev_file;
-                        nics_arr[i].ports[j + 1].dev_name =
-                                                        tmp_port.dev_name;
+                        tmp_port.pci_fn = nics[i].ports[j].pci_fn;
+                        tmp_port.dev_file = nics[i].ports[j].dev_file;
+                        tmp_port.dev_name = nics[i].ports[j].dev_name;
+                        nics[i].ports[j].pci_fn =
+                                        nics[i].ports[j + 1].pci_fn;
+                        nics[i].ports[j].dev_file =
+                                        nics[i].ports[j + 1].dev_file;
+                        nics[i].ports[j].dev_name =
+                                        nics[i].ports[j + 1].dev_name;
+                        nics[i].ports[j + 1].pci_fn = tmp_port.pci_fn;
+                        nics[i].ports[j + 1].dev_file = tmp_port.dev_file;
+                        nics[i].ports[j + 1].dev_name = tmp_port.dev_name;
                         k++;
                     }
                 }
             } while (k > 0);
         }
 
-        *nics = nics_arr;
-        *nics_count = nics_num;
-
         return 0;
-
-#undef DEV_ARRAYS_FREE
-#undef DEV_ARRAYS_REALLOC
     }
 
-    /**
-     * Remove space symbols from the end of a string.
-     *
-     * @param s     Char array pointer
-     */
-    static void trim(char *s)
-    {
-        int i;
-
-        for (i = strlen(s) - 1; i >= 0; i--)
-            if (s[i] == ' ' || s[i] == '\n' ||
-                s[i] == '\r')
-                s[i] = '\0';
-            else
-                break;
-    }
-
-    /**
-     * Parse VPD tag.
-     *
-     * @param vpd       Pointer to buffer with VPD data
-     * @param len       Length of VPD data
-     * @param tag_name  Where to save tag name
-     * @param tag_len   Where to save tag data len
-     * @param tag_start Where to save address of the first
-     *                  byte of tag data
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Parse VPD tag.
+    ///
+    /// @param vpd       Pointer to buffer with VPD data
+    /// @param len       Length of VPD data
+    /// @param tag_name  [out] Where to save tag name
+    /// @param tag_len   [out] Where to save tag data len
+    /// @param tag_start [out] Where to save address of the first
+    ///                  byte of tag data
+    ///
+    /// @return 0 on success or error code
+    ///
     static int getVPDTag(uint8_t *vpd, uint32_t len,
                          int *tag_name, unsigned int *tag_len,
                          uint8_t **tag_start)
     {
+        // The first bit shows whether it is large (1) or
+        // small (0) resource data type tag bit definition.
         if (vpd[0] & 0x80) // 10000000b
         {
-             if (len < 2)
+            if (len < 2)
                 return -1;
+            // Get large item name
             *tag_name = vpd[0] & 0x7f; // 01111111b
             *tag_len = (vpd[1] & 0x000000ff) +
                        ((vpd[2] & 0x000000ff) >> 8);
             *tag_start = vpd + 3;
             if (len < *tag_len + 3)
-                return -2;
+                return -1;
         }
         else
         {
+            // Small resource data type tag bit definition:
+            // 0xxxxyyyb, where xxxx - small item name,
+            // yyy - length.
             *tag_name = ((vpd[0] & 0xf8) >> 3); // 01111000b
             *tag_len = (vpd[0] & 0x07); // 00000111b
             *tag_start = vpd + 1;
             if (len < *tag_len + 1)
-                return -3;
+                return -1;
         }
 
         return 0;
     }
 
-    /**
-     * Parse VPD data.
-     *
-     * @param vpd               Buffer with VPD data
-     * @param len               Length of VPD data
-     * @param product_name      Where to save product name
-     * @param product_number    Where to save product number
-     * @param serial_number     Where to save serial number
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Parse VPD data.
+    ///
+    /// @param vpd               Buffer with VPD data
+    /// @param len               Length of VPD data
+    /// @param product_name      [out] Where to save product name
+    /// @param product_number    [out] Where to save product number
+    /// @param serial_number     [out] Where to save serial number
+    ///
+    /// @return 0 on success or error code
+    ///
     static int parseVPD(uint8_t *vpd, uint32_t len,
-                        char **product_name, char **product_number,
-                        char **serial_number)
+                        string &product_name, string &product_number,
+                        string &serial_number)
     {
         int             tag_name;
         unsigned int    tag_len;
@@ -840,10 +816,6 @@ fail:
         uint8_t sum = 0;
         uint8_t *vpd_start = vpd;
 
-        *product_name = NULL;
-        *product_number = NULL;
-        *serial_number = NULL;
-
         while (vpd < end)
         {
             if ((rc = getVPDTag(vpd, len, &tag_name,
@@ -853,11 +825,17 @@ fail:
             switch (tag_name)
             {
                 case VPD_TAG_ID:
-                    *product_name = (char *)calloc(1, tag_len + 1);
-                    memcpy(*product_name, tag_start, tag_len);
-                    (*product_name)[tag_len] = '\0';
+                {
+                    char *tmp_product_name = new char[tag_len + 1];
+
+                    memcpy(tmp_product_name, tag_start, tag_len);
+                    tmp_product_name[tag_len] = '\0';
+
+                    product_name = tmp_product_name;
+                    delete[] tmp_product_name;
 
                     break;
+                }
 
                 case VPD_TAG_R:
                 case VPD_TAG_W:
@@ -870,21 +848,21 @@ fail:
                         field_name[1] = vpd_field[1];
                         field_name[2] = '\0';
                         field_len = vpd_field[2];
-                        field_value = (char *)calloc(1, field_len + 1);
+                        field_value = new char[field_len + 1];
                         memcpy(field_value, vpd_field + 3, field_len);
                         field_value[field_len] = '\0';
 
                         if (strcmp(field_name, "PN") == 0)
-                            *product_number = strdup(field_value);
+                            product_number = field_value;
                         else if (strcmp(field_name, "SN") == 0)
-                            *serial_number = strdup(field_value);
+                            serial_number = field_value;
                         else if (strcmp(field_name, "RV") == 0 &&
                             tag_name == VPD_TAG_R)
                         {
                             if (field_len < 1)
                             {
-                                free(field_value);
-                                return -10;
+                                delete[] field_value;
+                                return -1;
                             }
 
                             sum = 0;
@@ -899,7 +877,7 @@ fail:
 #endif
                         }
 
-                        free(field_value);
+                        delete[] field_value;
 
                         vpd_field += 3 + field_len;
                     }
@@ -913,7 +891,7 @@ fail:
                 tag_name != VPD_TAG_R &&
                 tag_name != VPD_TAG_W &&
                 tag_name != VPD_TAG_END)
-                return -11;
+                return -1;
 
             vpd = tag_start + tag_len;
             len = end - vpd;
@@ -925,18 +903,18 @@ fail:
         return 0;
     }
 
-    /**
-     * Read NVRAM data from NIC.
-     *
-     * @param fd        File descriptor to be used for ioctl()
-     * @param data      Where to save obtained data
-     * @param offset    Offset of data to be read
-     * @param len       Length of data to be read
-     * @param ifname    Interface name
-     * @param type      This value is determined by port number
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Read NVRAM data from NIC.
+    ///
+    /// @param fd        File descriptor to be used for ioctl()
+    /// @param data      Where to save obtained data
+    /// @param offset    Offset of data to be read
+    /// @param len       Length of data to be read
+    /// @param ifname    Interface name
+    /// @param type      This value is determined by port number
+    ///
+    /// @return 0 on success or error code
+    ///
     static int readNVRAMBytes(int fd, uint8_t *data, unsigned int offset,
                               unsigned int len,
                               const char *ifname, int port_number)
@@ -983,26 +961,26 @@ fail:
             ptr += mcdi_req->len;
             offset += mcdi_req->len;
             if (mcdi_req->len == 0)
-                return -2;
+                return -1;
         }
 
         return 0;
     }
 
-    /**
-     * Get VPD.
-     *
-     * @param ifname            Interface name
-     * @param port_number       Port number
-     * @param product_name      Where to save product name
-     * @param product_number    Where to save product number
-     * @param serial_number     Where to save serial number
-     *
-     * @return 0 on success or error code
-     */
+    ///
+    /// Get VPD.
+    ///
+    /// @param ifname            Interface name
+    /// @param port_number       Port number
+    /// @param product_name      Where to save product name
+    /// @param product_number    Where to save product number
+    /// @param serial_number     Where to save serial number
+    ///
+    /// @return 0 on success or error code
+    ///
     static int getVPD(const char *ifname, int port_number,
-                      char **product_name, char **product_number,
-                      char **serial_number)
+                      string &product_name, string &product_number,
+                      string &serial_number)
     {
         int       rc;
         int       fd;
@@ -1010,13 +988,9 @@ fail:
         int       vpd_off;
         int       vpd_len;
 
-        struct efx_mcdi_request *mcdi_req;
-        struct efx_ioctl         ioc;
-        payload_t                payload;
-
         siena_mc_static_config_hdr_t partial_hdr;
 
-        fd = open("/dev/sfc_control", O_RDWR);
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
             return -1;
 
@@ -1025,57 +999,60 @@ fail:
                            ifname, port_number) < 0)
         {
             close(fd);
-            return -2;
+            return -1;
         }
 
         if (CI_BSWAP_LE32(partial_hdr.magic) !=
                                     SIENA_MC_STATIC_CONFIG_MAGIC)
         {
             close(fd);
-            return -3;
+            return -1;
         }
 
         vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
         vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
 
-        vpd = (uint8_t *)calloc(1, vpd_len);
+        vpd = new uint8_t[vpd_len];
         if (readNVRAMBytes(fd, vpd, vpd_off, vpd_len,
                            ifname, port_number) < 0)
         {
             close(fd);
-            free(vpd);
-            return -4;
+            delete[] vpd;
+            return -1;
         }
 
         if ((rc = parseVPD(vpd, vpd_len, product_name,
                            product_number, serial_number)) < 0)
         {
             close(fd);
-            free(product_name);
-            free(product_number);
-            free(serial_number);
-            free(vpd);
-            return -5;
+            delete[] vpd;
+            return -1;
         }
 
-        free(vpd);
+        delete[] vpd;
         close(fd);
 
         return 0;
     }
 
-    /**
-     * Wrapper function working like popen("sfupdate ...").
-     *
-     * @param cmd_line Command line (should start with "sfupdate")
-     *
-     * @return FD from which output of sfupdate can be read on
-     *         succens or negative value on failure
-     */
+    ///
+    /// Wrapper function working like popen("sfupdate ..."). It
+    /// redirects stdout and stderr to pipe and calls main function
+    /// of sfupdate with arguments obtained from a given command line.
+    /// After sfupdate main function terminated, original file
+    /// descriptors for stdout and stderr are restored.
+    ///
+    /// @param cmd_line Command line (should start with "sfupdate",
+    ///                 for example "sfupdate --adapter=vmnic2")
+    ///
+    /// @return FD from which output of sfupdate can be read on
+    ///         succens or negative value on failure
+    ///
     static int sfupdatePOpen(const char *cmd_line)
     {
         int     argc;
         char  **argv = NULL;
+        char   *values = NULL;
         int     saved_stdout_fd = -1;
         int     saved_stderr_fd = -1;
         int     pipefds[2] = {-1, -1};
@@ -1085,27 +1062,27 @@ fail:
 
         static pthread_mutex_t sfupdate_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-        if (parseArgvString(cmd_line, &argc, &argv) < 0 ||
+        if (parseArgvString(cmd_line, &argc, &argv, &values) < 0 ||
             argv == NULL)
             return -1;
 
         saved_stdout_fd = dup(STDOUT_FILENO);
         if (saved_stdout_fd < 0)
         {
-            rc = -2;
+            rc = -1;
             goto fail;
         }
 
         saved_stderr_fd = dup(STDERR_FILENO);
         if (saved_stderr_fd < 0)
         {
-            rc = -3;
+            rc = -1;
             goto fail;
         }
 
         if (pipe(pipefds) < 0)
         {
-            rc = -4;
+            rc = -1;
             goto fail;
         }
 
@@ -1114,7 +1091,7 @@ fail:
 
         if (dup2(pipefds[1], STDOUT_FILENO) < 0)
         {
-            rc = -7;
+            rc = -1;
             goto fail;
         }
         else
@@ -1122,7 +1099,7 @@ fail:
 
         if (dup2(pipefds[1], STDERR_FILENO) < 0)
         {
-            rc = -8;
+            rc = -1;
             goto fail;
         }
         else
@@ -1132,7 +1109,7 @@ fail:
         if ((rc = sfupdate_main(argc, argv)) != 0)
         {
             pthread_mutex_unlock(&sfupdate_mutex);
-            rc = -9;
+            rc = -1;
             goto fail;
         }
         pthread_mutex_unlock(&sfupdate_mutex);
@@ -1141,14 +1118,15 @@ fail:
         fflush(stdout);
         fflush(stderr);
 
-        free(argv);
+        delete[] argv;
+        delete[] values;
 
         if (restore_stdout > 0)
             if (dup2(saved_stdout_fd, STDOUT_FILENO) < 0 && rc == 0)
-                rc = -15;
+                rc = -1;
         if (restore_stderr > 0)
             if (dup2(saved_stderr_fd, STDERR_FILENO) < 0 && rc == 0)
-                rc = -16;
+                rc = -1;
         if (saved_stdout_fd >= 0)
             close(saved_stdout_fd);
         if (saved_stderr_fd >= 0)
@@ -1164,34 +1142,20 @@ fail:
         }
     }
 
-    /**
-     * Compare the beginning of the first string with
-     * the second one.
-     *
-     * @param x   The first string
-     * @param y   The second string
-     *
-     * @return The same as strncmp(x, y, strlen(y))
-     */
-    static inline int strcmp_start(const char *x, const char *y)
-    {
-        return strncmp(x, y, strlen(y));
-    }
-
-    /* Predeclaration */
+    // Predeclaration
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName);
 
-    /**
-     * Perform ethool command.
-     *
-     * @param dev_file          Path to device file
-     * @param dev_name          Device name
-     * @param cmd               Ethtool command
-     * @param edata             Location for get, data for set method
-     *
-     * @return zero on success, -1 on error
-     */
+    ///
+    /// Perform ethool command.
+    ///
+    /// @param dev_file          Path to device file
+    /// @param dev_name          Device name
+    /// @param cmd               Ethtool command
+    /// @param edata             Location for get, data for set method
+    ///
+    /// @return zero on success, -1 on error
+    ///
     static int vmwareEthtoolCmd(const char *dev_file, const char *dev_name,
                                 unsigned cmd, void *edata)
     {
@@ -1226,7 +1190,8 @@ fail:
 
         VMWarePort(NIC *up, unsigned i, PortDescr &descr) :
                     Port(i), owner(up), pci_fn(descr.pci_fn),
-                    dev_file(descr.dev_file), dev_name(descr.dev_name)
+                    dev_file(descr.dev_file.c_str()),
+                    dev_name(descr.dev_name.c_str())
         {} 
        
         virtual bool linkStatus() const;
@@ -1387,36 +1352,54 @@ fail:
 
     MACAddress VMWarePort::permanentMAC() const
     {
-        /**
-         * ETHTOOL_GPERMADDR is not supported on ESXi, and
-         * we cannot use popen("esxcli...") since fork() is
-         * forbidden, so we need to use vendor-specific
-         * interface here.
-         */
-        int       fd;
+        // ETHTOOL_GPERMADDR is not supported on ESXi, and
+        // we cannot use popen("esxcli...") since fork() is
+        // forbidden, so we need to get them from standard
+        // objects in root/cimv2 namespace of VMWare CIM server.
 
-        siena_mc_static_config_hdr_t partial_hdr;
+        Ref<CIM_EthernetPort> cimEthPort;
 
-        fd = open("/dev/sfc_control", O_RDWR);
-        if (fd < 0)
+        cimEthPort = getCIMEthPort(dev_name.c_str());
+
+        if (!cimEthPort)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
-        if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
-                           sizeof(partial_hdr),
-                           dev_name.c_str(), pci_fn) < 0)
-        {
-            close(fd);
+        if (cimEthPort->PermanentAddress.null)
             return MACAddress(0, 0, 0, 0, 0, 0);
-        }
         else
         {
-            close(fd);
-            return MACAddress(partial_hdr.mac_addr_base[0],
-                              partial_hdr.mac_addr_base[1],
-                              partial_hdr.mac_addr_base[2],
-                              partial_hdr.mac_addr_base[3],
-                              partial_hdr.mac_addr_base[4],
-                              partial_hdr.mac_addr_base[5]);
+#define MAC_STR_SIZE (6 * 3)
+            unsigned int  a0;
+            unsigned int  a1;
+            unsigned int  a2;
+            unsigned int  a3;
+            unsigned int  a4;
+            unsigned int  a5;
+            const char   *mac_val;
+            char          mac_str[MAC_STR_SIZE];
+
+            mac_val = cimEthPort->PermanentAddress.value.c_str();
+            if (strstr(mac_val, ":") == NULL)
+            {
+                // MAC address is represented as hexadecimal number
+                // without ':' separators - fix this.
+                if (strlen(mac_val) < 12)
+                    return MACAddress(0, 0, 0, 0, 0, 0);
+                snprintf(mac_str, MAC_STR_SIZE,
+                         "%c%c:%c%c:%c%c:%c%c:%c%c:%c%c",
+                         mac_val[0], mac_val[1], mac_val[2], mac_val[3],
+                         mac_val[4], mac_val[5], mac_val[6], mac_val[7],
+                         mac_val[8], mac_val[9], mac_val[10], mac_val[11]);
+                mac_val = mac_str;
+            }
+
+            if (sscanf(mac_val,
+                       "%x:%x:%x:%x:%x:%x",
+                       &a0, &a1, &a2, &a3, &a4, &a5) != 6)
+                return MACAddress(0, 0, 0, 0, 0, 0);
+
+            return MACAddress(a0, a1, a2, a3, a4, a5);
+#undef MAC_STR_SIZE
         }
     }
 
@@ -1452,14 +1435,16 @@ fail:
 
     bool VMWareInterface::ifStatus() const
     {
-        /* How to implement it?! */
+        // Implementation is blocked by SF bug 35613
 
         return false;
     }
 
     void VMWareInterface::enable(bool st)
     {
-        /* How to implement it?! */
+        // Implementation is blocked by SF bug 35613
+
+        UNUSED(st);
     }
 
     uint64 VMWareInterface::mtu() const
@@ -1480,11 +1465,11 @@ fail:
 
     void VMWareInterface::mtu(uint64 u)
     {
-        /*
-         * This should not be implemented - MTU
-         * is set for vSwitch as a whole, change is
-         * propagated to its uplinks automatically.
-         */
+        // This should not be implemented - MTU
+        // is set for vSwitch as a whole, change is
+        // propagated to its uplinks automatically.
+
+        UNUSED(u);
 
         return;
     }
@@ -1499,15 +1484,43 @@ fail:
 
     MACAddress VMWareInterface::currentMAC() const
     {
+        int fd = 0;
+        struct ifreq req;
+        unsigned char *mac_address;
+
         if (boundPort == NULL)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
-        return boundPort->permanentMAC();
+        fd = open(((VMWarePort *)boundPort)->dev_file.c_str(), O_RDWR);
+        if (fd < 0)
+            return MACAddress(0, 0, 0, 0, 0, 0);
+
+        memset(&req, 0, sizeof(req));
+        strncpy(req.ifr_name,
+                ((VMWarePort *)boundPort)->dev_name.c_str(),
+                sizeof(req.ifr_name));
+
+        if (ioctl(fd, SIOCGIFHWADDR, &req) != 0)
+        {
+            close(fd);
+            return MACAddress(0, 0, 0, 0, 0, 0);
+        }
+        close(fd);
+
+        mac_address = (unsigned char *)req.ifr_hwaddr.sa_data;
+        return MACAddress(mac_address[0],
+                          mac_address[1],
+                          mac_address[2],
+                          mac_address[3],
+                          mac_address[4],
+                          mac_address[5]);
     }
 
     void VMWareInterface::currentMAC(const MACAddress& mac)
     {
-        /* How to implement it?! */
+        // See SF bug 35613
+
+        UNUSED(mac);
     }
 
     class VMWareNICFirmware : public NICFirmware {
@@ -1529,10 +1542,9 @@ fail:
 
     class VMWareBootROM : public BootROM {
         const NIC *owner;
-        VersionInfo vers;
     public:
-        VMWareBootROM(const NIC *o, const VersionInfo &v) :
-            owner(o), vers(v) {}
+        VMWareBootROM(const NIC *o) :
+            owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *file_name)
@@ -1555,6 +1567,8 @@ fail:
             Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
         virtual Result syncTest() 
         {
+            // ETHTOOL_TEST is not available on ESXi -
+            // see bug 35580
             testPassed = Passed;
             log().logStatus("passed");
             return Passed;
@@ -1579,26 +1593,25 @@ fail:
 
     public:
 
-        int portNum;
-        VMWarePort **ports;
-        VMWareInterface **intfs;
+        vector<VMWarePort> ports;
+        vector<VMWareInterface> intfs;
 
     protected:
         virtual void setupPorts()
         {
             int i = 0;
 
-            for (i = 0; i < portNum; i++)
-                ports[i]->initialize();
+            for (i = 0; i < (int)ports.size(); i++)
+                ports[i].initialize();
         }
         virtual void setupInterfaces()
         {
             int i = 0;
 
-            for (i = 0; i < portNum; i++)
+            for (i = 0; i < (int)ports.size(); i++)
             {
-                intfs[i]->initialize();
-                intfs[i]->bindToPort(ports[i]);
+                intfs[i].initialize();
+                intfs[i].bindToPort(&ports[i]);
             }
         }
         virtual void setupFirmware()
@@ -1615,69 +1628,23 @@ fail:
         VMWareNIC(unsigned idx, NICDescr &descr) :
             NIC(idx),
             nicFw(this),
-            rom(this, VersionInfo("2.3.4")),
+            rom(this),
             diag(this), pci_domain(descr.pci_domain),
-            pci_bus(descr.pci_bus), pci_device(descr.pci_device),
-            portNum(0)
+            pci_bus(descr.pci_bus), pci_device(descr.pci_device)
         {
             int i = 0;
 
-            ports = (VMWarePort **)calloc(descr.ports_count,
-                                          sizeof(VMWarePort *));
-            if (ports == NULL)
-                return;
-
-            intfs = (VMWareInterface **)calloc(descr.ports_count,
-                                            sizeof(VMWareInterface *));
-            if (intfs == NULL)
+            for (i = 0; i < (int)descr.ports.size(); i++)
             {
-                free(ports);
-                return;
+                ports.push_back(VMWarePort(this, i, descr.ports[i]));
+                intfs.push_back(VMWareInterface(this, i));
             }
-
-            for (i = 0; i < descr.ports_count; i++)
-            {
-                ports[i] = new VMWarePort(this, i, descr.ports[i]);
-                if (ports[i] == NULL)
-                    break;
-                intfs[i] = new VMWareInterface(this, i);
-                if (intfs[i] == NULL)
-                    break;
-            }
-
-            if (i < descr.ports_count)
-            {
-                int j;
-
-                for (j = 0; j <= i; j++)
-                {
-                    free(ports[j]);
-                    free(intfs[j]);
-                }
-
-                free(ports);
-                free(intfs);
-
-                return;
-            }
-
-            portNum = descr.ports_count;
-        }
-
-        ~VMWareNIC()
-        {
-            int i;
-
-            for (i = 0; i < portNum; i++)
-                delete ports[i];
-
-            free(ports);
         }
 
         virtual VitalProductData vitalProductData() const;
         Connector connector() const;
 
-        uint64 supportedMTU() const { return 9000; }
+        uint64 supportedMTU() const { return EFX_MAX_MTU; }
 
         virtual bool forAllFw(ElementEnumerator& en)
         {
@@ -1696,8 +1663,8 @@ fail:
         {
             int i = 0;
 
-            for (i = 0; i < portNum; i++)
-                if (!en.process(*(ports[i])))
+            for (i = 0; i < (int)ports.size(); i++)
+                if (!en.process(ports[i]))
                     return false;
 
             return true;
@@ -1707,8 +1674,8 @@ fail:
         {
             int i = 0;
 
-            for (i = 0; i < portNum; i++)
-                if (!en.process(*(ports[i])))
+            for (i = 0; i < (int)ports.size(); i++)
+                if (!en.process(ports[i]))
                     return false;
 
             return true;
@@ -1718,8 +1685,8 @@ fail:
         {
             int i = 0;
 
-            for (i = 0; i < portNum; i++)
-                if (!en.process(*(intfs[i])))
+            for (i = 0; i < (int)ports.size(); i++)
+                if (!en.process(intfs[i]))
                     return false;
 
             return true;
@@ -1729,8 +1696,8 @@ fail:
         {
             int i = 0;
 
-            for (i = 0; i < portNum; i++)
-                if (!en.process(*(intfs[i])))
+            for (i = 0; i < (int)ports.size(); i++)
+                if (!en.process(intfs[i]))
                     return false;
 
             return true;
@@ -1751,23 +1718,20 @@ fail:
 
     VitalProductData VMWareNIC::vitalProductData() const 
     {
-        if (portNum <= 0)
+        if (ports.size() <= 0)
             return VitalProductData("", "", "", "", "", "");
         else
         {
-            char    *p_name;
-            char    *pn;
-            char    *sn;
+            string   p_name;
+            string   pn;
+            string   sn;
 
-            if (getVPD(ports[0]->dev_name.c_str(), 0,
-                       &p_name, &pn, &sn) < 0)
+            if (getVPD(ports[0].dev_name.c_str(), 0,
+                       p_name, pn, sn) < 0)
                 return VitalProductData("", "", "", "", "", "");
 
-            VitalProductData vpd(sn, "", sn, pn, p_name, pn /* ??? */);
-
-            free(p_name);
-            free(pn);
-            free(sn);
+            VitalProductData vpd(sn.c_str(), "", sn.c_str(), pn.c_str(),
+                                 p_name.c_str(), pn.c_str());
 
             return vpd;
         }
@@ -1798,14 +1762,14 @@ fail:
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
 
-    /**
-     * Get data via TFTP protocol.
-     *
-     * @param uri         Data URI
-     * @param f           File to write loaded data
-     *
-     * @return 0 on success, < 0 on failure
-     */
+    ///
+    /// Get data via TFTP protocol.
+    ///
+    /// @param uri         Data URI
+    /// @param f           File to write loaded data
+    ///
+    /// @return 0 on success, < 0 on failure
+    ///
     static int tftp_get_file(const char *uri, FILE *f)
     {
         CURL           *curl;
@@ -1816,24 +1780,24 @@ fail:
 
         curl = curl_easy_init();
         if (curl == NULL)
-            return -2;
+            return -1;
 
         if (curl_easy_setopt(curl, CURLOPT_URL, uri) != CURLE_OK)
         {
-            rc = -3;
+            rc = -1;
             goto curl_fail;
         }
         if (curl_easy_setopt(curl, CURLOPT_WRITEDATA,
                              f) != CURLE_OK)
         {
-            rc = -5;
+            rc = -1;
             goto curl_fail;
         }
 
         CURLcode rc_curl;
         if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
         {
-            rc = -6;
+            rc = -1;
             goto curl_fail;
         }
 
@@ -1842,81 +1806,83 @@ curl_fail:
         return rc;
     }
 
-    /**
-     * Install firmware on a NIC from given image.
-     *
-     * @param owner       NIC class pointer
-     * @param fileName    From where to get firmware image
-     *
-     * @return 0 on success, < 0 on failure
-     */
+    ///
+    /// Install firmware on a NIC from given image.
+    ///
+    /// @param owner       NIC class pointer
+    /// @param fileName    From where to get firmware image
+    ///
+    /// @return 0 on success, < 0 on failure
+    ///
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName)
     {
+#define FILE_PROTO "file://"
+#define TFTP_PROTO "tftp://"
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
         char  tmp_file[] = "/tmp/sf_firmware_XXXXXX";
         int   tmp_file_used = 0;
 
-        if (((VMWareNIC *)owner)->portNum <= 0)
+        if (((VMWareNIC *)owner)->ports.size() <= 0)
             return -1;
 
-        if (strcmp_start(fileName, "file://") == 0)
+        if (strcmp_start(fileName, FILE_PROTO) == 0)
         {
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
-                          ((VMWareNIC *)owner)->ports[0]->dev_name.c_str(),
-                          fileName + strlen("file://"));
+                          ((VMWareNIC *)owner)->ports[0].dev_name.c_str(),
+                          fileName + strlen(FILE_PROTO));
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
-                return -2;
+                return -1;
             }
         }
-        else if (strcmp_start(fileName, "tftp://") == 0)
+        else if (strcmp_start(fileName, TFTP_PROTO) == 0)
         {
             FILE *f;
 
             fd = mkstemp(tmp_file);
             if (fd < 0)
-                return -3;
+                return -1;
 
             f = fdopen(fd, "w");
             if (f == NULL)
             {
                 close(fd);
-                return -4;
+                return -1;
             }
 
             rc = tftp_get_file(fileName, f);
             if (rc != 0)
             {
                 fclose(f);
-                return -5;
+                return -1;
             }
             fclose(f);
 
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
-                          ((VMWareNIC *)owner)->ports[0]->dev_name.c_str(),
+                          ((VMWareNIC *)owner)->ports[0].dev_name.c_str(),
                           tmp_file);
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
                 unlink(tmp_file);
-                return -6;
+                return -1;
             }
 
             tmp_file_used = 1;
         }
-        else /* SFTP to be implemented */
-            return -7;
+        else // SFTP to be implemented
+            return -1;
 
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
         {
             if (tmp_file_used)
                 unlink(tmp_file);
-            return -8;
+            return -1;
         }
 
         close(fd);
@@ -1924,16 +1890,17 @@ curl_fail:
             unlink(tmp_file);
 
         return 0;
+#undef FILE_PROTO
+#undef TFTP_PROTO
     }
 
     class VMWareDriver : public Driver {
         const Package *owner;
-        VersionInfo vers;
         static const String drvName;
     public:
-        VMWareDriver(const Package *pkg, const String& d, const String& sn, 
-                     const VersionInfo& v) :
-            Driver(d, sn), owner(pkg), vers(v) {}
+        VMWareDriver(const Package *pkg, const String& d,
+                     const String& sn) :
+            Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
         virtual bool syncInstall(const char *) { return false; }
@@ -1952,7 +1919,7 @@ curl_fail:
 
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         for (device = readdir(device_dir);
              device != NULL;
@@ -1992,10 +1959,10 @@ curl_fail:
 
         closedir(device_dir);
 
-        /*
-         * We failed to get it via ethtool - we try to get it
-         * from VMWare root/cimv2 standard objects.
-         */
+        // We failed to get it via ethtool (possible reason: no
+        // Solarflare interfaces are presented) - we try to get it
+        // from VMWare root/cimv2 standard objects.
+
         Ref<CIM_SoftwareIdentity> cimModel =
                                       CIM_SoftwareIdentity::create();
         Ref<Instance>             cimInstance;
@@ -2006,7 +1973,7 @@ curl_fail:
 
         if (cimple::cimom::enum_instances(CIMHelper::baseNS,
                                           cimModel.ptr(), ie) != 0)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
         {
@@ -2020,7 +1987,7 @@ curl_fail:
         }
 
         if (!cimSoftId)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         return VersionInfo(cimSoftId->VersionString.value.c_str());
     }
@@ -2049,7 +2016,7 @@ curl_fail:
     public:
         VMWareKernelPackage() :
             Package("NET Driver RPM", "sfc"),
-            kernelDriver(this, "NET Driver", "sfc", "3.3") {}
+            kernelDriver(this, "NET Driver", "sfc") {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("3.3"); }
         virtual bool syncInstall(const char *) { return true; }
@@ -2090,37 +2057,24 @@ curl_fail:
 
     /// @brief stub-only System implementation
     class VMWareSystem : public System {
-        VMWareNIC **sf_nics;
-        int sf_nics_count;
-
         VMWareKernelPackage kernelPackage;
         VMWareManagementPackage mgmtPackage;
 
         VMWareSystem()
         {
-            sf_nics = NULL;
-            sf_nics_count = 0;
-
             curl_global_init(CURL_GLOBAL_ALL);
         };
 
         ~VMWareSystem()
         {
-            if (sf_nics != NULL)
-            {
-                int i;
-
-                for (i = 0; i < sf_nics_count; i++)
-                    delete sf_nics[i];
-                free(sf_nics);
-                sf_nics_count = 0;
-            }
-
             curl_global_cleanup();
         };
 
     protected:
-        void setupNICs();
+        void setupNICs()
+        {
+            // Do nothing
+        };
 
         void setupPackages()
         {
@@ -2136,66 +2090,35 @@ curl_fail:
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
     };
-
-    void VMWareSystem::setupNICs()
-    {
-        NICDescr   *nics;
-        int         count;
-        int         i;
-        int         rc;
-
-        if ((rc = getNICs(&nics, &count)) < 0)
-            return;
-
-        if (count != sf_nics_count)
-        {
-            for (i = 0; i < sf_nics_count; i++)
-                delete sf_nics[i];
-            free(sf_nics);
-            sf_nics_count = 0;
-
-            sf_nics = (VMWareNIC **)calloc(count, sizeof(*sf_nics));
-            if (sf_nics == NULL)
-            {
-                freeNICs(nics, count);
-                return;
-            }
-
-            for (i = 0; i < count; i++)
-            {
-                sf_nics[i] = new VMWareNIC(i, nics[i]);
-                sf_nics[i]->initialize();
-            }
-
-            sf_nics_count = count;
-            freeNICs(nics, count);
-        }
-        else
-            freeNICs(nics, count);
-    }
-
+    
     bool VMWareSystem::forAllNICs(ConstElementEnumerator& en) const
     {
+        NICDescrs   nics;
         int         i;
         bool        res;
-        bool        ret;
+        bool        ret = true;
+        int         rc;
 
-        for (i = 0; i < sf_nics_count; i++)
+        if ((rc = getNICs(nics)) < 0)
+            return false;
+
+        for (i = 0; i < (int)nics.size(); i++)
         {
-            res = en.process(*(sf_nics[i]));
+            VMWareNIC  nic(i, nics[i]);
+
+            nic.initialize();
+            res = en.process(nic);
             ret = ret && res;
         }
 
-        return true;
+        return ret;
     }
 
     bool VMWareSystem::forAllNICs(ElementEnumerator& en)
     {
-        setupNICs();
-
-        return forAllNICs((ConstElementEnumerator&) en);
+        return forAllNICs((ConstElementEnumerator&) en); 
     }
-    
+
     bool VMWareSystem::forAllPackages(ConstElementEnumerator& en) const
     {
         if (!en.process(kernelPackage))
@@ -2218,15 +2141,15 @@ curl_fail:
     {
         struct ethtool_drvinfo edata;
 
-        if (((VMWareNIC *)owner)->portNum <= 0)
-            return VersionInfo("");
+        if (((VMWareNIC *)owner)->ports.size() <= 0)
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         if (vmwareEthtoolCmd(((VMWareNIC *)owner)->
-                                        ports[0]->dev_file.c_str(),
+                                        ports[0].dev_file.c_str(),
                              ((VMWareNIC *)owner)->
-                                        ports[0]->dev_name.c_str(),
+                                        ports[0].dev_name.c_str(),
                              ETHTOOL_GDRVINFO, &edata) < 0)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         return VersionInfo(edata.fw_version);
     }
@@ -2242,19 +2165,19 @@ curl_fail:
         FILE *f = NULL;
 
         rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s",
-                      ((VMWareNIC *)owner)->ports[0]->dev_name.c_str());
+                      ((VMWareNIC *)owner)->ports[0].dev_name.c_str());
         if (rc < 0 || rc >= CMD_MAX_LEN)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         f = fdopen(fd, "r");
         if (f == NULL)
         {
             close(fd);
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
         }
 
         while (1)
@@ -2281,6 +2204,6 @@ curl_fail:
         if (version != NULL)
             return VersionInfo(version);
         else
-            return VersionInfo("");
+            return VersionInfo(DEFAULT_VERSION_STR);
     }
 }
