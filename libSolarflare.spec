@@ -14,7 +14,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %description
 
-Prefix: /opt/solarflare/lib
+Prefix: /opt/ibm/icc/lib
 Prefix: /opt/solarflare/bin
 Prefix: /opt/solarflare/mof
 
@@ -31,6 +31,16 @@ rm -rf $RPM_BUILD_ROOT
 make PRESET=ibm DESTDIR=$RPM_BUILD_ROOT install
 make PRESET=ibm DESTDIR=$RPM_BUILD_ROOT install-aux
 
+%post
+/opt/solarflare/bin/regmod -n root/solarflare -c /opt/ibm/icc/lib/libSolarflare.so
+/opt/solarflare/bin/regmod -n root/pg_interop -c /opt/ibm/icc/lib/libSolarflare.so \
+SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
+
+%preun
+/opt/solarflare/bin/regmod -n root/pg_interop -u -c -i /opt/ibm/icc/lib/libSolarflare.so \
+SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
+/opt/solarflare/bin/regmod -n root/solarflare -u -c -i /opt/ibm/icc/lib/libSolarflare.so
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -38,7 +48,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 /opt/solarflare/bin/regmod
-/opt/solarflare/lib/libSolarflare.so
+/opt/ibm/icc/lib/libSolarflare.so
 /opt/solarflare/mof/repository.mof
 %doc
 
