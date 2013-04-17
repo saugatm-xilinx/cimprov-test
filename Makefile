@@ -84,5 +84,6 @@ ifneq ($(PROVIDER_ROOT),)
 install-aux : $(libcimobjects_DIR)/repository.mof regmod
 	cp regmod $(DESTDIR)$(PROVIDER_ROOT)/bin
 	cp $(libcimobjects_DIR)/repository.mof $(DESTDIR)$(PROVIDER_ROOT)/mof
+endif
 
 include mk/rules.mk
