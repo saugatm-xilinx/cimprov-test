@@ -1142,7 +1142,7 @@ namespace solarflare
     bool LinuxSystem::is64bit() const
     {
         long wordBits = sysconf(_SC_LONG_BIT);
-        
+
         if (wordBits == -1)
         {
             LINUX_LOG_ERR("Failed to determine OS bitness");
@@ -1200,6 +1200,7 @@ namespace solarflare
             char       *port_path[2] = {0, };
             char       *iface_path[2] = {0, };
             int         i;
+            bool        no_ifaces = false;
 
             struct dirent *iface;
 
@@ -1231,7 +1232,10 @@ namespace solarflare
                 sprintf(buf, "%s/net", port_path[i]);
                 net_dir = opendir(buf);
                 if (net_dir == NULL)
+                {
+                    no_ifaces = true;
                     break;
+                }
                 for (iface = readdir(net_dir); iface != NULL;
                      iface = readdir(net_dir))
                 {
@@ -1246,13 +1250,16 @@ namespace solarflare
                 closedir(net_dir);
             }
 
-            LinuxNIC nic = LinuxNIC(NICNum, port_path[0], pnum,
+            if (!no_ifaces)
+            {
+                LinuxNIC nic = LinuxNIC(NICNum, port_path[0], pnum,
                                     iface_path[0],
                                     iface_path[1] ? iface_path[1] : "");
-            nic.initialize();
-            res = en.process(nic);
-            ret = ret && res;
-            NICNum++;
+                nic.initialize();
+                res = en.process(nic);
+                ret = ret && res;
+                NICNum++;
+            }
 
             for (i = 0; i < 2; i++)
             {
