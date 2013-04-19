@@ -36,28 +36,35 @@ namespace solarflare
             Diagnostic *owner;
         protected:
             virtual bool threadProc();
+            virtual Thread *dup() const;
             virtual void terminate()
             {
                 owner->stop();
             };
         public:
-            DiagnosticThread(Diagnostic *own) : owner(own) {};
+            Logger resultLog;
+            DiagnosticThread(Diagnostic *own) :
+                owner(own),
+                resultLog(LogInfo, maxRecordedEvents, "Result Log") {}
+            DiagnosticThread(Diagnostic *own, String sid) :
+                Thread(sid), owner(own),
+                resultLog(LogInfo, maxRecordedEvents, "Result Log") {}
             virtual unsigned percentage() const;
+            virtual void update(Thread *tempThread);
+            virtual String getThreadID() const;
         };
         /// Diagnostic thread object
         DiagnosticThread diagThread;
 
         /// Number of failure events stored
         static const unsigned maxRecordedEvents;
-        /// Test result log
-        Logger resultLog;
+
     public:
         /// Constructor
         ///
         /// @param d    Description
-        Diagnostic(const String& d) : 
-            SystemElement(d), diagThread(this),
-            resultLog(LogInfo, maxRecordedEvents, "Result Log")
+        Diagnostic(const String& d) :
+            SystemElement(d), diagThread(this)
         {}
 
         /// Runs the diagnostic either synchronously or not
@@ -79,11 +86,11 @@ namespace solarflare
         virtual unsigned percentage() const { return 0; }
         /// Attempt to stop hardware testing
         virtual void stop() {};
-        
+
         /// @return Result of the latest diagnostic run
         virtual Result result() const = 0;
         /// Thread object to control over asynchronous tests
-        Thread *asyncThread() { return &diagThread; }
+        Thread *asyncThread() { return diagThread.findUpdate(); }
         /// @return an associated software element or NULL
         virtual const SWElement *diagnosticTool() const { return NULL; }
 
@@ -96,7 +103,7 @@ namespace solarflare
         virtual bool isDestructive() const { return false; }
         /// @return true iff only one instance of test may be run on a device
         virtual bool isExclusive() const { return isDestructive(); }
-            
+
         /// Diagnostic varieties
         enum TestKind {
             FunctionalTest, //< functional
@@ -108,9 +115,19 @@ namespace solarflare
         virtual TestKind testKind() const { return FunctionalTest; }
 
         /// @return associated result logger
-        Logger& log() { return resultLog; }
+        Logger& log()
+        {
+            return static_cast<DiagnosticThread *>(asyncThread())->resultLog;
+        }
         /// @return associated success logger (immutable)
-        const Logger& log() const  { return resultLog; }
+        const Logger& log() const
+        { 
+            DiagnosticThread *thr = static_cast<DiagnosticThread *>(diagThread.find());
+            if (thr == NULL)
+                return diagThread.resultLog;
+            else
+                return thr->resultLog;
+        }
 
         virtual Thread *embeddedThread() { return asyncThread(); }
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;

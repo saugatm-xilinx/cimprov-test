@@ -83,10 +83,14 @@ namespace solarflare
             SWElement *owner;
             String filename;
         protected:
+            virtual Thread *dup() const;
             virtual bool threadProc();
         public:
-            InstallThread(SWElement *own) : 
-                owner(own) {}
+            virtual String getThreadID() const;
+            virtual void update(Thread *tempThr);
+            InstallThread(SWElement *own) : owner(own) {}
+            InstallThread(SWElement *own, String sid) :
+                Thread(sid), owner(own) {}
             void setFilename(const char *f)
             {
                 filename = f;
@@ -185,7 +189,7 @@ namespace solarflare
         /// is deleted
         ///
         /// @return Thread or (NULL or inactive Thread object)
-        Thread *installThread() { return &installer; }
+        Thread *installThread() { return installer.findUpdate(); }
         virtual Thread *embeddedThread() { return installThread(); }
     };
 

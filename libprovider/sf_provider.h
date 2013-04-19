@@ -280,6 +280,13 @@ namespace solarflare
         }
     };
 
+    class AsyncRunner : public Action {
+    protected:
+        virtual void handler(SystemElement& se, unsigned);
+    public:
+        AsyncRunner(const cimple::Instance *inst) : Action(inst) {}
+    };
+
     class ObjectCount : public ConstElementEnumerator
     {
         unsigned cnt;

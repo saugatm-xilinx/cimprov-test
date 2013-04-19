@@ -4,16 +4,33 @@
 #include <unistd.h>
 #endif
 
-namespace solarflare 
+namespace solarflare
 {
     const unsigned Diagnostic::maxRecordedEvents = 128;
+
+    String Diagnostic::DiagnosticThread::getThreadID() const
+    {
+        String tid = CIMHelper::instanceID(owner->name());
+        tid.append(":diagThread");
+        return tid;
+    }
+
+    void Diagnostic::DiagnosticThread::update(Thread *tempThr)
+    {
+        owner = static_cast<DiagnosticThread *>(tempThr)->owner;
+    }
+
+    Thread *Diagnostic::DiagnosticThread::dup() const
+    {
+        return new DiagnosticThread(owner, id);
+    }
 
     bool Diagnostic::DiagnosticThread::threadProc()
     {
         bool ok;
         onJobCreated.notify(*owner);
         onJobStarted.notify(*owner);
-        ok = owner->syncTest();
+        ok = owner->syncTest() == Passed ? true : false;
         if (ok)
             onJobSuccess.notify(*owner);
         else

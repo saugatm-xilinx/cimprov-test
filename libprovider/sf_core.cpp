@@ -1,15 +1,35 @@
+#include "sf_core.h"
 #include "sf_platform.h"
+#include "sf_provider.h"
 
 #if defined(linux)
 #include <unistd.h>
 #endif
 
-namespace solarflare 
+namespace solarflare
 {
+    Thread *SWElement::InstallThread::dup() const
+    {
+        return new InstallThread(owner, id);
+    }
+
+    String SWElement::InstallThread::getThreadID() const
+    {
+        String tid = CIMHelper::instanceID(owner->name());
+        tid.append(":installThread");
+        return tid;
+    }
+
     bool SWElement::InstallThread::threadProc()
     {
         return owner->syncInstall(filename.c_str());
     }
+
+    void SWElement::InstallThread::update(Thread *tempThr)
+    {
+        owner = static_cast<InstallThread *>(tempThr)->owner;
+    }
+
 
     bool SWElement::install(const char *filename, bool sync)
     {
