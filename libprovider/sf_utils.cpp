@@ -9,7 +9,7 @@ namespace solarflare
     const unsigned VersionInfo::unknown = unsigned(-1);
 
     VersionInfo::VersionInfo(const char *s) :
-        vmajor(0), vminor(0), revisionNo(unknown), buildNo(unknown)
+        vmajor(0), vminor(0), revisionNo(0), buildNo(0)
     {
         char *s0 = const_cast<char *>(s);
         vmajor = strtoul(s0, &s0, 10);
