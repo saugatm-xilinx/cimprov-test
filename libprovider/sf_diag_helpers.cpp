@@ -422,7 +422,7 @@ namespace solarflare
         le->RecordFormat.set("");
         le->RecordData.set(entry.message());
         le->CreationTimeStamp.set(entry.stamp());
-        le->ServiceName.set(diag.name());
+        le->ServiceName.set(instanceID(diag.name()));
         le->ManagedElementName.set(diag.nic()->name());
         le->ExpirationDate.set(Datetime::now());
         le->RecordType.null = false;
