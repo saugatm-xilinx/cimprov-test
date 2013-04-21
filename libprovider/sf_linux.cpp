@@ -309,7 +309,7 @@ namespace solarflare
 
     bool LinuxPort::autoneg() const
     {
-         struct ethtool_cmd edata;
+        struct ethtool_cmd edata;
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
@@ -324,7 +324,7 @@ namespace solarflare
 
     void LinuxPort::autoneg(bool an)
     {
-         struct ethtool_cmd edata;
+        struct ethtool_cmd edata;
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
@@ -457,11 +457,14 @@ namespace solarflare
 
     String LinuxInterface::ifName() const
     {
-        char *basec = strdup(sysfsPath.c_str());
-        char *bname = basename(basec);
+        String  res;
+        char   *basec = strdup(sysfsPath.c_str());
+        char   *bname = basename(basec);
 
+        res.append(bname);
         free(basec);
-        return bname;
+
+        return res;
     }
 
     MACAddress LinuxInterface::currentMAC() const
@@ -513,6 +516,7 @@ namespace solarflare
     {
         struct ethtool_drvinfo edata;
 
+        memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GDRVINFO, &edata) < 0)
             return VersionInfo("");
@@ -545,7 +549,8 @@ namespace solarflare
         int          fd;
         int          i;
         const char   prefix[] = BOOT_ROM_VERSION_PREFIX;
-        const char  *ifname = boundIface->ifName().c_str();
+
+        String  ifname = boundIface->ifName();
 
         mtd_list = fopen("/proc/mtd", "r");
         if (!mtd_list)
@@ -564,7 +569,7 @@ namespace solarflare
                 break;
 
             *p++ = 0;
-            if (!strstr(p, ifname) ||
+            if (!strstr(p, ifname.c_str()) ||
                 !strstr(p, "sfc_exp_rom"))
                 continue;
 
@@ -604,7 +609,7 @@ namespace solarflare
         {
             if (memcmp(&buf[offset], prefix, sizeof(prefix) - 1) == 0)
             {
-                offset += sizeof (prefix) - 1;
+                offset += sizeof(prefix) - 1;
                 break;
             }
             offset++;
@@ -654,6 +659,7 @@ namespace solarflare
         struct ethtool_drvinfo  drv_data;
         struct ethtool_test    *test_data;
 
+        memset(&drv_data, 0, sizeof(drv_data));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GDRVINFO, &drv_data) < 0)
             return NotKnown;
@@ -662,7 +668,7 @@ namespace solarflare
                            drv_data.testinfo_len * sizeof(*test_data->data));
         if (!test_data)
             return NotKnown;
-        
+
         if (!online)
             test_data->flags = ETH_TEST_FL_OFFLINE;
         test_data->len = drv_data.testinfo_len;
@@ -1030,6 +1036,7 @@ namespace solarflare
         {
             struct ethtool_drvinfo edata;
 
+            memset(&edata, 0, sizeof(edata));
             if (linuxEthtoolCmd(iface_name,
                                 ETHTOOL_GDRVINFO, &edata) < 0)
             {
