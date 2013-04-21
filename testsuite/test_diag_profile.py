@@ -24,7 +24,7 @@ SPEC_CLASSES_LIST = [
          'ElapsedTime',
          'PercentComplete',
          #'ErrorDescription',
-         'RequestedState'
+         #'RequestedState' # see OL 7619
         ],
         [],
         0
@@ -78,7 +78,9 @@ SPEC_CLASSES_LIST = [
          'Characteristics',
          #'OtherCharacteristicsDescriptions'
         ],
-        [['CIM_ElementSoftwareIdentity', 'CIM_SoftwareIdentity', 1]],
+        [],
+        # [['CIM_ElementSoftwareIdentity', 'CIM_SoftwareIdentity', 1]],
+        ## we don't have separate diagnostic tool, so no association
         0
     ],
     ['CIM_ElementSoftwareIdentity',
