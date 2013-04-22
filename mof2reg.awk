@@ -10,10 +10,13 @@ $1 == "class" && IMPLEMENTED[$2] {
     print "[" $2 "]"
     print "\tprovider:", $2 "_Provider"
     print "\tlocation:", PRODUCTNAME
-    printf "\ttype: instance method";
-    if (association) printf " association";
-    if (indication) printf " indication";
-    printf "\n"
+    if (indication) printf "\ttype: indication\n";
+    else
+    {
+        printf "\ttype: instance method";
+        if (association) printf " association";
+        printf "\n"
+    }
     print "\tgroup:", tolower(PRODUCTNAME)
     print "\tunload: never"
     print "\tnamespace:", NAMESPACE
