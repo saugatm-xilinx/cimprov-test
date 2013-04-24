@@ -38,7 +38,9 @@ Enum_Instances_Status SF_UseOfLog_Provider::enum_instances(
     const SF_UseOfLog* model,
     Enum_Instances_Handler<SF_UseOfLog>* handler)
 {
+#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_UseOfLog>::allObjects(handler);
+#endif
     return ENUM_INSTANCES_OK;
 }
 
