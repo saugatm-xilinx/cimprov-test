@@ -27,7 +27,7 @@ override top_CPPFLAGS += -D_GNU_SOURCE -I.
 
 ifneq ($(CIM_SERVER),esxi)
 override top_CXXFLAGS += -fPIC  -pthread
-override top_CXXFLAGS += -Wall -W -Wno-unused -Werror
+override top_CXXFLAGS += -Wall -W -Wno-unused -Werror -Wnon-virtual-dtor
 override top_CXXFLAGS += -g 
 
 ifeq ($(CIMPLE_PLATFORM),LINUX_IX86_GNU)

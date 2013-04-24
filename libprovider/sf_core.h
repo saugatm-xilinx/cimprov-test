@@ -66,12 +66,14 @@ namespace solarflare
     /// @brief Abstract mutable enumerator for SystemObject
     class ElementEnumerator {
     public:
+        virtual ~ElementEnumerator() {}
         virtual bool process(SystemElement& elem) = 0;
     };
 
     /// @brief Abstract immutable enumerator for SystemObject
     class ConstElementEnumerator {
     public:
+        virtual ~ConstElementEnumerator() {}
         virtual bool process(const SystemElement& elem) = 0;
     };
 
@@ -222,6 +224,7 @@ namespace solarflare
     /// firmware)
     class NICElement {
     public:
+        virtual ~NICElement() {}
         virtual const NIC *nic() const = 0;
     };
 
@@ -262,6 +265,7 @@ namespace solarflare
     /// Package and System)
     class SoftwareContainer {
     public:
+        virtual ~SoftwareContainer() {}
         virtual bool forAllSoftware(ElementEnumerator& en) = 0;
         virtual bool forAllSoftware(ConstElementEnumerator& en) const = 0;
     };
@@ -269,6 +273,7 @@ namespace solarflare
     /// @brief An abstract mix-in for port containing elements (NIC, System)
     class PortContainer {
     public:
+        virtual ~PortContainer() {}
         virtual bool forAllPorts(ElementEnumerator& en) = 0;
         virtual bool forAllPorts(ConstElementEnumerator& en) const = 0;
     };
@@ -276,6 +281,7 @@ namespace solarflare
     /// @brief An abstract mix-in for port containing elements (NIC, System)
     class InterfaceContainer {
     public:
+        virtual ~InterfaceContainer() {}
         virtual bool forAllInterfaces(ElementEnumerator& en) = 0;
         virtual bool forAllInterfaces(ConstElementEnumerator& en) const = 0;
     };
@@ -283,6 +289,7 @@ namespace solarflare
     /// @brief An abstract mix-in for diagnostic containing elements (NIC, System)
     class DiagnosticContainer {
     public:
+        virtual ~DiagnosticContainer() {}
         virtual bool forAllDiagnostics(ElementEnumerator& en) = 0;
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const = 0;
     };

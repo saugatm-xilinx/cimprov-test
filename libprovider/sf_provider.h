@@ -28,6 +28,7 @@ namespace solarflare
     class CIMHelper {
         static cimple::Ref<cimple::CIM_ComputerSystem> cimSystem;
     public:
+        virtual ~CIMHelper() {}
         virtual unsigned nObjects(const SystemElement&) const { return 1; }
         /// @return A CIM instance matching @p obj
         virtual cimple::Instance *instance(const SystemElement&,
