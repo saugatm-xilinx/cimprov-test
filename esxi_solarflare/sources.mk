@@ -26,6 +26,7 @@ endif
 esxi_archive_SOURCES = $(esxi_archive_GENERATED) \
 					   esxi_bootstrap.sh \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
+					   $(ESXI_PROJECT_NAME)/solarflare.wsman \
 					   oem/descriptor-urls.xml	\
 					   oem/oem.mk \
 					   oem/solarflare-build.sh \
