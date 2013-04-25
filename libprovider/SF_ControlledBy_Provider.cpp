@@ -37,7 +37,9 @@ Enum_Instances_Status SF_ControlledBy_Provider::enum_instances(
     const SF_ControlledBy* model,
     Enum_Instances_Handler<SF_ControlledBy>* handler)
 {
+#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_ControlledBy>::allInterfaces(handler);
+#endif
     return ENUM_INSTANCES_OK;
 }
 
