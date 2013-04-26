@@ -1796,14 +1796,16 @@ fail:
     }
 
     ///
-    /// Get data via TFTP protocol.
+    /// Get data via TFTP or SFTP protocol.
     ///
     /// @param uri         Data URI
+    /// @param passwd      Password (NULL if not required)
     /// @param f           File to write loaded data
     ///
     /// @return 0 on success, < 0 on failure
     ///
-    static int tftp_get_file(const char *uri, FILE *f)
+    static int uri_get_file(const char *uri, const char *passwd,
+                            FILE *f)
     {
         CURL           *curl;
         int             rc = 0;
@@ -1825,6 +1827,16 @@ fail:
         {
             rc = -1;
             goto curl_fail;
+        }
+
+        if (passwd != NULL)
+        {
+            if (curl_easy_setopt(curl, CURLOPT_PASSWORD,
+                                 passwd) != CURLE_OK)
+            {
+                rc = -1;
+                goto curl_fail;
+            }
         }
 
         CURLcode rc_curl;
@@ -1852,6 +1864,7 @@ curl_fail:
     {
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
+#define SFTP_PROTO "sftp://"
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
@@ -1872,7 +1885,8 @@ curl_fail:
                 return -1;
             }
         }
-        else if (strcmp_start(fileName, TFTP_PROTO) == 0)
+        else if (strcmp_start(fileName, TFTP_PROTO) == 0 ||
+                 strcmp_start(fileName, SFTP_PROTO) == 0)
         {
             FILE *f;
 
@@ -1887,7 +1901,10 @@ curl_fail:
                 return -1;
             }
 
-            rc = tftp_get_file(fileName, f);
+            if (strcmp_start(fileName, TFTP_PROTO) == 0)
+                rc = uri_get_file(fileName, NULL, f);
+            else // FIXME: password should be obtained properly
+                rc = uri_get_file(fileName, "news@ben", f);
             if (rc != 0)
             {
                 fclose(f);
@@ -1907,7 +1924,7 @@ curl_fail:
 
             tmp_file_used = 1;
         }
-        else // SFTP to be implemented
+        else // Protocol not supported
             return -1;
 
         fd = sfupdatePOpen(cmd);
@@ -1925,6 +1942,7 @@ curl_fail:
         return 0;
 #undef FILE_PROTO
 #undef TFTP_PROTO
+#undef SFTP_PROTO
     }
 
     class VMwareDriver : public Driver {

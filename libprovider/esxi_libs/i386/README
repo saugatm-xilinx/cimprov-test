@@ -5,3 +5,6 @@ libcrypto.so.0.9.8, librt.so.1 and libssl.so.0.9.8 were taken from
 ESXi 5 host.
 
 libcurl.a was built from sources of 7.29.0 version of libcurl.
+
+libssh2.a was build from sources of 1.4.3 version of libssh2,
+obtained from http://www.libssh2.org/download/libssh2-1.4.3.tar.gz .
