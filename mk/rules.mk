@@ -1,4 +1,4 @@
-
+ifeq ($(USE_EXISITING_SCHEMA),)
 $(CIM_SCHEMA_ZIP):
 	$(CURL) $(CIM_SCHEMA_REPOSITORY)/$(CIM_SCHEMA_ZIP) -o $@
 
@@ -9,6 +9,8 @@ ifneq ($(realpath $(CIM_SCHEMA_PATCHDIR)),$(realpath $(CIM_SCHEMA_DIR)))
 	cp $(CIM_SCHEMA_PATCHDIR)/*.mof $(CIM_SCHEMA_DIR)
 endif
 	touch $@
+
+endif
 
 ifeq ($(MAKECMDGOALS),dist)
 PROVIDER_TARBALL_DIR = cimprovider-$(PROVIDER_LIBRARY)-$(PROVIDER_VERSION)
@@ -68,6 +70,6 @@ $(CLEAN_TARGETS) $(EXTRA_CLEAN_TARGETS) : clean-% :
 	-test -n "$($*_OBJS)" && rm $(patsubst %.o,%.d,$($*_OBJS))
 	-test -z "$($*_PERSISTENT_TARGET)" && rm $($*_TARGET)
 	@echo "$(filter esxi_solarflare/solarflare/libcimobjects/%,$(_$*_GENERATED))"
-	-$(foreach f,$(_$*_GENERATED),rm $(f))
+	-$(foreach f,$(_$*_GENERATED),rm $(f);)
 	-$($*_EXTRA_CLEAN)
 

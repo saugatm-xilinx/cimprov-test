@@ -1,3 +1,4 @@
+genclass_PURPOSE = host
 genclass_DIR = cimple/tools/genclass
 genclass_SOURCES = main.cpp
 genclass_TARGET = genclass

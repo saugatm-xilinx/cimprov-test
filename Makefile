@@ -6,6 +6,10 @@ PRESET ?= default
 include presets/$(PRESET).mk
 
 include mk/vars.mk
+ifeq ($(CIM_SERVER),wmi)
+include mk/wmi.mk
+include cimple/posix/sources.mk
+endif
 
 .PHONY: all
 
@@ -19,16 +23,21 @@ else ifeq ($(CIM_SERVER),pegasus)
 include pegasus/sources.mk
 include cimple/pegasus/sources.mk
 
-PEGASUS_TOOLS_DEPS = libtools libcimplepeg 
+PEGASUS_TOOLS_DEPS = libtoolstgt libcimplepeg 
 include cimple/tools/regmod/sources.mk
 include cimple/tools/regview/sources.mk
 include cimple/tools/ciminvoke/sources.mk
 include cimple/tools/cimlisten/sources.mk
+else ifeq ($(CIM_SERVER),wmi)
+# do nothing
 else
 $(error Unknown CIM_SERVER: $(CIM_SERVER))
 endif
 ifeq ($(CIM_INTERFACE),cmpi)
 include cimple/cmpi/sources.mk
+endif
+ifeq ($(CIM_INTERFACE),wmi)
+include cimple/wmi/sources.mk
 endif
 
 include cimple/tools/file2c/sources.mk

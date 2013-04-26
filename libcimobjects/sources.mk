@@ -1,3 +1,4 @@
+libcimobjects_PURPOSE = target
 libcimobjects_TARGET = libcimobjects.a
 libcimobjects_DIR = libcimobjects
 libcimobjects_INCLUDES = $(libcimobjects_DIR)

@@ -1,3 +1,4 @@
+regview_PURPOSE = target
 regview_DIR = cimple/tools/regview
 regview_SOURCES = main.cpp
 regview_TARGET = regview

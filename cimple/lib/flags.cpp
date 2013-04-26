@@ -1,5 +1,5 @@
 #include "flags.h"
-#include "io.h"
+#include "cimpleio.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

@@ -1,0 +1,61 @@
+// The following qualifiers are required for wmi providers
+// 
+// Added for Windows. Reqired to register providers
+Qualifier Dynamic : boolean = false, 
+
+    Scope(class, association, indication);
+
+// Added for Windows.
+Qualifier PropertyContext : string = Null, 
+
+    Scope(property);
+
+// Added for Windows.
+Qualifier Implemented : boolean = false, 
+
+    Scope(method);
+
+Qualifier SupportsUpdate : boolean = false,
+    
+    Scope(class);
+
+Qualifier SupportsCreate : boolean = false,
+    
+    Scope(class);
+
+Qualifier SupportsDelete : boolean = false,
+    
+    Scope(class);
+
+Qualifier CreateBy : string = Null,
+    Scope(class);
+
+Qualifier DeleteBy : string = Null,
+    Scope(class);
+
+Qualifier Privileges : string[],
+    Scope(method, property),
+    Flavor(ToSubclass);
+
+Qualifier Constructor : boolean = false,
+    Scope(method);
+
+Qualifier Destructor : boolean = false,
+    Scope(method);
+
+Qualifier Locale : uint32,
+    Scope(class, association, indication);
+
+Qualifier UUID : string = Null,
+    Scope(class, association, indication);
+
+Qualifier Fixed : boolean = false,
+    Scope(property);
+
+Qualifier Optional : boolean = false,
+    Scope(parameter);
+
+[indication]
+class __ExtrinsicEvent
+{
+};

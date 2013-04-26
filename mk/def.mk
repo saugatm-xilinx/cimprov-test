@@ -5,10 +5,19 @@ BISON=bison
 FLEX=flex
 HG=hg
 
-override top_CPPFLAGS := $(CPPFLAGS)
-override top_CXXFLAGS := $(or $(CXXFLAGS),$(CFLAGS))
-override top_LDFLAGS := $(LDFLAGS)
-override top_LIBRARIES := 
+override host_CXX := $(or $(CXX),$(CC),c++)
+override host_AR := $(or $(AR),ar)
+override host_CPPFLAGS := $(CPPFLAGS)
+override host_CXXFLAGS := $(or $(CXXFLAGS),$(CFLAGS))
+override host_LDFLAGS := $(LDFLAGS)
+override host_LIBRARIES := 
+
+target_CXX = $(host_CXX)
+target_AR = $(host_AR)
+target_CPPFLAGS = $(host_CPPFLAGS)
+target_CXXFLAGS = $(host_CXXFLAGS)
+target_LDFLAGS = $(host_LDFLAGS)
+target_LIBRARIES = $(host_LIBRARIES)
 
 define _augment_vars
 _$(1)_DEP_$(2) = $$(foreach d,$$(_$(1)_DEPENDS),$$($$(d)_PROVIDE_$(2)) )
@@ -21,6 +30,20 @@ $$(error Target not specified for $(1))
 endif
 ifeq ($$($(1)_DIR),)
 $$(error Directory not specified for $(1))
+endif
+
+$(1)_PURPOSE ?= target
+
+ifeq ($$($(1)_PURPOSE),host)
+ifneq ($$(findstring target,$$(foreach d,$$($(1)_DEPENDS),$$($$(d)_PURPOSE))),)
+$$(error Host component $(1) depends on some target components)
+endif
+else ifeq ($$($(1)_PURPOSE),target)
+ifneq ($$(findstring host,$$(foreach d,$$($(1)_DEPENDS),$$($$(d)_PURPOSE))),)
+$$(error Target component $(1) depends on some host components)
+endif
+else
+$$(error Unknown purpose for $(1): $$($(1)_PURPOSE))
 endif
 
 __$(1)_DEPENDS = $$(foreach d,$$($(1)_DEPENDS),$$(_$$(d)_DEPENDS) )
@@ -46,16 +69,20 @@ $(2) += $$($(1)_TARGET)
 
 $$($(1)_OBJS) $$(patsubst %.o,%.d,$$($(1)_OBJS)) : $$(_$(1)_GENERATED)
 
+$$($(1)_TARGET) : override CXX = $$($$($(1)_PURPOSE)_CXX)
+$$($(1)_TARGET) : override AR = $$($$($(1)_PURPOSE)_AR)
+
 $$($(1)_TARGET) : $$(foreach d,$$($(1)_DEPENDS) $$($(1)_BUILD_DEPENDS),$$($$(d)_TARGET)) $$($(1)_OBJS) 
-$$($(1)_TARGET) : override CXXFLAGS = $$(top_CXXFLAGS) $($(1)_CXXFLAGS)
+$$($(1)_TARGET) : override CXXFLAGS = $$($$($(1)_PURPOSE)_CXXFLAGS) $($(1)_CXXFLAGS)
 
 ifneq ($(2),STATIC_LIBRARIES)
-$$($(1)_TARGET) : override LDFLAGS = $$(top_LDFLAGS) $$($(1)_LDFLAGS) $$(_$(1)_DEP_LDFLAGS)
-$$($(1)_TARGET) : override LIBRARIES = $$(filter-out $$(_$(1)_DEP_LIBRARIES),$$($(1)_LIBRARIES)) $$(_$(1)_DEP_LIBRARIES) $$(top_LIBRARIES)
+$$($(1)_TARGET) : override LDFLAGS = $$($$($(1)_PURPOSE)_LDFLAGS) $$($(1)_LDFLAGS) $$(_$(1)_DEP_LDFLAGS)
+$$($(1)_TARGET) : override LIBRARIES = $$(filter-out $$(_$(1)_DEP_LIBRARIES),$$($(1)_LIBRARIES)) $$(_$(1)_DEP_LIBRARIES) $$($$($(1)_PURPOSE)_LIBRARIES)
 endif
 
-$$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : CPPFLAGS = $$(top_CPPFLAGS) $$($(1)_CPPFLAGS) $$(_$(1)_DEP_CPPFLAGS)
-$$($(1)_DIR)/%.o : override CXXFLAGS = $$(top_CXXFLAGS) $($(1)_CXXFLAGS)
+$$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : CPPFLAGS = $$($$($(1)_PURPOSE)_CPPFLAGS) $$($(1)_CPPFLAGS) $$(_$(1)_DEP_CPPFLAGS)
+$$($(1)_DIR)/%.o : override CXXFLAGS = $$($$($(1)_PURPOSE)_CXXFLAGS) $($(1)_CXXFLAGS)
+$$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : override CXX = $$($$($(1)_PURPOSE)_CXX) 
 endif
 
 COMPONENTS += $(1)

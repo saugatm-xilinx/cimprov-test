@@ -74,7 +74,7 @@
 #include "config.h"
 #include "options.h"
 #include "FileSystem.h"
-#include "io.h"
+#include "cimpleio.h"
 #include <errno.h>
 
 #ifdef CIMPLE_WINDOWS_MSVC
@@ -631,7 +631,7 @@ static void _initialize(const char* name)
     char root_path[1024];
     {
         sprintf(root_path, "%s/%s", home, name);
-#ifdef CIMPLE_WINDOWS_MSVC
+#if defined(CIMPLE_WINDOWS_MSVC) 
         _mkdir(root_path);
 #else
         mkdir(root_path, 0777);

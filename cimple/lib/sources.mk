@@ -1,3 +1,4 @@
+libcimple_PURPOSE = target
 libcimple_SOURCES = \
     Atomic.cpp \
     Cond_Queue.cpp \
@@ -60,6 +61,30 @@ libcimple_CPPFLAGS = $(libcimple_PROVIDE_CPPFLAGS) -DCIMPLE_BUILDING_LIBCIMPLE
 
 libcimple_TARGET = libcimple.a
 
+ifeq ($(CIM_SERVER),wmi)
+libcimple_DEPENDS = libcimpleposix
+endif
+
 $(eval $(call component,libcimple,STATIC_LIBRARIES))
 
 CIMPLE_COMPONENTS += libcimple
+
+libcimplehost_PURPOSE = host
+
+libcimplehost_SOURCES = $(libcimple_SOURCES)
+libcimplehost_GENERATED = $(libcimplehost_SOURCES)
+
+libcimplehost_DIR = cimple/libhost
+
+libcimplehost_INCLUDES = $(libcimple_INCLUDES)
+libcimplehost_PROVIDE_CPPFLAGS = -DCIMPLE_DEBUG -DCIMPLE_PLATFORM_$(HOST_CIMPLE_PLATFORM)
+libcimplehost_CPPFLAGS = $(libcimplehost_PROVIDE_CPPFLAGS) -DCIMPLE_BUILDING_LIBCIMPLE
+
+libcimplehost_TARGET = libcimplehost.a
+
+$(eval $(call component,libcimplehost,STATIC_LIBRARIES))
+
+$(libcimplehost_DIR)/%.cpp : $(libcimple_DIR)/%.cpp
+	mkdir -p $(dir $@)
+	cp $< $@
+

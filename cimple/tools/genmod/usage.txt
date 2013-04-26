@@ -14,6 +14,7 @@ OPTIONS:
     -f file -- Read class names from this file (one per line).(Deprecate)
     -F file -- Read class names from this file (one per line). Same as -f
                option.
+    -w      -- generate WMI-specific files (guid.h and register.mof)
     -h      -- print this message.
     -v      -- Verbose output - Displays classes and module name.
 

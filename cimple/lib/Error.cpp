@@ -29,7 +29,7 @@
 #include <cstdio>
 #include <cimple/Strings.h>
 #include "Error.h"
-#include "io.h"
+#include "cimpleio.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

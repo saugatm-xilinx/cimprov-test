@@ -373,11 +373,12 @@ Datetime Datetime::now()
 {
 #ifdef CIMPLE_WINDOWS
     struct posix::timeval tv;
+    struct posix::timezone tz;
 #else
     struct timeval tv;
+    struct timezone tz;
 #endif
 
-    struct timezone tz;
 
     memset(&tv, 0, sizeof(tv));
     memset(&tz, 0, sizeof(tz));

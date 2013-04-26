@@ -32,7 +32,7 @@
 #include "Instance.h"
 #include "flags.h"
 #include "Strings.h"
-#include "io.h"
+#include "cimpleio.h"
 
 CIMPLE_NAMESPACE_BEGIN
 

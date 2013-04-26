@@ -22,24 +22,23 @@ INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToPr
 PROVIDER_LIBRARY=Solarflare
 PROVIDER_VERSION=0.1
 
-
-override top_CPPFLAGS += -D_GNU_SOURCE -I.
-
-ifneq ($(CIM_SERVER),esxi)
-override top_CXXFLAGS += -fPIC  -pthread
-override top_CXXFLAGS += -Wall -W -Wno-unused -Werror
-override top_CXXFLAGS += -g 
-
-ifeq ($(CIMPLE_PLATFORM),LINUX_IX86_GNU)
-override top_CXXFLAGS += -m32
-endif
-
-endif
-override top_CXXFLAGS += -fvisibility=hidden
+override host_CPPFLAGS += -D_GNU_SOURCE -I.
 
 ifneq ($(CIM_SERVER),esxi)
-override top_CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
-override top_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
+override host_CXXFLAGS += -fPIC  -pthread
+override host_CXXFLAGS += -Wall -W -Wno-unused -Werror
+override host_CXXFLAGS += -g 
+
+ifeq ($(HOST_CIMPLE_PLATFORM),LINUX_IX86_GNU)
+override host_CXXFLAGS += -m32
 endif
 
-override top_LIBRARIES += pthread
+endif
+override host_CXXFLAGS += -fvisibility=hidden
+
+ifneq ($(CIM_SERVER),esxi)
+override host_CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
+override host_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
+endif
+
+override host_LIBRARIES += pthread

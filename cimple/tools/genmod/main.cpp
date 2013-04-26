@@ -166,8 +166,6 @@ static void write_proc(FILE* os, const MOF_Class_Decl* cd)
     fprintf(os, "%s", suffix);
 }
 
-#if defined(CIMPLE_WINDOWS)
-
 static void gen_guid(const char* module_name, const cimple::UUID& uuid)
 {
     const char* fn = "guid.h";
@@ -259,8 +257,6 @@ static void gen_register(const char* module_name, const cimple::UUID& uuid)
 
     printf("Created %s\n", fn);
 }
-
-#endif /* defined(CIMPLE_WINDOWS) */
 
 static void gen_module(const char* module_name, int argc, char** argv)
 {
@@ -632,8 +628,9 @@ int main(int argc, char** argv)
     // Check options:
 
     int opt;
+    bool wmi_files = false;
 
-    while ((opt = getopt(argc, argv, "I:M:f:F:hVv")) != -1)
+    while ((opt = getopt(argc, argv, "I:M:f:F:whVv")) != -1)
     {
         switch (opt)
         {
@@ -691,7 +688,10 @@ int main(int argc, char** argv)
                 printf("%s\n", CIMPLE_VERSION_STRING);
                 exit(0);
             }
-
+            
+            case 'w':
+                wmi_files = true;
+                break;
 
             case 'v':
                 verbose = true;
@@ -749,7 +749,7 @@ int main(int argc, char** argv)
 
     // Generate guid.h file.
 
-#if defined(CIMPLE_WINDOWS)
+    if (wmi_files)
     {
         cimple::UUID uuid;
         cimple::create_uuid(uuid);
@@ -757,7 +757,7 @@ int main(int argc, char** argv)
         gen_guid(argv[0], uuid);
         gen_register(argv[0], uuid);
     }
-#endif /* defined(CIMPLE_WINDOWS) */
+
 
     // Generate register.mof.
 

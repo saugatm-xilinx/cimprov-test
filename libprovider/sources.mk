@@ -1,3 +1,4 @@
+libprovider_PURPOSE = target
 libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_AvailableDiagnosticService_Provider.cpp \
 	SF_BundleComponent_Provider.cpp \
@@ -64,6 +65,10 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 
 libprovider_GENERATED = module.cpp
 
+ifeq ($(CIM_INTERFACE),wmi)
+libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/register.mof
+endif
+
 libprovider_DIR = libprovider
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
 libprovider_INCLUDES = $(libprovider_DIR)
@@ -90,16 +95,21 @@ libprovider_INCLUDES += $(CI_INCLUDES)
 endif
 
 $(libprovider_DIR)/module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_ROOTFILE) $(genmod_TARGET)
-	cd $(dir $@); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) -F$(abspath $<) -M$(abspath $(libcimobjects_DIR)/repository.mof)
+	cd $(dir $@); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) \
+									-F$(abspath $<) -M$(abspath $(libcimobjects_DIR)/repository.mof) \
+									$(if $(findstring wmi,$(CIM_INTERFACE)),-w)
 
-
-ifeq ($(CIM_INTERFACE),pegasus)
-$(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_PEGASUS_MODULE
-
-endif
 ifeq ($(CIM_INTERFACE),cmpi)
-$(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_CMPI_MODULE
+CIM_INTERFACE_UPCASE=CMPI
 endif
+ifeq ($(CIM_INTERFACE),pegasus)
+CIM_INTERFACE_UPCASE=PEGASUS
+endif
+ifeq ($(CIM_INTERFACE),wmi)
+CIM_INTERFACE_UPCASE=WMI
+endif
+
+$(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_$(CIM_INTERFACE_UPCASE)_MODULE
 
 libprovider_DEPENDS = libcimobjects
 libprovider_BUILD_DEPENDS = genmod

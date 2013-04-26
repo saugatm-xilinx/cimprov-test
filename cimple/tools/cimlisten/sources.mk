@@ -1,3 +1,4 @@
+cimlisten_PURPOSE = target
 cimlisten_DIR = cimple/tools/cimlisten
 cimlisten_SOURCES = main.cpp
 cimlisten_TARGET = cimlisten

@@ -1,3 +1,4 @@
+libmof_PURPOSE = host
 libmof_GENERATED =  MOF_Yacc.cpp \
     MOF_Lex.cpp \
     REF_Yacc.cpp \

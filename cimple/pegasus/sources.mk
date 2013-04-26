@@ -1,3 +1,4 @@
+libcimplepeg_PURPOSE = target
 libcimplepeg_SOURCES = \
     Pegasus_Adapter.cpp \
     Pegasus_Thread_Context.cpp \

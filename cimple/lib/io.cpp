@@ -26,7 +26,7 @@
 
 #include "config.h"
 #include <cstdarg>
-#include "io.h"
+#include "cimpleio.h"
 #include "String.h"
 
 CIMPLE_NAMESPACE_BEGIN

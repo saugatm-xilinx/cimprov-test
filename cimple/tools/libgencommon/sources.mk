@@ -1,3 +1,4 @@
+libgencommon_PURPOSE = host
 libgencommon_DIR = cimple/tools/libgencommon
 libgencommon_SOURCES = gencommon.cpp
 libgencommon_TARGET = libgencommon.a

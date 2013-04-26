@@ -1,3 +1,4 @@
+libcimplecmpi_PURPOSE = target
 libcimplecmpi_SOURCES = CMPI_Containers.cpp \
     CMPI_Thread_Context.cpp \
     Converter.cpp \

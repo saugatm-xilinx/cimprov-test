@@ -1,3 +1,4 @@
+genprov_PURPOSE = host
 genprov_DIR = cimple/tools/genprov
 genprov_SOURCES = main.cpp
 genprov_TARGET = genprov

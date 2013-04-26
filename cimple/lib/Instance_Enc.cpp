@@ -37,7 +37,7 @@
 #include "Strings.h"
 #include "Enc.h"
 #include "Ref.h"
-#include "io.h"
+#include "cimpleio.h"
 #include "boolean.h"
 #include "integer.h"
 #include "real.h"

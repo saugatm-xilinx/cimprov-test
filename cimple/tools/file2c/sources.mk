@@ -1,3 +1,4 @@
+file2c_PURPOSE = host
 file2c_DIR = cimple/tools/file2c
 file2c_SOURCES = main.cpp
 file2c_TARGET = file2c

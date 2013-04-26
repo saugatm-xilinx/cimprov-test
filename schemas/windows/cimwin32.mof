@@ -1,0 +1,2387 @@
+// Copyright (c) 1997-2001 Microsoft Corporation, All Rights Reserved
+
+//#pragma autorecover
+//#pragma classflags(64)
+//#pragma namespace("\\\\.\\Root")
+
+[Abstract,Locale(1033),UUID("{8502C517-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_ManagedSystemElement
+{
+  [MaxLen(64) : ToSubclass,Read : ToSubclass] string Caption;
+  [Read : ToSubclass] string Description;
+  [MappingStrings{"MIF.DMTF|ComponentID|001.5"} : ToSubclass,Read : ToSubclass] datetime InstallDate;
+  [Read : ToSubclass] string Name;
+  [Read : ToSubclass,MaxLen(10) : ToSubclass,ValueMap{"OK", "Error", "Degraded", "Unknown", "Pred Fail", "Starting", "Stopping", "Service", "Stressed", "NonRecover", "No Contact", "Lost Comm"} : ToSubclass] string Status;
+};
+
+[Abstract,Locale(1033),UUID("{8502C518-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_LogicalElement : CIM_ManagedSystemElement
+{
+};
+
+[Abstract,Locale(1033),UUID("{8502C519-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_SystemResource : CIM_LogicalElement
+{
+};
+
+[Abstract,Locale(1033),UUID("{8502C51A-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_IRQ : CIM_SystemResource
+{
+  [read : ToSubclass,Propagated("CIM_ComputerSystem.CreationClassName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CSCreationClassName;
+  [read : ToSubclass,Propagated("CIM_ComputerSystem.Name") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CSName;
+  [read : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CreationClassName;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|IRQ|001.1"} : ToSubclass,key : ToSubclass DisableOverride] uint32 IRQNumber;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|IRQ|001.2"} : ToSubclass] uint16 Availability;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4"} : ToSubclass,MappingStrings{"MIF.DMTF|IRQ|001.3", "MIF.DMTF|System Resource IRQ Info|001.2"} : ToSubclass] uint16 TriggerType;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4"} : ToSubclass,MappingStrings{"MIF.DMTF|System Resource IRQ Info|001.3"} : ToSubclass] uint16 TriggerLevel;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|IRQ|001.4"} : ToSubclass] boolean Shareable;
+};
+
+[Abstract,Locale(1033),UUID("{8502C51B-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_MemoryMappedIO : CIM_SystemResource
+{
+  [read : ToSubclass,Propagated("CIM_ComputerSystem.CreationClassName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CSCreationClassName;
+  [read : ToSubclass,Propagated("CIM_ComputerSystem.Name") : ToSubclass,MaxLen(256) : ToSubclass,Key : ToSubclass] string CSName;
+  [read : ToSubclass,MaxLen(256) : ToSubclass,Key : ToSubclass] string CreationClassName;
+  [read : ToSubclass,Key : ToSubclass,MappingStrings{"MIF.DMTF|Memory Mapped I/O|001.1"} : ToSubclass] uint64 StartingAddress;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Memory Mapped I/O|001.2"} : ToSubclass] uint64 EndingAddress;
+};
+
+[Abstract,Locale(1033),UUID("{8502C523-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_DMA : CIM_SystemResource
+{
+  [read : ToSubclass,Propagated("CIM_ComputerSystem.CreationClassName") : ToSubclass,MaxLen(256) : ToSubclass,Key : ToSubclass] string CSCreationClassName;
+  [read : ToSubclass,Propagated("CIM_ComputerSystem.Name") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CSName;
+  [read : ToSubclass,MaxLen(256) : ToSubclass,Key : ToSubclass] string CreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MappingStrings{"MIF.DMTF|DMA|001.1"} : ToSubclass] uint32 DMAChannel;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|DMA|001.2"} : ToSubclass] uint16 Availability;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|DMA|001.3"} : ToSubclass] boolean BurstMode;
+  [read : ToSubclass,Units("Bits") : ToSubclass,MappingStrings{"MIF.DMTF|System Resource DMA Info|001.2"} : ToSubclass,ValueMap{"0", "8", "16", "32", "64", "128"} : ToSubclass] uint16 TransferWidths[];
+  [read : ToSubclass,Units("Bits") : ToSubclass,ValueMap{"0", "8", "16", "32", "64"} : ToSubclass,MappingStrings{"MIF.DMTF|System Resource DMA Info|001.3"} : ToSubclass] uint16 AddressSize;
+  [read : ToSubclass,Units("Bytes") : ToSubclass,MappingStrings{"MIF.DMTF|System Resource DMA Info|001.4"} : ToSubclass] uint32 MaxTransferSize;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4"} : ToSubclass,MappingStrings{"MIF.DMTF|System Resource DMA Info|001.7"} : ToSubclass] uint16 ByteMode;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4"} : ToSubclass,MappingStrings{"MIF.DMTF|System Resource DMA Info|001.8"} : ToSubclass] uint16 WordMode;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass,MappingStrings{"MIF.DMTF|System Resource DMA Info|001.9"} : ToSubclass] uint16 ChannelTiming;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|System Resource DMA Info|001.10"} : ToSubclass] uint16 TypeCTiming;
+};
+
+[Abstract,Locale(1033),UUID("{8502C524-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_System : CIM_LogicalElement
+{
+  [Key : ToSubclass,Read : ToSubclass] string CreationClassName;
+  [Override("Name"),Key : ToSubclass DisableOverride,Read : ToSubclass] string Name;
+  [Read : ToSubclass] string NameFormat;
+  [Read : ToSubclass] string PrimaryOwnerContact;
+  [MaxLen(64) : ToSubclass,Read : ToSubclass] string PrimaryOwnerName;
+  [Read : ToSubclass,Write : ToSubclass] string Roles[];
+};
+
+[Abstract,Locale(1033),UUID("{8502C525-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_ComputerSystem : CIM_System
+{
+  [Override("NameFormat"),ValueMap{"IP", "Dial", "HID", "NWA", "HWA", "X25", "ISDN", "IPX", "DCC", "ICD", "E.164", "SNA", "OID/OSI", "Other"} : ToSubclass,Read : ToSubclass] string NameFormat;
+};
+
+[Abstract,Locale(1033),UUID("{8502C526-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_UnitaryComputerSystem : CIM_ComputerSystem
+{
+  [Read : ToSubclass] string InitialLoadInfo[];
+  [Read : ToSubclass] string LastLoadInfo;
+  [Read : ToSubclass] boolean PowerManagementSupported;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|System Power Controls|001.2"} : ToSubclass] uint16 PowerManagementCapabilities[];
+  [Read : ToSubclass] uint16 PowerState;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|System Hardware Security|001.4"} : ToSubclass] uint16 ResetCapability;
+  uint32 SetPowerState([IN,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8"} : ToSubclass] uint16 PowerState,[IN] datetime Time);
+};
+
+[Abstract,Locale(1033),UUID("{8502C527-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Service : CIM_LogicalElement
+{
+  [Key : ToSubclass,Read : ToSubclass] string CreationClassName;
+  [Override("Name"),Key : ToSubclass DisableOverride,Read : ToSubclass] string Name;
+  [ValueMap{"Automatic", "Manual"} : ToSubclass,Read : ToSubclass] string StartMode;
+  [Read : ToSubclass] boolean Started;
+  [Propagated("CIM_System.CreationClassName") : ToSubclass,Key : ToSubclass,Read : ToSubclass] string SystemCreationClassName;
+  [Propagated("CIM_System.Name") : ToSubclass,Key : ToSubclass,Read : ToSubclass] string SystemName;
+  uint32 StartService();
+  uint32 StopService();
+};
+
+[Abstract,Locale(1033),UUID("{debac832-6b54-4add-8a62-8d3861b97b1d}")] 
+class CIM_ClusteringService : CIM_Service
+{
+  uint32 AddNode([IN] CIM_ComputerSystem Ref CS);
+  uint32 EvictNode([IN] CIM_ComputerSystem Ref CS);
+};
+
+[Locale(1033),UUID("{F126ACC2-E3D4-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_ServiceAccessPoint : CIM_LogicalElement
+{
+  [Key : ToSubclass,MaxLen(256) : ToSubclass,Read : ToSubclass] string CreationClassName;
+  [Override("Name"),Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Read : ToSubclass] string Name;
+  [Propagated("CIM_System.CreationClassName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass,Read : ToSubclass] string SystemCreationClassName;
+  [Propagated("CIM_System.Name") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass,Read : ToSubclass] string SystemName;
+  [Read : ToSubclass,Schema("Win32") : ToSubclass] uint32 Type;
+};
+
+[Abstract,Locale(1033),UUID("{2bb2b772-ffed-4aa6-b1b3-3d0cb74fc613}")] 
+class CIM_ClusteringSAP : CIM_ServiceAccessPoint
+{
+};
+
+[Abstract,Locale(1033),UUID("{8502C529-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_LogicalDevice : CIM_LogicalElement
+{
+  [Read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"} : ToSubclass,MappingStrings{"MIF.DMTF|Operational State|003.5", "MIB.IETF|HOST-RESOURCES-MIB.hrDeviceStatus"} : ToSubclass] uint16 Availability;
+  [Key : ToSubclass,Read : ToSubclass] string CreationClassName;
+  [Read : ToSubclass,Schema("Win32"),ValueMap{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"} : ToSubclass] uint32 ConfigManagerErrorCode;
+  [read : ToSubclass,Schema("Win32")] boolean ConfigManagerUserConfig;
+  [read : ToSubclass,Key : ToSubclass] string DeviceID;
+  [read : ToSubclass] uint16 PowerManagementCapabilities[];
+  [read : ToSubclass,Schema("Win32")] string PNPDeviceID;
+  [read : ToSubclass] boolean PowerManagementSupported;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|Operational State|003.3"} : ToSubclass] uint16 StatusInfo;
+  [Propagated("CIM_System.CreationClassName") : ToSubclass,Key : ToSubclass,Read : ToSubclass] string SystemCreationClassName;
+  [Propagated("CIM_System.Name") : ToSubclass,Key : ToSubclass,Read : ToSubclass] string SystemName;
+  uint32 SetPowerState([IN,ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass] uint16 PowerState,[IN] datetime Time);
+  uint32 Reset();
+  [Read : ToSubclass] uint32 LastErrorCode;
+  [Read : ToSubclass] string ErrorDescription;
+  [Read : ToSubclass] boolean ErrorCleared;
+};
+
+[Abstract,Locale(1033),UUID("{8502C52A-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_MediaAccessDevice : CIM_LogicalDevice
+{
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,MappingStrings{"MIF.DMTF|Storage Devices|001.9", "MIF.DMTF|Storage Devices|001.11", "MIF.DMTF|Storage Devices|001.12", "MIF.DMTF|Disks|003.7"} : ToSubclass,ModelCorrespondence{"CIM_MediaAccessDevice.CapabilityDescriptions"} : ToSubclass] uint16 Capabilities[];
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_MediaAccessDevice.Capabilities"} : ToSubclass] string CapabilityDescriptions[];
+  [read : ToSubclass] string CompressionMethod;
+  [read : ToSubclass] string ErrorMethodology;
+  [read : ToSubclass,Units("Kilobytes") : ToSubclass,MappingStrings{"MIF.DMTF|Sequential Access Devices|001.2"} : ToSubclass] uint64 MaxMediaSize;
+  [read : ToSubclass,Units("Bytes") : ToSubclass] uint64 DefaultBlockSize;
+  [read : ToSubclass,Units("Bytes") : ToSubclass] uint64 MaxBlockSize;
+  [read : ToSubclass,Units("Bytes") : ToSubclass] uint64 MinBlockSize;
+  [read : ToSubclass] uint32 NumberOfMediaSupported;
+  [Read : ToSubclass] boolean NeedsCleaning;
+};
+
+[Abstract,Locale(1033),UUID("{F27851CD-BBAC-11d2-85E5-0000F8102E5F}")] 
+class CIM_DisketteDrive : CIM_MediaAccessDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{9565979A-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_CoolingDevice : CIM_LogicalDevice
+{
+  [read : ToSubclass] boolean ActiveCooling;
+};
+
+[Locale(1033),UUID("{F3A5233A-E3D3-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_Refrigeration : CIM_CoolingDevice
+{
+};
+
+[Locale(1033),UUID("{FE5D55E0-E3D3-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_HeatPipe : CIM_CoolingDevice
+{
+};
+
+[Locale(1033),UUID("{0A59C856-E3D4-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_Fan : CIM_CoolingDevice
+{
+  [read : ToSubclass] boolean VariableSpeed;
+  [Units("Revolutions per Minute") : ToSubclass,read : ToSubclass] uint64 DesiredSpeed;
+  uint32 SetSpeed([IN] uint64 DesiredSpeed);
+};
+
+[Abstract,Locale(1033),UUID("{9565979B-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_Sensor : CIM_LogicalDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{9565979C-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_NumericSensor : CIM_Sensor
+{
+  [read : ToSubclass] sint32 CurrentReading;
+  [read : ToSubclass] sint32 NominalReading;
+  [read : ToSubclass] sint32 NormalMax;
+  [read : ToSubclass] sint32 NormalMin;
+  [read : ToSubclass] sint32 MaxReadable;
+  [read : ToSubclass] sint32 MinReadable;
+  [read : ToSubclass] uint32 Resolution;
+  [read : ToSubclass] sint32 Tolerance;
+  [Units("Hundredths of Percent") : ToSubclass,read : ToSubclass] sint32 Accuracy;
+  [read : ToSubclass] boolean IsLinear;
+  [read : ToSubclass] sint32 LowerThresholdNonCritical;
+  [read : ToSubclass] sint32 UpperThresholdNonCritical;
+  [read : ToSubclass] sint32 LowerThresholdCritical;
+  [read : ToSubclass] sint32 UpperThresholdCritical;
+  [read : ToSubclass] sint32 LowerThresholdFatal;
+  [read : ToSubclass] sint32 UpperThresholdFatal;
+};
+
+[Abstract,Locale(1033),UUID("{9565979D-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_TemperatureSensor : CIM_NumericSensor
+{
+  [Override("CurrentReading"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.5"} : ToSubclass,read : ToSubclass] sint32 CurrentReading;
+  [Override("NominalReading"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.6"} : ToSubclass,read : ToSubclass] sint32 NominalReading;
+  [Override("NormalMax"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.7"} : ToSubclass,read : ToSubclass] sint32 NormalMax;
+  [Override("NormalMin"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.8"} : ToSubclass,read : ToSubclass] sint32 NormalMin;
+  [Override("MaxReadable"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.9"} : ToSubclass,read : ToSubclass] sint32 MaxReadable;
+  [Override("MinReadable"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.10"} : ToSubclass,read : ToSubclass] sint32 MinReadable;
+  [Override("Resolution"),Units("Hundredths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.17"} : ToSubclass,read : ToSubclass] uint32 Resolution;
+  [Override("Tolerance"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.18"} : ToSubclass,read : ToSubclass] sint32 Tolerance;
+  [Override("Accuracy"),MappingStrings{"MIF.DMTF|Temperature Probe|001.19"} : ToSubclass,read : ToSubclass] sint32 Accuracy;
+  [Override("LowerThresholdNonCritical"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.11"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdNonCritical;
+  [Override("UpperThresholdNonCritical"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.12"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdNonCritical;
+  [Override("LowerThresholdCritical"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.13"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdCritical;
+  [Override("UpperThresholdCritical"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.14"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdCritical;
+  [Override("LowerThresholdFatal"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.15"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdFatal;
+  [Override("UpperThresholdFatal"),Units("Tenths of degrees Centigrade") : ToSubclass,MappingStrings{"MIF.DMTF|Temperature Probe|001.16"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdFatal;
+};
+
+[Locale(1033),UUID("{DCA1D084-E3D3-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_CurrentSensor : CIM_NumericSensor
+{
+  [Override("CurrentReading"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.5"} : ToSubclass,read : ToSubclass] sint32 CurrentReading;
+  [Override("NominalReading"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.6"} : ToSubclass,read : ToSubclass] sint32 NominalReading;
+  [Override("NormalMax"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.7"} : ToSubclass,read : ToSubclass] sint32 NormalMax;
+  [Override("NormalMin"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.8"} : ToSubclass,read : ToSubclass] sint32 NormalMin;
+  [Override("MaxReadable"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.9"} : ToSubclass,read : ToSubclass] sint32 MaxReadable;
+  [Override("MinReadable"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.10"} : ToSubclass,read : ToSubclass] sint32 MinReadable;
+  [Override("Resolution"),Units("Tenths of Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.17"} : ToSubclass,read : ToSubclass] uint32 Resolution;
+  [Override("Tolerance"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.18"} : ToSubclass,read : ToSubclass] sint32 Tolerance;
+  [Override("Accuracy"),MappingStrings{"MIF.DMTF|Electrical Current Probe|001.19"} : ToSubclass,read : ToSubclass] sint32 Accuracy;
+  [Override("LowerThresholdNonCritical"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.11"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdNonCritical;
+  [Override("UpperThresholdNonCritical"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.12"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdNonCritical;
+  [Override("LowerThresholdCritical"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.13"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdCritical;
+  [Override("UpperThresholdCritical"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.14"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdCritical;
+  [Override("LowerThresholdFatal"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.15"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdFatal;
+  [Override("UpperThresholdFatal"),Units("Milliamps") : ToSubclass,MappingStrings{"MIF.DMTF|Electrical Current Probe|001.16"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdFatal;
+};
+
+[Locale(1033),UUID("{A998F9B4-E3D4-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_VoltageSensor : CIM_NumericSensor
+{
+  [Override("CurrentReading"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.5"} : ToSubclass,read : ToSubclass] sint32 CurrentReading;
+  [Override("NominalReading"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.6"} : ToSubclass,read : ToSubclass] sint32 NominalReading;
+  [Override("NormalMax"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.7"} : ToSubclass,read : ToSubclass] sint32 NormalMax;
+  [Override("NormalMin"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.8"} : ToSubclass,read : ToSubclass] sint32 NormalMin;
+  [Override("MaxReadable"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.9"} : ToSubclass,read : ToSubclass] sint32 MaxReadable;
+  [Override("MinReadable"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.10"} : ToSubclass,read : ToSubclass] sint32 MinReadable;
+  [Override("Resolution"),Units("Tenths of Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.17"} : ToSubclass,read : ToSubclass] uint32 Resolution;
+  [Override("Tolerance"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.18"} : ToSubclass,read : ToSubclass] sint32 Tolerance;
+  [Override("Accuracy"),MappingStrings{"MIF.DMTF|Voltage Probe|001.19"} : ToSubclass,read : ToSubclass] sint32 Accuracy;
+  [Override("LowerThresholdNonCritical"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.11"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdNonCritical;
+  [Override("UpperThresholdNonCritical"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.12"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdNonCritical;
+  [Override("LowerThresholdCritical"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.13"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdCritical;
+  [Override("UpperThresholdCritical"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.14"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdCritical;
+  [Override("LowerThresholdFatal"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.15"} : ToSubclass,read : ToSubclass] sint32 LowerThresholdFatal;
+  [Override("UpperThresholdFatal"),Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Voltage Probe|001.16"} : ToSubclass,read : ToSubclass] sint32 UpperThresholdFatal;
+};
+
+[Abstract,Locale(1033),UUID("{8502C52B-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_CDROMDrive : CIM_MediaAccessDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{8502C52C-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_DiskDrive : CIM_MediaAccessDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{8502C52D-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_TapeDrive : CIM_MediaAccessDevice
+{
+  [read : ToSubclass,Units("Bytes") : ToSubclass] uint32 EOTWarningZoneSize;
+  [read : ToSubclass] uint32 MaxPartitionCount;
+  [read : ToSubclass,Units("Bytes") : ToSubclass] uint32 Padding;
+};
+
+[Abstract,Locale(1033),UUID("{8502C531-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Controller : CIM_LogicalDevice
+{
+  [MappingStrings{"MIF.DMTF|Bus Port|001.9"} : ToSubclass,Read : ToSubclass] uint32 MaxNumberControlled;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47"} : ToSubclass,MappingStrings{"MIF.DMTF|Bus Port|001.2", "MIF.DMTF|Disks|003.3"} : ToSubclass] uint16 ProtocolSupported;
+  [Read : ToSubclass] datetime TimeOfLastReset;
+};
+
+[Abstract,Locale(1033),UUID("{1008CCE5-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_VideoController : CIM_Controller
+{
+  [Read : ToSubclass] string VideoProcessor;
+  [Read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"} : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.6"} : ToSubclass] uint16 VideoMemoryType;
+  [Read : ToSubclass] uint32 NumberOfVideoPages;
+  [Read : ToSubclass,Units("Bytes") : ToSubclass] uint32 MaxMemorySupported;
+  [Read : ToSubclass,ModelCorrespondence{"CIM_VideoController.CapabilityDescriptions"} : ToSubclass] uint16 AcceleratorCapabilities[];
+  [Read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_VideoController.AcceleratorCapabilities"} : ToSubclass] string CapabilityDescriptions[];
+  [Read : ToSubclass,Units("Bits") : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.12"} : ToSubclass] uint32 CurrentBitsPerPixel;
+  [Read : ToSubclass,Units("Pixels") : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.11"} : ToSubclass] uint32 CurrentHorizontalResolution;
+  [Read : ToSubclass,Units("Pixels") : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.10"} : ToSubclass] uint32 CurrentVerticalResolution;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.5"} : ToSubclass] uint32 MaxRefreshRate;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.4"} : ToSubclass] uint32 MinRefreshRate;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.15"} : ToSubclass] uint32 CurrentRefreshRate;
+  [Read : ToSubclass,ValueMap{"1", "2", "3", "4"} : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.8"} : ToSubclass] uint16 CurrentScanMode;
+  [Read : ToSubclass] uint64 CurrentNumberOfColors;
+  [Read : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.13"} : ToSubclass] uint32 CurrentNumberOfRows;
+  [Read : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.14"} : ToSubclass] uint32 CurrentNumberOfColumns;
+};
+
+[Abstract,Locale(1033),UUID("{1008CCE6-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_PCVideoController : CIM_VideoController
+{
+  [Read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "160"} : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.2"} : ToSubclass] uint16 VideoArchitecture;
+  [Read : ToSubclass,MappingStrings{"MIF.DMTF|Video|003.3"} : ToSubclass] uint16 VideoMode;
+  [Read : ToSubclass] uint16 NumberOfColorPlanes;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B5A-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PCMCIAController : cim_controller
+{
+  [read : ToSubclass,Schema("Win32")] string Manufacturer;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B5B-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_USBController : CIM_Controller
+{
+  [read : ToSubclass,Schema("Win32")] string Manufacturer;
+};
+
+[Abstract,Locale(1033),UUID("{8502C532-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_NetworkAdapter : CIM_LogicalDevice
+{
+  [read : ToSubclass,MaxLen(64) : ToSubclass,MappingStrings{"MIF.DMTF|Network Adapter 802 Port|001.2"} : ToSubclass] string PermanentAddress;
+  [read : ToSubclass,MaxLen(64) : ToSubclass,MappingStrings{"MIF.DMTF|Network Adapter 802 Port|001.3"} : ToSubclass] string NetworkAddresses[];
+  [read : ToSubclass,Units("Bits per Second") : ToSubclass,MappingStrings{"MIB.IETF|RFC1213-MIB.ifSpeed", "MIF.DMTF|Network Adapter 802 Port|001.5"} : ToSubclass] uint64 Speed;
+  [read : ToSubclass,Units("Bits per Second") : ToSubclass] uint64 MaxSpeed;
+  [Read : ToSubclass] boolean AutoSense;
+};
+
+[Abstract,Locale(1033),UUID("{8502C533-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_UserDevice : CIM_LogicalDevice
+{
+  [read : ToSubclass] boolean IsLocked;
+};
+
+[Abstract,Locale(1033),UUID("{1008CCE7-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_Display : CIM_UserDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{1008CCE8-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_DesktopMonitor : CIM_Display
+{
+  [Read : ToSubclass] uint16 DisplayType;
+  [Read : ToSubclass,Units("MegaHertz") : ToSubclass] uint32 Bandwidth;
+  [Read : ToSubclass] uint32 ScreenHeight;
+  [Read : ToSubclass] uint32 ScreenWidth;
+};
+
+[Abstract,Locale(1033),UUID("{1008CCE9-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_FlatPanel : CIM_Display
+{
+  [Read : ToSubclass,Units("Pixels") : ToSubclass] uint32 HorizontalResolution;
+  [Read : ToSubclass,Units("Pixels") : ToSubclass] uint32 VerticalResolution;
+  [Read : ToSubclass] uint16 ScanMode;
+  [Read : ToSubclass] uint16 DisplayType;
+  [Read : ToSubclass] uint16 LightSource;
+  [Read : ToSubclass] boolean SupportsColor;
+};
+
+[Abstract,Locale(1033),UUID("{8502C534-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Keyboard : CIM_UserDevice
+{
+  [Read : ToSubclass] string Layout;
+  [Read : ToSubclass] uint16 NumberOfFunctionKeys;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|System Hardware Security|001.2"} : ToSubclass] uint16 Password;
+};
+
+[Abstract,Locale(1033),UUID("{8502C535-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_PointingDevice : CIM_UserDevice
+{
+  [read : ToSubclass] uint16 Handedness;
+  [read : ToSubclass] uint8 NumberOfButtons;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9"} : ToSubclass,MappingStrings{"MIF.DMTF|Pointing Device|001.1"} : ToSubclass] uint16 PointingType;
+  [read : ToSubclass,Units("Counts per Inch") : ToSubclass] uint32 Resolution;
+};
+
+[Abstract,Locale(1033),UUID("{8502C538-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_StorageExtent : CIM_LogicalDevice
+{
+  [read : ToSubclass] uint16 Access;
+  [read : ToSubclass,Units("Bytes") : ToSubclass,MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrStorageAllocationUnits"} : ToSubclass] uint64 BlockSize;
+  [Read : ToSubclass] string ErrorMethodology;
+  [MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrStorageSize"} : ToSubclass] uint64 NumberOfBlocks;
+  [Read : ToSubclass] string Purpose;
+};
+
+[Abstract,Locale(1033),UUID("{9565979E-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_PhysicalExtent : CIM_StorageExtent
+{
+  [read : ToSubclass,Override("BlockSize"),MappingStrings{"MIF.DMTF|Physical Extent|001.4"} : ToSubclass] uint64 BlockSize;
+  [read : ToSubclass,Override("NumberOfBlocks"),MappingStrings{"MIF.DMTF|Physical Extent|001.3"} : ToSubclass] uint64 NumberOfBlocks;
+  [read : ToSubclass,Units("Bytes") : ToSubclass,MappingStrings{"MIF.DMTF|Physical Extent|001.6"} : ToSubclass] uint64 UnitsBeforeCheckDataInterleave;
+  [read : ToSubclass,Units("Bytes") : ToSubclass,MappingStrings{"MIF.DMTF|Physical Extent|001.7"} : ToSubclass] uint64 UnitsOfCheckData;
+  [read : ToSubclass,Units("Bytes") : ToSubclass,MappingStrings{"MIF.DMTF|Physical Extent|001.8"} : ToSubclass] uint64 UnitsOfUserData;
+};
+
+[Abstract,Locale(1033),UUID("{9565979F-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_AggregatePExtent : CIM_StorageExtent
+{
+  [read : ToSubclass,Override("NumberOfBlocks"),MappingStrings{"MIF.DMTF|Aggregate Physical Extent|001.2"} : ToSubclass] uint64 NumberOfBlocks;
+};
+
+[Abstract,Locale(1033),UUID("{8502C539-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_LogicalDisk : CIM_StorageExtent
+{
+  [read : ToSubclass,units("Bytes") : ToSubclass] uint64 FreeSpace;
+  [read : ToSubclass,units("Bytes") : ToSubclass] uint64 Size;
+};
+
+[Association : ToSubclass DisableOverride,Abstract,Locale(1033),UUID("{8502C53A-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Dependency
+{
+  [Read : ToSubclass] CIM_ManagedSystemElement Ref Antecedent;
+  [Read : ToSubclass] CIM_ManagedSystemElement Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{8502C53B-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_ServiceServiceDependency : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_Service Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_Service Ref Dependent;
+  [read : ToSubclass] uint16 TypeOfDependency;
+};
+
+[Abstract,Locale(1033),UUID("{8502C53C-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_DeviceConnection : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_LogicalDevice Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+  [read : ToSubclass,Units("Bits per Second") : ToSubclass] uint64 NegotiatedSpeed;
+  [read : ToSubclass,Units("Bits") : ToSubclass] uint32 NegotiatedDataWidth;
+};
+
+[Abstract,Locale(1033),UUID("{956597A0-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_AssociatedSensor : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_Sensor Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{8502C53D-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_ControlledBy : CIM_DeviceConnection
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_Controller Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+  [read : ToSubclass] uint16 AccessState;
+  [read : ToSubclass] uint32 NumberOfHardResets;
+  [read : ToSubclass] uint32 NumberOfSoftResets;
+};
+
+[Abstract,Locale(1033),UUID("{8502C53E-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_BasedOn : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_StorageExtent Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_StorageExtent Ref Dependent;
+  [read : ToSubclass] uint64 StartingAddress;
+  [read : ToSubclass] uint64 EndingAddress;
+};
+
+[Abstract,Locale(1033),UUID("{8502C540-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_MediaPresent : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_MediaAccessDevice Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_StorageExtent Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{8502C541-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_DiskPartition : CIM_StorageExtent
+{
+  [Read : ToSubclass] boolean Bootable;
+  [Read : ToSubclass] boolean PrimaryPartition;
+};
+
+[Abstract,Locale(1033),UUID("{8502C53F-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_LogicalDiskBasedOnPartition : CIM_BasedOn
+{
+  [read : ToSubclass,Override("Antecedent"),Max(1) : ToSubclass] CIM_DiskPartition Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDisk Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{8502C546-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_PotsModem : CIM_LogicalDevice
+{
+  [read : ToSubclass] uint16 AnswerMode;
+  [read : ToSubclass] uint16 CompressionInfo;
+  [Read : ToSubclass] string CountriesSupported[];
+  [Read : ToSubclass] string CountrySelected;
+  [Read : ToSubclass] string CurrentPasswords[];
+  [read : ToSubclass] uint16 DialType;
+  [read : ToSubclass] uint16 ErrorControlInfo;
+  [read : ToSubclass,Units("Seconds") : ToSubclass] uint32 InactivityTimeout;
+  [Units("Bits per second") : ToSubclass,Read : ToSubclass] uint32 MaxBaudRateToPhone;
+  [Units("Bits per second") : ToSubclass,Read : ToSubclass] uint32 MaxBaudRateToSerialPort;
+  [Read : ToSubclass] uint16 MaxNumberOfPasswords;
+  [read : ToSubclass] uint16 ModulationScheme;
+  [read : ToSubclass] uint8 RingsBeforeAnswer;
+  [read : ToSubclass] uint16 SpeakerVolumeInfo;
+  [Read : ToSubclass] boolean SupportsCallback;
+  [Read : ToSubclass] boolean SupportsSynchronousConnect;
+  [Read : ToSubclass] datetime TimeOfLastReset;
+};
+
+[Abstract,Locale(1033),UUID("{8502C547-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_PowerSupply : CIM_LogicalDevice
+{
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.15"} : ToSubclass] uint16 ActiveInputVoltage;
+  [read : ToSubclass] boolean IsSwitchingSupply;
+  [Units("Hertz") : ToSubclass,Read : ToSubclass] uint32 Range1InputFrequencyHigh;
+  [Units("Hertz") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.17"} : ToSubclass,Read : ToSubclass] uint32 Range1InputFrequencyLow;
+  [Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.8"} : ToSubclass,Read : ToSubclass] uint32 Range1InputVoltageHigh;
+  [Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.7"} : ToSubclass,Read : ToSubclass] uint32 Range1InputVoltageLow;
+  [Units("Hertz") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.20"} : ToSubclass,Read : ToSubclass] uint32 Range2InputFrequencyHigh;
+  [Units("Hertz") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.19"} : ToSubclass,Read : ToSubclass] uint32 Range2InputFrequencyLow;
+  [Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.12"} : ToSubclass,Read : ToSubclass] uint32 Range2InputVoltageHigh;
+  [Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.11"} : ToSubclass,Read : ToSubclass] uint32 Range2InputVoltageLow;
+  [Units("Milliwatts") : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.21"} : ToSubclass,Read : ToSubclass] uint32 TotalOutputPower;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass,MappingStrings{"MIF.DMTF|Power Supply|002.16"} : ToSubclass] uint16 TypeOfRangeSwitching;
+};
+
+[Abstract,Locale(1033),UUID("{8502C548-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Battery : CIM_LogicalDevice
+{
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"} : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.14"} : ToSubclass] uint16 BatteryStatus;
+  [read : ToSubclass,Units("Seconds") : ToSubclass] uint32 TimeOnBattery;
+  [read : ToSubclass,Units("Minutes") : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.15"} : ToSubclass] uint32 EstimatedRunTime;
+  [read : ToSubclass,Units("Percent") : ToSubclass] uint16 EstimatedChargeRemaining;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8"} : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.7"} : ToSubclass] uint16 Chemistry;
+  [read : ToSubclass,Units("Milliwatt-Hours") : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.8"} : ToSubclass] uint32 DesignCapacity;
+  [read : ToSubclass,Units("Milliwatt-Hours") : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.11"} : ToSubclass] uint32 FullChargeCapacity;
+  [read : ToSubclass,Units("Millivolts") : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.9"} : ToSubclass] uint64 DesignVoltage;
+  [read : ToSubclass,MaxLen(64) : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.10"} : ToSubclass] string SmartBatteryVersion;
+  [read : ToSubclass,Units("Minutes") : ToSubclass,MappingStrings{"MIF.DMTF|Portable Battery|002.16"} : ToSubclass] uint32 TimeToFullCharge;
+  [Read : ToSubclass,Units("Minutes") : ToSubclass] uint32 ExpectedLife;
+  [Read : ToSubclass,Units("Minutes") : ToSubclass] uint32 MaxRechargeTime;
+};
+
+[Abstract,Locale(1033),UUID("{8502C54A-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Printer : CIM_LogicalDevice
+{
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7"} : ToSubclass,MappingStrings{"MIB.IETF|Printer-MIB.hrPrinterStatus"} : ToSubclass] uint16 PrinterStatus;
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.ErrorInformation"} : ToSubclass,MappingStrings{"MIB.IETF|Printer-MIB.hrPrinterDetectedErrorState"} : ToSubclass] uint16 DetectedErrorState;
+  [read : ToSubclass,write : ToSubclass,ModelCorrespondence{"CIM_Printer.DetectedErrorState"} : ToSubclass] string ErrorInformation[];
+  [read : ToSubclass] uint16 PaperSizesSupported[];
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_PrintJob.RequiredPaperType", "CIM_PrintService.PaperTypesAvailable"} : ToSubclass,MappingStrings{"MIB.IETF|Printer-MIB.prtInputMediaName"} : ToSubclass] string PaperTypesAvailable[];
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.PaperTypesAvailable"} : ToSubclass] string DefaultPaperType;
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.PaperTypesAvailable"} : ToSubclass] string CurrentPaperType;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47"} : ToSubclass,MappingStrings{"MIB.IETF|Printer-MIB.prtInterpreterLangFamily"} : ToSubclass,ModelCorrespondence{"CIM_Printer.MimeTypesSupported", "CIM_PrintJob.Language", "CIM_PrintService.LanguagesSupported"} : ToSubclass] uint16 LanguagesSupported[];
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.LanguagesSupported", "CIM_PrintJob.MimeTypes", "CIM_PrintService.MimeTypesSupported"} : ToSubclass] string MimeTypesSupported[];
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47"} : ToSubclass,ModelCorrespondence{"CIM_Printer.LanguagesSupported", "CIM_Printer.CurrentMimeType"} : ToSubclass] uint16 CurrentLanguage;
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.CurrentLanguage"} : ToSubclass] string CurrentMimeType;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47"} : ToSubclass,ModelCorrespondence{"CIM_Printer.LanguagesSupported", "CIM_Printer.DefaultMimeType"} : ToSubclass] uint16 DefaultLanguage;
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.DefaultLanguage"} : ToSubclass] string DefaultMimeType;
+  [read : ToSubclass,Counter] uint32 JobCountSinceLastReset;
+  [read : ToSubclass] datetime TimeOfLastReset;
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_Printer.CapabilityDescriptions", "CIM_PrintJob.Finishing", "CIM_PrintService.Capabilities"} : ToSubclass] uint16 Capabilities[];
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_Printer.Capabilities"} : ToSubclass] string CapabilityDescriptions[];
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.Capabilities"} : ToSubclass] uint16 DefaultCapabilities[];
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.Capabilities"} : ToSubclass] uint16 CurrentCapabilities[];
+  [read : ToSubclass,ModelCorrespondence{"CIM_PrintJob.Copies"} : ToSubclass] uint32 MaxCopies;
+  [read : ToSubclass] uint32 DefaultCopies;
+  [read : ToSubclass,ModelCorrespondence{"CIM_PrintJob.NumberUp"} : ToSubclass] uint32 MaxNumberUp;
+  [read : ToSubclass] uint32 DefaultNumberUp;
+  [read : ToSubclass,Units("Pixels per Inch") : ToSubclass,ModelCorrespondence{"CIM_PrintJob.HorizontalResolution"} : ToSubclass] uint32 HorizontalResolution;
+  [read : ToSubclass,Units("Pixels per Inch") : ToSubclass,ModelCorrespondence{"CIM_PrintJob.HorizontalResolution"} : ToSubclass] uint32 VerticalResolution;
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_PrintJob.CharSet"} : ToSubclass,MappingStrings{"MIB.IETF|Printer-MIB.prtLocalizationCharacterSet"} : ToSubclass] string CharSetsSupported[];
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.CharSetsSupported"} : ToSubclass] string CurrentCharSet;
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,MappingStrings{"MIB.IETF|Printer-MIB.prtLocalizationLanguage"} : ToSubclass,ModelCorrespondence{"CIM_PrintJob.NaturalLanguage"} : ToSubclass] string NaturalLanguagesSupported[];
+  [read : ToSubclass,ModelCorrespondence{"CIM_Printer.NaturalLanguagesSupported"} : ToSubclass] string CurrentNaturalLanguage;
+  [read : ToSubclass,Units("KiloBytes") : ToSubclass,ModelCorrespondence{"CIM_PrintJob.JobSize"} : ToSubclass] uint32 MaxSizeSupported;
+  [read : ToSubclass,ModelCorrespondence{"CIM_PrintJob.RequiredJobSheets"} : ToSubclass] string AvailableJobSheets[];
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27"} : ToSubclass,MappingStrings{"MIB.IETF|Printer-MIB.prtMarkerMarkTech"} : ToSubclass] uint16 MarkingTechnology;
+};
+
+[Abstract,Locale(1033),UUID("{8502C54B-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Processor : CIM_LogicalDevice
+{
+  [Units("Bits") : ToSubclass,Read : ToSubclass] uint16 AddressWidth;
+  [Units("MegaHertz") : ToSubclass,MappingStrings{"MIF.DMTF|Processor|006.6"} : ToSubclass,Read : ToSubclass] uint32 CurrentClockSpeed;
+  [Units("Bits") : ToSubclass,Read : ToSubclass] uint16 DataWidth;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "25", "26", "27", "28", "29", "32", "33", "34", "35", "36", "48", "64", "80", "96", "97", "98", "99", "100", "101", "112", "128", "131", "132", "144", "160", "176", "180", "185", "200", "203", "204", "250", "251", "260", "261", "280", "281", "300", "301", "302", "320"} : ToSubclass,MappingStrings{"SMBIOS|Processor Information|Type 4|Processor Family"} : ToSubclass,ModelCorrespondence{"CIM_Processor.OtherFamilyDescription"} : ToSubclass] uint16 Family;
+  [Read : ToSubclass,MaxLen(64) : ToSubclass,ModelCorrespondence{"CIM_Processor.Family"} : ToSubclass] string OtherFamilyDescription;
+  [Read : ToSubclass,Units("Percent") : ToSubclass,MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrProcessorLoad"} : ToSubclass] uint16 LoadPercentage;
+  [Units("MegaHertz") : ToSubclass,MappingStrings{"MIF.DMTF|Processor|006.5"} : ToSubclass,Read : ToSubclass] uint32 MaxClockSpeed;
+  [Read : ToSubclass] string Role;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"} : ToSubclass,MappingStrings{"MIF.DMTF|Processor|006.7"} : ToSubclass] uint16 UpgradeMethod;
+  [ModelCorrespondence{"CIM_Processor.Family"} : ToSubclass,Read : ToSubclass] string Stepping;
+  [Read : ToSubclass] string UniqueId;
+};
+
+[Abstract,Locale(1033),UUID("{8502C54F-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_UninterruptiblePowerSupply : CIM_PowerSupply
+{
+  [read : ToSubclass,Override("Range1InputVoltageLow"),Units("Millivolts") : ToSubclass] uint32 Range1InputVoltageLow;
+  [read : ToSubclass,Override("Range1InputVoltageHigh"),Units("Millivolts") : ToSubclass] uint32 Range1InputVoltageHigh;
+  [read : ToSubclass,Override("Range2InputVoltageLow"),Units("Millivolts") : ToSubclass] uint32 Range2InputVoltageLow;
+  [read : ToSubclass,Override("Range2InputVoltageHigh"),Units("Millivolts") : ToSubclass] uint32 Range2InputVoltageHigh;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4"} : ToSubclass,MappingStrings{"MIF.DMTF|UPS Battery|001.1"} : ToSubclass] uint16 RemainingCapacityStatus;
+  [read : ToSubclass,Units("Seconds") : ToSubclass,MappingStrings{"MIF.DMTF|UPS Battery|001.2"} : ToSubclass] uint32 TimeOnBackup;
+  [read : ToSubclass,Units("Minutes") : ToSubclass,MappingStrings{"MIF.DMTF|UPS Battery|001.3"} : ToSubclass] uint32 EstimatedRunTime;
+  [read : ToSubclass,Units("Percent") : ToSubclass,MappingStrings{"MIF.DMTF|UPS Battery|001.4"} : ToSubclass] uint16 EstimatedChargeRemaining;
+};
+
+[Abstract,Locale(1033),UUID("{8502C552-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_ParallelController : CIM_Controller
+{
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,MappingStrings{"MIF.DMTF|Parallel Ports|003.8"} : ToSubclass,ModelCorrespondence{"CIM_ParallelController.CapabilityDescriptions"} : ToSubclass] uint16 Capabilities[];
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_ParallelController.Capabilities"} : ToSubclass] string CapabilityDescriptions[];
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Parallel Ports|003.7"} : ToSubclass] boolean DMASupport;
+};
+
+[Abstract,Locale(1033),UUID("{8502C553-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_SCSIController : CIM_Controller
+{
+  [Read : ToSubclass] uint32 ControllerTimeouts;
+  [Units("Bits") : ToSubclass,read : ToSubclass] uint32 MaxDataWidth;
+  [Units("Bits per Second") : ToSubclass,read : ToSubclass] uint64 MaxTransferRate;
+  [read : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass,MappingStrings{"MIF.DMTF|Storage Controller|001.3"} : ToSubclass] uint16 ProtectionManagement;
+};
+
+[Abstract,Locale(1033),UUID("{8502C554-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_SerialController : CIM_Controller
+{
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "160", "161"} : ToSubclass,MappingStrings{"MIF.DMTF|Serial Ports|004.7"} : ToSubclass,ModelCorrespondence{"CIM_SerialController.CapabilityDescriptions"} : ToSubclass] uint16 Capabilities[];
+  [read : ToSubclass,ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_SerialController.Capabilities"} : ToSubclass] string CapabilityDescriptions[];
+  [Units("Bits per Second") : ToSubclass,MappingStrings{"MIF.DMTF|Serial Ports|004.6"} : ToSubclass,read : ToSubclass] uint32 MaxBaudRate;
+};
+
+[SupportsDelete,DeleteBy("DeleteInstance"),Abstract,Provider("CIMWin32"),Locale(1033),UUID("{8502C559-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_LogicalFile : CIM_LogicalElement
+{
+  [read : ToSubclass] uint64 InUseCount;
+  [read : ToSubclass,Schema("Win32")] boolean Archive;
+  [Propagated("CIM_FileSystem.CSCreationClassName") : ToSubclass,Key : ToSubclass,read : ToSubclass] string CSCreationClassName;
+  [Propagated("CIM_FileSystem.CSName") : ToSubclass,Key : ToSubclass,Read : ToSubclass] string CSName;
+  [Schema("Win32"),read : ToSubclass] boolean Compressed;
+  [Key : ToSubclass,read : ToSubclass] string CreationClassName;
+  [read : ToSubclass] datetime CreationDate;
+  [Schema("Win32"),read : ToSubclass] boolean Encrypted;
+  [Propagated("CIM_FileSystem.CreationClassName") : ToSubclass,Key : ToSubclass,read : ToSubclass] string FSCreationClassName;
+  [Propagated("CIM_FileSystem.Name") : ToSubclass,Key : ToSubclass,read : ToSubclass] string FSName;
+  [read : ToSubclass] datetime LastAccessed;
+  [read : ToSubclass] datetime LastModified;
+  [read : ToSubclass] boolean Readable;
+  [Units("Bytes") : ToSubclass,read : ToSubclass] uint64 FileSize;
+  [Read : ToSubclass] boolean Writeable;
+  [read : ToSubclass,Schema("Win32")] boolean Hidden;
+  [read : ToSubclass,Schema("Win32")] boolean System;
+  [read : ToSubclass,Schema("Win32")] string FileType;
+  [read : ToSubclass,Schema("Win32")] string EightDotThreeFileName;
+  [read : ToSubclass] string CompressionMethod;
+  [read : ToSubclass] string EncryptionMethod;
+  [Override("Name"),Key : ToSubclass DisableOverride,read : ToSubclass] string Name;
+  [Fixed : ToSubclass,read : ToSubclass,Schema("Win32")] string Drive;
+  [Fixed : ToSubclass,read : ToSubclass,Schema("Win32")] string Path;
+  [Fixed : ToSubclass,read : ToSubclass,Schema("Win32")] string FileName;
+  [Fixed : ToSubclass,read : ToSubclass,Schema("Win32")] string Extension;
+  [read : ToSubclass,Schema("Win32"),BitMap{"0", "1", "2", "3", "4", "5", "6", "7", "8", "16", "17", "18", "19", "20"} : ToSubclass] uint32 AccessMask;
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 TakeOwnerShip();
+//  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 ChangeSecurityPermissions([In] Win32_SecurityDescriptor SecurityDescriptor,[In,BitMap{"0", "1", "2", "3"} : ToSubclass] uint32 Option);
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 Copy([In] string FileName);
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 Rename([In] string FileName);
+  [Destructor,Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 Delete();
+  [Implemented,Schema("Win32"),ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass] uint32 Compress();
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 Uncompress();
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 TakeOwnerShipEx([Out] string StopFileName,[In,optional] string StartFileName,[In,optional] boolean Recursive);
+//  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 ChangeSecurityPermissionsEx([in] Win32_SecurityDescriptor SecurityDescriptor,[In,BitMap{"0", "1", "2", "3"} : ToSubclass] uint32 Option,[Out] string StopFileName,[In,optional] string StartFileName,[In,optional] boolean Recursive);
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 CopyEx([In] string FileName,[Out] string StopFileName,[In,optional] string StartFileName,[In,optional] boolean Recursive);
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 DeleteEx([Out] string StopFileName,[In,optional] string StartFileName);
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 CompressEx([Out] string StopFileName,[In,optional] string StartFileName,[In,optional] boolean Recursive);
+  [Implemented,ValueMap{"0", "2", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "21"} : ToSubclass,Schema("Win32")] uint32 UncompressEx([Out] string StopFileName,[In,optional] string StartFileName,[In,optional] boolean Recursive);
+  [Privileges{"SeSecurityPrivilege"} : ToSubclass,Implemented,Schema("Win32")] boolean GetEffectivePermission([In,BitMap{"0", "1", "2", "3", "4", "5", "6", "7", "8", "16", "17", "18", "19", "20"} : ToSubclass] uint32 Permissions);
+};
+
+[Dynamic,Provider("CIMWin32"),Locale(1033),UUID("{8502C55A-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_DataFile : CIM_LogicalFile
+{
+  [read : ToSubclass,Schema("Win32")] string Version;
+  [read : ToSubclass,Schema("Win32")] string Manufacturer;
+};
+
+[Abstract,Locale(1033),UUID("{8502C55F-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Directory : CIM_LogicalFile
+{
+};
+
+[abstract,Locale(1033),UUID("{8502C561-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_SoftwareElement : CIM_LogicalElement
+{
+  [read : ToSubclass,key : ToSubclass DisableOverride,maxlen(256) : ToSubclass,override("Name")] string Name;
+  [read : ToSubclass,key : ToSubclass DisableOverride,Maxlen(64) : ToSubclass,Mappingstrings{"MIF.DMTF|ComponentID|001.3"} : ToSubclass] string Version;
+  [read : ToSubclass,key : ToSubclass DisableOverride] uint16 SoftwareElementState;
+  [read : ToSubclass,key : ToSubclass DisableOverride,maxlen(256) : ToSubclass] string SoftwareElementID;
+  [read : ToSubclass,key : ToSubclass DisableOverride,Mappingstrings{"MIF.DMTF|Software Component Information|002.5"} : ToSubclass,ModelCorrespondence("CIM_OperatingSystem.OSType") : ToSubclass] uint16 TargetOperatingSystem;
+  [read : ToSubclass,Maxlen(64) : ToSubclass,ModelCorrespondence("CIM_OperatingSystem.OtherTypeDescription") : ToSubclass] string OtherTargetOS;
+  [read : ToSubclass,Maxlen(256) : ToSubclass,Mappingstrings{"MIF.DMTF|ComponentID|001.1"} : ToSubclass] string Manufacturer;
+  [read : ToSubclass,Maxlen(64) : ToSubclass,Mappingstrings{"MIF.DMTF|Software Component Information|002.4"} : ToSubclass] string BuildNumber;
+  [read : ToSubclass,Maxlen(64) : ToSubclass,Mappingstrings{"MIF.DMTF|ComponentID|001.4"} : ToSubclass] string SerialNumber;
+  [read : ToSubclass,Maxlen(64) : ToSubclass] string CodeSet;
+  [read : ToSubclass,Maxlen(64) : ToSubclass,Mappingstrings{"MIF.DMTF|Software Component Information|002.7"} : ToSubclass] string IdentificationCode;
+  [read : ToSubclass,Maxlen(32) : ToSubclass,Mappingstrings{"MIF.DMTF|Software Component Information|002.6"} : ToSubclass] string LanguageEdition;
+};
+
+[abstract,Locale(1033),UUID("{8502C562-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_BIOSElement : CIM_SoftwareElement
+{
+  [read : ToSubclass,Override("Version"),MappingStrings{"MIF.DMTF|System BIOS|001.3"} : ToSubclass] string Version;
+  [read : ToSubclass,Override("Manufacturer"),MappingStrings{"MIF.DMTF|System BIOS|001.2"} : ToSubclass] string Manufacturer;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|System BIOS|001.9"} : ToSubclass] boolean PrimaryBIOS;
+};
+
+[Abstract,Locale(1033),UUID("{8502C564-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Job : CIM_LogicalElement
+{
+  [read : ToSubclass] datetime ElapsedTime;
+  [read : ToSubclass] string Notify;
+  [read : ToSubclass] string Owner;
+  [read : ToSubclass] uint32 Priority;
+  [read : ToSubclass] datetime StartTime;
+  [read : ToSubclass] string JobStatus;
+  [read : ToSubclass] datetime TimeSubmitted;
+  [read : ToSubclass] datetime UntilTime;
+};
+
+[Abstract,Locale(1033),UUID("{8502C565-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_OperatingSystem : CIM_LogicalElement
+{
+  [Propagated("CIM_ComputerSystem.CreationClassName") : ToSubclass,Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string CSCreationClassName;
+  [Propagated("CIM_ComputerSystem.Name") : ToSubclass,Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string CSName;
+  [Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string CreationClassName;
+  [read : ToSubclass] boolean Distributed;
+  [Units("KiloBytes") : ToSubclass,read : ToSubclass] uint64 FreePhysicalMemory;
+  [Units("KiloBytes") : ToSubclass,read : ToSubclass] uint64 FreeVirtualMemory;
+  [read : ToSubclass,Units("KiloBytes") : ToSubclass] uint64 MaxProcessMemorySize;
+  [read : ToSubclass,ModelCorrespondence{"CIM_OperatingSystem.OtherTypeDescription"} : ToSubclass] uint16 OSType;
+  [read : ToSubclass,MaxLen(64) : ToSubclass,ModelCorrespondence{"CIM_OperatingSystem.OSType"} : ToSubclass] string OtherTypeDescription;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Operating System|001.3"} : ToSubclass] string Version;
+  [read : ToSubclass,MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrSystemDate", "MIF.DMTF|General Information|001.6"} : ToSubclass] datetime LocalDateTime;
+  [read : ToSubclass,Write : ToSubclass,Units("Minutes") : ToSubclass] sint16 CurrentTimeZone;
+  [read : ToSubclass,Units("KiloBytes") : ToSubclass,MappingStrings{"MIF.DMTF|System Memory Settings|001.3"} : ToSubclass] uint64 SizeStoredInPagingFiles;
+  [read : ToSubclass,Units("KiloBytes") : ToSubclass,MappingStrings{"MIF.DMTF|System Memory Settings|001.4"} : ToSubclass] uint64 FreeSpaceInPagingFiles;
+  [read : ToSubclass] datetime LastBootUpTime;
+  [MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrSystemMaxProcesses"} : ToSubclass,read : ToSubclass] uint32 MaxNumberOfProcesses;
+  [Override("Name"),Key : ToSubclass DisableOverride,read : ToSubclass] string Name;
+  [read : ToSubclass] uint32 NumberOfLicensedUsers;
+  [MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrSystemProcesses"} : ToSubclass,Read : ToSubclass] uint32 NumberOfProcesses;
+  [MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrSystemNumUsers"} : ToSubclass,read : ToSubclass] uint32 NumberOfUsers;
+  [Units("KiloBytes") : ToSubclass,read : ToSubclass] uint64 TotalSwapSpaceSize;
+  [Units("KiloBytes") : ToSubclass,read : ToSubclass] uint64 TotalVirtualMemorySize;
+  [read : ToSubclass,Units("KiloBytes") : ToSubclass] uint64 TotalVisibleMemorySize;
+  uint32 Reboot();
+  uint32 Shutdown();
+};
+
+[Abstract,Locale(1033),UUID("{8502C566-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Process : CIM_LogicalElement
+{
+  [Propagated("CIM_OperatingSystem.CSCreationClassName") : ToSubclass,Key : ToSubclass,Read : ToSubclass,MaxLen(256) : ToSubclass] string CSCreationClassName;
+  [Propagated("CIM_OperatingSystem.CSName") : ToSubclass,Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string CSName;
+  [Key : ToSubclass,Read : ToSubclass,MaxLen(256) : ToSubclass] string CreationClassName;
+  [Fixed : ToSubclass,read : ToSubclass] datetime CreationDate;
+  [Key : ToSubclass DisableOverride,Read : ToSubclass,MaxLen(256) : ToSubclass] string Handle;
+  [Units("Milliseconds") : ToSubclass,read : ToSubclass] uint64 KernelModeTime;
+  [Propagated("CIM_OperatingSystem.CreationClassName") : ToSubclass,Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string OSCreationClassName;
+  [Propagated("CIM_OperatingSystem.Name") : ToSubclass,Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string OSName;
+  [read : ToSubclass] uint32 Priority;
+  [read : ToSubclass] uint16 ExecutionState;
+  [Read : ToSubclass] datetime TerminationDate;
+  [Units("Milliseconds") : ToSubclass,read : ToSubclass] uint64 UserModeTime;
+  [read : ToSubclass,Units("Bytes") : ToSubclass] uint64 WorkingSetSize;
+};
+
+[Dynamic,Provider("CIMWin32"),Locale(1033),UUID("{8502C542-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_ProcessExecutable : CIM_Dependency
+{
+  [read : ToSubclass,key : ToSubclass DisableOverride] CIM_DataFile Ref Antecedent;
+  [read : ToSubclass,key : ToSubclass DisableOverride] CIM_Process Ref Dependent;
+  [read : ToSubclass,Schema("Win32")] uint32 GlobalProcessCount;
+  [read : ToSubclass,Schema("Win32")] uint32 ProcessCount;
+  [DEPRECATED : ToSubclass,read : ToSubclass,Schema("Win32")] uint32 ModuleInstance;
+  [read : ToSubclass,Schema("Win32")] uint64 BaseAddress;
+};
+
+[Abstract,Locale(1033),UUID("{8502C571-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Thread : CIM_LogicalElement
+{
+  [read : ToSubclass,Propagated("CIM_Process.CSCreationClassName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CSCreationClassName;
+  [read : ToSubclass,Propagated("CIM_Process.CSName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CSName;
+  [read : ToSubclass,Propagated("CIM_Process.OSCreationClassName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string OSCreationClassName;
+  [read : ToSubclass,Propagated("CIM_Process.OSName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string OSName;
+  [read : ToSubclass,Propagated("CIM_Process.CreationClassName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string ProcessCreationClassName;
+  [read : ToSubclass,Propagated("CIM_Process.Handle") : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] string ProcessHandle;
+  [read : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string CreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] string Handle;
+  [read : ToSubclass] uint32 Priority;
+  [read : ToSubclass] uint16 ExecutionState;
+  [read : ToSubclass,Units("MilliSeconds") : ToSubclass] uint64 UserModeTime;
+  [read : ToSubclass,Units("MilliSeconds") : ToSubclass] uint64 KernelModeTime;
+};
+
+[Abstract,Locale(1033),UUID("{8502C572-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Setting
+{
+  [read : ToSubclass,MaxLen(256) : ToSubclass] string SettingID;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string Caption;
+  [read : ToSubclass] string Description;
+};
+
+[Dynamic,Provider("CIMWin32"),Locale(1033),UUID("{1008CCEA-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_VideoControllerResolution : CIM_Setting
+{
+  [Read : ToSubclass,Override("SettingID"),Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] string SettingID;
+  [Read : ToSubclass,Units("Pixels") : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentHorizontalResolution"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.2"} : ToSubclass] uint32 HorizontalResolution;
+  [Read : ToSubclass,Units("Pixels") : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentVerticalResolution"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.3"} : ToSubclass] uint32 VerticalResolution;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentRefreshRate"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.4"} : ToSubclass] uint32 RefreshRate;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,ModelCorrespondence{"CIM_VideoController.MinRefreshRate"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.6"} : ToSubclass] uint32 MinRefreshRate;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,ModelCorrespondence{"CIM_VideoController.MaxRefreshRate"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.7"} : ToSubclass] uint32 MaxRefreshRate;
+  [Read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentScanMode"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.5"} : ToSubclass] uint16 ScanMode;
+  [Read : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentNumberOfColors"} : ToSubclass] uint64 NumberOfColors;
+};
+
+[Association : ToSubclass DisableOverride,Abstract,Aggregation : ToSubclass,Locale(1033),UUID("{8502C573-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_Component
+{
+  [Read : ToSubclass,Aggregate : ToSubclass] CIM_ManagedSystemElement Ref GroupComponent;
+  [read : ToSubclass] CIM_ManagedSystemElement Ref PartComponent;
+};
+
+[Dynamic,Provider("CIMWin32"),Locale(1033),UUID("{6F9D4740-8324-11d2-AAD9-006008C78BC7}")] 
+class CIM_DirectoryContainsFile : CIM_Component
+{
+  [read : ToSubclass,Key : ToSubclass DisableOverride,Override("GroupComponent"),Max(1) : ToSubclass] CIM_Directory Ref GroupComponent;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,Override("PartComponent")] CIM_DataFile Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{527BC6CE-BAFE-11d2-85E5-0000F8102E5F}")] 
+class CIM_SystemComponent : CIM_Component
+{
+  [Override("GroupComponent"),read : ToSubclass] CIM_System Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_ManagedSystemElement Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{4B2C30D7-BAFE-11d2-85E5-0000F8102E5F}")] 
+class CIM_SystemDevice : CIM_SystemComponent
+{
+  [read : ToSubclass,Override("GroupComponent"),Max(1) : ToSubclass,Min(1) : ToSubclass] CIM_System Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_LogicalDevice Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{8502C575-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_InstalledOS : CIM_SystemComponent
+{
+  [read : ToSubclass,Override("GroupComponent"),Min(1) : ToSubclass,Max(1) : ToSubclass] CIM_ComputerSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_OperatingSystem Ref PartComponent;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Operating System|001.4"} : ToSubclass] boolean PrimaryOS;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{8502C577-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_ElementSetting
+{
+  [read : ToSubclass] CIM_ManagedSystemElement Ref Element;
+  [read : ToSubclass] CIM_Setting Ref Setting;
+};
+
+[Abstract,Locale(1033),UUID("{1008CCEB-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_VideoSetting : CIM_ElementSetting
+{
+  [Read : ToSubclass,Override("Element")] CIM_VideoController Ref Element;
+  [Read : ToSubclass,Override("Setting")] CIM_VideoControllerResolution Ref Setting;
+};
+
+[Abstract,Locale(1033),UUID("{1008CCEC-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_MonitorResolution : CIM_Setting
+{
+  [Read : ToSubclass,Override("SettingID"),Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] string SettingID;
+  [Read : ToSubclass,Units("Pixels") : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentHorizontalResolution"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.2"} : ToSubclass] uint32 HorizontalResolution;
+  [Read : ToSubclass,Units("Pixels") : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentVerticalResolution"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.3"} : ToSubclass] uint32 VerticalResolution;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentRefreshRate"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.4"} : ToSubclass] uint32 RefreshRate;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,ModelCorrespondence{"CIM_VideoController.MinRefreshRate"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.6"} : ToSubclass] uint32 MinRefreshRate;
+  [Read : ToSubclass,Units("Hertz") : ToSubclass,ModelCorrespondence{"CIM_VideoController.MaxRefreshRate"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.7"} : ToSubclass] uint32 MaxRefreshRate;
+  [Read : ToSubclass,ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,ModelCorrespondence{"CIM_VideoController.CurrentScanMode"} : ToSubclass,MappingStrings{"MIF.DMTF|Monitor Resolutions|002.5"} : ToSubclass] uint16 ScanMode;
+};
+
+[Abstract,Locale(1033),UUID("{1008CCED-7BFF-11D2-AAD2-006008C78BC7}")] 
+class CIM_MonitorSetting : CIM_ElementSetting
+{
+  [Read : ToSubclass,Key : ToSubclass DisableOverride,Override("Element")] CIM_DesktopMonitor Ref Element;
+  [Read : ToSubclass,Key : ToSubclass DisableOverride,Override("Setting")] CIM_MonitorResolution Ref Setting;
+};
+
+[Abstract,Locale(1033),UUID("{8502C578-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_AssociatedBattery : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_Battery Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{8502C579-5FBB-11D2-AAC1-006008C78BC7}")] 
+class CIM_AllocatedResource : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_SystemResource Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{956597A1-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_StatisticalInformation
+{
+  [read : ToSubclass,MaxLen(256) : ToSubclass] string Name;
+  [read : ToSubclass] string Description;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string Caption;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{956597A3-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_Statistics
+{
+  [read : ToSubclass] CIM_StatisticalInformation Ref Stats;
+  [read : ToSubclass] CIM_ManagedSystemElement Ref Element;
+};
+
+[Abstract,Locale(1033),UUID("{117FDB8C-D025-11d2-85F5-0000F8102E5F}")] 
+class CIM_DeviceErrorCounts : CIM_StatisticalInformation
+{
+  [Read : ToSubclass,Propagated("CIM_LogicalDevice.SystemCreationClassName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string SystemCreationClassName;
+  [Read : ToSubclass,Propagated("CIM_LogicalDevice.SystemName") : ToSubclass,Key : ToSubclass,MaxLen(256) : ToSubclass] string SystemName;
+  [Read : ToSubclass,Propagated("CIM_LogicalDevice.CreationClassName") : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] string DeviceCreationClassName;
+  [Read : ToSubclass,Propagated("CIM_LogicalDevice.DeviceID") : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(64) : ToSubclass] string DeviceID;
+  [Read : ToSubclass,Override("Name"),Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] string Name;
+  [Read : ToSubclass] uint64 IndeterminateErrorCount;
+  [Read : ToSubclass,MappingStrings{"MIF.DMTF|Operational State|003.7"} : ToSubclass] uint64 CriticalErrorCount;
+  [Read : ToSubclass,MappingStrings{"MIF.DMTF|Operational State|003.8"} : ToSubclass] uint64 MajorErrorCount;
+  [Read : ToSubclass] uint64 MinorErrorCount;
+  [Read : ToSubclass,MappingStrings{"MIF.DMTF|Operational State|003.9"} : ToSubclass] uint64 WarningCount;
+  uint32 ResetCounter([IN] uint16 SelectedCounter);
+};
+
+[Abstract,Locale(1033),UUID("{2D79F3A0-D025-11d2-85F5-0000F8102E5F}")] 
+class CIM_ErrorCountersForDevice : CIM_Statistics
+{
+  [Read : ToSubclass,Override("Stats"),Weak : ToSubclass] CIM_DeviceErrorCounts Ref Stats;
+  [Read : ToSubclass,Override("Element"),Min(1) : ToSubclass,Max(1) : ToSubclass] CIM_LogicalDevice Ref Element;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{956597A4-7D80-11D2-AAD3-006008C78BC7}")] 
+class CIM_RelatedStatistics
+{
+  [read : ToSubclass] CIM_StatisticalInformation Ref Stats;
+  [read : ToSubclass] CIM_StatisticalInformation Ref RelatedStats;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B61-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalElement : CIM_ManagedSystemElement
+{
+  [Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string CreationClassName;
+  [read : ToSubclass,MaxLen(256) : ToSubclass] string Manufacturer;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string Model;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string SKU;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string SerialNumber;
+  [Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass] string Tag;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string Version;
+  [read : ToSubclass,MaxLen(256) : ToSubclass] string PartNumber;
+  [read : ToSubclass] string OtherIdentifyingInfo;
+  [read : ToSubclass] boolean PoweredOn;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B62-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Realizes : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_PhysicalElement Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_LogicalDevice Ref Dependent;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B63-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Product
+{
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string Caption;
+  [read : ToSubclass] string Description;
+  [Key : ToSubclass DisableOverride,read : ToSubclass,MaxLen(64) : ToSubclass,MappingStrings{"MIF.DMTF|ComponentID|001.4"} : ToSubclass] string IdentifyingNumber;
+  [Key : ToSubclass DisableOverride,read : ToSubclass,MaxLen(256) : ToSubclass,MappingStrings{"MIF.DMTF|ComponentID|001.2"} : ToSubclass] string Name;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string SKUNumber;
+  [Key : ToSubclass,read : ToSubclass,MaxLen(256) : ToSubclass,MappingStrings{"MIF.DMTF|ComponentID|001.1"} : ToSubclass] string Vendor;
+  [Key : ToSubclass DisableOverride,read : ToSubclass,MaxLen(64) : ToSubclass,MappingStrings{"MIF.DMTF|ComponentID|001.3"} : ToSubclass] string Version;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B64-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Memory : CIM_StorageExtent
+{
+  [Override("ErrorMethodology"),MappingStrings{"MIF.DMTF|Physical Memory Array|001.7"} : ToSubclass,read : ToSubclass] string ErrorMethodology;
+  [Units("KiloBytes") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Array Mapped Addresses|001.3", "MIF.DMTF|Memory Device Mapped Addresses|001.4"} : ToSubclass,read : ToSubclass] uint64 StartingAddress;
+  [Units("KiloBytes") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Array Mapped Addresses|001.4", "MIF.DMTF|Memory Device Mapped Addresses|001.5"} : ToSubclass,read : ToSubclass] uint64 EndingAddress;
+  [ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"} : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.12", "MIF.DMTF|Physical Memory Array|001.8"} : ToSubclass,ModelCorrespondence{"CIM_Memory.OtherErrorDescription"} : ToSubclass,read : ToSubclass] uint16 ErrorInfo;
+  [ModelCorrespondence{"CIM_Memory.ErrorInfo"} : ToSubclass,read : ToSubclass] string OtherErrorDescription;
+  [MappingStrings{"MIF.DMTF|Memory Device|002.12", "MIF.DMTF|Physical Memory Array|001.8"} : ToSubclass,read : ToSubclass] boolean CorrectableError;
+  [read : ToSubclass] datetime ErrorTime;
+  [ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.15", "MIF.DMTF|Physical Memory Array|001.10"} : ToSubclass,read : ToSubclass] uint16 ErrorAccess;
+  [Units("Bits") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.16", "MIF.DMTF|Physical Memory Array|001.11"} : ToSubclass,read : ToSubclass] uint32 ErrorTransferSize;
+  [ArrayType("Indexed") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.17", "MIF.DMTF|Physical Memory Array|001.12"} : ToSubclass,read : ToSubclass,MAX(64)] uint8 ErrorData[];
+  [read : ToSubclass] uint16 ErrorDataOrder;
+  [MappingStrings{"MIF.DMTF|Memory Device|002.19", "MIF.DMTF|Memory Device|002.20", "MIF.DMTF|Physical Memory Array|001.14"} : ToSubclass,read : ToSubclass] uint64 ErrorAddress;
+  [read : ToSubclass] boolean SystemLevelAddress;
+  [Units("Bytes") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.21", "MIF.DMTF|Physical Memory Array|001.15"} : ToSubclass,read : ToSubclass] uint64 ErrorResolution;
+  [MappingStrings{"MIF.DMTF|Memory Device|002.18", "MIF.DMTF|Physical Memory Array|001.13"} : ToSubclass,read : ToSubclass,MAX(64)] uint8 AdditionalErrorData[];
+};
+
+[Abstract,Locale(1033),UUID("{18074AFA-F0FE-11d2-8617-0000F8102E5F}")] 
+class CIM_NonVolatileStorage : CIM_Memory
+{
+  [read : ToSubclass] boolean IsWriteable;
+};
+
+[Abstract,Locale(1033),UUID("{36851DFE-F0FE-11d2-8617-0000F8102E5F}")] 
+class CIM_VolatileStorage : CIM_Memory
+{
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|System Resource Memory Info|001.5"} : ToSubclass] boolean Cacheable;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|System Resource Memory Info|001.6"} : ToSubclass] uint16 CacheType;
+};
+
+[abstract,Locale(1033),UUID("{464FFAB0-946F-11d2-AAE2-006008C78BC7}")] 
+class CIM_AssociatedMemory : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_Memory Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_LogicalDevice Ref Dependent;
+};
+
+[abstract,Locale(1033),UUID("{464FFAB1-946F-11d2-AAE2-006008C78BC7}")] 
+class CIM_AssociatedProcessorMemory : CIM_AssociatedMemory
+{
+  [Override("Dependent"),read : ToSubclass] CIM_Processor Ref Dependent;
+  [Units("MegaHertz") : ToSubclass,read : ToSubclass] uint32 BusSpeed;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B65-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_CacheMemory : CIM_Memory
+{
+  [ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.2"} : ToSubclass,read : ToSubclass] uint16 Level;
+  [ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.5"} : ToSubclass,read : ToSubclass] uint16 WritePolicy;
+  [ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.9"} : ToSubclass,read : ToSubclass] uint16 CacheType;
+  [Units("Bytes") : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.10"} : ToSubclass,read : ToSubclass] uint32 LineSize;
+  [ValueMap{"1", "2", "3", "4", "5", "6", "7", "8"} : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.12"} : ToSubclass,read : ToSubclass] uint16 ReplacementPolicy;
+  [ValueMap{"1", "2", "3", "4", "5", "6"} : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.13"} : ToSubclass,read : ToSubclass] uint16 ReadPolicy;
+  [Units("Seconds") : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.14"} : ToSubclass,read : ToSubclass] uint32 FlushTimer;
+  [ValueMap{"1", "2", "3", "4", "5", "6", "7", "8"} : ToSubclass,MappingStrings{"MIF.DMTF|System Cache|003.15"} : ToSubclass,read : ToSubclass] uint16 Associativity;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B66-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_AlarmDevice : CIM_LogicalDevice
+{
+  [read : ToSubclass] boolean AudibleAlarm;
+  [read : ToSubclass] boolean VisibleAlarm;
+  [read : ToSubclass] uint16 Urgency;
+  uint32 SetUrgency([IN] uint16 RequestedUrgency);
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B67-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Location
+{
+  [Key : ToSubclass DisableOverride,read : ToSubclass,MaxLen(256) : ToSubclass] string Name;
+  [Key : ToSubclass DisableOverride,read : ToSubclass,MaxLen(256) : ToSubclass] string PhysicalPosition;
+  [read : ToSubclass,MaxLen(1024) : ToSubclass] string Address;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{FAF76B68-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalElementLocation
+{
+  [read : ToSubclass] CIM_PhysicalElement Ref Element;
+  [Max(1) : ToSubclass,read : ToSubclass] CIM_Location Ref PhysicalLocation;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B69-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalCapacity
+{
+  [read : ToSubclass,MaxLen(256) : ToSubclass] string Name;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] string Caption;
+  [read : ToSubclass] string Description;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{FAF76B6A-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ElementCapacity
+{
+  [read : ToSubclass] CIM_PhysicalCapacity Ref Capacity;
+  [Min(1) : ToSubclass,read : ToSubclass] CIM_PhysicalElement Ref Element;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B6B-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_MemoryCapacity : CIM_PhysicalCapacity
+{
+  [Override("Name"),Key : ToSubclass DisableOverride,read : ToSubclass] string Name;
+  [Key : ToSubclass DisableOverride,read : ToSubclass,ModelCorrespondence{"CIM_PhysicalMemory.MemoryType"} : ToSubclass] uint16 MemoryType;
+  [Units("KiloBytes") : ToSubclass,read : ToSubclass] uint64 MinimumMemoryCapacity;
+  [Units("KiloBytes") : ToSubclass,read : ToSubclass] uint64 MaximumMemoryCapacity;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B6C-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ReplacementSet
+{
+  [Key : ToSubclass DisableOverride,read : ToSubclass,MaxLen(256) : ToSubclass] string Name;
+  [read : ToSubclass] string Description;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Aggregation : ToSubclass,Locale(1033),UUID("{FAF76B6D-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ParticipatesInSet
+{
+  [Aggregate : ToSubclass,read : ToSubclass] CIM_ReplacementSet Ref Set;
+  [read : ToSubclass] CIM_PhysicalElement Ref Element;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B6E-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalPackage : CIM_PhysicalElement
+{
+  [read : ToSubclass] boolean Removable;
+  [read : ToSubclass] boolean Replaceable;
+  [read : ToSubclass] boolean HotSwappable;
+  [Units("Inches") : ToSubclass,read : ToSubclass] real32 Height;
+  [Units("Inches") : ToSubclass,read : ToSubclass] real32 Depth;
+  [Units("Inches") : ToSubclass,read : ToSubclass] real32 Width;
+  [Units("Pounds") : ToSubclass,read : ToSubclass] real32 Weight;
+  uint32 IsCompatible([IN] CIM_PhysicalElement Ref ElementToCheck);
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B6F-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Container : CIM_Component
+{
+  [Override("GroupComponent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalPackage Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_PhysicalElement Ref PartComponent;
+  [read : ToSubclass] string LocationWithinContainer;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B70-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalFrame : CIM_PhysicalPackage
+{
+  [read : ToSubclass] string CableManagementStrategy;
+  [ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_PhysicalFrame.ServiceDescriptions"} : ToSubclass,read : ToSubclass] uint16 ServicePhilosophy[];
+  [ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_PhysicalFrame.ServicePhilosophy"} : ToSubclass,read : ToSubclass] string ServiceDescriptions[];
+  [read : ToSubclass] boolean LockPresent;
+  [read : ToSubclass] boolean AudibleAlarm;
+  [read : ToSubclass] boolean VisibleAlarm;
+  [ValueMap{"1", "2", "3", "4", "5"} : ToSubclass,MappingStrings{"MIF.DMTF|Physical Container Global Table|002.12"} : ToSubclass,ModelCorrespondence{"CIM_PhysicalFrame.BreachDescription"} : ToSubclass,read : ToSubclass] uint16 SecurityBreach;
+  [ModelCorrespondence{"CIM_PhysicalFrame.SecurityBreach"} : ToSubclass,read : ToSubclass] string BreachDescription;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B71-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Rack : CIM_PhysicalFrame
+{
+  [Override("Height"),read : ToSubclass,Units("Us") : ToSubclass] real32 Height;
+  [ModelCorrespondence{"CIM_Rack.CountryDesignation"} : ToSubclass,read : ToSubclass] uint16 TypeOfRack;
+  [ModelCorrespondence{"CIM_Rack.TypeOfRack"} : ToSubclass,read : ToSubclass] string CountryDesignation;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B72-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Chassis : CIM_PhysicalFrame
+{
+  [read : ToSubclass] uint16 NumberOfPowerCords;
+  [Units("Amps at 120 Volts") : ToSubclass,read : ToSubclass] sint16 CurrentRequiredOrProduced;
+  [Units("BTU per Hour") : ToSubclass,read : ToSubclass] uint16 HeatGeneration;
+  [ArrayType("Indexed") : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"} : ToSubclass,MappingStrings{"MIF.DMTF|Physical Container Global Table|002.1"} : ToSubclass,ModelCorrespondence{"CIM_Chassis.TypeDescriptions"} : ToSubclass,read : ToSubclass] uint16 ChassisTypes[];
+  [ArrayType("Indexed") : ToSubclass,ModelCorrespondence{"CIM_Chassis.ChassisTypes"} : ToSubclass,read : ToSubclass] string TypeDescriptions[];
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B73-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ChassisInRack : CIM_Container
+{
+  [Override("GroupComponent"),read : ToSubclass,Max(1) : ToSubclass] CIM_Rack Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_Chassis Ref PartComponent;
+  [Units("Us") : ToSubclass,read : ToSubclass] uint16 BottomU;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B74-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PackageInChassis : CIM_Container
+{
+  [Override("GroupComponent"),Max(1) : ToSubclass,read : ToSubclass] CIM_Chassis Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_PhysicalPackage Ref PartComponent;
+};
+
+[Abstract,MappingStrings{"MIF.DMTF|Dynamic States|001.2"} : ToSubclass,Locale(1033),UUID("{FAF76B75-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Docked : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass,Max(1) : ToSubclass] CIM_Chassis Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass,Max(1) : ToSubclass] CIM_Chassis Ref Dependent;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B76-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Card : CIM_PhysicalPackage
+{
+  [read : ToSubclass] boolean HostingBoard;
+  [read : ToSubclass] string SlotLayout;
+  [read : ToSubclass] boolean RequiresDaughterBoard;
+  [ModelCorrespondence{"CIM_Card.RequirementsDescription"} : ToSubclass,read : ToSubclass] boolean SpecialRequirements;
+  [ModelCorrespondence{"CIM_Card.SpecialRequirements"} : ToSubclass,read : ToSubclass] string RequirementsDescription;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B77-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_CardOnCard : CIM_Container
+{
+  [Override("GroupComponent"),read : ToSubclass,Max(1) : ToSubclass] CIM_Card Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_Card Ref PartComponent;
+  [read : ToSubclass] string MountOrSlotDescription;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B78-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalComponent : CIM_PhysicalElement
+{
+  [read : ToSubclass] boolean Removable;
+  [read : ToSubclass] boolean Replaceable;
+  [read : ToSubclass] boolean HotSwappable;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B79-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PackagedComponent : CIM_Container
+{
+  [Override("GroupComponent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalPackage Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_PhysicalComponent Ref PartComponent;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B7A-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Chip : CIM_PhysicalComponent
+{
+  [read : ToSubclass] uint16 FormFactor;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B7B-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalMemory : CIM_Chip
+{
+  [read : ToSubclass,Override("FormFactor"),MappingStrings{"MIF.DMTF|Memory Device|002.6"} : ToSubclass] uint16 FormFactor;
+  [MappingStrings{"MIF.DMTF|Memory Device|002.9"} : ToSubclass,read : ToSubclass] uint16 MemoryType;
+  [Units("Bits") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.7"} : ToSubclass,read : ToSubclass] uint16 TotalWidth;
+  [Units("Bits") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.8"} : ToSubclass,read : ToSubclass] uint16 DataWidth;
+  [Units("NanoSeconds") : ToSubclass,read : ToSubclass] uint32 Speed;
+  [Units("Bytes") : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.5"} : ToSubclass,read : ToSubclass] uint64 Capacity;
+  [MaxLen(64) : ToSubclass,MappingStrings{"MIF.DMTF|Memory Device|002.4"} : ToSubclass,read : ToSubclass] string BankLabel;
+  [MappingStrings{"MIF.DMTF|Memory Device Mapped Addresses|001.6"} : ToSubclass,read : ToSubclass] uint32 PositionInRow;
+  [MappingStrings{"MIF.DMTF|Memory Device Mapped Addresses|001.7"} : ToSubclass,read : ToSubclass] uint32 InterleavePosition;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B7C-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_MemoryOnCard : CIM_PackagedComponent
+{
+  [Override("GroupComponent"),read : ToSubclass,Max(1) : ToSubclass] CIM_Card Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_PhysicalMemory Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B7D-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalMedia : CIM_PhysicalComponent
+{
+  [Units("Bytes") : ToSubclass,read : ToSubclass] uint64 Capacity;
+  [ModelCorrespondence{"CIM_PhysicalMedia.MediaDescription"} : ToSubclass,read : ToSubclass] uint16 MediaType;
+  [ModelCorrespondence{"CIM_PhysicalMedia.MediaType"} : ToSubclass,read : ToSubclass] string MediaDescription;
+  [read : ToSubclass] boolean WriteProtectOn;
+  [read : ToSubclass] boolean CleanerMedia;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B7E-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_MemoryWithMedia : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_PhysicalMemory Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_PhysicalMedia Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B7F-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_RealizesPExtent : CIM_Realizes
+{
+  [Override("Antecedent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalMedia Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_PhysicalExtent Ref Dependent;
+  [read : ToSubclass] uint64 StartingAddress;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B80-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_RealizesDiskPartition : CIM_Realizes
+{
+  [Override("Antecedent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalMedia Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_DiskPartition Ref Dependent;
+  [read : ToSubclass] uint64 StartingAddress;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B81-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_RealizesAggregatePExtent : CIM_Realizes
+{
+  [Override("Antecedent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalMedia Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_AggregatePExtent Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B82-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalLink : CIM_PhysicalElement
+{
+  [Units("Feet") : ToSubclass,read : ToSubclass] real64 MaxLength;
+  [Units("Feet") : ToSubclass,read : ToSubclass] real64 Length;
+  [read : ToSubclass] boolean Wired;
+  [read : ToSubclass] uint16 MediaType;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B83-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ElementsLinked : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_PhysicalLink Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_PhysicalElement Ref Dependent;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B84-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PhysicalConnector : CIM_PhysicalElement
+{
+  [read : ToSubclass] string ConnectorPinout;
+  [read : ToSubclass] uint16 ConnectorType[];
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B85-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ConnectedTo : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_PhysicalConnector Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_PhysicalConnector Ref Dependent;
+};
+
+[abstract,Locale(1033),UUID("{FAF76B86-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_Slot : CIM_PhysicalConnector
+{
+  [Override("ConnectorType"),read : ToSubclass,MappingStrings{"MIF.DMTF|System Slot|004.2"} : ToSubclass] uint16 ConnectorType[];
+  [read : ToSubclass] boolean SupportsHotPlug;
+  [Units("Inches") : ToSubclass,read : ToSubclass] real32 HeightAllowed;
+  [Units("Inches") : ToSubclass,read : ToSubclass] real32 LengthAllowed;
+  [Units("Bits") : ToSubclass,MappingStrings{"MIF.DMTF|System Slot|004.3"} : ToSubclass,read : ToSubclass] uint16 MaxDataWidth;
+  [MappingStrings{"MIF.DMTF|System Slot|004.9"} : ToSubclass,read : ToSubclass] uint16 VccMixedVoltageSupport[];
+  [MappingStrings{"MIF.DMTF|System Slot|004.10"} : ToSubclass,read : ToSubclass] uint16 VppMixedVoltageSupport[];
+  [Units("MilliWatts") : ToSubclass,MappingStrings{"MIF.DMTF|System Slot|004.11"} : ToSubclass,read : ToSubclass] uint32 ThermalRating;
+  [ModelCorrespondence{"CIM_Slot.PurposeDescription"} : ToSubclass,read : ToSubclass] boolean SpecialPurpose;
+  [ModelCorrespondence{"CIM_Slot.SpecialPurpose"} : ToSubclass,read : ToSubclass] string PurposeDescription;
+  [read : ToSubclass] uint16 Number;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B87-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_SlotInSlot : CIM_ConnectedTo
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_Slot Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass,Max(1) : ToSubclass] CIM_Slot Ref Dependent;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{FAF76B88-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_AdjacentSlots
+{
+  [read : ToSubclass] CIM_Slot Ref SlotA;
+  [read : ToSubclass] CIM_Slot Ref SlotB;
+  [Units("Inches") : ToSubclass,read : ToSubclass] real32 DistanceBetweenSlots;
+  [read : ToSubclass] boolean SharedSlots;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B89-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PackageInSlot : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_Slot Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalPackage Ref Dependent;
+};
+
+[Abstract,MappingStrings{"MIF.DMTF|System Slot|004.4"} : ToSubclass,Locale(1033),UUID("{FAF76B8A-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_CardInSlot : CIM_PackageInSlot
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_Slot Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass,Max(1) : ToSubclass] CIM_Card Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B8B-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_LinkHasConnector : CIM_Component
+{
+  [Override("GroupComponent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalLink Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_PhysicalConnector Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B8C-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ConnectorOnPackage : CIM_Container
+{
+  [Override("GroupComponent"),read : ToSubclass,Max(1) : ToSubclass] CIM_PhysicalPackage Ref GroupComponent;
+  [Override("PartComponent"),read : ToSubclass] CIM_PhysicalConnector Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B8D-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_ComputerSystemPackage : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_PhysicalPackage Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_UnitaryComputerSystem Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{FAF76B8E-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PackageCooling : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_CoolingDevice Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_PhysicalPackage Ref Dependent;
+};
+
+[Abstract,Aggregation : ToSubclass,Locale(1033),UUID("{FAF76B8F-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PackageTempSensor : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_TemperatureSensor Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_PhysicalPackage Ref Dependent;
+};
+
+[Abstract,Aggregation : ToSubclass,Locale(1033),UUID("{FAF76B90-798C-11D2-AAD1-006008C78BC7}")] 
+class CIM_PackageAlarm : CIM_Dependency
+{
+  [Override("Antecedent"),read : ToSubclass] CIM_AlarmDevice Ref Antecedent;
+  [Override("Dependent"),read : ToSubclass] CIM_PhysicalPackage Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{2F648FBA-DB22-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_CompatibleProduct
+{
+  [read : ToSubclass] STRING CompatibilityDescription;
+  [read : ToSubclass] CIM_Product Ref CompatibleProduct;
+  [read : ToSubclass] CIM_Product Ref Product;
+};
+
+[Abstract,Locale(1033),UUID("{A361A7AE-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_OSProcess : CIM_Component
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("GroupComponent")] CIM_OperatingSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_Process Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{B7E6042C-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_ProcessThread : CIM_Component
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("GroupComponent")] CIM_Process Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_Thread Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{9B81340A-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_ComputerSystemResource : CIM_SystemComponent
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("GroupComponent")] CIM_ComputerSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent")] CIM_SystemResource Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{9B81340B-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_ComputerSystemDMA : CIM_ComputerSystemResource
+{
+  [read : ToSubclass,Override("GroupComponent")] CIM_ComputerSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_DMA Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{A2EFC896-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_ComputerSystemIRQ : CIM_ComputerSystemResource
+{
+  [read : ToSubclass] CIM_ComputerSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_IRQ Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{A2EFC897-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_ComputerSystemMappedIO : CIM_ComputerSystemResource
+{
+  [read : ToSubclass] CIM_ComputerSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_MemoryMappedIO Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{4C51D7AE-DB22-11d2-85FC-0000F8102E5F}")] 
+class CIM_Configuration
+{
+  [read : ToSubclass,MaxLen(64) : ToSubclass] STRING Caption;
+  [read : ToSubclass] STRING Description;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] STRING Name;
+};
+
+[Abstract,Locale(1033),UUID("{2280CB02-DB35-11d2-85FC-0000F8102E5F}")] 
+class CIM_AssociatedAlarm : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_AlarmDevice Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{306F88F2-DB35-11d2-85FC-0000F8102E5F}")] 
+class CIM_AssociatedCooling : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_CoolingDevice Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{29B273F2-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_AssociatedSupplyCurrentSensor : CIM_AssociatedSensor
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_CurrentSensor Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_PowerSupply Ref Dependent;
+  [read : ToSubclass] UINT16 MonitoringRange;
+};
+
+[Abstract,Locale(1033),UUID("{327ABD78-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_AssociatedSupplyVoltageSensor : CIM_AssociatedSensor
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_VoltageSensor Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_PowerSupply Ref Dependent;
+  [read : ToSubclass] UINT16 MonitoringRange;
+};
+
+[Abstract,Locale(1033),UUID("{524ED194-DB35-11d2-85FC-0000F8102E5F}")] 
+class CIM_BIOSLoadedInNV : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_NonVolatileStorage Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_BIOSElement Ref Dependent;
+  [read : ToSubclass] UINT64 EndingAddress;
+  [read : ToSubclass] UINT64 StartingAddress;
+};
+
+[Abstract,Locale(1033),UUID("{7CE7448E-E3D4-11d2-8601-0000F8102E5F}")] 
+class CIM_SCSIInterface : CIM_ControlledBy
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_SCSIController Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+  [read : ToSubclass] UINT32 SCSIRetries;
+  [read : ToSubclass] UINT32 SCSITimeouts;
+};
+
+[Abstract,Locale(1033),UUID("{8B309BDA-E3D4-11d2-8601-0000F8102E5F}")] 
+class CIM_SerialInterface : CIM_ControlledBy
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_SerialController Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+  [read : ToSubclass] UINT16 FlowControlInfo;
+  [read : ToSubclass,Units("Bits") : ToSubclass] UINT16 NumberOfStopBits;
+  [read : ToSubclass] UINT16 ParityInfo;
+};
+
+[Abstract,Locale(1033),UUID("{290FC242-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_DeviceServiceImplementation : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_LogicalDevice Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_Service Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{36363AAA-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_DeviceSoftware : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_SoftwareElement Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+  [read : ToSubclass,ModelCorrespondence{"CIM_DeviceSoftware.PurposeDescription"} : ToSubclass] UINT16 Purpose;
+  [read : ToSubclass,ModelCorrespondence{"CIM_DeviceSoftware.Purpose"} : ToSubclass] STRING PurposeDescription;
+};
+
+[Abstract,Locale(1033),UUID("{576C3C56-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_HostedAccessPoint : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent"),Max(1) : ToSubclass,Min(1) : ToSubclass] CIM_System Ref Antecedent;
+  [read : ToSubclass,Override("Dependent"),Weak : ToSubclass] CIM_ServiceAccessPoint Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{83B2A7AA-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_HostedService : CIM_Dependency
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("Antecedent")] CIM_System Ref Antecedent;
+  [read : ToSubclass,Override("Dependent"),Weak : ToSubclass] CIM_Service Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{1F2EA300-DB37-11d2-85FC-0000F8102E5F}")] 
+class CIM_RunningOS : CIM_Dependency
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Override("Antecedent")] CIM_OperatingSystem Ref Antecedent;
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("Dependent")] CIM_ComputerSystem Ref Dependent;
+};
+
+[Abstract,Aggregation : ToSubclass,Association : ToSubclass DisableOverride,Locale(1033),UUID("{A228E208-DB22-11d2-85FC-0000F8102E5F}")] 
+class CIM_DependencyContext
+{
+  [read : ToSubclass,Aggregate : ToSubclass] CIM_Configuration Ref Context;
+  [read : ToSubclass] CIM_Dependency Ref Dependency;
+};
+
+[Abstract,Locale(1033),UUID("{FC049DCE-DB29-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_ElementConfiguration
+{
+  [read : ToSubclass] CIM_Configuration Ref Configuration;
+  [read : ToSubclass] CIM_ManagedSystemElement Ref Element;
+};
+
+[Abstract,Locale(1033),UUID("{778C74EE-DB2A-11d2-85FC-0000F8102E5F}")] 
+class CIM_FRU
+{
+  [read : ToSubclass,MaxLen(64) : ToSubclass] STRING Caption;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|FRU|002.3"} : ToSubclass] STRING Description;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MappingStrings{"MIF.DMTF|FRU|002.6"} : ToSubclass,MaxLen(64) : ToSubclass] STRING FRUNumber;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MappingStrings{"MIF.DMTF|FRU|002.7"} : ToSubclass,MaxLen(64) : ToSubclass] STRING IdentifyingNumber;
+  [read : ToSubclass,MaxLen(256) : ToSubclass] STRING Name;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|FRU|002.8"} : ToSubclass,MaxLen(64) : ToSubclass] STRING RevisionLevel;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MappingStrings{"MIF.DMTF|FRU|002.4"} : ToSubclass,MaxLen(256) : ToSubclass] STRING Vendor;
+};
+
+[Abstract,Locale(1033),UUID("{87FEEDCA-DB2A-11d2-85FC-0000F8102E5F}"),Aggregation : ToSubclass,Association : ToSubclass DisableOverride] 
+class CIM_FRUIncludesProduct
+{
+  [read : ToSubclass] CIM_Product Ref Component;
+  [read : ToSubclass,Aggregate : ToSubclass,Max(1) : ToSubclass] CIM_FRU Ref FRU;
+};
+
+[Abstract,Locale(1033),UUID("{977E36CA-DB2A-11d2-85FC-0000F8102E5F}"),Aggregation : ToSubclass,Association : ToSubclass DisableOverride] 
+class CIM_FRUPhysicalElements
+{
+  [read : ToSubclass] CIM_PhysicalElement Ref Component;
+  [read : ToSubclass,Aggregate : ToSubclass,Max(1) : ToSubclass] CIM_FRU Ref FRU;
+};
+
+[Abstract,Locale(1033),UUID("{4DA18760-E3D0-11d2-8601-0000F8102E5F}")] 
+class CIM_FileSystem : CIM_LogicalElement
+{
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Partition|002.4"} : ToSubclass,Units("Bytes") : ToSubclass] UINT64 AvailableSpace;
+  [read : ToSubclass,Units("Bytes") : ToSubclass] UINT64 BlockSize;
+  [read : ToSubclass] BOOLEAN CasePreserved;
+  [read : ToSubclass] BOOLEAN CaseSensitive;
+  [read : ToSubclass] UINT16 CodeSet[];
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Partition|002.7"} : ToSubclass] STRING CompressionMethod;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] STRING CreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Propagated("CIM_ComputerSystem.CreationClassName") : ToSubclass] STRING CSCreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Propagated("CIM_ComputerSystem.Name") : ToSubclass] STRING CSName;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Partition|002.8"} : ToSubclass] STRING EncryptionMethod;
+  [read : ToSubclass,Units("Bytes") : ToSubclass] UINT64 FileSystemSize;
+  [read : ToSubclass] UINT32 MaxFileNameLength;
+  [read : ToSubclass,MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrFSAccess"} : ToSubclass] BOOLEAN ReadOnly;
+  [read : ToSubclass,MappingStrings{"MIB.IETF|HOST-RESOURCES-MIB.hrFSMountPoint"} : ToSubclass] STRING Root;
+};
+
+[Abstract,Locale(1033),UUID("{A2EFC898-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_HostedFileSystem : CIM_SystemComponent
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("GroupComponent")] CIM_ComputerSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_FileSystem Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{5F5B101E-DB35-11d2-85FC-0000F8102E5F}")] 
+class CIM_BootOSFromFS : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_FileSystem Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_OperatingSystem Ref Dependent;
+};
+
+
+[Abstract,Locale(1033),UUID("{10458E26-DB37-11d2-85FC-0000F8102E5F}")] 
+class CIM_ResidesOnExtent : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_StorageExtent Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_FileSystem Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{4A626026-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_FileStorage : CIM_Component
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("GroupComponent")] CIM_FileSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent"),Weak : ToSubclass] CIM_LogicalFile Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{5B6C820A-E3D0-11d2-8601-0000F8102E5F}")] 
+class CIM_LocalFileSystem : CIM_FileSystem
+{
+};
+
+[Abstract,Locale(1033),UUID("{673E0A2C-E3D0-11d2-8601-0000F8102E5F}")] 
+class CIM_JobDestination : CIM_LogicalElement
+{
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] STRING CreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Propagated("CIM_System.CreationClassName") : ToSubclass] STRING SystemCreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Propagated("CIM_System.Name") : ToSubclass] STRING SystemName;
+};
+
+[Abstract,Locale(1033),UUID("{7880DD16-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_HostedJobDestination : CIM_Dependency
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass,Override("Antecedent")] CIM_System Ref Antecedent;
+  [read : ToSubclass,Override("Dependent"),Weak : ToSubclass] CIM_JobDestination Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{8D079BEE-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_JobDestinationJobs : CIM_Dependency
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Override("Antecedent")] CIM_JobDestination Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_Job Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{7250D62E-E3D0-11d2-8601-0000F8102E5F}")] 
+class CIM_ManagementController : CIM_Controller
+{
+};
+
+[Abstract,Locale(1033),UUID("{7BB67AE8-E3D0-11d2-8601-0000F8102E5F}")] 
+class CIM_PCIController : CIM_Controller
+{
+};
+
+[Abstract,Locale(1033),UUID("{F62037D8-E3D0-11d2-8601-0000F8102E5F}")] 
+class CIM_MagnetoOpticalDrive : CIM_MediaAccessDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{FFB58B9A-E3D0-11d2-8601-0000F8102E5F}")] 
+class CIM_WORMDrive : CIM_MediaAccessDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{07F12A62-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_Scanner : CIM_LogicalDevice
+{
+};
+
+[Abstract,Locale(1033),UUID("{11140D44-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_BinarySensor : CIM_Sensor
+{
+  [read : ToSubclass] BOOLEAN CurrentReading;
+  [read : ToSubclass] BOOLEAN ExpectedReading;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] STRING InterpretationOfFalse;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] STRING InterpretationOfTrue;
+};
+
+[Abstract,Locale(1033),UUID("{1BF00330-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_DiscreteSensor : CIM_Sensor
+{
+  [read : ToSubclass,MaxLen(64) : ToSubclass] STRING AcceptableValues[];
+  [read : ToSubclass,MaxLen(64) : ToSubclass] STRING CurrentReading;
+  [read : ToSubclass,MaxLen(64) : ToSubclass] STRING PossibleValues[];
+};
+
+[Abstract,Locale(1033),UUID("{237D964E-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_MultiStateSensor : CIM_Sensor
+{
+};
+
+[Abstract,Locale(1033),UUID("{A2ABF536-DB35-11d2-85FC-0000F8102E5F}")] 
+class CIM_CollectionOfSensors : CIM_Component
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Override("GroupComponent")] CIM_MultiStateSensor Ref GroupComponent;
+  [read : ToSubclass,Min(2) : ToSubclass,Override("PartComponent")] CIM_BinarySensor Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{237D964F-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_Tachometer : CIM_NumericSensor
+{
+  [read : ToSubclass,Override("CurrentReading"),Units("Revolutions per Minute") : ToSubclass] sint32 CurrentReading;
+  [read : ToSubclass,Override("NominalReading"),Units("Revolutions per Minute") : ToSubclass] sint32 NominalReading;
+  [read : ToSubclass,Override("NormalMax"),Units("Revolutions per Minute") : ToSubclass] sint32 NormalMax;
+  [read : ToSubclass,Override("NormalMin"),Units("Revolutions per Minute") : ToSubclass] sint32 NormalMin;
+  [read : ToSubclass,Override("MaxReadable"),Units("Revolutions per Minute") : ToSubclass] sint32 MaxReadable;
+  [read : ToSubclass,Override("MinReadable"),Units("Revolutions per Minute") : ToSubclass] sint32 MinReadable;
+  [read : ToSubclass,Override("Resolution"),Units("Tenths of Revolutions per Minute") : ToSubclass] uint32 Resolution;
+  [read : ToSubclass,Override("Tolerance"),Units("Revolutions per Minute") : ToSubclass] sint32 Tolerance;
+  [read : ToSubclass,Override("LowerThresholdNonCritical"),Units("Revolutions per Minute") : ToSubclass] sint32 LowerThresholdNonCritical;
+  [read : ToSubclass,Override("UpperThresholdNonCritical"),Units("Revolutions per Minute") : ToSubclass] sint32 UpperThresholdNonCritical;
+  [read : ToSubclass,Override("LowerThresholdCritical"),Units("Revolutions per Minute") : ToSubclass] sint32 LowerThresholdCritical;
+  [read : ToSubclass,Override("UpperThresholdCritical"),Units("Revolutions per Minute") : ToSubclass] sint32 UpperThresholdCritical;
+  [read : ToSubclass,Override("LowerThresholdFatal"),Units("Revolutions per Minute") : ToSubclass] sint32 LowerThresholdFatal;
+  [read : ToSubclass,Override("UpperThresholdFatal"),Units("Revolutions per Minute") : ToSubclass] sint32 UpperThresholdFatal;
+};
+
+[Abstract,Locale(1033),UUID("{2D0E255C-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_AggregatePSExtent : CIM_StorageExtent
+{
+};
+
+[Abstract,Locale(1033),UUID("{35E25AA4-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_ProtectedSpaceExtent : CIM_StorageExtent
+{
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Protected Space Extent|001.6"} : ToSubclass,Units("Bytes") : ToSubclass] UINT64 UserDataStripeDepth;
+};
+
+[Abstract,Locale(1033),UUID("{451FE14C-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_PSExtentBasedOnPExtent : CIM_BasedOn
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Override("Antecedent")] CIM_PhysicalExtent Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_ProtectedSpaceExtent Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{35E25AA5-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_VolumeSet : CIM_StorageExtent
+{
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Volume Set|001.5"} : ToSubclass] UINT64 PSExtentInterleaveDepth;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Volume Set|001.4"} : ToSubclass] UINT64 PSExtentStripeLength;
+};
+
+[Abstract,Locale(1033),UUID("{3A608798-E3D3-11d2-8601-0000F8102E5F}")] 
+class CIM_LogicalDiskBasedOnVolumeSet : CIM_BasedOn
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Override("Antecedent")] CIM_VolumeSet Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_LogicalDisk Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{4333BD60-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_DeviceFile : CIM_LogicalFile
+{
+};
+
+[Abstract,Locale(1033),UUID("{05D1FFF2-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_DeviceAccessedByFile : CIM_Dependency
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_DeviceFile Ref Antecedent;
+  [read : ToSubclass,Max(1) : ToSubclass,Override("Dependent")] CIM_LogicalDevice Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{4C3A040A-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_RedundancyGroup : CIM_LogicalElement
+{
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] STRING CreationClassName;
+  [read : ToSubclass] UINT16 RedundancyStatus;
+};
+
+[Abstract,Locale(1033),UUID("{FB9D6E62-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_RedundancyComponent : CIM_Component
+{
+  [read : ToSubclass,Override("GroupComponent")] CIM_RedundancyGroup Ref GroupComponent;
+  [read : ToSubclass] CIM_ManagedSystemElement Ref PartComponent;
+};
+
+
+[Abstract,Locale(1033),UUID("{570ED2E8-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_ExtraCapacityGroup : CIM_RedundancyGroup
+{
+  [read : ToSubclass] UINT32 MinNumberNeeded;
+};
+
+[Abstract,Locale(1033),UUID("{64B86CA6-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_SpareGroup : CIM_RedundancyGroup
+{
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{64C1726E-DB21-11d2-85FC-0000F8102E5F}")] 
+class CIM_ActsAsSpare
+{
+  [Read : ToSubclass] CIM_SpareGroup Ref Group;
+  [Read : ToSubclass] BOOLEAN HotStandby;
+  [Read : ToSubclass] CIM_ManagedSystemElement Ref Spare;
+};
+
+[Abstract,Locale(1033),UUID("{6D477DBC-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_StorageRedundancyGroup : CIM_RedundancyGroup
+{
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Redundancy Group|001.2"} : ToSubclass] UINT16 TypeOfAlgorithm;
+};
+
+[Abstract,Locale(1033),UUID("{154E66D8-DB35-11d2-85FC-0000F8102E5F}")] 
+class CIM_AggregateRedundancyComponent : CIM_RedundancyComponent
+{
+  [read : ToSubclass,Override("GroupComponent")] CIM_StorageRedundancyGroup Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent")] CIM_AggregatePExtent Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{AD3C1FA2-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_PExtentRedundancyComponent : CIM_RedundancyComponent
+{
+  [read : ToSubclass,Override("GroupComponent")] CIM_StorageRedundancyGroup Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent")] CIM_PhysicalExtent Ref PartComponent;
+};
+
+[Abstract,Locale(1033),UUID("{76148BF6-E3D1-11d2-8601-0000F8102E5F}")] 
+class CIM_VideoBIOSElement : CIM_SoftwareElement
+{
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Video BIOS|001.5"} : ToSubclass] BOOLEAN IsShadowed;
+};
+
+[Abstract,Locale(1033),UUID("{120BB700-DB2B-11d2-85FC-0000F8102E5F}")] 
+class CIM_ApplicationSystem : CIM_System
+{
+};
+
+[Abstract,Locale(1033),UUID("{EB98A1B2-DB36-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_ProductFRU
+{
+  [read : ToSubclass] CIM_FRU Ref FRU;
+  [read : ToSubclass,Max(1) : ToSubclass] CIM_Product Ref Product;
+};
+
+[Abstract,Locale(1033),UUID("{3E24D5A6-DB2B-11d2-85FC-0000F8102E5F}"),Aggregation : ToSubclass,Association : ToSubclass DisableOverride] 
+class CIM_ProductParentChild
+{
+  [read : ToSubclass] CIM_Product Ref Child;
+  [read : ToSubclass,Aggregate : ToSubclass] CIM_Product Ref Parent;
+};
+
+[Abstract,Locale(1033),UUID("{502F00A0-DB2B-11d2-85FC-0000F8102E5F}"),Aggregation : ToSubclass,Association : ToSubclass DisableOverride] 
+class CIM_ProductPhysicalElements
+{
+  [read : ToSubclass] CIM_PhysicalElement Ref Component;
+  [read : ToSubclass,Aggregate : ToSubclass,Max(1) : ToSubclass] CIM_Product Ref Product;
+};
+
+[Abstract,Locale(1033),UUID("{65878E68-DB2B-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_ProductProductDependency
+{
+  [read : ToSubclass] CIM_Product Ref DependentProduct;
+  [read : ToSubclass] CIM_Product Ref RequiredProduct;
+  [read : ToSubclass] UINT16 TypeOfDependency;
+};
+
+[Abstract,Locale(1033),UUID("{F0B752E8-DB30-11d2-85FC-0000F8102E5F}"),Aggregation : ToSubclass,Association : ToSubclass DisableOverride] 
+class CIM_SettingContext
+{
+  [read : ToSubclass,Aggregate : ToSubclass] CIM_Configuration Ref Context;
+  [read : ToSubclass] CIM_Setting Ref Setting;
+};
+
+[Abstract,Locale(1033),UUID("{71312AB6-DB31-11d2-85FC-0000F8102E5F}")] 
+class CIM_StorageError
+{
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Propagated("CIM_StorageExtent.CreationClassName") : ToSubclass] STRING DeviceCreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(64) : ToSubclass,Propagated("CIM_StorageExtent.DeviceID") : ToSubclass] STRING DeviceID;
+  [read : ToSubclass] UINT64 EndingAddress;
+  [read : ToSubclass,Key : ToSubclass DisableOverride] UINT64 StartingAddress;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Propagated("CIM_StorageExtent.SystemCreationClassName") : ToSubclass] STRING SystemCreationClassName;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Propagated("CIM_StorageExtent.SystemName") : ToSubclass] STRING SystemName;
+};
+
+[Abstract,Locale(1033),UUID("{5CC70817-DB31-11d2-85FC-0000F8102E5F}"),Aggregation : ToSubclass,Association : ToSubclass DisableOverride] 
+class CIM_StorageDefect
+{
+  [read : ToSubclass,Weak : ToSubclass] CIM_StorageError Ref Error;
+  [read : ToSubclass,Aggregate : ToSubclass,Max(1) : ToSubclass,Min(1) : ToSubclass] CIM_StorageExtent Ref Extent;
+};
+
+[Abstract,Locale(1033),UUID("{80321714-DB31-11d2-85FC-0000F8102E5F}")] 
+class CIM_SupportAccess
+{
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|FRU|002.11", "MIF.DMTF|FRU|002.12"} : ToSubclass] STRING CommunicationInfo;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Support|001.5"} : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8"} : ToSubclass] UINT16 CommunicationMode;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Support|001.3"} : ToSubclass] STRING Description;
+  [read : ToSubclass,MappingStrings{"MIF.DMTF|Support|001.2"} : ToSubclass,MaxLen(64) : ToSubclass] STRING Locale;
+  [read : ToSubclass,Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass] STRING SupportAccessId;
+};
+
+[Abstract,Locale(1033),UUID("{8D6D6880-DB2B-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_ProductSupport
+{
+  [read : ToSubclass] CIM_Product Ref Product;
+  [read : ToSubclass] CIM_SupportAccess Ref Support;
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{75BCF4F8-DB46-11D2-B4C8-80080C7B6371}")] 
+class CIM_Export
+{
+  [Read : ToSubclass] CIM_Directory Ref Directory;
+  [Max(1) : ToSubclass,Read : ToSubclass] CIM_LocalFileSystem Ref LocalFS;
+  [Read : ToSubclass] STRING ExportedDirectoryName;
+};
+
+[Abstract,Locale(1033),UUID("{75BCF4F9-DB46-11D2-B4C8-80080C7B6371}")] 
+class CIM_RemoteFileSystem : CIM_FileSystem
+{
+};
+
+[Abstract,Locale(1033),UUID("{75BCF4FB-DB46-11D2-B4C8-80080C7B6371}")] 
+class CIM_NFS : CIM_RemoteFileSystem
+{
+  [Read : ToSubclass] BOOLEAN AttributeCaching;
+  [Read : ToSubclass,Units("Seconds") : ToSubclass] UINT16 AttributeCachingForDirectoriesMax;
+  [Read : ToSubclass,Units("Seconds") : ToSubclass] UINT16 AttributeCachingForDirectoriesMin;
+  [Read : ToSubclass,Units("Seconds") : ToSubclass] UINT16 AttributeCachingForRegularFilesMax;
+  [Read : ToSubclass,Units("Seconds") : ToSubclass] UINT16 AttributeCachingForRegularFilesMin;
+  [Read : ToSubclass] BOOLEAN ForegroundMount;
+  [Read : ToSubclass] BOOLEAN HardMount;
+  [Read : ToSubclass] BOOLEAN Interrupt;
+  [Read : ToSubclass] UINT16 MountFailureRetries;
+  [Read : ToSubclass,Units("Bytes") : ToSubclass] UINT64 ReadBufferSize;
+  [Read : ToSubclass] UINT16 RetransmissionAttempts;
+  [Read : ToSubclass,Units("Tenths of Seconds") : ToSubclass] UINT32 RetransmissionTimeout;
+  [Read : ToSubclass] UINT32 ServerCommunicationPort;
+  [Read : ToSubclass,Units("Bytes") : ToSubclass] UINT64 WriteBufferSize;
+};
+
+[Abstract,Locale(1033),UUID("{75BCF4F6-DB46-11D2-B4C8-80080C7B6371}")] 
+class CIM_Mount : CIM_Dependency
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Override("Antecedent")] CIM_Directory Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_NFS Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{75BCF4FE-DB46-11D2-B4C8-80080C7B6371}")] 
+class CIM_BootService : CIM_Service
+{
+};
+
+[Abstract,Locale(1033),UUID("{6DAE7092-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_HostedBootService : CIM_HostedService
+{
+  CIM_System Ref Antecedent;
+  [Override("Dependent")] CIM_BootService Ref Dependent;
+};
+
+[Locale(1033),UUID("{E527D7F2-E3D4-11d2-8601-0000F8102E5F}"),abstract] 
+class CIM_SoftwareFeature : CIM_LogicalElement
+{
+  [Propagated("CIM_Product.IdentifyingNumber") : ToSubclass,Key : ToSubclass DisableOverride,Maxlen(64) : ToSubclass,Read : ToSubclass,MappingStrings{"DMTF|ComponentID|001.4"} : ToSubclass] string IdentifyingNumber;
+  [Propagated("CIM_Product.Name") : ToSubclass,Key : ToSubclass DisableOverride,Maxlen(256) : ToSubclass,Read : ToSubclass,MappingStrings{"DMTF|ComponentID|001.2"} : ToSubclass] string ProductName;
+  [Propagated("CIM_Product.Vendor") : ToSubclass,Key : ToSubclass,Read : ToSubclass,Maxlen(256) : ToSubclass,MappingStrings{"DMTF|ComponentID|001.1"} : ToSubclass] string Vendor;
+  [Propagated("CIM_Product.Version") : ToSubclass,Key : ToSubclass DisableOverride,Maxlen(64) : ToSubclass,MappingStrings{"DMTF|ComponentID|001.3"} : ToSubclass,Read : ToSubclass] string Version;
+  [key : ToSubclass DisableOverride,override("Name"),Maxlen(256) : ToSubclass,Read : ToSubclass] string Name;
+};
+
+[Abstract,Locale(1033),UUID("{96B4C734-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_OperatingSystemSoftwareFeature : CIM_Component
+{
+  [read : ToSubclass,Override("GroupComponent")] CIM_OperatingSystem Ref GroupComponent;
+  [read : ToSubclass,Override("PartComponent")] CIM_SoftwareFeature Ref PartComponent;
+};
+
+[Locale(1033),UUID("{7A9135CA-DB21-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_Check
+{
+  [Propagated("CIM_SoftwareElement.Name") : ToSubclass,key : ToSubclass,maxlen(256) : ToSubclass,Read : ToSubclass] string Name;
+  [Propagated("CIM_SoftwareElement.Version") : ToSubclass,key : ToSubclass,Maxlen(64) : ToSubclass,Read : ToSubclass,Mappingstrings{"MIF.DMTF|ComponentID|001.3"} : ToSubclass] string Version;
+  [Propagated("CIM_SoftwareElement.SoftwareElementState") : ToSubclass,key : ToSubclass,Read : ToSubclass] uint16 SoftwareElementState;
+  [Propagated("CIM_SoftwareElement.SoftwareElementID") : ToSubclass,key : ToSubclass,maxlen(256) : ToSubclass,Read : ToSubclass] string SoftwareElementID;
+  [Propagated("CIM_SoftwareElement.TargetOperatingSystem") : ToSubclass,key : ToSubclass,Read : ToSubclass,Mappingstrings{"MIF.DMTF|Software Component Information|002.5"} : ToSubclass] uint16 TargetOperatingSystem;
+  [key : ToSubclass DisableOverride,maxlen(256) : ToSubclass,Read : ToSubclass] string CheckID;
+  [Read : ToSubclass] string Description;
+  [Maxlen(64) : ToSubclass,Read : ToSubclass] string Caption;
+  [Read : ToSubclass] boolean CheckMode;
+  uint32 Invoke();
+};
+
+[Locale(1033),UUID("{A524EE6E-DB29-11d2-85FC-0000F8102E5F}"),abstract] 
+class CIM_DirectorySpecification : CIM_Check
+{
+  [Read : ToSubclass,Mappingstrings{"MIF.DMTF|Location|001.2"} : ToSubclass] uint16 DirectoryType;
+  [Maxlen(1024) : ToSubclass,Read : ToSubclass] string DirectoryPath;
+};
+
+[Locale(1033),UUID("{41F377B0-DB2A-11d2-85FC-0000F8102E5F}"),abstract] 
+class CIM_FileSpecification : CIM_Check
+{
+  [Fixed : ToSubclass,maxlen(1024) : ToSubclass,Read : ToSubclass] string Name;
+  [Fixed : ToSubclass,Read : ToSubclass] datetime CreateTimeStamp;
+  [units("KiloBytes") : ToSubclass,Read : ToSubclass] uint64 FileSize;
+  [Mappingstrings{"MIF.DMTF|Software Signature|002.4"} : ToSubclass,Read : ToSubclass] uint32 CheckSum;
+  [Mappingstrings{"MIF.DMTF|Software Signature|002.5"} : ToSubclass,Read : ToSubclass] uint32 CRC1;
+  [Mappingstrings{"MIF.DMTF|Software Signature|002.6"} : ToSubclass,Read : ToSubclass] uint32 CRC2;
+  [maxlen(16) : ToSubclass,Read : ToSubclass] string MD5Checksum;
+};
+
+[Abstract,Locale(1033),UUID("{BCD64CCE-DB29-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_DirectorySpecificationFile
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(0) : ToSubclass] CIM_DirectorySpecification Ref DirectorySpecification;
+  [read : ToSubclass,Min(0) : ToSubclass] CIM_FileSpecification Ref FileSpecification;
+};
+
+[Locale(1033),UUID("{2F156260-DB21-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_Action
+{
+  [Propagated("CIM_SoftwareElement.Name") : ToSubclass,key : ToSubclass,maxlen(256) : ToSubclass,Read : ToSubclass] string Name;
+  [Propagated("CIM_SoftwareElement.Version") : ToSubclass,key : ToSubclass,Maxlen(64) : ToSubclass,Read : ToSubclass,Mappingstrings{"MIF.DMTF|ComponentID|001.3"} : ToSubclass] string Version;
+  [Propagated("CIM_SoftwareElement.SoftwareElementState") : ToSubclass,key : ToSubclass,Read : ToSubclass] uint16 SoftwareElementState;
+  [Propagated("CIM_SoftwareElement.SoftwareElementID") : ToSubclass,key : ToSubclass,maxlen(256) : ToSubclass,Read : ToSubclass] string SoftwareElementID;
+  [Propagated("CIM_SoftwareElement.TargetOperatingSystem") : ToSubclass,key : ToSubclass,Read : ToSubclass,Mappingstrings{"MIF.DMTF|Software Component Information|002.5"} : ToSubclass] uint16 TargetOperatingSystem;
+  [key : ToSubclass DisableOverride,maxlen(256) : ToSubclass,Read : ToSubclass] string ActionID;
+  [Read : ToSubclass] uint16 Direction;
+  [maxlen(64) : ToSubclass,Read : ToSubclass] string Caption;
+  [Read : ToSubclass] string Description;
+  uint32 Invoke();
+};
+
+[Locale(1033),UUID("{8875A39E-DB29-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_DirectoryAction : CIM_Action
+{
+  [maxlen(1024) : ToSubclass,Read : ToSubclass] string DirectoryName;
+};
+
+[Locale(1033),UUID("{87946AAC-DB22-11d2-85FC-0000F8102E5F}"),abstract] 
+class CIM_CreateDirectoryAction : CIM_DirectoryAction
+{
+};
+
+[Locale(1033),Abstract,UUID("{B272D2EA-DB22-11d2-85FC-0000F8102E5F}")] 
+class CIM_RemoveDirectoryAction : CIM_DirectoryAction
+{
+  [Read : ToSubclass] boolean MustBeEmpty;
+};
+
+[Locale(1033),UUID("{2B590C72-DB2A-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_FileAction : CIM_Action
+{
+};
+
+[Abstract,Locale(1033),UUID("{55D5B446-DB2A-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_FromDirectoryAction
+{
+  [read : ToSubclass,Min(0) : ToSubclass] CIM_FileAction Ref FileName;
+  [read : ToSubclass,Max(1) : ToSubclass,Min(0) : ToSubclass] CIM_DirectoryAction Ref SourceDirectory;
+};
+
+[Abstract,Locale(1033),UUID("{6715375E-DB2A-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_FromDirectorySpecification
+{
+  [read : ToSubclass,Min(0) : ToSubclass] CIM_FileAction Ref FileName;
+  [read : ToSubclass,Max(1) : ToSubclass,Min(0) : ToSubclass] CIM_DirectorySpecification Ref SourceDirectory;
+};
+
+[Locale(1033),UUID("{73553260-DB22-11d2-85FC-0000F8102E5F}"),abstract] 
+class CIM_CopyFileAction : CIM_FileAction
+{
+  [maxlen(1024) : ToSubclass,Read : ToSubclass] string Source;
+  [maxlen(1024) : ToSubclass,Read : ToSubclass] string Destination;
+  [Read : ToSubclass] boolean DeleteAfterCopy;
+};
+
+[Abstract,Locale(1033),UUID("{B58D172E-DB31-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_ToDirectoryAction
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(0) : ToSubclass] CIM_DirectoryAction Ref DestinationDirectory;
+  [read : ToSubclass,Min(0) : ToSubclass] CIM_CopyFileAction Ref FileName;
+};
+
+
+[Abstract,Locale(1033),UUID("{C3E25A3C-DB31-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride] 
+class CIM_ToDirectorySpecification
+{
+  [read : ToSubclass,Max(1) : ToSubclass,Min(0) : ToSubclass] CIM_DirectorySpecification Ref DestinationDirectory;
+  [read : ToSubclass,Min(0) : ToSubclass] CIM_CopyFileAction Ref FileName;
+};
+
+[Locale(1033),UUID("{C75D89F8-DB30-11d2-85FC-0000F8102E5F}"),abstract] 
+class CIM_RemoveFileAction : CIM_FileAction
+{
+  [maxlen(1024) : ToSubclass,Read : ToSubclass] string File;
+};
+
+[Locale(1033),UUID("{4B82D255-E3CD-11d2-8601-0000F8102E5F}"),Association : ToSubclass DisableOverride,Aggregation : ToSubclass,Abstract] 
+class CIM_SoftwareElementActions
+{
+  [Min(1) : ToSubclass,Max(1) : ToSubclass,Aggregate : ToSubclass,Read : ToSubclass] CIM_SoftwareElement Ref Element;
+  [Min(0) : ToSubclass,Weak : ToSubclass,Read : ToSubclass] CIM_Action Ref Action;
+};
+
+[Locale(1033),UUID("{A91081E2-DB37-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_SoftwareFeatureSoftwareElements : CIM_Component
+{
+  [Min(0) : ToSubclass,Read : ToSubclass] CIM_SoftwareFeature Ref GroupComponent;
+  [Min(1) : ToSubclass,Read : ToSubclass] CIM_SoftwareElement Ref PartComponent;
+};
+
+[Locale(1033),UUID("{7C39D12A-DB2B-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride,Aggregation : ToSubclass,Abstract] 
+class CIM_ProductSoftwareFeatures
+{
+  [Min(0) : ToSubclass,Aggregate : ToSubclass,Read : ToSubclass] CIM_Product Ref Product;
+  [Min(1) : ToSubclass,Weak : ToSubclass,Read : ToSubclass] CIM_SoftwareFeature Ref Component;
+};
+
+[Locale(1033),UUID("{A7B05028-DB2A-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride,Abstract] 
+class CIM_InstalledSoftwareElement
+{
+  [Min(0) : ToSubclass,Read : ToSubclass] CIM_SoftwareElement Ref Software;
+  [Min(0) : ToSubclass,Read : ToSubclass] CIM_ComputerSystem Ref System;
+};
+
+[Locale(1033),UUID("{24783E8A-DB31-11d2-85FC-0000F8102E5F}"),Association : ToSubclass DisableOverride,Aggregation : ToSubclass,Abstract] 
+class CIM_SoftwareElementChecks
+{
+  [Min(1) : ToSubclass,Max(1) : ToSubclass,Aggregate : ToSubclass,Read : ToSubclass] CIM_SoftwareElement Ref Element;
+  [Min(0) : ToSubclass,Weak : ToSubclass,Read : ToSubclass] CIM_Check Ref Check;
+  [Read : ToSubclass] uint16 Phase;
+};
+
+[Locale(1033),UUID("{714C00BA-DB37-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_ServiceAccessBySAP : CIM_Dependency
+{
+  [Override("Antecedent"),Read : ToSubclass] CIM_Service Ref Antecedent;
+  [Override("Dependent"),Read : ToSubclass] CIM_ServiceAccessPoint Ref Dependent;
+};
+
+[Locale(1033),UUID("{149ADDEE-DB2A-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_ExecuteProgram : CIM_Action
+{
+  [Read : ToSubclass] STRING CommandLine;
+  [maxlen(1024) : ToSubclass,Read : ToSubclass] STRING ProgramPath;
+};
+
+[Locale(1033),UUID("{ECDE0B90-DB2A-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_ModifySettingAction : CIM_Action
+{
+  [Read : ToSubclass] UINT16 ActionType;
+  [Maxlen(256) : ToSubclass,Read : ToSubclass] STRING EntryName;
+  [Read : ToSubclass] STRING EntryValue;
+  [Maxlen(1024) : ToSubclass,Read : ToSubclass] STRING FileName;
+  [Maxlen(256) : ToSubclass,Read : ToSubclass] STRING SectionKey;
+};
+
+[Locale(1033),UUID("{AB08D884-DB30-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_RebootAction : CIM_Action
+{
+};
+
+[Abstract,Association : ToSubclass DisableOverride,Locale(1033),UUID("{F127E50E-E3E0-11d2-8601-0000F8102E5F}")] 
+class CIM_ActionSequence
+{
+  [Max(1) : ToSubclass,Min(0) : ToSubclass,Read : ToSubclass] CIM_Action Ref Next;
+  [Max(1) : ToSubclass,Min(0) : ToSubclass,Read : ToSubclass] CIM_Action Ref Prior;
+};
+
+[Locale(1033),UUID("{D3B1178A-DB29-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_DiskSpaceCheck : CIM_Check
+{
+  [read : ToSubclass,ModelCorrespondence{"CIM_FileSystem.AvailableSpace "} : ToSubclass,units("KiloBytes") : ToSubclass] UINT64 AvailableDiskSpace;
+};
+
+[Locale(1033),UUID("{DC0E96FE-DB2A-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_MemoryCheck : CIM_Check
+{
+  [ModelCorrespondence{"CIM_OperatingSystem.FreePhysicalMemory"} : ToSubclass,units("KiloBytes") : ToSubclass,Read : ToSubclass] UINT64 MemorySize;
+};
+
+[Locale(1033),UUID("{FEE8368A-DB2A-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_OSVersionCheck : CIM_Check
+{
+  [maxlen(64) : ToSubclass,ModelCorrespondence{"CIM_OperatingSystem.Version"} : ToSubclass,Read : ToSubclass] STRING MaximumVersion;
+  [maxlen(64) : ToSubclass,ModelCorrespondence{"CIM_OperatingSystem.Version"} : ToSubclass,Read : ToSubclass] STRING MinimumVersion;
+};
+
+[Locale(1033),UUID("{DC1D8140-DB30-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_SettingCheck : CIM_Check
+{
+  [Read : ToSubclass] UINT16 CheckType;
+  [Maxlen(256) : ToSubclass,Read : ToSubclass] STRING EntryName;
+  [Read : ToSubclass] STRING EntryValue;
+  [Maxlen(1024) : ToSubclass,Read : ToSubclass] STRING FileName;
+  [Maxlen(256) : ToSubclass,Read : ToSubclass] STRING SectionKey;
+};
+
+[Locale(1033),UUID("{4D23FBD0-DB31-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_SoftwareElementVersionCheck : CIM_Check
+{
+  [maxlen(64) : ToSubclass,ModelCorrespondence{"CIM_SoftwareElement.Version"} : ToSubclass,Read : ToSubclass] STRING LowerSoftwareElementVersion;
+  [maxlen(256) : ToSubclass,ModelCorrespondence{"CIM_SoftwareElement.Name"} : ToSubclass,Read : ToSubclass] STRING SoftwareElementName;
+  [maxlen(64) : ToSubclass,ModelCorrespondence{"CIM_SoftwareElement.SoftwareElementState"} : ToSubclass,Read : ToSubclass] UINT16 SoftwareElementStateDesired;
+  [maxlen(64) : ToSubclass,ModelCorrespondence{"CIM_SoftwareElement.TargetOperatingSystem"} : ToSubclass,Read : ToSubclass] UINT16 TargetOperatingSystemDesired;
+  [maxlen(64) : ToSubclass,ModelCorrespondence{"CIM_SoftwareElement.Version"} : ToSubclass,Read : ToSubclass] STRING UpperSoftwareElementVersion;
+};
+
+[Locale(1033),UUID("{A5AE701E-DB31-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_SwapSpaceCheck : CIM_Check
+{
+  [ModelCorrespondence{"CIM_OperatingSystem.TotalSwapSpaceSize"} : ToSubclass,units("KiloBytes") : ToSubclass,Read : ToSubclass] UINT64 SwapSpaceSize;
+};
+
+[Locale(1033),UUID("{D368CA4A-DB31-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_VersionCompatibilityCheck : CIM_Check
+{
+  [Read : ToSubclass] BOOLEAN AllowDownVersion;
+  [Read : ToSubclass] BOOLEAN AllowMultipleVersions;
+  [Read : ToSubclass] BOOLEAN Reinstall;
+};
+
+[Locale(1033),UUID("{0E17B9EA-E3D3-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_ApplicationSystemSoftwareFeature : CIM_SystemComponent
+{
+  [Min(0) : ToSubclass,Override("GroupComponent"),Read : ToSubclass] CIM_ApplicationSystem Ref GroupComponent;
+  [Min(0) : ToSubclass,Override("PartComponent"),Read : ToSubclass] CIM_SoftwareFeature Ref PartComponent;
+};
+
+[Locale(1033),UUID("{1BE949DA-DB36-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_DeviceSAPImplementation : CIM_Dependency
+{
+  [Override("Antecedent"),Read : ToSubclass] CIM_LogicalDevice Ref Antecedent;
+  [Override("Dependent"),Read : ToSubclass] CIM_ServiceAccessPoint Ref Dependent;
+};
+
+[Locale(1033),UUID("{7EFCC186-DB37-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_SoftwareFeatureSAPImplementation : CIM_Dependency
+{
+  [Min(0) : ToSubclass,Override("Antecedent"),Read : ToSubclass] CIM_SoftwareFeature Ref Antecedent;
+  [Min(0) : ToSubclass,Override("Dependent"),Read : ToSubclass] CIM_ServiceAccessPoint Ref Dependent;
+};
+
+[Locale(1033),UUID("{8AC984F4-DB37-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_SoftwareFeatureServiceImplementation : CIM_Dependency
+{
+  [Min(0) : ToSubclass,Override("Antecedent"),Read : ToSubclass] CIM_SoftwareFeature Ref Antecedent;
+  [Min(0) : ToSubclass,Override("Dependent"),Read : ToSubclass] CIM_Service Ref Dependent;
+};
+
+[Locale(1033),UUID("{422D175A-E3D5-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_SAPSAPDependency : CIM_Dependency
+{
+  [Override("Antecedent"),Read : ToSubclass] CIM_ServiceAccessPoint Ref Antecedent;
+  [Override("Dependent"),Read : ToSubclass] CIM_ServiceAccessPoint Ref Dependent;
+};
+
+[Locale(1033),UUID("{88F073D8-DB35-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_ClusterServiceAccessBySAP : CIM_ServiceAccessBySAP
+{
+  [Override("Antecedent"),Read : ToSubclass] CIM_ClusteringService Ref Antecedent;
+  [Override("Dependent"),Read : ToSubclass] CIM_ClusteringSAP Ref Dependent;
+};
+
+[Locale(1033),UUID("{652E2D58-DB37-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_ServiceSAPDependency : CIM_Dependency
+{
+  [Override("Antecedent"),Read : ToSubclass] CIM_ServiceAccessPoint Ref Antecedent;
+  [Override("Dependent"),Read : ToSubclass] CIM_Service Ref Dependent;
+};
+
+[Locale(1033),UUID("{F6FEF20A-E3D2-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_BootSAP : CIM_ServiceAccessPoint
+{
+};
+
+[Abstract,Locale(1033),UUID("{625B4512-DB36-11d2-85FC-0000F8102E5F}")] 
+class CIM_HostedBootSAP : CIM_HostedAccessPoint
+{
+  [read : ToSubclass,Override("Antecedent")] CIM_UnitaryComputerSystem Ref Antecedent;
+  [read : ToSubclass,Override("Dependent")] CIM_BootSAP Ref Dependent;
+};
+
+
+[Locale(1033),UUID("{6EDF1DD2-DB35-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_BootServiceAccessBySAP : CIM_ServiceAccessBySAP
+{
+  [Override("Antecedent"),Read : ToSubclass] CIM_BootService Ref Antecedent;
+  [Override("Dependent"),Read : ToSubclass] CIM_BootSAP Ref Dependent;
+};
+
+[Locale(1033),UUID("{7D33100E-E3D3-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_BIOSFeature : CIM_SoftwareFeature
+{
+  [ArrayType("Indexed") : ToSubclass,MappingStrings{"MIF.DMTF|BIOS Characteristic|003.4"} : ToSubclass,ModelCorrespondence{"CIM_BIOSFeature.Characteristics"} : ToSubclass,Read : ToSubclass] STRING CharacteristicDescriptions[];
+  [ArrayType("Indexed") : ToSubclass,MappingStrings{"MIF.DMTF|BIOS Characteristic|003.3"} : ToSubclass,ModelCorrespondence{"CIM_BIOSFeature.CharacteristicDescriptions"} : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "910", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "160"} : ToSubclass,Read : ToSubclass] UINT16 Characteristics[];
+};
+
+[Locale(1033),UUID("{42B2EC5C-DB35-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_BIOSFeatureBIOSElements : CIM_SoftwareFeatureSoftwareElements
+{
+  [Override("GroupComponent"),Read : ToSubclass] CIM_BIOSFeature Ref GroupComponent;
+  [Override("PartComponent"),Read : ToSubclass] CIM_BIOSElement Ref PartComponent;
+};
+
+[Locale(1033),UUID("{BAE20634-E3D4-11d2-8601-0000F8102E5F}"),Abstract] 
+class CIM_VideoBIOSFeature : CIM_SoftwareFeature
+{
+  [ArrayType("Indexed") : ToSubclass,MappingStrings{"MIF.DMTF|Video BIOS Characteristic|001.4"} : ToSubclass,ModelCorrespondence{"CIM_VideoBIOSFeature.Characteristics"} : ToSubclass,Read : ToSubclass] STRING CharacteristicDescriptions[];
+  [ArrayType("Indexed") : ToSubclass,MappingStrings{"MIF.DMTF|Video BIOS Characteristic|001.3"} : ToSubclass,ModelCorrespondence{"CIM_VideoBIOSFeature.CharacteristicDescriptions"} : ToSubclass,ValueMap{"1", "2", "3", "4", "5", "6", "7", "8", "9"} : ToSubclass,Read : ToSubclass] UINT16 Characteristics[];
+};
+
+[Locale(1033),UUID("{B3F86390-DB37-11d2-85FC-0000F8102E5F}"),Abstract] 
+class CIM_VideoBIOSFeatureVideoBIOSElements : CIM_SoftwareFeatureSoftwareElements
+{
+  [Override("GroupComponent"),Read : ToSubclass] CIM_VideoBIOSFeature Ref GroupComponent;
+  [Override("PartComponent"),Read : ToSubclass] CIM_VideoBIOSElement Ref PartComponent;
+};
+
+class CIM_USBDevice : CIM_LogicalDevice
+{
+  uint16 USBVersion;
+  uint8 ClassCode;
+  uint8 SubclassCode;
+  uint8 ProtocolCode;
+  uint8 NumberOfConfigs;
+  [ModelCorrespondence{"CIM_USBDevice.CurrentAlternateSettings"} : ToSubclass] uint8 CurrentConfigValue;
+  [ModelCorrespondence{"CIM_USBDevice.CurrentConfigValue"} : ToSubclass] uint8 CurrentAlternateSettings[];
+  uint32 GetDescriptor([IN] uint8 RequestType,[IN] uint16 RequestValue,[IN] uint16 RequestIndex,[IN,OUT] uint16 RequestLength,[OUT] uint8 Buffer[]);
+};
+
+class CIM_USBHub : CIM_USBDevice
+{
+  boolean GangSwitched;
+  uint8 NumberOfPorts;
+};
+
+class CIM_USBControllerHasHub : CIM_ControlledBy
+{
+  [Override("Antecedent"),Min(1) : ToSubclass,Max(1) : ToSubclass] CIM_USBController Ref Antecedent;
+  [Override("Dependent"),Min(1) : ToSubclass] CIM_USBHub Ref Dependent;
+};
+
+[Abstract,Locale(1033),UUID("{EDCE42F9-0991-11d3-910A-00105AA630BE}")] 
+class CIM_InfraredController : CIM_Controller
+{
+};

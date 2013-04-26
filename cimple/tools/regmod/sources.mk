@@ -1,3 +1,4 @@
+regmod_PURPOSE = target
 regmod_DIR = cimple/tools/regmod
 regmod_SOURCES = main.cpp
 regmod_TARGET = regmod

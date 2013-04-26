@@ -1,3 +1,4 @@
+genmod_PURPOSE = host
 genmod_DIR = cimple/tools/genmod
 genmod_SOURCES = main.cpp
 genmod_TARGET = genmod

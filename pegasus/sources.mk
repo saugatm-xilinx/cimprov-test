@@ -36,6 +36,8 @@ CIM_SCHEMA_ROOTFILE=$(CIM_SCHEMA_DIR)/DMTF/cim_schema_$(CIM_SCHEMA_VERSION_MAJOR
 PROVIDER_LIBPATH?=$(PEGASUS_LIBDIR)
 PROVIDER_LIBRARY_SO=$(PROVIDER_LIBPATH)/lib$(PROVIDER_LIBRARY).so
 
+pegasus_PURPOSE = target
+
 pegasus_PROVIDE_LIBRARIES = pegprm \
 						    pegprovidermanager \
 					    	pegprovider \
