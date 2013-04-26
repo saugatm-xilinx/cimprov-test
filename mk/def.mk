@@ -47,7 +47,7 @@ $(2) += $$($(1)_TARGET)
 $$($(1)_OBJS) $$(patsubst %.o,%.d,$$($(1)_OBJS)) : $$(_$(1)_GENERATED)
 
 $$($(1)_TARGET) : $$(foreach d,$$($(1)_DEPENDS) $$($(1)_BUILD_DEPENDS),$$($$(d)_TARGET)) $$($(1)_OBJS) 
-$$($(1)_TARGET) : override CXXFLAGS = $$(top_CXXFLAGS) $($(1)_CXXFLAGS)
+$$($(1)_TARGET) : override CXXFLAGS = $$(top_CXXFLAGS) $$($(1)_CXXFLAGS)
 
 ifneq ($(2),STATIC_LIBRARIES)
 $$($(1)_TARGET) : override LDFLAGS = $$(top_LDFLAGS) $$($(1)_LDFLAGS) $$(_$(1)_DEP_LDFLAGS)
@@ -55,7 +55,7 @@ $$($(1)_TARGET) : override LIBRARIES = $$(filter-out $$(_$(1)_DEP_LIBRARIES),$$(
 endif
 
 $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : CPPFLAGS = $$(top_CPPFLAGS) $$($(1)_CPPFLAGS) $$(_$(1)_DEP_CPPFLAGS)
-$$($(1)_DIR)/%.o : override CXXFLAGS = $$(top_CXXFLAGS) $($(1)_CXXFLAGS)
+$$($(1)_DIR)/%.o : override CXXFLAGS = $$(top_CXXFLAGS) $$($(1)_CXXFLAGS) $$($(1)_$$(notdir $$*)_CXXFLAGS)
 endif
 
 COMPONENTS += $(1)
