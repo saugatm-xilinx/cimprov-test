@@ -26,8 +26,8 @@ override host_CPPFLAGS += -D_GNU_SOURCE -I.
 
 ifneq ($(CIM_SERVER),esxi)
 override host_CXXFLAGS += -fPIC  -pthread
-override host_CXXFLAGS += -Wall -W -Wno-unused -Werror
-override host_CXXFLAGS += -g 
+override host_CXXFLAGS += -Wall -W -Wno-unused -Werror -Wnon-virtual-dtor
+override host_CXXFLAGS += -g
 
 ifeq ($(HOST_CIMPLE_PLATFORM),LINUX_IX86_GNU)
 override host_CXXFLAGS += -m32

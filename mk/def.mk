@@ -81,7 +81,7 @@ $$($(1)_TARGET) : override LIBRARIES = $$(filter-out $$(_$(1)_DEP_LIBRARIES),$$(
 endif
 
 $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : CPPFLAGS = $$($$($(1)_PURPOSE)_CPPFLAGS) $$($(1)_CPPFLAGS) $$(_$(1)_DEP_CPPFLAGS)
-$$($(1)_DIR)/%.o : override CXXFLAGS = $$($$($(1)_PURPOSE)_CXXFLAGS) $($(1)_CXXFLAGS)
+$$($(1)_DIR)/%.o : override CXXFLAGS = $$($$($(1)_PURPOSE)_CXXFLAGS) $($(1)_CXXFLAGS) $$($(1)_$$(notdir $$*)_CXXFLAGS)
 $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : override CXX = $$($$($(1)_PURPOSE)_CXX) 
 endif
 

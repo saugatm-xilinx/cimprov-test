@@ -42,9 +42,6 @@
 
 #include <arpa/inet.h>
 
-#include <string>
-#include <vector>
-
 // Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80
 
@@ -106,6 +103,7 @@ namespace solarflare
     using cimple::CIM_EthernetPort;
     using cimple::CIM_SoftwareIdentity;
     using cimple::Ref;
+    using cimple::Array;
     using cimple::cast;
 
     ///
@@ -401,8 +399,15 @@ fail:
     {
     public:
         int     pci_fn;     ///< PCI function
-        string  dev_file;   ///< Path to device file
-        string  dev_name;   ///< Device name
+        String  dev_file;   ///< Path to device file
+        String  dev_name;   ///< Device name
+
+        /* Dummy operator to make possible using of cimple::Array */
+        bool operator== (const PortDescr &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
     };
 
     ///
@@ -415,13 +420,20 @@ fail:
         int pci_bus;                    ///< PCI bus ID
         int pci_device;                 ///< PCI device ID
 
-        vector<PortDescr> ports;        ///< NIC ports
+        Array<PortDescr> ports;         ///< NIC ports
+
+        /* Dummy operator to make possible using of cimple::Array */
+        bool operator== (const NICDescr &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
     };
 
     ///
     /// Vector of NIC descriptions.
     ///
-    typedef vector<NICDescr> NICDescrs;
+    typedef Array<NICDescr> NICDescrs;
 
     ///
     /// Device description.
@@ -433,8 +445,15 @@ fail:
         int     pci_bus_id;     ///< PCI bus ID
         int     pci_dev_id;     ///< PCI device ID
         int     pci_fn_id;      ///< PCI function
-        string  dev_name;       ///< Device name
-        string  dev_file;       ///< Path to device file
+        String  dev_name;       ///< Device name
+        String  dev_file;       ///< Path to device file
+
+        /* Dummy operator to make possible using of cimple::Array */
+        bool operator== (const DeviceDescr &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
     };
 
     ///
@@ -490,7 +509,7 @@ fail:
         int                  vendor_id;
         int                  device_class;
 
-        vector<DeviceDescr> devs;
+        Array<DeviceDescr> devs;
 
         int          rc;
 
@@ -574,7 +593,7 @@ fail:
                                                    NULL, 16);
                 }
                 tmp_dev.dev_file = device_path;
-                devs.push_back(tmp_dev);
+                devs.append(tmp_dev);
             }
             else
                 close(fd);
@@ -693,13 +712,13 @@ fail:
                     tmp_nic.pci_domain = cur_domain;
                     tmp_nic.pci_bus = cur_bus;
                     tmp_nic.pci_device = cur_dev;
-                    nics.push_back(tmp_nic);
+                    nics.append(tmp_nic);
                 }
 
                 tmp_port.pci_fn = cur_fn;
                 tmp_port.dev_file = devs[i].dev_file;
                 tmp_port.dev_name = devs[i].dev_name;
-                nics[j].ports.push_back(tmp_port);
+                nics[j].ports.append(tmp_port);
             }
 
             closedir(device_dir);
@@ -798,8 +817,8 @@ fail:
     /// @return 0 on success or error code
     ///
     static int parseVPD(uint8_t *vpd, uint32_t len,
-                        string &product_name, string &product_number,
-                        string &serial_number)
+                        String &product_name, String &product_number,
+                        String &serial_number)
     {
         int             tag_name;
         unsigned int    tag_len;
@@ -979,8 +998,8 @@ fail:
     /// @return 0 on success or error code
     ///
     static int getVPD(const char *ifname, int port_number,
-                      string &product_name, string &product_number,
-                      string &serial_number)
+                      String &product_name, String &product_number,
+                      String &serial_number)
     {
         int       rc;
         int       fd;
@@ -1180,7 +1199,7 @@ fail:
         return 0;
     }
 
-    class VMWarePort : public Port {
+    class VMwarePort : public Port {
         NIC *owner;
         unsigned pci_fn;
 
@@ -1188,7 +1207,7 @@ fail:
         String dev_file;
         String dev_name;
 
-        VMWarePort(NIC *up, unsigned i, PortDescr &descr) :
+        VMwarePort(NIC *up, unsigned i, PortDescr &descr) :
                     Port(i), owner(up), pci_fn(descr.pci_fn),
                     dev_file(descr.dev_file.c_str()),
                     dev_name(descr.dev_name.c_str())
@@ -1220,9 +1239,16 @@ fail:
         }
 
         virtual void initialize() {};
+
+        /* Dummy operator to make possible using of cimple::Array */
+        bool operator== (const VMwarePort &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
     };
 
-    bool VMWarePort::linkStatus() const
+    bool VMwarePort::linkStatus() const
     {
         struct ethtool_value edata;
 
@@ -1234,7 +1260,7 @@ fail:
         return edata.data == 1 ? true : false;
     }
 
-    Port::Speed VMWarePort::linkSpeed() const
+    Port::Speed VMwarePort::linkSpeed() const
     {
         struct ethtool_cmd edata;
 
@@ -1253,7 +1279,7 @@ fail:
         }
     }
 
-    void VMWarePort::linkSpeed(Port::Speed sp)
+    void VMwarePort::linkSpeed(Port::Speed sp)
     {
         struct ethtool_cmd edata;
 
@@ -1275,7 +1301,7 @@ fail:
                          ETHTOOL_SSET, &edata);
     }
        
-    bool VMWarePort::fullDuplex() const
+    bool VMwarePort::fullDuplex() const
     { 
         struct ethtool_cmd edata;
 
@@ -1290,7 +1316,7 @@ fail:
         return true;
     }
 
-    void VMWarePort::fullDuplex(bool fd)
+    void VMwarePort::fullDuplex(bool fd)
     { 
         struct ethtool_cmd edata;
 
@@ -1308,7 +1334,7 @@ fail:
                          ETHTOOL_SSET, &edata);
     }
 
-    bool VMWarePort::autoneg() const
+    bool VMwarePort::autoneg() const
     {
          struct ethtool_cmd edata;
 
@@ -1323,7 +1349,7 @@ fail:
         return true;          
     }
 
-    void VMWarePort::autoneg(bool an)
+    void VMwarePort::autoneg(bool an)
     {
          struct ethtool_cmd edata;
 
@@ -1341,7 +1367,7 @@ fail:
                          ETHTOOL_SSET, &edata);
     }
     
-    void VMWarePort::renegotiate()
+    void VMwarePort::renegotiate()
     {
         struct ethtool_cmd edata;
 
@@ -1350,12 +1376,12 @@ fail:
                          ETHTOOL_NWAY_RST, &edata);
     }
 
-    MACAddress VMWarePort::permanentMAC() const
+    MACAddress VMwarePort::permanentMAC() const
     {
         // ETHTOOL_GPERMADDR is not supported on ESXi, and
         // we cannot use popen("esxcli...") since fork() is
         // forbidden, so we need to get them from standard
-        // objects in root/cimv2 namespace of VMWare CIM server.
+        // objects in root/cimv2 namespace of VMware CIM server.
 
         Ref<CIM_EthernetPort> cimEthPort;
 
@@ -1403,11 +1429,11 @@ fail:
         }
     }
 
-    class VMWareInterface : public Interface {
+    class VMwareInterface : public Interface {
         const NIC *owner;
         Port *boundPort;
     public:
-        VMWareInterface(const NIC *up, unsigned i) :
+        VMwareInterface(const NIC *up, unsigned i) :
             Interface(i),
             owner(up),
             boundPort(NULL) { };
@@ -1431,28 +1457,35 @@ fail:
         void bindToPort(Port *p) { boundPort = p; }
 
         virtual void initialize() {};
+
+        /* Dummy operator to make possible using of cimple::Array */
+        bool operator== (const VMwareInterface &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
     };
 
-    bool VMWareInterface::ifStatus() const
+    bool VMwareInterface::ifStatus() const
     {
         // Implementation is blocked by SF bug 35613
 
         return false;
     }
 
-    void VMWareInterface::enable(bool st)
+    void VMwareInterface::enable(bool st)
     {
         // Implementation is blocked by SF bug 35613
 
         UNUSED(st);
     }
 
-    uint64 VMWareInterface::mtu() const
+    uint64 VMwareInterface::mtu() const
     {
         Ref<CIM_EthernetPort> cimEthPort;
 
         cimEthPort =
-          getCIMEthPort(((VMWarePort *)boundPort)->dev_name.c_str());
+          getCIMEthPort(((VMwarePort *)boundPort)->dev_name.c_str());
 
         if (!cimEthPort)
             return 0;
@@ -1463,7 +1496,7 @@ fail:
             return cimEthPort->ActiveMaximumTransmissionUnit.value;
     }
 
-    void VMWareInterface::mtu(uint64 u)
+    void VMwareInterface::mtu(uint64 u)
     {
         // This should not be implemented - MTU
         // is set for vSwitch as a whole, change is
@@ -1474,15 +1507,15 @@ fail:
         return;
     }
 
-    String VMWareInterface::ifName() const
+    String VMwareInterface::ifName() const
     {
         if (boundPort == NULL)
             return "";
 
-        return ((VMWarePort *)boundPort)->dev_name;
+        return ((VMwarePort *)boundPort)->dev_name;
     }
 
-    MACAddress VMWareInterface::currentMAC() const
+    MACAddress VMwareInterface::currentMAC() const
     {
         int fd = 0;
         struct ifreq req;
@@ -1491,13 +1524,13 @@ fail:
         if (boundPort == NULL)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
-        fd = open(((VMWarePort *)boundPort)->dev_file.c_str(), O_RDWR);
+        fd = open(((VMwarePort *)boundPort)->dev_file.c_str(), O_RDWR);
         if (fd < 0)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
         memset(&req, 0, sizeof(req));
         strncpy(req.ifr_name,
-                ((VMWarePort *)boundPort)->dev_name.c_str(),
+                ((VMwarePort *)boundPort)->dev_name.c_str(),
                 sizeof(req.ifr_name));
 
         if (ioctl(fd, SIOCGIFHWADDR, &req) != 0)
@@ -1516,17 +1549,17 @@ fail:
                           mac_address[5]);
     }
 
-    void VMWareInterface::currentMAC(const MACAddress& mac)
+    void VMwareInterface::currentMAC(const MACAddress& mac)
     {
         // See SF bug 35613
 
         UNUSED(mac);
     }
 
-    class VMWareNICFirmware : public NICFirmware {
+    class VMwareNICFirmware : public NICFirmware {
         const NIC *owner;
     public:
-        VMWareNICFirmware(const NIC *o) :
+        VMwareNICFirmware(const NIC *o) :
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
@@ -1540,10 +1573,10 @@ fail:
         virtual void initialize() {};
     };
 
-    class VMWareBootROM : public BootROM {
+    class VMwareBootROM : public BootROM {
         const NIC *owner;
     public:
-        VMWareBootROM(const NIC *o) :
+        VMwareBootROM(const NIC *o) :
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
@@ -1557,13 +1590,13 @@ fail:
         virtual void initialize() {};
     };
 
-    class VMWareDiagnostic : public Diagnostic {
+    class VMwareDiagnostic : public Diagnostic {
         const NIC *owner;
         Result testPassed;
         static const char sampleDescr[];
         static const String diagGenName;
     public:
-        VMWareDiagnostic(const NIC *o) :
+        VMwareDiagnostic(const NIC *o) :
             Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
         virtual Result syncTest() 
         {
@@ -1579,13 +1612,13 @@ fail:
         virtual const String& genericName() const { return diagGenName; }
     };
 
-    const char VMWareDiagnostic::sampleDescr[] = "VMWare Diagnostic";
-    const String VMWareDiagnostic::diagGenName = "Diagnostic";
+    const char VMwareDiagnostic::sampleDescr[] = "VMware Diagnostic";
+    const String VMwareDiagnostic::diagGenName = "Diagnostic";
 
-    class VMWareNIC : public NIC {
-        VMWareNICFirmware nicFw;
-        VMWareBootROM rom;
-        VMWareDiagnostic diag;
+    class VMwareNIC : public NIC {
+        VMwareNICFirmware nicFw;
+        VMwareBootROM rom;
+        VMwareDiagnostic diag;
 
         int pci_domain;
         int pci_bus;
@@ -1593,8 +1626,8 @@ fail:
 
     public:
 
-        vector<VMWarePort> ports;
-        vector<VMWareInterface> intfs;
+        Array<VMwarePort> ports;
+        Array<VMwareInterface> intfs;
 
     protected:
         virtual void setupPorts()
@@ -1625,7 +1658,7 @@ fail:
         }
     public:
 
-        VMWareNIC(unsigned idx, NICDescr &descr) :
+        VMwareNIC(unsigned idx, NICDescr &descr) :
             NIC(idx),
             nicFw(this),
             rom(this),
@@ -1636,8 +1669,8 @@ fail:
 
             for (i = 0; i < (int)descr.ports.size(); i++)
             {
-                ports.push_back(VMWarePort(this, i, descr.ports[i]));
-                intfs.push_back(VMWareInterface(this, i));
+                ports.append(VMwarePort(this, i, descr.ports[i]));
+                intfs.append(VMwareInterface(this, i));
             }
         }
 
@@ -1716,15 +1749,15 @@ fail:
         virtual PCIAddress pciAddress() const;
     };
 
-    VitalProductData VMWareNIC::vitalProductData() const 
+    VitalProductData VMwareNIC::vitalProductData() const 
     {
         if (ports.size() <= 0)
             return VitalProductData("", "", "", "", "", "");
         else
         {
-            string   p_name;
-            string   pn;
-            string   sn;
+            String   p_name;
+            String   pn;
+            String   sn;
 
             if (getVPD(ports[0].dev_name.c_str(), 0,
                        p_name, pn, sn) < 0)
@@ -1737,7 +1770,7 @@ fail:
         }
     }
 
-    NIC::Connector VMWareNIC::connector() const
+    NIC::Connector VMwareNIC::connector() const
     {
         VitalProductData        vpd = vitalProductData();
         const char             *part = vpd.part().c_str();
@@ -1757,20 +1790,22 @@ fail:
         }
     }
 
-    PCIAddress VMWareNIC::pciAddress() const
+    PCIAddress VMwareNIC::pciAddress() const
     {
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
 
     ///
-    /// Get data via TFTP protocol.
+    /// Get data via TFTP or SFTP protocol.
     ///
     /// @param uri         Data URI
+    /// @param passwd      Password (NULL if not required)
     /// @param f           File to write loaded data
     ///
     /// @return 0 on success, < 0 on failure
     ///
-    static int tftp_get_file(const char *uri, FILE *f)
+    static int uri_get_file(const char *uri, const char *passwd,
+                            FILE *f)
     {
         CURL           *curl;
         int             rc = 0;
@@ -1792,6 +1827,16 @@ fail:
         {
             rc = -1;
             goto curl_fail;
+        }
+
+        if (passwd != NULL)
+        {
+            if (curl_easy_setopt(curl, CURLOPT_PASSWORD,
+                                 passwd) != CURLE_OK)
+            {
+                rc = -1;
+                goto curl_fail;
+            }
         }
 
         CURLcode rc_curl;
@@ -1819,27 +1864,29 @@ curl_fail:
     {
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
+#define SFTP_PROTO "sftp://"
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
         char  tmp_file[] = "/tmp/sf_firmware_XXXXXX";
         int   tmp_file_used = 0;
 
-        if (((VMWareNIC *)owner)->ports.size() <= 0)
+        if (((VMwareNIC *)owner)->ports.size() <= 0)
             return -1;
 
         if (strcmp_start(fileName, FILE_PROTO) == 0)
         {
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
-                          ((VMWareNIC *)owner)->ports[0].dev_name.c_str(),
+                          ((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
                           fileName + strlen(FILE_PROTO));
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
                 return -1;
             }
         }
-        else if (strcmp_start(fileName, TFTP_PROTO) == 0)
+        else if (strcmp_start(fileName, TFTP_PROTO) == 0 ||
+                 strcmp_start(fileName, SFTP_PROTO) == 0)
         {
             FILE *f;
 
@@ -1854,7 +1901,10 @@ curl_fail:
                 return -1;
             }
 
-            rc = tftp_get_file(fileName, f);
+            if (strcmp_start(fileName, TFTP_PROTO) == 0)
+                rc = uri_get_file(fileName, NULL, f);
+            else // FIXME: password should be obtained properly
+                rc = uri_get_file(fileName, "news@ben", f);
             if (rc != 0)
             {
                 fclose(f);
@@ -1864,7 +1914,7 @@ curl_fail:
 
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
-                          ((VMWareNIC *)owner)->ports[0].dev_name.c_str(),
+                          ((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
                           tmp_file);
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
@@ -1874,7 +1924,7 @@ curl_fail:
 
             tmp_file_used = 1;
         }
-        else // SFTP to be implemented
+        else // Protocol not supported
             return -1;
 
         fd = sfupdatePOpen(cmd);
@@ -1892,13 +1942,14 @@ curl_fail:
         return 0;
 #undef FILE_PROTO
 #undef TFTP_PROTO
+#undef SFTP_PROTO
     }
 
-    class VMWareDriver : public Driver {
+    class VMwareDriver : public Driver {
         const Package *owner;
         static const String drvName;
     public:
-        VMWareDriver(const Package *pkg, const String& d,
+        VMwareDriver(const Package *pkg, const String& d,
                      const String& sn) :
             Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
@@ -1908,7 +1959,7 @@ curl_fail:
         virtual const Package *package() const { return owner; }
     };
 
-    VersionInfo VMWareDriver::version() const
+    VersionInfo VMwareDriver::version() const
     {
         DIR                     *device_dir;
         struct dirent           *device;
@@ -1961,7 +2012,7 @@ curl_fail:
 
         // We failed to get it via ethtool (possible reason: no
         // Solarflare interfaces are presented) - we try to get it
-        // from VMWare root/cimv2 standard objects.
+        // from VMware root/cimv2 standard objects.
 
         Ref<CIM_SoftwareIdentity> cimModel =
                                       CIM_SoftwareIdentity::create();
@@ -1992,11 +2043,11 @@ curl_fail:
         return VersionInfo(cimSoftId->VersionString.value.c_str());
     }
 
-    class VMWareLibrary : public Library {
+    class VMwareLibrary : public Library {
         const Package *owner;
         VersionInfo vers;
     public:
-        VMWareLibrary(const Package *pkg, const String& d, const String& sn, 
+        VMwareLibrary(const Package *pkg, const String& d, const String& sn, 
                      const VersionInfo& v) :
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
@@ -2009,12 +2060,12 @@ curl_fail:
 
     /// @brief stub-only implementation of a software package
     /// with kernel drivers
-    class VMWareKernelPackage : public Package {
-        VMWareDriver kernelDriver;
+    class VMwareKernelPackage : public Package {
+        VMwareDriver kernelDriver;
     protected:
         virtual void setupContents() { kernelDriver.initialize(); };
     public:
-        VMWareKernelPackage() :
+        VMwareKernelPackage() :
             Package("NET Driver RPM", "sfc"),
             kernelDriver(this, "NET Driver", "sfc") {}
         virtual PkgType type() const { return RPM; }
@@ -2033,12 +2084,12 @@ curl_fail:
 
     /// @brief stub-only implementation of a software package
     /// with provider library
-    class VMWareManagementPackage : public Package {
-        VMWareLibrary providerLibrary;
+    class VMwareManagementPackage : public Package {
+        VMwareLibrary providerLibrary;
     protected:
         virtual void setupContents() { providerLibrary.initialize(); };
     public:
-        VMWareManagementPackage() :
+        VMwareManagementPackage() :
             Package("CIM Provider RPM", "sfcprovider"),
             providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
         virtual PkgType type() const { return RPM; }
@@ -2056,16 +2107,16 @@ curl_fail:
     };
 
     /// @brief stub-only System implementation
-    class VMWareSystem : public System {
-        VMWareKernelPackage kernelPackage;
-        VMWareManagementPackage mgmtPackage;
+    class VMwareSystem : public System {
+        VMwareKernelPackage kernelPackage;
+        VMwareManagementPackage mgmtPackage;
 
-        VMWareSystem()
+        VMwareSystem()
         {
             curl_global_init(CURL_GLOBAL_ALL);
         };
 
-        ~VMWareSystem()
+        ~VMwareSystem()
         {
             curl_global_cleanup();
         };
@@ -2082,7 +2133,7 @@ curl_fail:
             mgmtPackage.initialize();
         };
     public:
-        static VMWareSystem target;
+        static VMwareSystem target;
         bool is64bit() const { return true; }
         OSType osType() const { return RHEL; }
         bool forAllNICs(ConstElementEnumerator& en) const;
@@ -2091,7 +2142,7 @@ curl_fail:
         bool forAllPackages(ElementEnumerator& en);
     };
     
-    bool VMWareSystem::forAllNICs(ConstElementEnumerator& en) const
+    bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
     {
         NICDescrs   nics;
         int         i;
@@ -2104,7 +2155,7 @@ curl_fail:
 
         for (i = 0; i < (int)nics.size(); i++)
         {
-            VMWareNIC  nic(i, nics[i]);
+            VMwareNIC  nic(i, nics[i]);
 
             nic.initialize();
             res = en.process(nic);
@@ -2114,39 +2165,39 @@ curl_fail:
         return ret;
     }
 
-    bool VMWareSystem::forAllNICs(ElementEnumerator& en)
+    bool VMwareSystem::forAllNICs(ElementEnumerator& en)
     {
         return forAllNICs((ConstElementEnumerator&) en); 
     }
 
-    bool VMWareSystem::forAllPackages(ConstElementEnumerator& en) const
+    bool VMwareSystem::forAllPackages(ConstElementEnumerator& en) const
     {
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
     }
     
-    bool VMWareSystem::forAllPackages(ElementEnumerator& en)
+    bool VMwareSystem::forAllPackages(ElementEnumerator& en)
     {
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
     }
 
-    VMWareSystem VMWareSystem::target;
+    VMwareSystem VMwareSystem::target;
 
-    System& System::target = VMWareSystem::target;
+    System& System::target = VMwareSystem::target;
 
-    VersionInfo VMWareNICFirmware::version() const
+    VersionInfo VMwareNICFirmware::version() const
     {
         struct ethtool_drvinfo edata;
 
-        if (((VMWareNIC *)owner)->ports.size() <= 0)
+        if (((VMwareNIC *)owner)->ports.size() <= 0)
             return VersionInfo(DEFAULT_VERSION_STR);
 
-        if (vmwareEthtoolCmd(((VMWareNIC *)owner)->
+        if (vmwareEthtoolCmd(((VMwareNIC *)owner)->
                                         ports[0].dev_file.c_str(),
-                             ((VMWareNIC *)owner)->
+                             ((VMwareNIC *)owner)->
                                         ports[0].dev_name.c_str(),
                              ETHTOOL_GDRVINFO, &edata) < 0)
             return VersionInfo(DEFAULT_VERSION_STR);
@@ -2154,7 +2205,7 @@ curl_fail:
         return VersionInfo(edata.fw_version);
     }
 
-    VersionInfo VMWareBootROM::version() const
+    VersionInfo VMwareBootROM::version() const
     {
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
@@ -2165,7 +2216,7 @@ curl_fail:
         FILE *f = NULL;
 
         rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s",
-                      ((VMWareNIC *)owner)->ports[0].dev_name.c_str());
+                      ((VMwareNIC *)owner)->ports[0].dev_name.c_str());
         if (rc < 0 || rc >= CMD_MAX_LEN)
             return VersionInfo(DEFAULT_VERSION_STR);
 

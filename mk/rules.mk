@@ -69,7 +69,6 @@ $(CLEAN_TARGETS) $(EXTRA_CLEAN_TARGETS) : clean-% :
 	-test -n "$($*_OBJS)" && rm $($*_OBJS)
 	-test -n "$($*_OBJS)" && rm $(patsubst %.o,%.d,$($*_OBJS))
 	-test -z "$($*_PERSISTENT_TARGET)" && rm $($*_TARGET)
-	@echo "$(filter esxi_solarflare/solarflare/libcimobjects/%,$(_$*_GENERATED))"
 	-$(foreach f,$(_$*_GENERATED),rm $(f);)
 	-$($*_EXTRA_CLEAN)
 

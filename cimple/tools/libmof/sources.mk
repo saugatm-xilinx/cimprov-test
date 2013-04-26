@@ -41,6 +41,7 @@ libmof_TARGET = libmof.a
 libmof_DEPENDS = libtools
 libmof_INCLUDES = $(libmof_DIR)
 libmof_CPPFLAGS = $(libmof_PROVIDE_CPPFLAGS) -DMOF_INTERNAL
+libmof_MOF_Lex_CXXFLAGS = -Wno-sign-compare
 libmof_SDK = 1
 
 $(eval $(call component,libmof,STATIC_LIBRARIES))

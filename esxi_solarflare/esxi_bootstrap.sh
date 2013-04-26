@@ -10,6 +10,7 @@ set -v
 for sysdir in cim-schema cmpi common hwinfo omc sfcb support; do
     cp -r ${CIMPDK_SAMPLES}/$sysdir .
 done
+chmod -R +w .
 
 sed -i "s/acme/$PRODUCT_NAME/g" common/visor-oemtgz.sh
 

@@ -73,6 +73,7 @@ namespace solarflare
         /// Constructors.
         Thread() : state(NotRun), id("") {}
         Thread(String sid) : state(NotRun), id(sid) {}
+        virtual ~Thread() {}
 
         /// Find thread in threads list
         Thread* find() const;

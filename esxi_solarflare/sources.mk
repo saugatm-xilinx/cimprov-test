@@ -10,6 +10,7 @@ ESXI_GENERATED += repository.reg.in interop.reg.in
 ESXI_GENERATED += Makefile.am
 ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs/i386/libutils.a
 ESXI_GENERATED += libprovider/esxi_libs/i386/libcurl.a
+ESXI_GENERATED += libprovider/esxi_libs/i386/libssh2.a
 ESXI_GENERATED += libprovider/esxi_libs/i386/libssl.so.0.9.8
 ESXI_GENERATED += libprovider/esxi_libs/i386/librt.so.1
 ESXI_GENERATED += libprovider/esxi_libs/i386/libcrypto.so.0.9.8
@@ -26,6 +27,7 @@ endif
 esxi_archive_SOURCES = $(esxi_archive_GENERATED) \
 					   esxi_bootstrap.sh \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
+					   $(ESXI_PROJECT_NAME)/solarflare.wsman \
 					   oem/descriptor-urls.xml	\
 					   oem/oem.mk \
 					   oem/solarflare-build.sh \
@@ -74,6 +76,7 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD=\$$(srcdir)/libprovider/esxi_libs/i386/libsfupdate.a " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libutils.a " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libcurl.a " >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libssh2.a " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libssl.so.0.9.8 " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/librt.so.1 " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libcrypto.so.0.9.8 " >>$@

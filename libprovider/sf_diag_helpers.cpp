@@ -565,6 +565,8 @@ namespace solarflare
         SF_DiagnosticLogCapabilities *newDlc = SF_DiagnosticLogCapabilities::create(true);
 
         newDlc->InstanceID.set(instanceID(se.name()));
+        newDlc->InstanceID.value.append(" ");
+        newDlc->InstanceID.value.append(static_cast<const Diagnostic&>(se).log().description());
         newDlc->InstanceID.value.append(" Capabilities");
         return newDlc;
     }

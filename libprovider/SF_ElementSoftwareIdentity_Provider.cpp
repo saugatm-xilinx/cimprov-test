@@ -38,7 +38,9 @@ Enum_Instances_Status SF_ElementSoftwareIdentity_Provider::enum_instances(
     const SF_ElementSoftwareIdentity* model,
     Enum_Instances_Handler<SF_ElementSoftwareIdentity>* handler)
 {
+#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_ElementSoftwareIdentity>::allObjects(handler);
+#endif
     return ENUM_INSTANCES_OK;
 }
 
