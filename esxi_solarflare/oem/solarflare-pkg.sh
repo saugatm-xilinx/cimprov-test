@@ -30,6 +30,7 @@ do
    newname=$basename.so
    mv $filename $newname
 done
+find $DESTDIR/usr/lib -type f -name "*.so" -exec $BINUTILS_DIR/bin/i686-linux5.0-strip '{}' ';'
 
 # Tar provider libraries
 tar cf $PKGDIR/$PROJECT-libs.tar usr/lib

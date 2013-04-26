@@ -9,12 +9,8 @@ export OEM_NAMESPACE=solarflare
 
 . ../common/defs_builddir
 
-if [ "$OBJDIR" = "obj" ] ; then
-   DEBUG_CFG="--enable-debug"
-   DEBUG_CFLAGS="-g"
-else
-   DEBUG_CFLAGS="-g -Os"
-fi
+DEBUG_CFG="--disable-debug"
+DEBUG_CFLAGS="-g -Os"
 
 export CC="$TARGET_SYSTEM-gcc -I$TCROOT/$ARCH/RHEL5/usr/include"
 
