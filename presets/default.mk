@@ -13,7 +13,6 @@ else
 $(error Platform is not specified and cannot be guessed)
 endif
 endif
-endif
 $(info Platform detected as $(HOST_CIMPLE_PLATFORM))
 endif
 
