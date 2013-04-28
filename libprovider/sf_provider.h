@@ -15,6 +15,14 @@
 #include "SF_JobSuccess.h"
 #include "SF_Alert.h"
 
+#if CIM_SCHEMA_VERSION_MINOR == 0
+namespace cimple
+{
+    typedef CIM_ManagedSystemElement CIM_ManagedElement;
+};
+#endif
+
+
 /// This file contains some helpers and utilities
 /// for writing CIMPLE providers. None of the code is platform-dependent
 
@@ -139,8 +147,10 @@ namespace solarflare
             CIMClass *indication = CIMInstanceNotify<CIMClass>::makeIndication(se);
             indication->PreviousInstance = cimple::clone(indication->SourceInstance);
             cimple::CIM_ConcreteJob *pi = cimple::cast<cimple::CIM_ConcreteJob *>(indication->PreviousInstance);
+#if CIM_SCHEMA_VERSION_MINOR > 0
             pi->OperationalStatus.null = false;
             pi->OperationalStatus.value.append(prevState);
+#endif
             return indication;
         }
     public:

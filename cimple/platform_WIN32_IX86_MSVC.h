@@ -56,10 +56,10 @@
 #define CIMPLE_WINDOWS
 #define CIMPLE_WINDOWS_32
 #define CIMPLE_LLU "%I64u"
+#define CIMPLE_LL "I64"
 #define CIMPLE_LLD "%I64d"
 #define CIMPLE_IMPORT __declspec(dllimport)
 #define CIMPLE_EXPORT __declspec(dllexport)
-#define for if (0) ; else for
 
 #ifndef __GNUC__
 inline int strcasecmp(const char* s1, const char* s2)

@@ -2,7 +2,7 @@ libcimobjects_PURPOSE = target
 libcimobjects_TARGET = libcimobjects.a
 libcimobjects_DIR = libcimobjects
 libcimobjects_INCLUDES = $(libcimobjects_DIR)
-libcimobjects_DEPENDS = $(CIMPLE_COMPONENTS)
+libcimobjects_DEPENDS = $(CIMPLE_COMPONENT)
 
 libcimobjects_EXTRA_MOF = CIM_OperatingSystem IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem \
 						 PG_ComputerSystem OMC_UnitaryComputerSystem

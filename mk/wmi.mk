@@ -1,10 +1,11 @@
-override target_CXX = amd64-mingw32msvc-gcc
-override target_AR = amd64-mingw32msvc-ar
+override target_CXX = i686-w64-mingw32-g++
+override target_AR = i686-w64-mingw32-ar 
 override target_CPPFLAGS = -I. -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\" -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
-override target_CXXFLAGS = -m32 -Wall -W -Wno-unused -Werror -g -fms-extensions -Wno-unknown-pragmas -std=gnu++98
+override target_CXXFLAGS = -Wall -W -Wno-unused -Werror -g -fms-extensions -Wno-unknown-pragmas -std=gnu++98
 override target_LDFLAGS = 
-override target_LIBRARIES = ole32 oleaut32
+override target_SYSLIBRARIES = ole32 oleaut32 uuid
 
 override CIMPLE_PLATFORM = WIN32_IX86_MSVC
 
 CIM_SCHEMA_DIR = $(abspath schemas/windows)
+override CIM_SCHEMA_VERSION_MINOR = 0

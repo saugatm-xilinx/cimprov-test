@@ -83,6 +83,7 @@ Modify_Instance_Status SF_EthernetPort_Provider::modify_instance(
     return MODIFY_INSTANCE_OK;
 }
 
+#if CIM_SCHEMA_VERSION_MINOR > 0
 void SF_EthernetPort_Provider::StateChanger::handler(solarflare::SystemElement& se, unsigned)
 {
     solarflare::Interface &intf = static_cast<solarflare::Interface&>(se);
@@ -107,6 +108,7 @@ void SF_EthernetPort_Provider::StateChanger::handler(solarflare::SystemElement& 
             break;
     }
 }
+#endif
 
 
 Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
@@ -116,6 +118,9 @@ Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
     const Property<Datetime>& TimeoutPeriod,
     Property<uint32>& return_value)
 {
+#if CIM_SCHEMA_VERSION_MINOR == 0
+    return INVOKE_METHOD_UNSUPPORTED;
+#else
     /// CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
     {
@@ -155,6 +160,7 @@ Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
     }
 
     return INVOKE_METHOD_OK;
+#endif
 }
 
 Invoke_Method_Status SF_EthernetPort_Provider::SetPowerState(

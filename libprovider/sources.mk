@@ -70,7 +70,11 @@ libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/regist
 endif
 
 libprovider_DIR = libprovider
+ifeq ($(CIM_INTERFACE),wmi)
+libprovider_TARGET = $(PROVIDER_LIBRARY).dll
+else
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
+endif
 libprovider_INCLUDES = $(libprovider_DIR)
 libprovider_CPPFLAGS = -Ilibprovider -Ilibprovider/v5_import -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 

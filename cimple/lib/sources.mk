@@ -54,7 +54,7 @@ libcimple_SOURCES = \
 libcimple_DIR = cimple/lib
 libcimple_INCLUDES = cimple
 
-libcimple_PROVIDE_CPPFLAGS = -DCIMPLE_DEBUG 
+libcimple_PROVIDE_CPPFLAGS = -DCIMPLE_DEBUG -DCIMPLE_STATIC
 libcimple_PROVIDE_CPPFLAGS += -DCIMPLE_PLATFORM_$(CIMPLE_PLATFORM)
 
 libcimple_CPPFLAGS = $(libcimple_PROVIDE_CPPFLAGS) -DCIMPLE_BUILDING_LIBCIMPLE
@@ -66,8 +66,6 @@ libcimple_DEPENDS = libcimpleposix
 endif
 
 $(eval $(call component,libcimple,STATIC_LIBRARIES))
-
-CIMPLE_COMPONENTS += libcimple
 
 libcimplehost_PURPOSE = host
 

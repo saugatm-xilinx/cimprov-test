@@ -3,6 +3,7 @@
 #define _SF_ComputerSystem_Provider_h
 
 #include <cimple/cimple.h>
+#include "CIM_ConcreteJob.h"
 #include "SF_ComputerSystem.h"
 
 CIMPLE_NAMESPACE_BEGIN

@@ -234,7 +234,9 @@ namespace solarflare
         SF_DiagnosticTest *newSvc = static_cast<SF_DiagnosticTest *>(reference(diag, idx));
 
         newSvc->Description.set(diag.description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newSvc->ElementName.set(diag.name());
+#endif
         unsigned p = diag.percentage();
         newSvc->Started.set(p > 0 && p < 100);
         newSvc->Characteristics.null = false;
@@ -303,12 +305,16 @@ namespace solarflare
         newLog->Name.set(se.name());
         newLog->Name.value.append(" ");
         newLog->Name.value.append(diag.log().description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newLog->ElementName.set(diag.log().description());
+#endif
         newLog->Description.set(diag.log().description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newLog->OperationalStatus.null = false;
         newLog->OperationalStatus.value.append(SF_DiagnosticLog::_OperationalStatus::enum_OK);
         newLog->HealthState.null = false;
         newLog->HealthState.value = SF_DiagnosticLog::_HealthState::enum_OK;
+#endif
         newLog->EnabledState.null = false;
         newLog->EnabledState.value = (diag.log().isEnabled() ? 
                                       SF_DiagnosticLog::_EnabledState::enum_Enabled :

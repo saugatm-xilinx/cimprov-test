@@ -170,7 +170,7 @@ public:
     {
         clear();
         char buf[64];
-        sprintf(buf, "%I64u", x);
+        snprintf(buf, sizeof(buf), "%I64u", x);
         _rep.vt = VT_BSTR;
         _rep.bstrVal = cstr2bstr(buf);
     }
@@ -179,7 +179,7 @@ public:
     {
         clear();
         char buf[64];
-        sprintf(buf, "%I64d", x);
+        snprintf(buf, sizeof(buf), "%I64d", x);
         _rep.vt = VT_BSTR;
         _rep.bstrVal = cstr2bstr(buf);
     }

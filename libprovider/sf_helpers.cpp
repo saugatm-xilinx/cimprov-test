@@ -98,9 +98,15 @@ namespace solarflare
     }
 
     CIMInstanceNotify<cimple::SF_JobCreated> onJobCreated(cimple::SF_ConcreteJob::static_meta_class);
+#if CIM_SCHEMA_VERSION_MINOR > 0
     CIMJobChangeStateNotify<cimple::SF_JobStarted> onJobStarted(cimple::SF_ConcreteJob::_OperationalStatus::enum_Dormant);
     CIMJobChangeStateNotify<cimple::SF_JobError> onJobError(cimple::SF_ConcreteJob::_OperationalStatus::enum_OK);
     CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess(cimple::SF_ConcreteJob::_OperationalStatus::enum_OK);
+#else
+    CIMJobChangeStateNotify<cimple::SF_JobStarted> onJobStarted(0);
+    CIMJobChangeStateNotify<cimple::SF_JobError> onJobError(0);
+    CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess(0);
+#endif
 
     bool Action::process(SystemElement& se)
     {
@@ -161,40 +167,56 @@ namespace solarflare
         SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj, idx));
         
         job->Name.set(job->InstanceID.value);
+#if CIM_SCHEMA_VERSION_MINOR > 0
         job->OperationalStatus.null = false;
+#endif
         job->JobState.null = false;
 
         switch (th->currentState())
         {
             case Thread::NotRun:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Dormant);
+#endif
                 job->JobState.value = SF_ConcreteJob::_JobState::enum_New;
                 break;
             case Thread::Running:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_OK);
+#endif
                 job->JobState.value = SF_ConcreteJob::_JobState::enum_Running;
                 break;
             case Thread::Succeeded:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_OK);
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Completed);
+#endif
                 job->JobState.value = SF_ConcreteJob::_JobState::enum_Completed;
                 break;
             case Thread::Failed:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Completed);
+#endif
                 job->JobState.value = SF_ConcreteJob::_JobState::enum_Exception;
                 break;
             case Thread::Aborting:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+#endif
                 job->JobState.value = SF_ConcreteJob::_JobState::enum_Shutting_Down;
                 break;
             case Thread::Aborted:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 job->OperationalStatus.value.append(SF_ConcreteJob::_OperationalStatus::enum_Error);
+#endif
                 job->JobState.value = SF_ConcreteJob::_JobState::enum_Killed;
                 break;
         }
+#if CIM_SCHEMA_VERSION_MINOR > 0
         job->PercentComplete.set(th->percentage());
         job->DeleteOnCompletion.set(false);
+#endif
         job->StartTime.set(th->startTime());
         job->ElapsedTime.set(Datetime(Datetime::now().usec() - job->StartTime.value.usec()));
         return job;

@@ -67,7 +67,7 @@ static IWbemServices* _connect(const char* nameSpace)
     WMI_Ref<IWbemServices> svc_(svc);
 
     hr = loc->ConnectServer(
-        BString(tns).rep(), NULL, NULL, 0, NULL, 0, 0, &svc);
+        BString(tns).rep(), NULL, NULL, 0, 0, 0, 0, &svc);
 
     if (FAILED(hr))
     {

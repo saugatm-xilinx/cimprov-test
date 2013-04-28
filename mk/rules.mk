@@ -54,10 +54,14 @@ link_static_to_shared_end = -Wl,-no-whole-archive
 
 $(SHARED_LIBRARIES) : %.so:
 	$(CXX) -shared -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) \
-	-L. $(link_static_to_shared_start) $(addprefix -l,$(LIBRARIES)) $(link_static_to_shared_end)
+	-L. $(link_static_to_shared_start) $(addprefix -l,$(LIBRARIES)) $(link_static_to_shared_end) \
+	$(addprefix -l,$(SYSLIBRARIES))
+
+%.dll : lib%.so
+	cp $< $@
 
 $(BINARIES) : %:
-	$(CXX) -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) -L. $(addprefix -l,$(LIBRARIES))
+	$(CXX) -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) -L. $(addprefix -l,$(LIBRARIES)) $(addprefix -l,$(SYSLIBRARIES))
 
 CLEAN_TARGETS = $(addprefix clean-,$(COMPONENTS))
 

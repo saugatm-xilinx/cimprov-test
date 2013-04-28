@@ -130,11 +130,15 @@ namespace solarflare
         card->PartNumber.set(vpd.part());
         card->Model.set(vpd.model());
         card->SKU.set(vpd.fru());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         card->PackageType.null = false;
         card->PackageType.value = SF_NICCard::_PackageType::enum_Module_Card;
+#endif
         card->HostingBoard.set(false);
         card->PoweredOn.set(true);
+#if CIM_SCHEMA_VERSION_MINOR > 0
         card->ElementName.set(nic.name());
+#endif
 
         return card;
     }
@@ -172,10 +176,13 @@ namespace solarflare
         
         newPC->Description.set(nic.description());
         newPC->Name.set(nic.name());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newPC->ElementName.set(nic.name());
+#endif
         
         newPC->ControllerType.null = false;
         newPC->ControllerType.value = SF_PortController::_ControllerType::enum_Ethernet;
+#if CIM_SCHEMA_VERSION_MINOR > 0
         // fixme: I could not figure out whether 'protocol' here is to be meant
         // as system<->device protocol (PCI), as a networking protocol
         // (Ethernet), or as an internal protocol (like MII)
@@ -186,10 +193,12 @@ namespace solarflare
         newPC->ProtocolSupported.null = false;
         newPC->ProtocolSupported.value = SF_PortController::_ProtocolSupported::enum_PCI;
 
+
         newPC->RequestedState.null = false;
         newPC->RequestedState.value = SF_PortController::_RequestedState::enum_Not_Applicable;
         newPC->EnabledState.null = false;
         newPC->EnabledState.value = SF_PortController::_EnabledState::enum_Enabled;
+#endif
         
         nic.forAllPorts(counter);
         newPC->MaxNumberControlled.set(counter.count());
@@ -264,7 +273,11 @@ namespace solarflare
         SF_ComputerSystemPackage* link = SF_ComputerSystemPackage::create(true);
 
         link->Antecedent = cast<cimple::CIM_PhysicalPackage *>(nic.cimReference(SF_NICCard::static_meta_class));
+#if CIM_SCHEMA_VERSION_MINOR > 0
         link->Dependent =  findSystem()->clone();
+#else
+        link->Dependent =  cast<cimple::CIM_UnitaryComputerSystem *>(findSystem()->clone());
+#endif
         return link;
     }
 

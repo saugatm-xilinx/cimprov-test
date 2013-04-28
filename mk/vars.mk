@@ -41,4 +41,4 @@ override host_CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
 override host_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
 endif
 
-override host_LIBRARIES += pthread
+override host_SYSLIBRARIES += pthread

@@ -32,7 +32,9 @@
 #include <objbase.h>
 #include <cctype>
 #include <process.h>
+#undef __CRT__NO_INLINE
 #include <strsafe.h>
+#define __CRT__NO_INLINE
 #include <sddl.h>
 #include "WMI_Adapter.h"
 #include "WMI_Adapter_Factory.h"
@@ -44,6 +46,19 @@
 #include "utils.h"
 #include "WMI_Ref.h"
 #include "BString.h"
+
+#ifdef __GNUC__
+extern "C" 
+{
+DEFINE_GUID(IID_IWbemServices, 0x9556DC99, 0x828C, 0x11CF, 0xA3, 0x7E, 0x00, 0xAA, 0x00, 0x32, 0x40, 0xC7);
+DEFINE_GUID(IID_IWbemLocator, 0xdc12a687, 0x737f, 0x11cf, 0x88, 0x4d, 0x00, 0xaa, 0x00, 0x4b, 0x2e, 0x24);
+DEFINE_GUID(CLSID_WbemLocator, 0x4590f811, 0x1d3a, 0x11d0, 0x89, 0x1f, 0x00, 0xaa, 0x00, 0x4b, 0x2e, 0x24);
+DEFINE_GUID(IID_IWbemEventProvider, 0xe245105b, 0xb06e, 0x11d0, 0xad, 0x61, 0x00, 0xc0, 0x4f, 0xd8, 0xfd, 0xff);
+DEFINE_GUID(IID_IWbemEventProviderQuerySink, 0x580acaf8, 0xfa1c, 0x11d0, 0xad, 0x72, 0x00, 0xc0, 0x4f, 0xd8, 0xfd, 0xff);
+DEFINE_GUID(IID_IWbemProviderInit, 0x1be41571, 0x91dd, 0x11d1, 0xae, 0xb2, 0x00, 0xc0, 0x4f, 0xb6, 0x88, 0x20);
+DEFINE_GUID(IID_IWbemUnboundObjectSink, 0xe246107b, 0xb06e, 0x11d0, 0xad, 0x61, 0x00, 0xc0, 0x4f, 0xd8, 0xfd, 0xff);
+};
+#endif
 
 //void __exit()
 //{
@@ -85,7 +100,7 @@ static void _formatGUID(REFGUID guid, char str[128])
 {
     LOG_ENTER;
     WCHAR wstr[128];
-    memset(wstr, NULL, sizeof(wstr));
+    memset(wstr, 0, sizeof(wstr));
 
     StringFromGUID2(guid, wstr, sizeof(wstr) / sizeof(wstr[0]));
 
@@ -150,7 +165,7 @@ static HRESULT _registerServer(
         return E_FAIL;
     }
 
-    memset(&module, NULL, sizeof(module));
+    memset(&module, 0, sizeof(module));
     GetModuleFileName(mod, module, sizeof(module) / sizeof(char) - 1);
 
     r = RegSetValueEx(key2, NULL, 0, REG_SZ, (BYTE*)module, strlen(module)+1);
@@ -229,7 +244,7 @@ static int _get_classname(IWbemClassObject* co, String& classname)
     LOG_ENTER;
     classname.clear();
 
-    BString nm(L"__CLASS", WSTR_TAG);
+    BString nm((wchar_t *)L"__CLASS", WSTR_TAG);
     VARIANT v;
     HRESULT hr = co->Get(nm.rep(), 0, &v, 0, 0);
 
@@ -299,29 +314,36 @@ static void _print_guid(REFIID riid, char buf[1024])
 {
     char* p = buf;
     int n;
+	int sz = 1024;
 
-    n = sprintf(p, "%08X-", riid.Data1);
+    n = snprintf(p, sz, "%08X-", (unsigned)riid.Data1);
     p += n;
+	sz -= n;
 
-    n = sprintf(p, "%04X-", riid.Data2);
+    n = snprintf(p, sz, "%04X-", riid.Data2);
     p += n;
+	sz -= n;
 
-    n = sprintf(p, "%04X-", riid.Data3);
+    n = snprintf(p, sz, "%04X-", riid.Data3);
     p += n;
+	sz -= n;
 
     for (int i = 0; i < 2; i++)
     {
-        n = sprintf(p, "%02X", riid.Data4[i]);
+        n = snprintf(p, sz, "%02X", riid.Data4[i]);
         p += n;
+		sz -= n;
     }
 
-    n = sprintf(p, "-");
-    p += n;
+    n = snprintf(p, sz, "-");
+ 	p += n;
+	sz -= n;
 
     for (int i = 2; i < 8; i++)
     {
-        n = sprintf(p, "%02X", riid.Data4[i]);
+        n = snprintf(p, sz, "%02X", riid.Data4[i]);
         p += n;
+		sz -= n;
     }
 }
 
@@ -940,6 +962,12 @@ HRESULT WMI_Adapter::DeleteInstanceAsync(
 
         case DELETE_INSTANCE_UNSUPPORTED:
             RETURN_CODE(handler, WBEM_E_NOT_SUPPORTED);
+
+		case DELETE_INSTANCE_ACCESS_DENIED:
+			RETURN_CODE(handler, WBEM_E_ACCESS_DENIED);
+
+		case DELETE_INSTANCE_FAILED:
+			RETURN_CODE(handler, WBEM_E_FAILED);
     }
 
     RETURN_CODE(handler, S_OK);

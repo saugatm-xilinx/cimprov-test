@@ -11,6 +11,7 @@ override host_CPPFLAGS := $(CPPFLAGS)
 override host_CXXFLAGS := $(or $(CXXFLAGS),$(CFLAGS))
 override host_LDFLAGS := $(LDFLAGS)
 override host_LIBRARIES := 
+override host_SYSLIBRARIES := 
 
 target_CXX = $(host_CXX)
 target_AR = $(host_AR)
@@ -18,6 +19,7 @@ target_CPPFLAGS = $(host_CPPFLAGS)
 target_CXXFLAGS = $(host_CXXFLAGS)
 target_LDFLAGS = $(host_LDFLAGS)
 target_LIBRARIES = $(host_LIBRARIES)
+target_SYSLIBRARIES = $(host_SYSLIBRARIES)
 
 define _augment_vars
 _$(1)_DEP_$(2) = $$(foreach d,$$(_$(1)_DEPENDS),$$($$(d)_PROVIDE_$(2)) )
@@ -57,6 +59,7 @@ $(1)_PROVIDE_CPPFLAGS += $$(addprefix -I,$$($(1)_INCLUDES))
 $(call _augment_vars,$(1),CPPFLAGS)
 $(call _augment_vars,$(1),LDFLAGS)
 $(call _augment_vars,$(1),LIBRARIES)
+$(call _augment_vars,$(1),SYSLIBRARIES)
 
 _$(1)_SOURCES = $$(addprefix $$($(1)_DIR)/,$$($(1)_SOURCES))
 _$(1)_GENERATED = $$(addprefix $$($(1)_DIR)/,$$($(1)_GENERATED)) $$(foreach d,$$(_$(1)_DEPENDS),$$(_$$(d)_GENERATED) )
@@ -78,6 +81,7 @@ $$($(1)_TARGET) : override CXXFLAGS = $$($$($(1)_PURPOSE)_CXXFLAGS) $($(1)_CXXFL
 ifneq ($(2),STATIC_LIBRARIES)
 $$($(1)_TARGET) : override LDFLAGS = $$($$($(1)_PURPOSE)_LDFLAGS) $$($(1)_LDFLAGS) $$(_$(1)_DEP_LDFLAGS)
 $$($(1)_TARGET) : override LIBRARIES = $$(filter-out $$(_$(1)_DEP_LIBRARIES),$$($(1)_LIBRARIES)) $$(_$(1)_DEP_LIBRARIES) $$($$($(1)_PURPOSE)_LIBRARIES)
+$$($(1)_TARGET) : override SYSLIBRARIES = $$(filter-out $$(_$(1)_DEP_SYSLIBRARIES),$$($(1)_SYSLIBRARIES)) $$(_$(1)_DEP_SYSLIBRARIES) $$($$($(1)_PURPOSE)_SYSLIBRARIES)
 endif
 
 $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : CPPFLAGS = $$($$($(1)_PURPOSE)_CPPFLAGS) $$($(1)_CPPFLAGS) $$(_$(1)_DEP_CPPFLAGS)

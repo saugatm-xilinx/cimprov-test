@@ -68,7 +68,7 @@ String wstr2str(LPWSTR str)
 
     int alen = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
 
-    if (alen <= sizeof(buf))
+    if (alen <= (int)sizeof(buf))
         astr = buf;
     else
         astr = (char*)::operator new(alen);

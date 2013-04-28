@@ -4,6 +4,7 @@
 
 #include <cimple/cimple.h>
 #include "SF_NICCard.h"
+#include "CIM_PhysicalConnector.h"
 #include "sf_platform.h"
 
 CIMPLE_NAMESPACE_BEGIN
