@@ -1,7 +1,7 @@
 esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
 
-esxi_archive_COMPONENTS = $(foreach comp,$(filter-out esxi_archive,$(COMPONENTS)),$(if $(findstring target,$($(comp)_PURPOSE)),,$(comp) ))
+esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $(findstring target,$($(comp)_PURPOSE)),$(comp) ,))
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
@@ -68,7 +68,7 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
 	done
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -I\$$(srcdir)" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+=$(patsubst -I%,-I\$$(srcdir)/%,$(libprovider_CPPFLAGS) $(_libprovider_DEP_CPPFLAGS))" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+=$(patsubst -I%,-I\$$(srcdir)/%,$(libprovider_CPPFLAGS) $(libtoolstgt_CPPFLAGS) $(_libprovider_DEP_CPPFLAGS))" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\\\"\$$(smash_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_INTEROP_NS=\\\"\$$(sfcb_interop_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE" >>$@
