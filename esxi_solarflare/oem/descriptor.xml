@@ -9,7 +9,7 @@
    <!-- ver and rel are both strings that must start with digits, -->
    <!-- and can end with a combination of digits, period, and letters.
         The entire string should be 35 chars or less.  -->
-   <version>1.23-7.89</version>
+   <version>1.0-0.0</version>
 
    <!-- Vendor has the same formatting restrictions as the name field -->
    <vendor>Solarflare</vendor>
