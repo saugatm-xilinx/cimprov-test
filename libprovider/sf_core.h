@@ -7,7 +7,7 @@
 #include "sf_utils.h"
 #include "sf_threads.h"
 
-#define SF_LIBPROV_VERSION      "0.1"
+#define SF_LIBPROV_VERSION      "1.0.0.0"
 
 // Platform-independent classes.
 
