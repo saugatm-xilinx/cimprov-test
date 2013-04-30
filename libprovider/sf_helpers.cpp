@@ -1,10 +1,14 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
+#ifdef TARGET_CIM_SERVER_pegasus
 #include "IBMPSG_ComputerSystem.h"
 #include "IBMSD_ComputerSystem.h"
 #include "IBMSD_SPComputerSystem.h"
 #include "PG_ComputerSystem.h"
+#endif
+#ifdef TARGET_CIM_SERVER_esxi
 #include "OMC_UnitaryComputerSystem.h"
+#endif
 #include "SF_ConcreteJob.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
 #include "SF_ElementCapabilities.h"
@@ -50,14 +54,25 @@ namespace solarflare
     const CIM_ComputerSystem *CIMHelper::findSystem()
     {
         static const char * const namespaces[] =
-        {ibmseNS, solarflareNS, baseNS, NULL};
+        {
+#ifdef TARGET_CIM_SERVER_pegasus
+         ibmseNS, 
+#endif
+         solarflareNS, 
+         baseNS, 
+         NULL
+        };
         static const Meta_Class * const csysMetaclasses[] = 
         {
+#ifdef TARGET_CIM_SERVER_pegasus
             &cimple::IBMPSG_ComputerSystem::static_meta_class,
             &cimple::IBMSD_ComputerSystem::static_meta_class,
             &cimple::IBMSD_SPComputerSystem::static_meta_class,
-            &cimple::OMC_UnitaryComputerSystem::static_meta_class,
             &cimple::PG_ComputerSystem::static_meta_class,
+#endif
+#ifdef TARGET_CIM_SERVER_esxi
+            &cimple::OMC_UnitaryComputerSystem::static_meta_class,
+#endif
             &CIM_ComputerSystem::static_meta_class,
             NULL
         };

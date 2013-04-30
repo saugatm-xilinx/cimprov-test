@@ -156,6 +156,7 @@ class SF_ReferencedProfile : CIM_ReferencedProfile {
 class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
 };
 
+#ifdef TARGET_CIM_SERVER_pegasus
 class IBMPSG_ComputerSystem : CIM_UnitaryComputerSystem
 {
 string Model;
@@ -212,7 +213,9 @@ class PG_ComputerSystem : CIM_UnitaryComputerSystem
     ]  
     string IdentificationNumber;
 };
+#endif
 
+#ifdef TARGET_CIM_SERVER_esxi
 class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
 {
       [Override("Caption")]
@@ -238,6 +241,7 @@ class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
       [Override("ResetCapability")]
    uint16 ResetCapability;
 };
+#endif
 
 [Indication]
 class SF_JobCreated : CIM_InstCreation
