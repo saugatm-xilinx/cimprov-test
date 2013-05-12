@@ -16,6 +16,7 @@ ifeq ($(MAKECMDGOALS),dist)
 PROVIDER_TARBALL_DIR = cimprovider-$(PROVIDER_LIBRARY)-$(PROVIDER_VERSION)
 PROVIDER_DIST_FILES := $(shell $(HG) manifest)
 PROVIDER_DIST_FILES += $(CIM_SCHEMA_ZIP)
+PROVIDER_DIST_FILES += lib$(PROVIDER_LIBRARY).spec
 
 .PHONY : dist
 
@@ -28,6 +29,21 @@ $(PROVIDER_TARBALL_DIR)/% : %
 	mkdir -p $(dir $@)
 	cp $< $@
 endif
+
+define subst_spec
+$(SED) 's!%{PROVIDER_LIBRARY}!$(PROVIDER_LIBRARY)!g; \
+		s!%{PROVIDER_VERSION}!$(PROVIDER_VERSION)!g; \
+		s!%{PROVIDER_LIBPATH}!$(PROVIDER_LIBPATH)!g; \
+		s!%{PROVIDER_SO}!$(libprovider_TARGET)!g; \
+		s!%{PROVIDER_ROOT}!$(PROVIDER_ROOT)!g; \
+		s!%{IMP_NAMESPACE}!$(IMP_NAMESPACE)!g; \
+		s!%{INTEROP_NAMESPACE}!$(INTEROP_NAMESPACE)!g; \
+		s!%{INTEROP_CLASSES}!$(INTEROP_CLASSES)!g; \
+		s!%{PEGASUS_HOME}!$(PEGASUS_HOME)!g' $< >$@
+endef
+
+lib$(PROVIDER_LIBRARY).spec : lib$(PROVIDER_LIBRARY).spec.in $(MAKEFILE_LIST)
+	$(subst_spec)
 
 %.d: %.cpp
 	@echo Producing $@
