@@ -159,11 +159,14 @@ namespace solarflare
         SF_EthernetPort *newPort = static_cast<SF_EthernetPort *>(reference(intf, idx));
 
         newPort->Description.set(intf.description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newPort->ElementName.set(intf.ifName());
+#endif
         newPort->Name.set(intf.name());
 #if  CIM_SCHEMA_VERSION_MINOR == 26
         newPort->InstanceID.set(instanceID(intf.name()));
 #endif
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newPort->EnabledState.null = false;
         newPort->EnabledState.value = (intf.ifStatus() ?
                                        (intf.port()->linkStatus() ? 
@@ -176,6 +179,7 @@ namespace solarflare
         newPort->StatusInfo.value = (intf.ifStatus() ?
                                      SF_EthernetPort::_StatusInfo::enum_Enabled :
                                      SF_EthernetPort::_StatusInfo::enum_Disabled);
+#endif
         // The following is a hack. The point is that PortType variable is
         // defined in one CIM class (CIM_LogicalPort) but the set of useful
         // values is defined in another class (CIM_EthernetPort). CIMPLE tools
@@ -258,17 +262,21 @@ namespace solarflare
         SF_LANEndpoint *newEP = static_cast<SF_LANEndpoint *>(reference(intf, idx));
 
         newEP->Description.set(intf.description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newEP->ElementName.set(intf.ifName());
+#endif
         newEP->NameFormat.set("Interface");
 #if CIM_SCHEMA_VERSION_MINOR == 26
         newEP->InstanceID.set(instanceID(intf.name()));
 #endif
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newEP->EnabledState.null = false;
         newEP->EnabledState.value = (intf.ifStatus() ?
                                      SF_LANEndpoint::_EnabledState::enum_Enabled : 
                                      SF_LANEndpoint::_EnabledState::enum_Disabled);
         newEP->RequestedState.null = false;
         newEP->RequestedState.value = SF_LANEndpoint::_RequestedState::enum_Not_Applicable;
+#endif
         newEP->ProtocolIFType.null = false;
         newEP->ProtocolIFType.value = SF_LANEndpoint::_ProtocolIFType::enum_Gigabit_Ethernet;
         newEP->MACAddress.set(intf.currentMAC().string());

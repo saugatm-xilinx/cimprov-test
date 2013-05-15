@@ -13,11 +13,13 @@ class SF_SoftwareInstallationService_Provider
     class Installer : public solarflare::Action
     {
         const char *uri;
+        bool ok;
     protected:
         virtual void handler(solarflare::SystemElement& se, unsigned);
     public:
         Installer(const char *u, const Instance *inst) :  
-            solarflare::Action(inst), uri(u) {}
+            solarflare::Action(inst), uri(u), ok(true) {}
+        bool isOk() const { return ok; };
     };
 
     class NICInstaller : public solarflare::Action

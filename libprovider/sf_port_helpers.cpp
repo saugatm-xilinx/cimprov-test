@@ -77,28 +77,56 @@ namespace solarflare
         phc->InstanceID.set(instanceID(p.name()));
 #endif
         phc->Name.set(p.name());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         phc->ElementName.set(p.name());
+#endif
         phc->Description.set(p.description());
 
         phc->ConnectorType.null = false;
+#if CIM_SCHEMA_VERSION_MINOR > 0
         phc->ConnectorLayout.null = false;
+#endif
         switch (p.nic()->connector())
         {
             case solarflare::NIC::RJ45:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_RJ45);
+#else
+                phc->ConnectorType.value.append(39);
+#endif
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_RJ45;
+#endif
                 break;
             case solarflare::NIC::SFPPlus:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_Fibre_Channel__Optical_Fibre_);
+#else
+                phc->ConnectorType.value.append(12);
+#endif
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_Fiber_SC;
+#endif
                 break;
             case solarflare::NIC::Mezzanine:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_PMC);
+#else
+                phc->ConnectorType.value.append(106);
+#endif
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_Slot;
+#endif
                 break;
             default:
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorType.value.append(SF_PhysicalConnector::_ConnectorType::enum_Unknown);
+#else
+                phc->ConnectorType.value.append(0);
+#endif
+#if CIM_SCHEMA_VERSION_MINOR > 0
                 phc->ConnectorLayout.value = SF_PhysicalConnector::_ConnectorLayout::enum_Unknown;
+#endif
                 break;
         }
         return phc;

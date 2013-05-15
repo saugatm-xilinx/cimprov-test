@@ -22,6 +22,7 @@ namespace solarflare
     using cimple::Ref;
     using cimple::cast;
     using cimple::is_a;
+    using cimple::CIM_SoftwareIdentity;
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_SoftwareInstallationService;
     using cimple::SF_SoftwareInstallationServiceCapabilities;
@@ -175,7 +176,9 @@ namespace solarflare
         };
         
         identity->IsEntity.set(true);
+#if CIM_SCHEMA_VERSION_MINOR > 0
         identity->ElementName.set(sw.sysName());
+#endif
         identity->Name.set(se.name());
         identity->MajorVersion.set(sw.version().major());
         identity->MinorVersion.set(sw.version().minor());
@@ -253,49 +256,65 @@ namespace solarflare
         bool is64 = System::target.is64bit();
         unsigned cimType[][2] = {
             {
-                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2003, 
-                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2003_64_Bit
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003, 
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003_64_Bit
             },
+#if CIM_SCHEMA_VERSION_MINOR > 0
             {
+#if CIM_SCHEMA_VERSION_MINOR == 26
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2008, 
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2008_64_Bit
+#else
                 CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008, 
                 CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_64_Bit
+#endif
             },
             {
 #if CIM_SCHEMA_VERSION_MINOR == 26
-                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_R2, 
-                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_R2
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2008_R2, 
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2008_R2
 #else
                 CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_64_Bit, 
                 CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2008_64_Bit
 #endif
             },
+#else
+            {
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003, 
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003_64_Bit
+            },
+            {
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003, 
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003_64_Bit
+            },
+#endif
 #if CIM_SCHEMA_VERSION_MINOR == 26
             {
-                CIM_OperatingSystem::_OSType::enum_RedHat_Enterprise_Linux,
-                CIM_OperatingSystem::_OSType::enum_RedHat_Enterprise_Linux_64_Bit
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_RedHat_Enterprise_Linux,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_RedHat_Enterprise_Linux_64_Bit
             },
             {
-                CIM_OperatingSystem::_OSType::enum_SLES,
-                CIM_OperatingSystem::_OSType::enum_SLES_64_Bit
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_SLES,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_SLES_64_Bit
             },
             {
-                CIM_OperatingSystem::_OSType::enum_Debian,
-                CIM_OperatingSystem::_OSType::enum_Debian_64_Bit
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Debian,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Debian_64_Bit
             },
             {
-                CIM_OperatingSystem::_OSType::enum_CentOS_32_bit,
-                CIM_OperatingSystem::_OSType::enum_CentOS_64_bit
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_CentOS_32_bit,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_CentOS_64_bit
             },
             {
-                CIM_OperatingSystem::_OSType::enum_Oracle_Enterprise_Linux_32_bit,
-                CIM_OperatingSystem::_OSType::enum_Oracle_Enterprise_Linux_64_bit
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Oracle_Enterprise_Linux_32_bit,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Oracle_Enterprise_Linux_64_bit
             },
             {
-                CIM_OperatingSystem::_OSType::enum_Linux_2_6_x,
-                CIM_OperatingSystem::_OSType::enum_Linux_2_6_x_64_Bit
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Linux_2_6_x,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Linux_2_6_x_64_Bit
             },
 #else
-#define GENERIC_LINUX {CIM_OperatingSystem::_OSType::enum_LINUX, CIM_OperatingSystem::_OSType::enum_LINUX}
+#define GENERIC_LINUX {CIM_SoftwareIdentity::_TargetOSTypes::enum_LINUX, CIM_SoftwareIdentity::_TargetOSTypes::enum_LINUX}
             GENERIC_LINUX,
             GENERIC_LINUX,
             GENERIC_LINUX,
@@ -306,11 +325,11 @@ namespace solarflare
 #endif
             {
 #if CIM_SCHEMA_VERSION_MINOR == 26
-                CIM_OperatingSystem::_OSType::enum_VMware_ESXi,
-                CIM_OperatingSystem::_OSType::enum_VMware_ESXi,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_VMware_ESXi,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_VMware_ESXi,
 #else
-                CIM_OperatingSystem::_OSType::enum_Dedicated,
-                CIM_OperatingSystem::_OSType::enum_Dedicated,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Dedicated,
+                CIM_SoftwareIdentity::_TargetOSTypes::enum_Dedicated,
 #endif
             }
         };
@@ -499,11 +518,14 @@ namespace solarflare
         SF_SoftwareInstallationService *newSvc = static_cast<SF_SoftwareInstallationService *>(reference(sw, idx));
 
         newSvc->Description.set(sw.description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newSvc->ElementName.set(sw.name());
+#endif
 #if CIM_SCHEMA_VERSION_MINOR == 26
         newSvc->InstanceID.set(instanceID(sw.name()));
         newSvc->InstanceID.value.append(" Installer");
 #endif
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newSvc->OperationalStatus.null = false;
         newSvc->OperationalStatus.value.append(SF_SoftwareInstallationService::_OperationalStatus::enum_OK);
         newSvc->OperatingStatus.null = false;
@@ -512,6 +534,7 @@ namespace solarflare
         newSvc->PrimaryStatus.value = SF_SoftwareInstallationService::_PrimaryStatus::enum_OK;
         newSvc->EnabledState.null = false;
         newSvc->EnabledState.value = SF_SoftwareInstallationService::_EnabledState::enum_Enabled;
+#endif
 
         return newSvc;
     }

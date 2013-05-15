@@ -23,6 +23,7 @@ class SF_EthernetPort_Provider
         bool isOk() const { return ok; }
     };
 
+#if CIM_SCHEMA_VERSION_MINOR > 0
     class StateChanger : public solarflare::Action 
     {
         unsigned reqState;
@@ -32,6 +33,7 @@ class SF_EthernetPort_Provider
         StateChanger(unsigned rs, const Instance *inst) :
             solarflare::Action(inst), reqState(rs) {}
     };
+#endif
 public:
     typedef SF_EthernetPort Class;
 

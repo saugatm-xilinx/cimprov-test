@@ -11,7 +11,8 @@ libcimplewmi_TARGET = libcimplewmi.a
 libcimplewmi_DIR = cimple/wmi
 libcimplewmi_INCLUDES = cimple/wmi
 libcimplewmi_DEPENDS = libcimple
+libcimplewmi_CPPFLAGS = $(libcimplewmi_PROVIDE_CPPFLAGS) -DCIMPLE_WMI_MODULE
 
 $(eval $(call component,libcimplewmi,STATIC_LIBRARIES))
 
-CIMPLE_COMPONENTS := libcimplewmi $(CIMPLE_COMPONENTS)
+CIMPLE_COMPONENT := libcimplewmi 

@@ -147,8 +147,10 @@ namespace solarflare
         LogEntry entry = log->get(idx);
         le->LogInstanceID.set(CIMHelper::instanceID(log->description()));
         le->LogName.set(log->description());
-        sprintf(id, "%16.16llx", entry.id());
+        snprintf(id, sizeof(id), "%16.16" CIMPLE_LL "x", entry.id());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         le->ElementName.set(id);
+#endif
         le->RecordID.set(id);
         le->RecordFormat.set("");
         le->RecordData.set(entry.message());
@@ -194,12 +196,16 @@ namespace solarflare
         const Logger *log = Logger::knownLogs[idx];
 
         newLog->Name.set(log->description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newLog->ElementName.set(log->description());
+#endif
         newLog->Description.set(log->description());
+#if CIM_SCHEMA_VERSION_MINOR > 0
         newLog->OperationalStatus.null = false;
         newLog->OperationalStatus.value.append(SF_RecordLog::_OperationalStatus::enum_OK);
         newLog->HealthState.null = false;
         newLog->HealthState.value = SF_RecordLog::_HealthState::enum_OK;
+#endif
         newLog->EnabledState.null = false;
         newLog->EnabledState.value = (log->isEnabled() ? 
                                       SF_RecordLog::_EnabledState::enum_Enabled :

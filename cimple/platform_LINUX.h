@@ -52,6 +52,7 @@
 #define CIMPLE_OS_LINUX
 
 #define CIMPLE_LLU "%llu"
+#define CIMPLE_LL "ll"
 #define CIMPLE_LLD "%lld"
 
 #define CIMPLE_HAVE_DEV_RANDOM

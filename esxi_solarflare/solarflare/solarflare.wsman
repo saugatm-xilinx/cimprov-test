@@ -1,5 +1,2 @@
 SF=http://sf.schemas.solarflare.org/wbem/wscim/1/cim-schema/2
-OMC=http://omc.schemas.solarflare.org/wbem/wscim/1/cim-schema/2
-PG=http://pg.schemas.solarflare.org/wbem/wscim/1/cim-schema/2
-IBMSD=http://ibmsd.schemas.solarflare.org/wbem/wscim/1/cim-schema/2
-IBMPSG=http://ibmpsg.schemas.solarflare.org/wbem/wscim/1/cim-schema/2
+OMC=http://schema.omc-project.org/wbem/wscim/1/cim-schema/2

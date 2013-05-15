@@ -66,5 +66,6 @@
 #include "Stack.h"
 #include "FileSystem.h"
 #include "CimpleConfig.h"
+#undef StartService
 
 #endif /* _cimple_h */

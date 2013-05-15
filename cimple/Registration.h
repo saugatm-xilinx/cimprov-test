@@ -317,7 +317,7 @@ struct WMI_DllUnregisterServer_Args
         void* arg0, void* arg1, void* arg2, void* arg3, \
         void* arg4, void* arg5, void* arg6, void* arg7); \
     static HMODULE _module; \
-    BOOL WINAPI DllMain(HINSTANCE instance, ULONG reason, LPVOID reserved) \
+    BOOL WINAPI CIMPLE_EXPORT DllMain(HINSTANCE instance, ULONG reason, LPVOID reserved) \
     { \
         WMI_DllMain_Args args; \
         args.reg = _cimple_registration_head; \
@@ -330,7 +330,7 @@ struct WMI_DllUnregisterServer_Args
         cimple_wmi_adapter((void*)'W', (void*)'M', &args, 0, 0, 0, 0, 0); \
         return args.result; \
     } \
-    STDAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID* ptr) \
+    STDAPI CIMPLE_EXPORT DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID* ptr) \
     { \
         WMI_DllGetClassObject_Args args; \
         args.reg = _cimple_registration_head; \
@@ -343,7 +343,7 @@ struct WMI_DllUnregisterServer_Args
         cimple_wmi_adapter((void*)'W', (void*)'G', &args, 0, 0, 0, 0, 0); \
         return args.result; \
     } \
-    STDAPI DllCanUnloadNow() \
+    STDAPI CIMPLE_EXPORT DllCanUnloadNow() \
     { \
         WMI_DllCanUnloadNow_Args args; \
         args.reg = _cimple_registration_head; \
@@ -353,7 +353,7 @@ struct WMI_DllUnregisterServer_Args
         cimple_wmi_adapter((void*)'W', (void*)'C', &args, 0, 0, 0, 0, 0); \
         return args.result; \
     } \
-    STDAPI DllRegisterServer() \
+    STDAPI CIMPLE_EXPORT DllRegisterServer() \
     { \
         WMI_DllRegisterServer_Args args; \
         args.reg = _cimple_registration_head; \
@@ -363,7 +363,7 @@ struct WMI_DllUnregisterServer_Args
         cimple_wmi_adapter((void*)'W', (void*)'R', &args, 0, 0, 0, 0, 0); \
         return args.result; \
     } \
-    STDAPI DllUnregisterServer() \
+    STDAPI CIMPLE_EXPORT DllUnregisterServer()      \
     { \
         WMI_DllUnregisterServer_Args args; \
         args.reg = _cimple_registration_head; \

@@ -17,5 +17,4 @@ libcimpleposix_CPPFLAGS = $(libcimpleposix_PROVIDE_CPPFLAGS) -DPOSIX_INTERNAL
 
 $(eval $(call component,libcimpleposix,STATIC_LIBRARIES))
 
-CIMPLE_COMPONENTS := libcimpleposix $(CIMPLE_COMPONENTS)
 

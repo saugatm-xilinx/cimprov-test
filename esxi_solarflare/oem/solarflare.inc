@@ -4,8 +4,8 @@ DESC_NAME := solarflare
 DESC_ESX_VERSION := 5.0.0
 DESC_VENDOR_EMAIL := none@vmware.com
 DESC_VERSION := 1.23-7.89
-DESC_VENDOR := VMware
-DESC_SUMMARY := Sample ACME
+DESC_VENDOR := Solarflare
+DESC_SUMMARY := Solarflare NIC CIM Provider
 
 DESC_DESCRIPTION := Sample solarflare provider for ESX Server
 DESC_RELEASE_DATE := 2010-09-25T12:44:41-07:00

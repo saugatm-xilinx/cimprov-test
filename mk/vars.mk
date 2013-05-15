@@ -20,7 +20,7 @@ endif
 INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
 
 PROVIDER_LIBRARY=Solarflare
-PROVIDER_VERSION=0.1
+PROVIDER_VERSION=1.0
 
 override host_CPPFLAGS += -D_GNU_SOURCE -I.
 
@@ -41,4 +41,4 @@ override host_CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
 override host_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
 endif
 
-override host_LIBRARIES += pthread
+override host_SYSLIBRARIES += pthread

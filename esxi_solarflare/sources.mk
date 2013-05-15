@@ -1,7 +1,7 @@
 esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
 
-esxi_archive_COMPONENTS = $(foreach comp,$(filter-out esxi_archive,$(COMPONENTS)),$(if $(findstring target,$($(comp)_PURPOSE)),,$(comp) ))
+esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $(findstring target,$($(comp)_PURPOSE)),$(comp) ,))
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
@@ -68,7 +68,7 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
 	done
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -I\$$(srcdir)" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+=$(patsubst -I%,-I\$$(srcdir)/%,$(libprovider_CPPFLAGS) $(_libprovider_DEP_CPPFLAGS))" >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+=$(patsubst -I%,-I\$$(srcdir)/%,$(libprovider_CPPFLAGS) $(libtoolstgt_CPPFLAGS) $(_libprovider_DEP_CPPFLAGS))" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\\\"\$$(smash_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_INTEROP_NS=\\\"\$$(sfcb_interop_namespace)\\\"" >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE" >>$@
@@ -92,22 +92,27 @@ COMPONENTS += esxi_archive
 
 ifneq ($(ESXI_BUILD_HOST),)
 
+ifneq ($(ESXI_GATEWAY),)
+ESXI_CONNECT = ssh $(ESXI_GATEWAY)
+endif
+
 ESXI_BUILD_CIMPDK_PATH ?= /opt/vmware/cimpdk
 ESXI_BUILD_SUBDIR ?= $(PROVIDER_LIBRARY)
 ESXI_BUILD_DIR = $(ESXI_BUILD_CIMPDK_PATH)/$(ESXI_BUILD_SUBDIR)
 ESXI_BUILD_VIB_PATH = build/obj/esx/staging
 
-ESXI_BUILD_RSH=ssh $(ESXI_BUILD_HOST) #-oBatchMode=yes 
+ESXI_BUILD_RSH=$(ESXI_CONNECT) ssh $(ESXI_BUILD_HOST) #-oBatchMode=yes 
 ESXI_BUILD_RCP=scp #-oBatchMode=yes 
+ESXI_COPYTO=$(or $(ESXI_GATEWAY),$(ESXI_BUILD_HOST))
 
 esxi_vib_TARGET = vmware-esx-provider-solarflare.vib
 esxi_vib_DIR = esxi_solarflare
 
 $(esxi_vib_TARGET) : $(esxi_archive_TARGET)
-	$(ESXI_BUILD_RCP) $< $(ESXI_BUILD_HOST):$(notdir $<)
+	$(ESXI_BUILD_RCP) $< $(ESXI_COPYTO):$(notdir $<)
 	$(ESXI_BUILD_RSH) mkdir -p $(ESXI_BUILD_DIR)
-	$(ESXI_BUILD_RSH) 'set -e; cd $(ESXI_BUILD_DIR); tar xzvf ~/$<; ./esxi_bootstrap.sh'
-	$(ESXI_BUILD_RSH) 'set -e; cd $(ESXI_BUILD_DIR)/common; make CIMDE=1 solarflare && make CIMDE=1 visor-oem'
-	$(ESXI_BUILD_RCP) $(ESXI_BUILD_HOST):$(ESXI_BUILD_DIR)/$(ESXI_BUILD_VIB_PATH)/$(notdir $@) $@
+	$(ESXI_BUILD_RSH) "'set -e; cd $(ESXI_BUILD_DIR); tar xzvf ~/$<; ./esxi_bootstrap.sh'"
+	$(ESXI_BUILD_RSH) "'set -e; cd $(ESXI_BUILD_DIR)/common; make CIMDE=1 solarflare && make CIMDE=1 visor-oem'"
+	$(ESXI_BUILD_RCP) $(ESXI_COPYTO):$(ESXI_BUILD_DIR)/$(ESXI_BUILD_VIB_PATH)/$(notdir $@) $@
 
 endif

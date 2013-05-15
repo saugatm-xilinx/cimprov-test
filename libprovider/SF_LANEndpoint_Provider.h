@@ -3,6 +3,7 @@
 #define _SF_LANEndpoint_Provider_h
 
 #include <cimple/cimple.h>
+#include "CIM_ConcreteJob.h"
 #include "SF_LANEndpoint.h"
 #include "sf_platform.h"
 

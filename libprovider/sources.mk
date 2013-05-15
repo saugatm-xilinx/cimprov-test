@@ -71,6 +71,7 @@ endif
 
 libprovider_DIR = libprovider
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
+
 libprovider_INCLUDES = $(libprovider_DIR)
 libprovider_CPPFLAGS = -Ilibprovider -Ilibprovider/v5_import -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 
