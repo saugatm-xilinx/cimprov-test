@@ -112,7 +112,7 @@ void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::Sys
                                                                  unsigned)
 {
     solarflare::SWElement& sw = static_cast<solarflare::SWElement&>(se);
-    sw.install(uri);
+    ok = ok && sw.install(uri);
 }
 
 void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::SystemElement& se,
@@ -120,7 +120,7 @@ void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::
 {
     solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
     Installer installer(uri, service);
-    ok = installer.forSoftware(nic);
+    ok = installer.forSoftware(nic) && installer.isOk();
 }
 
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
