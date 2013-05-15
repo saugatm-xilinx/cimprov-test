@@ -1901,10 +1901,7 @@ curl_fail:
                 return -1;
             }
 
-            if (strcmp_start(fileName, TFTP_PROTO) == 0)
-                rc = uri_get_file(fileName, NULL, f);
-            else // FIXME: password should be obtained properly
-                rc = uri_get_file(fileName, "news@ben", f);
+            rc = uri_get_file(fileName, NULL, f);
             if (rc != 0)
             {
                 fclose(f);
