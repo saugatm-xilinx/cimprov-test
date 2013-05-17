@@ -103,7 +103,6 @@ namespace solarflare
 
     Instance *NICCardHelper::reference(const SystemElement& se, unsigned) const 
     {
-        
         SF_NICCard *card = SF_NICCard::create(true);
 
         card->CreationClassName.set("SF_NICCard");
@@ -228,7 +227,7 @@ namespace solarflare
         SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
     
         item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(drv->cimReference(SF_SoftwareIdentity::static_meta_class));
-        item->Dependent = cast<cimple::CIM_ManagedElement *>(nic.cimReference(SF_PortController::static_meta_class));
+        item->Dependent = cast<cimple::CIM_PortController *>(nic.cimReference(SF_PortController::static_meta_class));
     
         item->ElementSoftwareStatus.null = false;
         item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);

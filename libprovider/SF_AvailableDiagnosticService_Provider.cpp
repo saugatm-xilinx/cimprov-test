@@ -36,9 +36,7 @@ Enum_Instances_Status SF_AvailableDiagnosticService_Provider::enum_instances(
     const SF_AvailableDiagnosticService* model,
     Enum_Instances_Handler<SF_AvailableDiagnosticService>* handler)
 {
-#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_AvailableDiagnosticService>::allDiagnostics(handler);
-#endif
 
     return ENUM_INSTANCES_OK;
 }

@@ -12,11 +12,22 @@ class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 
 [Association]
 class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
+      [Override("Dependent")]
+   CIM_PortController REF Dependent;
 };
 
+[Association]
+class SF_DiagElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
+      [Override("Dependent")]
+   CIM_DiagnosticTest REF Dependent;
+};
 
 [Association]
 class SF_BundleComponent : CIM_OrderedComponent {
+      [Override("GroupComponent")]
+   CIM_SoftwareIdentity REF GroupComponent;
+      [Override("PartComponent")]
+   CIM_SoftwareIdentity REF PartComponent;
 };
 
 class SF_ComputerSystem : CIM_ComputerSystem {
@@ -65,6 +76,8 @@ class SF_SoftwareInstallationServiceCapabilities : CIM_SoftwareInstallationServi
 
 [Association]
 class SF_ElementCapabilities : CIM_ElementCapabilities {
+      [Override("ManagedElement")]
+   CIM_LogicalElement REF ManagedElement;
 };
 
 [Association]
@@ -77,6 +90,10 @@ class SF_HostedService : CIM_HostedService {
 
 [Association]
 class SF_ControlledBy : CIM_ControlledBy {
+      [Override("Dependent")]
+   CIM_EthernetPort REF Dependent;
+      [Override("Antecedent")]
+   CIM_PortController REF Antecedent;
 };
 
 [Association]
@@ -124,14 +141,20 @@ class SF_RecordAppliesToElement : CIM_RecordAppliesToElement {
 
 [Association]
 class SF_OwningJobElement : CIM_OwningJobElement {
+      [Override("OwningElement")]
+   CIM_DiagnosticTest REF OwningElement;
 };
 
 [Association]
 class SF_AffectedJobElement : CIM_AffectedJobElement {
+      [Override("AffectedElement")]
+   CIM_PortController REF AffectedElement;
 };
 
 [Association]
 class SF_AvailableDiagnosticService : CIM_AvailableDiagnosticService {
+      [Override("UserOfService")]
+   CIM_Card REF UserOfService;
 };
 
 class SF_DiagnosticSettingData : CIM_DiagnosticSettingData {
