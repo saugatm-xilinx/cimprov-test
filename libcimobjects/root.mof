@@ -1,0 +1,28 @@
+[Association]
+class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
+};
+
+[Association]
+class SF_SystemDevice : CIM_SystemDevice {
+};
+
+[Association]
+class SF_ServiceAffectsElement : CIM_ServiceAffectsElement {
+};
+
+[Association]
+class SF_HostedService : CIM_HostedService {
+};
+
+[Association]
+class SF_HostedAccessPoint : CIM_HostedAccessPoint {
+};
+
+[Association]
+class SF_UseOfLog : CIM_UseOfLog {
+};
+
+[Association]
+class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
+};
+

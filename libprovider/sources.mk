@@ -126,6 +126,9 @@ repository.reg : $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/classe
 interop.reg : $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/classes mof2reg.awk
 	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(INTEROP_NAMESPACE) -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
 
+root.reg : $(libcimobjects_DIR)/root.mof $(libcimobjects_DIR)/classes mof2reg.awk
+	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=root/cimv2 -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
+
 endif
 
 ifeq ($(CIM_SERVER),pegasus)

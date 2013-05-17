@@ -5,8 +5,8 @@ esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $(findstring target,
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
-ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof
-ESXI_GENERATED += repository.reg.in interop.reg.in
+ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
+ESXI_GENERATED += repository.reg.in interop.reg.in root.reg.in
 ESXI_GENERATED += Makefile.am
 ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs/i386/libutils.a
 ESXI_GENERATED += libprovider/esxi_libs/i386/libcurl.a
@@ -57,6 +57,10 @@ $(ESXI_SRC_PATH)/interop.reg.in : interop.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
 
+$(ESXI_SRC_PATH)/root.reg.in : root.reg
+	mkdir -p $(dir $@)	
+	cp $< $@
+
 $(ESXI_SRC_PATH)/% : %
 	mkdir -p $(dir $@)
 	cp $< $@
@@ -81,11 +85,12 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/librt.so.1 " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libcrypto.so.0.9.8 " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
-	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace)" >>$@
+	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace) root/cimv2" >>$@
 	echo "if ENABLE_SFCB" >>$@
 	echo "dist_sfcb_interop_ns_DATA = libcimobjects/interop.mof" >>$@
 	echo "dist_sfcb_ns_DATA = libcimobjects/repository.mof" >>$@
-	echo "dist_sfcb_reg_DATA = repository.reg interop.reg" >>$@
+	echo "dist_sfcb_root_ns_DATA = libcimobjects/root.mof" >>$@
+	echo "dist_sfcb_reg_DATA = repository.reg interop.reg root.reg" >>$@
 	echo "endif" >>$@
 
 COMPONENTS += esxi_archive
@@ -94,6 +99,7 @@ ifneq ($(ESXI_BUILD_HOST),)
 
 ifneq ($(ESXI_GATEWAY),)
 ESXI_CONNECT = ssh $(ESXI_GATEWAY)
+ESXI_Q = "
 endif
 
 ESXI_BUILD_CIMPDK_PATH ?= /opt/vmware/cimpdk
@@ -111,8 +117,8 @@ esxi_vib_DIR = esxi_solarflare
 $(esxi_vib_TARGET) : $(esxi_archive_TARGET)
 	$(ESXI_BUILD_RCP) $< $(ESXI_COPYTO):$(notdir $<)
 	$(ESXI_BUILD_RSH) mkdir -p $(ESXI_BUILD_DIR)
-	$(ESXI_BUILD_RSH) "'set -e; cd $(ESXI_BUILD_DIR); tar xzvf ~/$<; ./esxi_bootstrap.sh'"
-	$(ESXI_BUILD_RSH) "'set -e; cd $(ESXI_BUILD_DIR)/common; make CIMDE=1 solarflare && make CIMDE=1 visor-oem'"
+	$(ESXI_BUILD_RSH) $(ESXI_Q)'set -e; cd $(ESXI_BUILD_DIR); tar xzvf ~/$<; ./esxi_bootstrap.sh'$(ESXI_Q)
+	$(ESXI_BUILD_RSH) $(ESXI_Q)'set -e; cd $(ESXI_BUILD_DIR)/common; make CIMDE=1 solarflare && make CIMDE=1 visor-oem'$(ESXI_Q)
 	$(ESXI_BUILD_RCP) $(ESXI_COPYTO):$(ESXI_BUILD_DIR)/$(ESXI_BUILD_VIB_PATH)/$(notdir $@) $@
 
 endif

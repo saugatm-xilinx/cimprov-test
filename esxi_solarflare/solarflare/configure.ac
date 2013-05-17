@@ -118,6 +118,8 @@ AC_SUBST([sfcb_config_nsdir],
 	 "\$(sfcb_staging_dir)/mofs/\$(config_namespace)")
 AC_SUBST([sfcb_interop_nsdir],
 	 "\$(sfcb_staging_dir)/mofs/\$(sfcb_interop_namespace)")
+AC_SUBST([sfcb_root_nsdir],
+	 "\$(sfcb_staging_dir)/mofs/root/cimv2")
 AC_SUBST([sfcb_nsdir],
 	 "\$(sfcb_staging_dir)/mofs/\$(smash_namespace)")
 
@@ -129,6 +131,6 @@ AC_SUBST([sfcb_staging_dir])
 
 
 
-AC_CONFIG_FILES([Makefile repository.reg interop.reg])
+AC_CONFIG_FILES([Makefile repository.reg interop.reg root.reg])
 
 AC_OUTPUT
