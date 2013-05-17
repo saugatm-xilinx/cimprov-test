@@ -326,8 +326,8 @@ namespace solarflare
         const solarflare::Interface& intf = static_cast<const Interface&>(se);
         SF_ControlledBy *link = SF_ControlledBy::create(true);
         
-        link->Dependent = cast<cimple::CIM_LogicalDevice *>(intf.cimReference(SF_EthernetPort::static_meta_class));
-        link->Antecedent = cast<cimple::CIM_Controller *>(intf.nic()->cimReference(SF_PortController::static_meta_class));
+        link->Dependent = cast<cimple::CIM_EthernetPort *>(intf.cimReference(SF_EthernetPort::static_meta_class));
+        link->Antecedent = cast<cimple::CIM_PortController *>(intf.nic()->cimReference(SF_PortController::static_meta_class));
         return link;
     }
 

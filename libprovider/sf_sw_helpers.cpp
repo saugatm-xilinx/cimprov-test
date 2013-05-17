@@ -369,9 +369,9 @@ namespace solarflare
         
         SF_BundleComponent *link = SF_BundleComponent::create(true);
         link->GroupComponent = 
-        cast<CIM_ManagedElement *>(he.package()->cimReference(SF_SoftwareIdentity::static_meta_class));
+        cast<CIM_SoftwareIdentity *>(he.package()->cimReference(SF_SoftwareIdentity::static_meta_class));
         link->PartComponent =
-        cast<CIM_ManagedElement *>(he.cimReference(SF_SoftwareIdentity::static_meta_class));
+        cast<CIM_SoftwareIdentity *>(he.cimReference(SF_SoftwareIdentity::static_meta_class));
         FindIndex finder(&se);
         he.package()->forAllSoftware(finder);
         link->AssignedSequence.set(finder.found());
@@ -668,7 +668,7 @@ namespace solarflare
         SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
         
         item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(fw.cimReference(SF_SoftwareIdentity::static_meta_class));
-        item->Dependent = cast<cimple::CIM_ManagedElement *>(fw.nic()->cimReference(SF_PortController::static_meta_class));
+        item->Dependent = cast<cimple::CIM_PortController *>(fw.nic()->cimReference(SF_PortController::static_meta_class));
         item->ElementSoftwareStatus.null = false;
         item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
         item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);

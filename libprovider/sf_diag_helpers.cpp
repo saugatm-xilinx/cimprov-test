@@ -14,7 +14,7 @@
 #include "SF_RecordAppliesToElement.h"
 #include "SF_DiagnosticServiceCapabilities.h"
 #include "SF_ElementCapabilities.h"
-#include "SF_ElementSoftwareIdentity.h"
+#include "SF_DiagElementSoftwareIdentity.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_HostedService.h"
 #include "SF_OwningJobElement.h"
@@ -42,7 +42,7 @@ namespace solarflare
     using cimple::SF_DiagnosticLogCapabilities;
     using cimple::SF_DiagnosticServiceCapabilities;
     using cimple::SF_ElementCapabilities;
-    using cimple::SF_ElementSoftwareIdentity;
+    using cimple::SF_DiagElementSoftwareIdentity;
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_HostedService;
     using cimple::SF_OwningJobElement;
@@ -201,7 +201,7 @@ namespace solarflare
             return &serviceCaps;
         if (&cls == &SF_ElementCapabilities::static_meta_class)
             return &capsLink;
-        if (&cls == &SF_ElementSoftwareIdentity::static_meta_class)
+        if (&cls == &SF_DiagElementSoftwareIdentity::static_meta_class)
             return &elementSoftwareIdentity;
         if (&cls == &SF_HostedService::static_meta_class)
             return &hostedService;
@@ -354,7 +354,7 @@ namespace solarflare
     
         SF_AffectedJobElement *link = SF_AffectedJobElement::create(true);
     
-        link->AffectedElement = cast<cimple::CIM_ManagedElement *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
+        link->AffectedElement = cast<cimple::CIM_PortController *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
         link->AffectingElement = cast<cimple::CIM_Job *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
         link->ElementEffects.null = false;
         if (diag.isExclusive())
@@ -371,7 +371,7 @@ namespace solarflare
         SF_AvailableDiagnosticService *link = SF_AvailableDiagnosticService::create(true);
     
         link->ServiceProvided = cast<cimple::CIM_DiagnosticService *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
-        link->UserOfService = cast<cimple::CIM_ManagedElement *>(diag.nic()->cimReference(SF_NICCard::static_meta_class));
+        link->UserOfService = cast<cimple::CIM_Card *>(diag.nic()->cimReference(SF_NICCard::static_meta_class));
         link->EstimatedDurationOfService.null = false;
         link->EstimatedDurationOfService.value = SF_AvailableDiagnosticService::_EstimatedDurationOfService::enum_Unknown;
 
@@ -601,14 +601,14 @@ namespace solarflare
         if (tool == NULL)
             return NULL;
         
-        SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
+        SF_DiagElementSoftwareIdentity *item = SF_DiagElementSoftwareIdentity::create(true);
     
         item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(tool->cimReference(SF_SoftwareIdentity::static_meta_class));
-        item->Dependent = cast<cimple::CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
+        item->Dependent = cast<cimple::CIM_DiagnosticTest *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
         item->ElementSoftwareStatus.null = false;
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
+        item->ElementSoftwareStatus.value.append(SF_DiagElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        item->ElementSoftwareStatus.value.append(SF_DiagElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
+        item->ElementSoftwareStatus.value.append(SF_DiagElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
 
         return item;
     }
@@ -645,7 +645,7 @@ namespace solarflare
 
         SF_OwningJobElement *link = SF_OwningJobElement::create(true);
         
-        link->OwningElement = cast<cimple::CIM_ManagedElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
+        link->OwningElement = cast<cimple::CIM_DiagnosticTest *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
         link->OwnedElement = cast<cimple::CIM_Job *>(diag.cimReference(SF_ConcreteJob::static_meta_class));
         
         return link;

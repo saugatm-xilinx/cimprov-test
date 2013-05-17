@@ -291,7 +291,7 @@ namespace solarflare
     {
         SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
 
-        link->ManagedElement = cast<cimple::CIM_ManagedElement *>(el.cimReference(elementClass));
+        link->ManagedElement = cast<cimple::CIM_LogicalElement *>(el.cimReference(elementClass));
         link->Capabilities = cast<cimple::CIM_Capabilities *>(el.cimReference(capsClass));
         link->Characteristics.null = false;
         link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);

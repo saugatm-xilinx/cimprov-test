@@ -34,9 +34,7 @@ Enum_Instances_Status SF_AffectedJobElement_Provider::enum_instances(
     const SF_AffectedJobElement* model,
     Enum_Instances_Handler<SF_AffectedJobElement>* handler)
 {
-#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_AffectedJobElement>::allDiagnostics(handler);
-#endif
     return ENUM_INSTANCES_OK;
 }
 
