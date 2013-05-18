@@ -19,7 +19,10 @@ SF_NICSAPImplementation
 SF_SoftwareInstallationService
 SF_SoftwareInstallationServiceCapabilities
 SF_ElementCapabilities
-SF_ServiceAffectsElement
+SF_ServiceAffectsCard
+SF_ServiceAffectsController
+SF_ServiceAffectsSystem
+SF_ServiceAffectsSoftware
 SF_HostedService
 SF_ControlledBy
 SF_HostedAccessPoint
@@ -27,7 +30,8 @@ SF_RecordLog
 SF_RecordLogCapabilities
 SF_LogEntry
 SF_LogManagesRecord
-SF_UseOfLog
+SF_SystemUseOfLog
+SF_DiagnosticUseOfLog
 SF_DiagnosticLog
 SF_DiagnosticLogCapabilities
 SF_DiagnosticCompletionRecord

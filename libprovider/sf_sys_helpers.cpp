@@ -7,7 +7,7 @@
 #include "SF_LogEntry.h"
 #include "SF_RecordLog.h"
 #include "SF_RecordLogCapabilities.h"
-#include "SF_UseOfLog.h"
+#include "SF_SystemUseOfLog.h"
 #include "SF_LogManagesRecord.h"
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
@@ -25,7 +25,7 @@ namespace solarflare
     using cimple::SF_RecordLog;
     using cimple::SF_RecordLogCapabilities;
     using cimple::SF_ElementCapabilities;
-    using cimple::SF_UseOfLog;
+    using cimple::SF_SystemUseOfLog;
     using cimple::SF_LogManagesRecord;
     using cimple::SF_RegisteredProfile;
     using cimple::SF_ReferencedProfile;
@@ -280,10 +280,10 @@ namespace solarflare
     {
         Instance *log = se.cimReference(SF_RecordLog::static_meta_class, idx);
         CIM_ComputerSystem *sys = solarflare::CIMHelper::findSystem()->clone();
-        SF_UseOfLog *link = SF_UseOfLog::create(true);
+        SF_SystemUseOfLog *link = SF_SystemUseOfLog::create(true);
         
         link->Antecedent = static_cast<cimple::CIM_Log *>(log);
-        link->Dependent = cast<cimple::CIM_ManagedSystemElement *>(sys);
+        link->Dependent = cast<cimple::CIM_ComputerSystem *>(sys);
         return link;
     }
 
@@ -414,7 +414,7 @@ namespace solarflare
             return &recordLogHelper;
         if (&cls == &SF_RecordLogCapabilities::static_meta_class)
             return &recordLogCapabilitiesHelper;          
-        if (&cls == &SF_UseOfLog::static_meta_class)
+        if (&cls == &SF_SystemUseOfLog::static_meta_class)
             return &useOfLogHelper;
         if (&cls == &SF_LogManagesRecord::static_meta_class)
             return &logManagesRecordHelper;

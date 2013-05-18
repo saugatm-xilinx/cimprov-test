@@ -33,9 +33,7 @@ Enum_Instances_Status SF_ComputerSystemPackage_Provider::enum_instances(
     const SF_ComputerSystemPackage* model,
     Enum_Instances_Handler<SF_ComputerSystemPackage>* handler)
 {
-#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_ComputerSystemPackage>::allNICs(handler);
-#endif
     return ENUM_INSTANCES_OK;
 }
 

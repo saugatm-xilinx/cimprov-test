@@ -8,7 +8,7 @@
 #include "SF_DiagnosticLog.h"
 #include "SF_DiagnosticLogCapabilities.h"
 #include "SF_DiagnosticCompletionRecord.h"
-#include "SF_UseOfLog.h"
+#include "SF_DiagnosticUseOfLog.h"
 #include "SF_LogManagesRecord.h"
 #include "SF_ElementConformsToProfile.h"
 #include "SF_RecordAppliesToElement.h"
@@ -18,7 +18,7 @@
 #include "SF_SoftwareIdentity.h"
 #include "SF_HostedService.h"
 #include "SF_OwningJobElement.h"
-#include "SF_ServiceAffectsElement.h"
+#include "SF_ServiceAffectsController.h"
 
 namespace solarflare 
 {
@@ -36,7 +36,7 @@ namespace solarflare
     using cimple::SF_AvailableDiagnosticService;
     using cimple::SF_ElementConformsToProfile;
     using cimple::SF_DiagnosticCompletionRecord;
-    using cimple::SF_UseOfLog;
+    using cimple::SF_DiagnosticUseOfLog;
     using cimple::SF_LogManagesRecord;
     using cimple::SF_RecordAppliesToElement;
     using cimple::SF_DiagnosticLogCapabilities;
@@ -46,7 +46,7 @@ namespace solarflare
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_HostedService;
     using cimple::SF_OwningJobElement;
-    using cimple::SF_ServiceAffectsElement;
+    using cimple::SF_ServiceAffectsController;
 
     class DiagnosticTestHelper : public CIMHelper {
     public:
@@ -189,7 +189,7 @@ namespace solarflare
         }
         if (&cls == &SF_DiagnosticCompletionRecord::static_meta_class)
             return &diagnosticCompletionRecord;
-        if (&cls == &SF_UseOfLog::static_meta_class)
+        if (&cls == &SF_DiagnosticUseOfLog::static_meta_class)
             return &useOfLog;
         if (&cls == &SF_LogManagesRecord::static_meta_class)
             return &logManagesRecord;
@@ -205,7 +205,7 @@ namespace solarflare
             return &elementSoftwareIdentity;
         if (&cls == &SF_HostedService::static_meta_class)
             return &hostedService;
-        if (&cls == &SF_ServiceAffectsElement::static_meta_class)
+        if (&cls == &SF_ServiceAffectsController::static_meta_class)
             return &serviceAffectsElement;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conforming;
@@ -480,10 +480,10 @@ namespace solarflare
     {
         const solarflare::Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
     
-        SF_UseOfLog *link = SF_UseOfLog::create(true);
+        SF_DiagnosticUseOfLog *link = SF_DiagnosticUseOfLog::create(true);
         
         link->Antecedent = cast<cimple::CIM_Log *>(diag.cimReference(SF_DiagnosticLog::static_meta_class));
-        link->Dependent = cast<cimple::CIM_ManagedSystemElement *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
+        link->Dependent = cast<cimple::CIM_DiagnosticTest *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
 
         return link;
     }
@@ -626,9 +626,9 @@ namespace solarflare
     DiagnosticServiceAffectsElementHelper::instance(const solarflare::SystemElement& se, unsigned) const
     {
         const Diagnostic& diag = static_cast<const Diagnostic&>(se);
-        SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
+        SF_ServiceAffectsController *link = SF_ServiceAffectsController::create(true);
         
-        link->AffectedElement = cast<cimple::CIM_ManagedElement *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
+        link->AffectedElement = cast<cimple::CIM_PortController *>(diag.nic()->cimReference(SF_PortController::static_meta_class));
         link->AffectingElement = cast<cimple::CIM_Service *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
 
         return link;

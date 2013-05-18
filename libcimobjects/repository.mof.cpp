@@ -81,7 +81,27 @@ class SF_ElementCapabilities : CIM_ElementCapabilities {
 };
 
 [Association]
-class SF_ServiceAffectsElement : CIM_ServiceAffectsElement {
+class SF_ServiceAffectsCard : CIM_ServiceAffectsElement {
+      [Override("AffectedElement")]
+   CIM_Card REF AffectedElement;
+};
+
+[Association]
+class SF_ServiceAffectsController : CIM_ServiceAffectsElement {
+      [Override("AffectedElement")]
+   CIM_PortController REF AffectedElement;
+};
+
+[Association]
+class SF_ServiceAffectsSystem : CIM_ServiceAffectsElement {
+      [Override("AffectedElement")]
+   CIM_ComputerSystem REF AffectedElement;
+};
+
+[Association]
+class SF_ServiceAffectsSoftware : CIM_ServiceAffectsElement {
+      [Override("AffectedElement")]
+   CIM_SoftwareIdentity REF AffectedElement;
 };
 
 [Association]
@@ -126,7 +146,15 @@ class SF_LogManagesRecord : CIM_LogManagesRecord {
 };
 
 [Association]
-class SF_UseOfLog : CIM_UseOfLog {
+class SF_SystemUseOfLog : CIM_UseOfLog {
+      [Override("Dependent")]
+   CIM_ComputerSystem REF Dependent;
+};
+
+[Association]
+class SF_DiagnosticUseOfLog : CIM_UseOfLog {
+      [Override("Dependent")]
+   CIM_DiagnosticTest REF Dependent;
 };
 
 class SF_DiagnosticTest : CIM_DiagnosticTest {

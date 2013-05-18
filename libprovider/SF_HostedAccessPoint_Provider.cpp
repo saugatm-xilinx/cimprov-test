@@ -37,9 +37,7 @@ Enum_Instances_Status SF_HostedAccessPoint_Provider::enum_instances(
     const SF_HostedAccessPoint* model,
     Enum_Instances_Handler<SF_HostedAccessPoint>* handler)
 {
-#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_HostedAccessPoint>::allInterfaces(handler);
-#endif
     return ENUM_INSTANCES_OK;
 }
 

@@ -36,9 +36,7 @@ Enum_Instances_Status SF_HostedService_Provider::enum_instances(
     const SF_HostedService* model,
     Enum_Instances_Handler<SF_HostedService>* handler)
 {
-#if !TARGET_CIM_SERVER_esxi
     solarflare::EnumInstances<SF_HostedService>::allObjects(handler);
-#endif
     return ENUM_INSTANCES_OK;
 }
 

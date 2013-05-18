@@ -37,12 +37,16 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_RecordLogCapabilities_Provider.cpp \
 	SF_ReferencedProfile_Provider.cpp \
 	SF_RegisteredProfile_Provider.cpp \
-	SF_ServiceAffectsElement_Provider.cpp \
+	SF_ServiceAffectsCard_Provider.cpp \
+	SF_ServiceAffectsController_Provider.cpp \
+	SF_ServiceAffectsSystem_Provider.cpp \
+	SF_ServiceAffectsSoftware_Provider.cpp \
 	SF_SoftwareIdentity_Provider.cpp \
 	SF_SoftwareInstallationServiceCapabilities_Provider.cpp \
 	SF_SoftwareInstallationService_Provider.cpp \
 	SF_SystemDevice_Provider.cpp \
-	SF_UseOfLog_Provider.cpp \
+	SF_SystemUseOfLog_Provider.cpp \
+	SF_DiagnosticUseOfLog_Provider.cpp \
 	SF_ComputerSystemPackage_Provider.cpp \
 	SF_JobStarted_Provider.cpp \
 	SF_JobCreated_Provider.cpp \

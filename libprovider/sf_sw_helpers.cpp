@@ -11,7 +11,9 @@
 #include "SF_PortController.h"
 #include "SF_HostedService.h"
 #include "SF_InstalledSoftwareIdentity.h"
-#include "SF_ServiceAffectsElement.h"
+#include "SF_ServiceAffectsSystem.h"
+#include "SF_ServiceAffectsSoftware.h"
+#include "SF_ServiceAffectsCard.h"
 #include "SF_NICCard.h"
 
 namespace solarflare 
@@ -36,7 +38,9 @@ namespace solarflare
     using cimple::SF_PortController;
     using cimple::SF_HostedService;
     using cimple::SF_InstalledSoftwareIdentity;
-    using cimple::SF_ServiceAffectsElement;
+    using cimple::SF_ServiceAffectsSystem;
+    using cimple::SF_ServiceAffectsSoftware;
+    using cimple::SF_ServiceAffectsCard;
     using cimple::SF_NICCard;
 
     class SoftwareIdentityHelper : public CIMHelper {
@@ -116,13 +120,25 @@ namespace solarflare
         virtual Instance *instance(const SystemElement& se, unsigned idx) const;
     };
 
-    class FirmwareServiceAffectsElementHelper : public CIMHelper {
+    class FirmwareServiceAffectsCardHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const { return 2; }
         virtual Instance *instance(const SystemElement& se, unsigned idx) const;
     };
 
-    class PackageServiceAffectsElementHelper : public CIMHelper {
+    class FirmwareServiceAffectsSoftwareHelper : public CIMHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement&) const { return 2; }
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
+
+    class PackageServiceAffectsSystemHelper : public CIMHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement&) const { return 2; }
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
+
+    class PackageServiceAffectsSoftwareHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const { return 2; }
         virtual Instance *instance(const SystemElement& se, unsigned idx) const;
@@ -238,14 +254,14 @@ namespace solarflare
     {
         static const HostSoftwareIdentityHelper hostSoftwareIdentity;
         static const BundleComponentHelper bundleComponent;
-        static const SoftwareServiceAffectsElementHelper serviceAffectsElement;
+        static const SoftwareServiceAffectsElementHelper serviceAffectsSoftware;
 
         if (&cls == &SF_SoftwareIdentity::static_meta_class)
             return &hostSoftwareIdentity;
         else if (&cls == &SF_BundleComponent::static_meta_class)
             return &bundleComponent;
-        else if (&cls == &SF_ServiceAffectsElement::static_meta_class)
-            return &serviceAffectsElement;
+        else if (&cls == &SF_ServiceAffectsSoftware::static_meta_class)
+            return &serviceAffectsSoftware;
         else
             return SWElement::cimDispatch(cls);
     }
@@ -394,7 +410,8 @@ namespace solarflare
         static const InstallationJobHelper bundleInstallationJob;
         static const InstallationHostedServiceHelper hostedService;
         static const InstallableConformsToProfileHelper conformToProfile;
-        static const PackageServiceAffectsElementHelper serviceAffectsElement;
+        static const PackageServiceAffectsSystemHelper serviceAffectsSystem;
+        static const PackageServiceAffectsSoftwareHelper serviceAffectsSoftware;
         static const ElementCapabilitiesHelper capsLink(SF_SoftwareInstallationService::static_meta_class,
                                                         SF_SoftwareInstallationServiceCapabilities::static_meta_class);
 
@@ -408,8 +425,10 @@ namespace solarflare
             return &bundleSoftwareIdentity;
         if (&cls == &SF_HostedService::static_meta_class)
             return &hostedService;
-        if (&cls == &SF_ServiceAffectsElement::static_meta_class)
-            return &serviceAffectsElement;
+        if (&cls == &SF_ServiceAffectsSystem::static_meta_class)
+            return &serviceAffectsSystem;
+        if (&cls == &SF_ServiceAffectsSoftware::static_meta_class)
+            return &serviceAffectsSoftware;
         if (&cls == &SF_ConcreteJob::static_meta_class && 
             const_cast<Package *>(this)->installThread() != NULL)
             return &bundleInstallationJob;
@@ -476,7 +495,8 @@ namespace solarflare
         static const InstallableConformsToProfileHelper conformToProfile;
         static const InstallationHostedServiceHelper hostedService;
         static const FirmwareElementSoftwareIdentityHelper elementSoftwareIdentity;
-        static const FirmwareServiceAffectsElementHelper serviceAffectsElement;
+        static const FirmwareServiceAffectsCardHelper serviceAffectsCard;
+        static const FirmwareServiceAffectsSoftwareHelper serviceAffectsSoftware;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &firmwareInstallation;
@@ -488,8 +508,10 @@ namespace solarflare
             return &elementSoftwareIdentity;
         if (&cls == &SF_HostedService::static_meta_class)
             return &hostedService;
-        if (&cls == &SF_ServiceAffectsElement::static_meta_class)
-            return &serviceAffectsElement;
+        if (&cls == &SF_ServiceAffectsCard::static_meta_class)
+            return &serviceAffectsCard;
+        if (&cls == &SF_ServiceAffectsSoftware::static_meta_class)
+            return &serviceAffectsSoftware;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conformToProfile;
         else
@@ -704,50 +726,65 @@ namespace solarflare
     }
 
     Instance *
-    FirmwareServiceAffectsElementHelper::instance(const SystemElement& se, unsigned idx) const
+    FirmwareServiceAffectsCardHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const Firmware& fw = static_cast<const Firmware&>(se);
-        SF_ServiceAffectsElement *link = NULL;
     
-        switch (idx)
-        {
-            case 0:
-                link = SF_ServiceAffectsElement::create(true);
-                link->AffectedElement = cast<cimple::CIM_ManagedElement *>(fw.nic()->cimReference(SF_NICCard::static_meta_class));
-                link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
-                break;
-            case 1:
-                link = SF_ServiceAffectsElement::create(true);
-                link->AffectedElement = cast<cimple::CIM_ManagedElement *>(se.cimReference(SF_SoftwareIdentity::static_meta_class));
-                link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
-                break;
-            default:
-                break;
-        }
+        SF_ServiceAffectsCard *link = NULL;
+
+        if (idx != 0)
+            return NULL;
+
+        link = SF_ServiceAffectsCard::create(true);
+        link->AffectedElement = cast<cimple::CIM_Card *>(fw.nic()->cimReference(SF_NICCard::static_meta_class));
+        link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
+
         return link;
     }
 
     Instance *
-    PackageServiceAffectsElementHelper::instance(const SystemElement& se, unsigned idx) const
+    FirmwareServiceAffectsSoftwareHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        SF_ServiceAffectsElement *link = NULL;
+        const Firmware& fw = static_cast<const Firmware&>(se);
 
-        switch (idx)
-        {
-            case 0:
-                link = SF_ServiceAffectsElement::create(true);
-                link->AffectedElement = cast<cimple::CIM_ManagedElement *>(findSystem()->clone());
-                link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
-                break;
+        SF_ServiceAffectsSoftware *link = NULL;
 
-            case 1:
-                link = SF_ServiceAffectsElement::create(true);
-                link->AffectedElement = cast<cimple::CIM_ManagedElement *>(se.cimReference(SF_SoftwareIdentity::static_meta_class));
-                link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
-                break;
-            default:
-                break;
-        }
+        if (idx != 1)
+            return NULL;
+
+        link = SF_ServiceAffectsSoftware::create(true);
+        link->AffectedElement = cast<cimple::CIM_SoftwareIdentity *>(se.cimReference(SF_SoftwareIdentity::static_meta_class));
+        link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
+
+        return link;
+    }
+
+    Instance *
+    PackageServiceAffectsSystemHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        SF_ServiceAffectsSystem *link = NULL;
+
+        if (idx != 0)
+            return NULL;
+
+        link = SF_ServiceAffectsSystem::create(true);
+        link->AffectedElement = cast<cimple::CIM_ComputerSystem *>(findSystem()->clone());
+        link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
+
+        return link;
+    }
+
+    Instance *
+    PackageServiceAffectsSoftwareHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        SF_ServiceAffectsSoftware *link = NULL;
+
+        if (idx != 1)
+            return NULL;
+
+        link = SF_ServiceAffectsSoftware::create(true);
+        link->AffectedElement = cast<cimple::CIM_SoftwareIdentity *>(se.cimReference(SF_SoftwareIdentity::static_meta_class));
+        link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
         return link;
     }
 
@@ -755,9 +792,9 @@ namespace solarflare
     SoftwareServiceAffectsElementHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const HostSWElement& hsw = static_cast<const HostSWElement&>(se);
-        SF_ServiceAffectsElement *link = SF_ServiceAffectsElement::create(true);
+        SF_ServiceAffectsSoftware *link = SF_ServiceAffectsSoftware::create(true);
 
-        link->AffectedElement = cast<cimple::CIM_ManagedElement *>(se.cimReference(SF_SoftwareIdentity::static_meta_class));
+        link->AffectedElement = cast<cimple::CIM_SoftwareIdentity *>(se.cimReference(SF_SoftwareIdentity::static_meta_class));
         link->AffectingElement = cast<cimple::CIM_Service *>(hsw.package()->cimReference(SF_SoftwareInstallationService::static_meta_class));
         return link;
     }
