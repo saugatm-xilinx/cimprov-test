@@ -619,6 +619,9 @@ namespace solarflare
         SF_HostedService *link = SF_HostedService::create(true);
         link->Antecedent = solarflare::CIMHelper::systemRef();
         link->Dependent = cast<cimple::CIM_Service *>(se.cimReference(SF_DiagnosticTest::static_meta_class));
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        link->Dependent->__name_space = CIMHelper::solarflareNS;
+#endif 
         return link;
     }
 

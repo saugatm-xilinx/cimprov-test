@@ -81,6 +81,7 @@ libprovider_INCLUDES = $(libprovider_DIR)
 libprovider_CPPFLAGS = -Ilibprovider -Ilibprovider/v5_import -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 
 ifeq ($(CIM_SERVER),esxi)
+libprovider_CPPFLAGS += -DNEED_ASSOC_IN_ROOT_CIMV2=1
 
 CI_INCLUDES = libprovider/v5_import libprovider/v5_import/ci libprovider/v5_import/ci/app \
 	      libprovider/v5_import/ci/app/platform \

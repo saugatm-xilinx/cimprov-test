@@ -245,7 +245,9 @@ namespace solarflare
         
         dev->GroupComponent = systemRef();
         dev->PartComponent = cast<cimple::CIM_LogicalDevice *>(nic.cimReference(SF_PortController::static_meta_class));
-
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        dev->PartComponent->__name_space = CIMHelper::solarflareNS;
+#endif
         return dev;
     }
     
@@ -276,6 +278,9 @@ namespace solarflare
         link->Dependent =  findSystem()->clone();
 #else
         link->Dependent =  cast<cimple::CIM_UnitaryComputerSystem *>(findSystem()->clone());
+#endif
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        link->Antecedent->__name_space = CIMHelper::solarflareNS;
 #endif
         return link;
     }

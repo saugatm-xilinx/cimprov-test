@@ -377,6 +377,9 @@ namespace solarflare
         SF_HostedAccessPoint *link = SF_HostedAccessPoint::create(true);
         link->Antecedent = solarflare::CIMHelper::systemRef();
         link->Dependent = cast<cimple::CIM_ServiceAccessPoint *>(se.cimReference(SF_LANEndpoint::static_meta_class));
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        link->Dependent->__name_space = CIMHelper::solarflareNS;
+#endif
         return link;
     }
 
@@ -399,6 +402,9 @@ namespace solarflare
 
         dev->GroupComponent = systemRef();
         dev->PartComponent = static_cast<cimple::CIM_LogicalDevice *>(se.cimReference(SF_EthernetPort::static_meta_class));
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        dev->PartComponent->__name_space = CIMHelper::solarflareNS;
+#endif
         
         return dev;
     }

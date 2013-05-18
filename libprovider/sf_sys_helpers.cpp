@@ -284,6 +284,9 @@ namespace solarflare
         
         link->Antecedent = static_cast<cimple::CIM_Log *>(log);
         link->Dependent = cast<cimple::CIM_ComputerSystem *>(sys);
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        link->Antecedent->__name_space = CIMHelper::solarflareNS;
+#endif
         return link;
     }
 
