@@ -81,7 +81,8 @@ libprovider_INCLUDES = $(libprovider_DIR)
 libprovider_CPPFLAGS = -Ilibprovider -Ilibprovider/v5_import -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 
 ifeq ($(CIM_SERVER),esxi)
-libprovider_CPPFLAGS += -DNEED_ASSOC_IN_ROOT_CIMV2=1
+NEED_ASSOC_IN_ROOT_CIMV2=1
+libprovider_CPPFLAGS += -DNEED_ASSOC_IN_ROOT_CIMV2=$(NEED_ASSOC_IN_ROOT_CIMV2)
 
 CI_INCLUDES = libprovider/v5_import libprovider/v5_import/ci libprovider/v5_import/ci/app \
 	      libprovider/v5_import/ci/app/platform \
@@ -126,14 +127,10 @@ $(eval $(call component,libprovider,SHARED_LIBRARIES))
 ifneq ($(CIM_SERVER),pegasus)
 
 repository.reg : $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/classes mof2reg.awk
-	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
-
-interop.reg : $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/classes mof2reg.awk
-	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(INTEROP_NAMESPACE) -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
-
-root.reg : $(libcimobjects_DIR)/root.mof $(libcimobjects_DIR)/classes mof2reg.awk
-	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=root/cimv2 -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
-
+	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
+                -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
+                -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),root/cimv2)" \
+                -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
 endif
 
 ifeq ($(CIM_SERVER),pegasus)
@@ -149,9 +146,9 @@ endif
 
 ifeq ($(CIM_SERVER),sfcb)
 
-register: repository.reg interop.reg install
+register: repository.reg install
 	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg repository.mof
-	$(RUNASROOT) $(SFCBSTAGE) -n $(INTEROP_NAMESPACE) -r interop.reg repository.mof
+	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg interop.mof
 	$(RUNASROOT) $(SFCBREPOS)
 
 endif

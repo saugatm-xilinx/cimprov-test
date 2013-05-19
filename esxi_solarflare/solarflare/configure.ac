@@ -131,6 +131,6 @@ AC_SUBST([sfcb_staging_dir])
 
 
 
-AC_CONFIG_FILES([Makefile repository.reg interop.reg root.reg])
+AC_CONFIG_FILES([Makefile repository.reg])
 
 AC_OUTPUT

@@ -19,13 +19,17 @@ $1 == "class" && IMPLEMENTED[$2] {
     }
     print "\tgroup:", tolower(PRODUCTNAME)
     print "\tunload: never"
-    print "\tnamespace:", NAMESPACE
+    print "\tnamespace:", NAMESPACE, (in_interop ? INTEROP_NAMESPACE : ""), (in_root ? ROOT_NAMESPACE : "")
     association = 0;
     indication = 0;
+    in_interop = 0;
+    in_root = 0;
     next;
 }
 
 /\[.*Association.*\]/ { association = 1; }
 /\[.*Indication.*\]/ { indication = 1; }
 
+/\/\*interop\*\// { in_interop = 1; }
+/\/\*root\*\// { in_root = 1; }
     

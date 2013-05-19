@@ -6,7 +6,7 @@ ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_GENERATED = $(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
 ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
-ESXI_GENERATED += repository.reg.in interop.reg.in root.reg.in
+ESXI_GENERATED += repository.reg.in 
 ESXI_GENERATED += Makefile.am
 ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs/i386/libutils.a
 ESXI_GENERATED += libprovider/esxi_libs/i386/libcurl.a
@@ -51,15 +51,7 @@ $(ESXI_SRC_PATH)/$(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repo
 
 $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	
-	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g' <$< >$@
-
-$(ESXI_SRC_PATH)/interop.reg.in : interop.reg
-	mkdir -p $(dir $@)	
-	$(SED) 's!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
-
-$(ESXI_SRC_PATH)/root.reg.in : root.reg
-	mkdir -p $(dir $@)	
-	cp $< $@
+	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g; s!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
 
 $(ESXI_SRC_PATH)/% : %
 	mkdir -p $(dir $@)
@@ -90,7 +82,7 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "dist_sfcb_interop_ns_DATA = libcimobjects/interop.mof" >>$@
 	echo "dist_sfcb_ns_DATA = libcimobjects/repository.mof" >>$@
 	echo "dist_sfcb_root_ns_DATA = libcimobjects/root.mof" >>$@
-	echo "dist_sfcb_reg_DATA = repository.reg interop.reg root.reg" >>$@
+	echo "dist_sfcb_reg_DATA = repository.reg" >>$@
 	echo "endif" >>$@
 
 COMPONENTS += esxi_archive
