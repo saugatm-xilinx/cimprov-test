@@ -30,5 +30,5 @@ $(libcimobjects_DIR)/classes.mk : $(libcimobjects_DIR)/.genclass
 	$(AWK) '{ print "libcimobjects_SOURCES += ", $$0 }' $< >$@
 
 $(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof.cpp
-	$(target_CXX) -E -P -DTARGET_CIM_SERVER_$(CIM_SERVER) $(libcimobjects_CPPFLAGS) $(target_CPPFLAGS) $< >$@
+	$(target_CXX) -E -C -P -DTARGET_CIM_SERVER_$(CIM_SERVER) $(libcimobjects_CPPFLAGS) $(target_CPPFLAGS) $< >$@
 

@@ -6,6 +6,7 @@ class SF_SoftwareIdentity : CIM_SoftwareIdentity {
 class SF_ConcreteJob : CIM_ConcreteJob {
 };
 
+/*root*/
 [Association]
 class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 };
@@ -49,6 +50,7 @@ class SF_EthernetPort : CIM_EthernetPort {
 class SF_PortController : CIM_PortController {
 };
 
+/*root*/
 [Association]
 class SF_SystemDevice : CIM_SystemDevice {
 };
@@ -92,6 +94,7 @@ class SF_ServiceAffectsController : CIM_ServiceAffectsElement {
    CIM_PortController REF AffectedElement;
 };
 
+/*root*/
 [Association]
 class SF_ServiceAffectsSystem : CIM_ServiceAffectsElement {
       [Override("AffectedElement")]
@@ -104,6 +107,7 @@ class SF_ServiceAffectsSoftware : CIM_ServiceAffectsElement {
    CIM_SoftwareIdentity REF AffectedElement;
 };
 
+/*root*/
 [Association]
 class SF_HostedService : CIM_HostedService {
 };
@@ -116,6 +120,7 @@ class SF_ControlledBy : CIM_ControlledBy {
    CIM_PortController REF Antecedent;
 };
 
+/*root*/
 [Association]
 class SF_HostedAccessPoint : CIM_HostedAccessPoint {
 };
@@ -145,6 +150,7 @@ class SF_LogEntry : CIM_LogEntry {
 class SF_LogManagesRecord : CIM_LogManagesRecord {
 };
 
+/*root*/
 [Association]
 class SF_SystemUseOfLog : CIM_UseOfLog {
       [Override("Dependent")]
@@ -192,17 +198,21 @@ class SF_DiagnosticSettingData : CIM_DiagnosticSettingData {
 class SF_ElementSettingData : CIM_ElementSettingData {
 };
 
+/*interop*/
 class SF_RegisteredProfile : CIM_RegisteredProfile {
 };
 
+/*interop*/
 [Association]
 class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
 };
 
+/*interop*/
 [Association]
 class SF_ReferencedProfile : CIM_ReferencedProfile {
 };
 
+/*root*/
 [Association]
 class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
 };
