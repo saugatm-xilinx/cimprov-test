@@ -358,7 +358,7 @@ namespace solarflare
 
         link->ConformantStandard = cast<cimple::CIM_RegisteredProfile *>(reference());
         link->ConformantStandard->__name_space = CIMHelper::interopNS;
-        link->ManagedElement = cast<cimple::CIM_ManagedElement *>(obj);
+        link->ManagedElement = cast<cimple::CIM_ManagedSystemElement *>(obj);
         link->ManagedElement->__name_space = CIMHelper::solarflareNS;
 
         return link;
