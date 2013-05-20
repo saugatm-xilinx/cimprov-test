@@ -69,6 +69,13 @@
       <!-- name is required, version is optional -->
       <provides>
 	 <!-- <provide name="" version="" /> -->
+         <provide name="cim.DMTF.DSP1002" version="2.0.0" />
+         <provide name="cim.DMTF.DSP1011" version="1.0.2" />
+         <provide name="cim.DMTF.DSP1014" version="1.0.1" />
+         <provide name="cim.DMTF.DSP1023" version="1.0.1" />
+         <provide name="cim.DMTF.DSP1025" version="1.0.0" />
+         <provide name="cim.DMTF.DSP1035" version="1.0.2" />
+         <provide name="cim.DMTF.DSP1103" version="1.0.0" />
       </provides>
 
       <!-- Indicates relationships with software entities outside of the
@@ -105,7 +112,7 @@
    <!-- certified / accepted / partner / community -->
    <!-- Defaults to community if not specified    -->
    <!-- TODO: This value may be overridden by the signing code. -->
-   <acceptance-level>community</acceptance-level>
+   <acceptance-level>accepted</acceptance-level>
 
    <!-- Defaults to false -->
    <live-install-allowed>true</live-install-allowed>
