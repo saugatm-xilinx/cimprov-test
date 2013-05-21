@@ -328,7 +328,11 @@ namespace solarflare
         &SoftwareInventoryProfile,
         &SoftwareUpdateProfile,
         &HostLANNetworkPortProfile,
+#if !TARGET_CIM_SERVER_esxi
+        // Disabled on ESXi due to an error in CIM PAT Provides
+        // Tags Validation test.
         &JobControlProfile,
+#endif
         NULL
     };
 
