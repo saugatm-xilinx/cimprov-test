@@ -822,8 +822,14 @@ namespace solarflare
         // to all the profile of ordinary software (a single one as of now)
         // + Software Update profile + Job Control profile if it has an
         // associated thread
+#if !TARGET_CIM_SERVER_esxi
         return SWConformsToProfileHelper::nObjects(se) + 1 + 
         (se.cimDispatch(cimple::SF_ConcreteJob::static_meta_class) != NULL);
+#else
+        // On ESXi Job Control profile support is not declared due to
+        // incorrect CIM PAT Provides Tags Validation test.
+        return SWConformsToProfileHelper::nObjects(se) + 1;
+#endif
     }
 
     Instance *

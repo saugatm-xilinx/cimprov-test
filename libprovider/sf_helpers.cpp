@@ -331,7 +331,11 @@ namespace solarflare
         &SoftwareInventoryProfile,
         &SoftwareUpdateProfile,
         &HostLANNetworkPortProfile,
+#if !TARGET_CIM_SERVER_esxi
+        // Disabled on ESXi due to an error in CIM PAT Provides
+        // Tags Validation test.
         &JobControlProfile,
+#endif
         NULL
     };
 
@@ -361,7 +365,7 @@ namespace solarflare
 
         link->ConformantStandard = cast<cimple::CIM_RegisteredProfile *>(reference());
         link->ConformantStandard->__name_space = CIMHelper::interopNS;
-        link->ManagedElement = cast<cimple::CIM_ManagedElement *>(obj);
+        link->ManagedElement = cast<cimple::CIM_ManagedSystemElement *>(obj);
         link->ManagedElement->__name_space = CIMHelper::solarflareNS;
 
         return link;

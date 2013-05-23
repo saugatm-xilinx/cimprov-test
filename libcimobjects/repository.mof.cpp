@@ -205,6 +205,8 @@ class SF_RegisteredProfile : CIM_RegisteredProfile {
 /*interop*/
 [Association]
 class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
+      [Override("ManagedElement")]
+    CIM_ManagedSystemElement REF ManagedElement;
 };
 
 /*interop*/

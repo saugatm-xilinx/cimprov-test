@@ -2242,6 +2242,8 @@ curl_fail:
                 while (*s == ' ')
                     s++;
                 trim(s);
+                if (*s == 'v')
+                    s++;
                 version = s;
                 break;
             }

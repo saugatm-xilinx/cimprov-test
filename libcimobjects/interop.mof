@@ -3,6 +3,8 @@ class SF_RegisteredProfile : CIM_RegisteredProfile {
 
 [Association]
 class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
+      [Override("ManagedElement")]
+    CIM_ManagedSystemElement REF ManagedElement;
 };
 
 [Association]

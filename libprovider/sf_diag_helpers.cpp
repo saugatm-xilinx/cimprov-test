@@ -656,7 +656,13 @@ namespace solarflare
 
     unsigned DiagnosticConformsToProfile::nObjects(const SystemElement &se) const
     {
+#if !TARGET_CIM_SERVER_esxi
         return CIMHelper::nObjects(se) + (se.cimDispatch(SF_ConcreteJob::static_meta_class) != NULL);
+#else
+        // On ESXi Job Control profile support is not declared due to
+        // incorrect CIM PAT Provides Tags Validation test.
+        return CIMHelper::nObjects(se);
+#endif
     }
     
     Instance *DiagnosticConformsToProfile::instance(const SystemElement &se, unsigned idx) const
