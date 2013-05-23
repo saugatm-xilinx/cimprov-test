@@ -53,6 +53,7 @@ namespace solarflare
 
     const CIM_ComputerSystem *CIMHelper::findSystem()
     {
+        static cimple::Mutex findSystemMutex;
         static const char * const namespaces[] =
         {
 #ifdef TARGET_CIM_SERVER_pegasus
@@ -76,6 +77,8 @@ namespace solarflare
             &CIM_ComputerSystem::static_meta_class,
             NULL
         };
+        cimple::Auto_Mutex guard(findSystemMutex);
+
 
         if (cimSystem)
             return cast<CIM_ComputerSystem *>(cimSystem.ptr());
