@@ -3,7 +3,7 @@
 
 #include <cimple/cimple.h>
 #include <cimple/Buffer.h>
-#include <vector>
+#include <cimple/Array.h>
 
 // !!! OS-specific !!!
 
@@ -15,7 +15,7 @@ namespace solarflare
     using cimple::Datetime;
     using cimple::uint64;
     using cimple::Mutex;
-    using std::vector;
+    using cimple::Array;
 
     /// @brief Thread abstraction. Unlike CIMPLE's own class, this class
     /// shall be subclassed, as the thread encapsulates its behaviour via
@@ -34,7 +34,7 @@ namespace solarflare
         };
 
         /// List with saved thread instances
-        static vector<Thread *> threads;
+        static Array<Thread *> threads;
     private:
         /// State change lock
         mutable Mutex stateLock;

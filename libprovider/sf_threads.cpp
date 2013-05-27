@@ -13,8 +13,9 @@ namespace solarflare
     using cimple::LL_ERR;
     using cimple::Auto_Mutex;
     using cimple::SF_ConcreteJob;
+    using cimple::Array;
 
-    vector<Thread *> Thread::threads;
+    Array<Thread *> Thread::threads;
 
     Thread *Thread::find() const
     {
@@ -54,7 +55,7 @@ namespace solarflare
         }
 
         Thread *thr = dup();
-        threads.push_back(thr);
+        threads.append(thr);
         return thr;
     }
 
