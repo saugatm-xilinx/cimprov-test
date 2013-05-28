@@ -104,6 +104,18 @@ private:
     friend class Cond;
 };
 
+// This is used to replace usage of assert()
+// where an expression has some important side
+// effect - since with NDEBUG assert() has no
+// effect at all and its expression is never
+// computed.
+#define MUTEX_ASSERT(expr_) \
+  do {                  \
+      bool rc_;         \
+      rc_ = (expr_);    \
+      assert(rc_);      \
+  } while (0)
+
 CIMPLE_NAMESPACE_END
 
 #endif /* _cimple_Mutex_h */

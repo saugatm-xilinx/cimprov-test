@@ -201,9 +201,11 @@ int pthread_mutex_trylock(
     //printf("waitforSingleObject Supposidly no error = %ld\n", rc);
     if (!rep->recursive && rep->count == 1)
     {
+        bool rc;
         //printf("pthread return recurse limit hit. EBUSY= %d \n", EBUSY);
         // Avoid double lock on non-recursive mutex.
-        assert(ReleaseMutex(rep->handle));
+        rc = ReleaseMutex(rep->handle);
+        assert(rc);
         //printf("pthread returning EBUSY\n");
         return(EBUSY);
     }

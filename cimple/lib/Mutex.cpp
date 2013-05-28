@@ -119,7 +119,7 @@ void Mutex::lock()
         pthread_t self = pthread_self();
 
         // set lock. We should never get error return
-        assert(pthread_mutex_lock(&rep->mutex) == 0);
+        MUTEX_ASSERT(pthread_mutex_lock(&rep->mutex) == 0);
 
         if (rep->count == 0)
         {
@@ -138,11 +138,11 @@ void Mutex::lock()
         pthread_mutex_unlock(&rep->mutex);
     }
     else
-        assert(pthread_mutex_lock(&rep->mutex) == 0);
+        MUTEX_ASSERT(pthread_mutex_lock(&rep->mutex) == 0);
 
 #else /* CIMPLE_NO_RECURSIVE_MUTEXES */
 
-    assert(pthread_mutex_lock(&((MutexRep*)_rep)->mutex) == 0);
+    MUTEX_ASSERT(pthread_mutex_lock(&((MutexRep*)_rep)->mutex) == 0);
 
 #endif /* CIMPLE_NO_RECURSIVE_MUTEXES */
 }
