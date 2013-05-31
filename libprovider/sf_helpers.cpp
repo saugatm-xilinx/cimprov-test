@@ -1,5 +1,7 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
+#include "CIM_ElementConformsToProfile.h"
+#include "CIM_RegisteredProfile.h"
 #ifdef TARGET_CIM_SERVER_pegasus
 #include "IBMPSG_ComputerSystem.h"
 #include "IBMSD_ComputerSystem.h"
@@ -20,6 +22,8 @@ namespace solarflare
     using cimple::Instance;
     using cimple::Meta_Class;
     using cimple::CIM_ComputerSystem;
+    using cimple::CIM_ElementConformsToProfile;
+    using cimple::CIM_RegisteredProfile;
     using cimple::Ref;
     using cimple::cast;
     using cimple::SF_ConcreteJob;
@@ -83,6 +87,73 @@ namespace solarflare
         if (cimSystem)
             return cast<CIM_ComputerSystem *>(cimSystem.ptr());
 
+        // Try to find Base Server Profile instance
+        Ref<Instance> cimInstance;
+        Ref<CIM_RegisteredProfile> cimRPModel = CIM_RegisteredProfile::create();
+        Ref<CIM_RegisteredProfile> cimBSP;
+
+        cimple::Instance_Enumerator profIE;
+
+        if (cimple::cimom::enum_instances(interopNS,
+                cimRPModel.ptr(), profIE) != 0)
+            return cimSystem.ptr();
+        
+        for (cimInstance = profIE(); !!cimInstance;
+             profIE++, cimInstance = profIE())
+        {
+            cimBSP.reset(cast<CIM_RegisteredProfile *>(cimInstance.ptr()));
+            if (!(cimBSP->RegisteredName.null) &&
+                strcmp(cimBSP->RegisteredName.value.c_str(),
+                        "Base Server") == 0)
+                break;
+            cimBSP.reset(cast<CIM_RegisteredProfile *>(NULL));
+        }
+
+        if (cimBSP.ptr())
+        {
+            // Try to find association with Base Server profile
+            for (const char * const *ns = namespaces; *ns != NULL; ns++)
+            {
+                if (strcmp(*ns, solarflareNS) == 0)
+                    continue;
+ 
+                Ref<Instance> assocInstance;
+                Ref<CIM_ElementConformsToProfile> cimAssocModel =
+                                        CIM_ElementConformsToProfile::create();
+                Ref<CIM_ElementConformsToProfile> cimAssoc;
+                cimple::Instance_Enumerator assocIE;
+
+                if (cimple::cimom::enum_instances(*ns, cimAssocModel.ptr(),
+                                                  assocIE) != 0)
+                    return cimSystem.ptr();
+               
+                for (assocInstance = assocIE(); !!assocInstance;
+                     assocIE++, assocInstance = assocIE())
+                {
+                    cimAssoc.reset(cast<CIM_ElementConformsToProfile *>(
+                                                    assocInstance.ptr()));
+                    if (cimAssoc->ConformantStandard &&
+                        !(cimAssoc->ConformantStandard->InstanceID.null) &&
+                        strcmp(cimAssoc->ConformantStandard->InstanceID.value.c_str(),
+                               cimBSP->InstanceID.value.c_str()) == 0)
+                    {
+                        if (cimAssoc->ManagedElement)
+                        {
+                            cimSystem.reset(cast<CIM_ComputerSystem *>(
+                                                    cimAssoc->ManagedElement));
+                            break;
+                        }
+                    }
+                    
+                    cimAssoc.reset(cast<CIM_ElementConformsToProfile *>(NULL));
+                }
+
+                if (cimSystem.ptr())
+                    return cimSystem.ptr();     
+            }
+        }
+ 
+        // There is no instance associated with Base profile - take the first one
         Ref<Instance> sysInstance;
 
         for (const Meta_Class * const *mcs = csysMetaclasses; 

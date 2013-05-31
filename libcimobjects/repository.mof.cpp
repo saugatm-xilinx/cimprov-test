@@ -276,6 +276,10 @@ class PG_ComputerSystem : CIM_UnitaryComputerSystem
     ]  
     string IdentificationNumber;
 };
+
+class PG_RegisteredProfile : CIM_RegisteredProfile
+{
+};
 #endif
 
 #ifdef TARGET_CIM_SERVER_esxi

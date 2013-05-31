@@ -6,7 +6,7 @@ libcimobjects_DEPENDS = $(CIMPLE_COMPONENT)
 
 libcimobjects_EXTRA_MOF = CIM_OperatingSystem 
 ifeq ($(CIM_SERVER),pegasus)
-libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem PG_ComputerSystem 
+libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem PG_ComputerSystem PG_RegisteredProfile 
 endif
 ifeq ($(CIM_SERVER),esxi)
 libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem
