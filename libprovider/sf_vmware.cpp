@@ -42,6 +42,9 @@
 
 #include <arpa/inet.h>
 
+#include <cimple/Mutex.h>
+#include <cimple/Auto_Mutex.h>
+
 // Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80
 
@@ -105,6 +108,8 @@ namespace solarflare
     using cimple::Ref;
     using cimple::Array;
     using cimple::cast;
+    using cimple::Mutex;
+    using cimple::Auto_Mutex;
 
     ///
     /// Is a symbol a space?
@@ -1079,7 +1084,8 @@ fail:
         int     restore_stdout = 0;
         int     restore_stderr = 0;
 
-        static pthread_mutex_t sfupdate_mutex = PTHREAD_MUTEX_INITIALIZER;
+        static Mutex  lock(false);
+        Auto_Mutex    auto_lock(lock);
 
         if (parseArgvString(cmd_line, &argc, &argv, &values) < 0 ||
             argv == NULL)
@@ -1124,14 +1130,11 @@ fail:
         else
             restore_stderr = 1;
 
-        pthread_mutex_lock(&sfupdate_mutex);
         if ((rc = sfupdate_main(argc, argv)) != 0)
         {
-            pthread_mutex_unlock(&sfupdate_mutex);
             rc = -1;
             goto fail;
         }
-        pthread_mutex_unlock(&sfupdate_mutex);
 
     fail:
         fflush(stdout);
