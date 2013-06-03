@@ -407,7 +407,7 @@ fail:
         String  dev_file;   ///< Path to device file
         String  dev_name;   ///< Device name
 
-        /* Dummy operator to make possible using of cimple::Array */
+        // Dummy operator to make possible using of cimple::Array
         bool operator== (const PortDescr &rhs)
         {
             UNUSED(rhs);
@@ -427,7 +427,7 @@ fail:
 
         Array<PortDescr> ports;         ///< NIC ports
 
-        /* Dummy operator to make possible using of cimple::Array */
+        // Dummy operator to make possible using of cimple::Array
         bool operator== (const NICDescr &rhs)
         {
             UNUSED(rhs);
@@ -453,7 +453,7 @@ fail:
         String  dev_name;       ///< Device name
         String  dev_file;       ///< Path to device file
 
-        /* Dummy operator to make possible using of cimple::Array */
+        // Dummy operator to make possible using of cimple::Array
         bool operator== (const DeviceDescr &rhs)
         {
             UNUSED(rhs);
@@ -1243,7 +1243,7 @@ fail:
 
         virtual void initialize() {};
 
-        /* Dummy operator to make possible using of cimple::Array */
+        // Dummy operator to make possible using of cimple::Array
         bool operator== (const VMwarePort &rhs)
         {
             UNUSED(rhs);
@@ -1461,7 +1461,7 @@ fail:
 
         virtual void initialize() {};
 
-        /* Dummy operator to make possible using of cimple::Array */
+        // Dummy operator to make possible using of cimple::Array
         bool operator== (const VMwareInterface &rhs)
         {
             UNUSED(rhs);
@@ -1583,13 +1583,7 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *file_name)
-        {
-            if (vmwareInstallFirmware(owner, file_name) < 0)
-                return false;
-
-            return true;
-        }
+        virtual bool syncInstall(const char *file_name);
         virtual void initialize() {};
     };
 
@@ -2205,6 +2199,52 @@ curl_fail:
         return VersionInfo(edata.fw_version);
     }
 
+    ///
+    /// Correspondence between port and its BootROM version.
+    ///
+    class BootROMVer
+    {
+    public:
+        String portName; ///< Port name
+        String version;  ///< BootROM version
+
+        // Dummy operator to make possible using of cimple::Array
+        bool operator== (const BootROMVer &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
+    };
+
+    /// Array to store correspondence between ports and their
+    /// BootROM versions (currently these versions are obtained
+    /// via sfupdate which is time-consuming and also requires
+    /// locking).
+    static Array<BootROMVer> bootROMVers;
+    /// Mutex to protect bootROMVers array
+    static Mutex             bootROMVersLock(false);
+
+    bool VMwareBootROM::syncInstall(const char *file_name)
+    {
+        Auto_Mutex     auto_lock(bootROMVersLock);
+        unsigned int   i = 0;
+
+        for (i = 0; i < bootROMVers.size(); i++)
+        {
+            if (((VMwareNIC *)owner)->ports[0].dev_name ==
+                                              bootROMVers[i].portName)
+            {
+                bootROMVers.remove(i);
+                i--;
+            }
+        }
+
+        if (vmwareInstallFirmware(owner, file_name) < 0)
+            return false;
+
+        return true;
+    }
+
     VersionInfo VMwareBootROM::version() const
     {
         int   rc = 0;
@@ -2214,6 +2254,16 @@ curl_fail:
         char *version = NULL;
         int   fd = -1;
         FILE *f = NULL;
+
+        unsigned int   i;
+        Auto_Mutex     auto_lock(bootROMVersLock);
+
+        for (i = 0; i < bootROMVers.size(); i++)
+        {
+            if (((VMwareNIC *)owner)->ports[0].dev_name ==
+                                              bootROMVers[i].portName)
+                return VersionInfo(bootROMVers[i].version.c_str());
+        }
 
         rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s",
                       ((VMwareNIC *)owner)->ports[0].dev_name.c_str());
@@ -2255,7 +2305,15 @@ curl_fail:
         fclose(f);
 
         if (version != NULL)
+        {
+            BootROMVer ver;
+
+            ver.portName = ((VMwareNIC *)owner)->ports[0].dev_name;
+            ver.version = String(version);
+            bootROMVers.append(ver);
+
             return VersionInfo(version);
+        }
         else
             return VersionInfo(DEFAULT_VERSION_STR);
     }
