@@ -82,26 +82,119 @@ namespace solarflare
     template <class CIMClass>
     class CIMNotify {
         cimple::Indication_Handler<CIMClass> *handler;
+        cimple::Atomic_Counter thread_continue;
+        cimple::Atomic_Counter thread_send;
+        cimple::Thread provider_thread;
+        cimple::Mutex send_lock;
+        cimple::Mutex thread_lock;
+        CIMClass *obj_to_send;
 
     protected:
         virtual void send(CIMClass *obj)
         {
             using namespace cimple;
+
+            Auto_Mutex auto_mutex(send_lock);
+
             if (handler != NULL)
-                handler->handle(obj);
+            {
+                obj_to_send = obj;
+                thread_send.inc();
+
+                while (thread_send.get() > 0 && thread_continue.get() > 0)
+                    Time::sleep(10 * Time::MSEC);
+
+                if (thread_send.get() > 0)
+                    thread_send.dec();
+            }
             else
                 CIMClass::destroy(obj);
         }
-        CIMNotify() : handler(NULL) {}
+
+        CIMNotify() : handler(NULL), send_lock(false), thread_lock(false) {}
+
         virtual ~CIMNotify()
         {
+            cimple::Auto_Mutex auto_mutex1(thread_lock);
+            cimple::Auto_Mutex auto_mutex2(send_lock);
+
+            if (thread_continue.get())
+            {
+                void *value;
+
+                thread_continue.dec();
+                Thread::join(provider_thread, value);
+            }
+
             delete handler;
         }
+
+        static void *thread_func(void *arg)
+        {
+            using namespace cimple;
+
+            CIMNotify<CIMClass> *owner = (CIMNotify<CIMClass> *)arg;
+
+            while (1)
+            {
+                if (!owner->thread_continue.get())
+                    break;
+
+                if (owner->thread_send.get())
+                {
+                    if (owner->handler != NULL)
+                            owner->handler->handle(owner->obj_to_send);
+                    owner->thread_send.dec();
+                }
+
+                Time::sleep(10 * Time::MSEC);
+            }
+
+            return NULL;
+        }
+
     public:
         void enable(cimple::Indication_Handler<CIMClass> *hnd)
         {
-            delete handler;
-            handler = hnd;
+            using namespace cimple;
+
+            Auto_Mutex auto_mutex(thread_lock);
+
+            if (hnd == NULL && thread_continue.get())
+            {
+                void *value;
+
+                // After Pegasus attempts to disable indications,
+                // thread calling indication handler hangs (or
+                // terminates?). It's important to unblock send()
+                // call in this case to prevent deadlock.
+
+                thread_continue.dec();
+
+                {
+                    Auto_Mutex auto_mutex(send_lock);
+
+                    Thread::join(provider_thread, value);
+
+                    delete handler;
+                    handler = hnd;
+                }
+            }
+            else
+            {
+                Auto_Mutex auto_mutex(send_lock);
+
+                delete handler;
+                handler = hnd;
+
+                if (hnd != NULL && !thread_continue.get())
+                {
+                    thread_continue.inc();
+                    Thread::create_joinable(provider_thread,
+                                            (Thread_Proc)thread_func,
+                                            this);
+                }
+            }
         }
         void disable()
         {
@@ -129,7 +222,7 @@ namespace solarflare
         }
     public:
         CIMInstanceNotify(const cimple::Meta_Class& mc) :
-            sourceMC(mc) {}
+            CIMNotify<CIMClass>(), sourceMC(mc) {}
         ~CIMInstanceNotify() {}
         
         void notify(const SystemElement& se)
@@ -169,7 +262,7 @@ namespace solarflare
     class CIMAlertNotify : public CIMNotify<CIMClass> {
         const cimple::Meta_Class& alertMC;
     public:
-        CIMAlertNotify(const cimple::Meta_Class amc) : alertMC(amc) {}
+        CIMAlertNotify(const cimple::Meta_Class amc) : CIMNotify<CIMClass>(), alertMC(amc) {}
 #if 0
         virtual void alert(const SystemElement& se)
         {
