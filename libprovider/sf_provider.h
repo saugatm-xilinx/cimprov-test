@@ -87,6 +87,7 @@ namespace solarflare
         cimple::Thread provider_thread;
         cimple::Mutex send_lock;
         cimple::Mutex thread_lock;
+        bool thread_not_joined;
         CIMClass *obj_to_send;
 
     protected:
@@ -96,7 +97,7 @@ namespace solarflare
 
             Auto_Mutex auto_mutex(send_lock);
 
-            if (handler != NULL)
+            if (handler != NULL && thread_continue.get() > 0)
             {
                 obj_to_send = obj;
                 thread_send.inc();
@@ -111,22 +112,26 @@ namespace solarflare
                 CIMClass::destroy(obj);
         }
 
-        CIMNotify() : handler(NULL), send_lock(false), thread_lock(false) {}
+        CIMNotify() : handler(NULL), send_lock(false),
+                      thread_lock(false), thread_not_joined(false) {}
 
         virtual ~CIMNotify()
         {
             cimple::Auto_Mutex auto_mutex1(thread_lock);
             cimple::Auto_Mutex auto_mutex2(send_lock);
 
-            if (thread_continue.get())
+            if (thread_continue.get() || thread_not_joined)
             {
                 void *value;
 
-                thread_continue.dec();
+                if (thread_continue.get() > 0)
+                    thread_continue.dec();
                 Thread::join(provider_thread, value);
+                thread_not_joined = false;
             }
 
             delete handler;
+            handler = NULL;
         }
 
         static void *thread_func(void *arg)
@@ -158,47 +163,59 @@ namespace solarflare
         {
             using namespace cimple;
 
-            Auto_Mutex auto_mutex(thread_lock);
+            Auto_Mutex auto_mutex1(thread_lock);
+            Auto_Mutex auto_mutex2(send_lock);
 
-            if (hnd == NULL && thread_continue.get())
+            if (thread_not_joined)
             {
                 void *value;
 
-                // After Pegasus attempts to disable indications,
-                // thread calling indication handler hangs (or
-                // terminates?). It's important to unblock send()
-                // call in this case to prevent deadlock.
-
-                thread_continue.dec();
-
-                {
-                    Auto_Mutex auto_mutex(send_lock);
-
-                    Thread::join(provider_thread, value);
-
-                    delete handler;
-                    handler = hnd;
-                }
+                Thread::join(provider_thread, value);
+                thread_not_joined = false;
             }
-            else
+
+            delete handler;
+            handler = hnd;
+
+            if (hnd != NULL && !thread_continue.get())
             {
-                Auto_Mutex auto_mutex(send_lock);
-
-                delete handler;
-                handler = hnd;
-
-                if (hnd != NULL && !thread_continue.get())
-                {
-                    thread_continue.inc();
-                    Thread::create_joinable(provider_thread,
-                                            (Thread_Proc)thread_func,
-                                            this);
-                }
+                thread_continue.inc();
+                Thread::create_joinable(provider_thread,
+                                        (Thread_Proc)thread_func,
+                                        this);
             }
         }
         void disable()
         {
-            enable(NULL);
+            cimple::Auto_Mutex auto_mutex(thread_lock);
+
+            if (thread_continue.get())
+            {
+                // With CMPI, after CIMPLE attempts to disable indications,
+                // thread calling an indication handler just after it hangs
+                // because this handler tries to call _indication_proc from
+                // cimple/cmpi/CMPI_Adapter.cpp which uses the same mutex as
+                // disableIndications() from the same file. To prevent
+                // deadlock, we should not wait for anything here but
+                // return immediately, so that disableIndications() will
+                // unlock the mutex and _indication_proc will be able to
+                // proceed unlocking our thread and send().
+                // The same is true for pegasus provider interface.
+                // 
+                // Neither should we delete handler to avoid possible
+                // segmentation fault in the thread.
+                //
+                // So the only thing we can do here is to ask thread to
+                // terminate after unblocking and remember to join it later.
+
+                thread_continue.dec();
+                thread_not_joined = true;
+            }
+            else
+            {
+                delete handler;
+                handler = NULL;
+            }
         }
     };
 
