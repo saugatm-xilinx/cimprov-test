@@ -282,6 +282,7 @@ namespace solarflare
 #if NEED_ASSOC_IN_ROOT_CIMV2
         link->Antecedent->__name_space = CIMHelper::solarflareNS;
 #endif
+        link->PlatformGUID.set("0");
         return link;
     }
 
