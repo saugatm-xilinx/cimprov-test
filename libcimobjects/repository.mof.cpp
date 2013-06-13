@@ -1,29 +1,33 @@
-
-
+#if defined(IMPNS)
+INSTANCE
 class SF_SoftwareIdentity : CIM_SoftwareIdentity {
 };
 
+INSTANCE
 class SF_ConcreteJob : CIM_ConcreteJob {
 };
+#endif
 
-/*root*/
-[Association]
+#if defined(ROOTNS) || defined(IMPNS)
+ASSOCIATION
 class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 };
+#endif
 
-[Association]
+#if defined(IMPNS)
+ASSOCIATION
 class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
       [Override("Dependent")]
    CIM_PortController REF Dependent;
 };
 
-[Association]
+ASSOCIATION
 class SF_DiagElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
       [Override("Dependent")]
    CIM_DiagnosticTest REF Dependent;
 };
 
-[Association]
+ASSOCIATION
 class SF_BundleComponent : CIM_OrderedComponent {
       [Override("GroupComponent")]
    CIM_SoftwareIdentity REF GroupComponent;
@@ -31,210 +35,249 @@ class SF_BundleComponent : CIM_OrderedComponent {
    CIM_SoftwareIdentity REF PartComponent;
 };
 
+INSTANCE
 class SF_ComputerSystem : CIM_ComputerSystem {
 };
 
+INSTANCE
 class SF_NICCard : CIM_Card {
 };
 
+INSTANCE
 class SF_PhysicalConnector : CIM_PhysicalConnector {
 };
 
-[Association]
+ASSOCIATION
 class SF_ConnectorOnNIC : CIM_ConnectorOnPackage {
 };
 
+INSTANCE
 class SF_EthernetPort : CIM_EthernetPort {
 };
 
+INSTANCE
 class SF_PortController : CIM_PortController {
 };
+#endif
 
-/*root*/
-[Association]
+#if defined(ROOTNS) || defined(IMPNS)
+ASSOCIATION
 class SF_SystemDevice : CIM_SystemDevice {
 };
+#endif
 
-[Association]
+#if defined(IMPNS)
+ASSOCIATION
 class SF_ConnectorRealizesPort : CIM_Realizes {
 };
 
-[Association]
+ASSOCIATION
 class SF_CardRealizesController : CIM_Realizes {
 };
 
+INSTANCE
 class SF_LANEndpoint : CIM_LANEndpoint {
 };
 
-[Association]
+ASSOCIATION
 class SF_NICSAPImplementation : CIM_DeviceSAPImplementation {
 };
 
+INSTANCE
 class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
 };
 
+INSTANCE
 class SF_SoftwareInstallationServiceCapabilities : CIM_SoftwareInstallationServiceCapabilities {
 };
 
-[Association]
+ASSOCIATION
 class SF_ElementCapabilities : CIM_ElementCapabilities {
       [Override("ManagedElement")]
    CIM_LogicalElement REF ManagedElement;
 };
 
-[Association]
+ASSOCIATION
 class SF_ServiceAffectsCard : CIM_ServiceAffectsElement {
       [Override("AffectedElement")]
    CIM_Card REF AffectedElement;
 };
 
-[Association]
+ASSOCIATION
 class SF_ServiceAffectsController : CIM_ServiceAffectsElement {
       [Override("AffectedElement")]
    CIM_PortController REF AffectedElement;
 };
+#endif
 
-/*root*/
-[Association]
+#if defined(ROOTNS) || defined(IMPNS)
+ASSOCIATION
 class SF_ServiceAffectsSystem : CIM_ServiceAffectsElement {
       [Override("AffectedElement")]
    CIM_ComputerSystem REF AffectedElement;
 };
+#endif
 
-[Association]
+#if defined(IMPNS)
+ASSOCIATION
 class SF_ServiceAffectsSoftware : CIM_ServiceAffectsElement {
       [Override("AffectedElement")]
    CIM_SoftwareIdentity REF AffectedElement;
 };
+#endif
 
-/*root*/
-[Association]
+#if defined(IMPNS) || defined(ROOTNS)
+ASSOCIATION
 class SF_HostedService : CIM_HostedService {
 };
+#endif
 
-[Association]
+#if defined(IMPNS)
+ASSOCIATION
 class SF_ControlledBy : CIM_ControlledBy {
       [Override("Dependent")]
    CIM_EthernetPort REF Dependent;
       [Override("Antecedent")]
    CIM_PortController REF Antecedent;
 };
+#endif
 
-/*root*/
-[Association]
+#if defined(IMPNS) || defined(ROOTNS)
+ASSOCIATION
 class SF_HostedAccessPoint : CIM_HostedAccessPoint {
 };
+#endif
 
+#if defined(IMPNS)
+INSTANCE
 class SF_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities {
 };
 
+INSTANCE
 class SF_RecordLog : CIM_RecordLog {
 };
 
+INSTANCE
 class SF_RecordLogCapabilities : CIM_RecordLogCapabilities {
 };
 
+INSTANCE
 class SF_DiagnosticLog : CIM_DiagnosticLog {
 };
 
+INSTANCE
 class SF_DiagnosticLogCapabilities : CIM_RecordLogCapabilities {
 };
 
+INSTANCE
 class SF_DiagnosticCompletionRecord : CIM_DiagnosticCompletionRecord {
 };
 
+INSTANCE
 class SF_LogEntry : CIM_LogEntry {
 };
 
-[Association]
+ASSOCIATION
 class SF_LogManagesRecord : CIM_LogManagesRecord {
 };
+#endif
 
-/*root*/
-[Association]
+#if defined(ROOTNS) || defined(IMPNS)
+ASSOCIATION
 class SF_SystemUseOfLog : CIM_UseOfLog {
       [Override("Dependent")]
    CIM_ComputerSystem REF Dependent;
 };
+#endif
 
-[Association]
+#if defined(IMPNS)
+ASSOCIATION
 class SF_DiagnosticUseOfLog : CIM_UseOfLog {
       [Override("Dependent")]
    CIM_DiagnosticTest REF Dependent;
 };
 
+INSTANCE
 class SF_DiagnosticTest : CIM_DiagnosticTest {
 };
 
+INSTANCE
 class SF_DiagnosticServiceCapabilities : CIM_DiagnosticServiceCapabilities {
 };
 
-[Association]
+ASSOCIATION
 class SF_RecordAppliesToElement : CIM_RecordAppliesToElement {
 };
 
-[Association]
+ASSOCIATION
 class SF_OwningJobElement : CIM_OwningJobElement {
       [Override("OwningElement")]
    CIM_DiagnosticTest REF OwningElement;
 };
 
-[Association]
+ASSOCIATION
 class SF_AffectedJobElement : CIM_AffectedJobElement {
       [Override("AffectedElement")]
    CIM_PortController REF AffectedElement;
 };
 
-[Association]
+ASSOCIATION
 class SF_AvailableDiagnosticService : CIM_AvailableDiagnosticService {
       [Override("UserOfService")]
    CIM_Card REF UserOfService;
 };
 
+INSTANCE
 class SF_DiagnosticSettingData : CIM_DiagnosticSettingData {
 };
 
-[Association]
+ASSOCIATION
 class SF_ElementSettingData : CIM_ElementSettingData {
 };
+#endif
 
-/*interop*/
+#if defined(IMPNS) || defined(INTEROPNS)
+INSTANCE
 class SF_RegisteredProfile : CIM_RegisteredProfile {
 };
 
-/*interop*/
-[Association]
+ASSOCIATION
 class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
       [Override("ManagedElement")]
     CIM_ManagedSystemElement REF ManagedElement;
 };
 
-/*interop*/
-[Association]
+ASSOCIATION
 class SF_ReferencedProfile : CIM_ReferencedProfile {
 };
+#endif
 
-/*root*/
-[Association]
+#if defined(IMPNS) || defined(ROOTNS)
+ASSOCIATION
 class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
 };
+#endif
 
-#ifdef TARGET_CIM_SERVER_pegasus
+#if defined(TARGET_CIM_SERVER_pegasus) && defined(IMPNS)
+INSTANCE
 class IBMPSG_ComputerSystem : CIM_UnitaryComputerSystem
 {
 string Model;
 string LPARID;
 };
 
+INSTANCE
 class IBMSD_ComputerSystem : CIM_ComputerSystem
 {
 string UUID;
 };
 
+INSTANCE
 class IBMSD_SPComputerSystem : CIM_ComputerSystem
 {
 };
 
+INSTANCE
 class PG_ComputerSystem : CIM_UnitaryComputerSystem
 {  
     [
@@ -277,12 +320,14 @@ class PG_ComputerSystem : CIM_UnitaryComputerSystem
     string IdentificationNumber;
 };
 
+INSTANCE
 class PG_RegisteredProfile : CIM_RegisteredProfile
 {
 };
 #endif
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) && defined(IMPNS)
+INSTANCE
 class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
 {
       [Override("Caption")]
@@ -310,27 +355,29 @@ class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
 };
 #endif
 
-[Indication]
+#if defined(IMPNS)
+INDICATION
 class SF_JobCreated : CIM_InstCreation
 {
 };
 
-[Indication]
+INDICATION
 class SF_JobStarted : CIM_InstModification
 {
 };
 
-[Indication]
+INDICATION
 class SF_JobError : CIM_InstModification
 {
 };
 
-[Indication]
+INDICATION
 class SF_JobSuccess : CIM_InstModification
 {
 };
 
-[Indication]
+INDICATION
 class SF_Alert : CIM_AlertIndication
 {
 };
+#endif

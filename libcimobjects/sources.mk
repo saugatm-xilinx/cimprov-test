@@ -29,6 +29,28 @@ $(filter %.h,$(_libcimobjects_GENERATED)) : $(libcimobjects_DIR)/classes.mk
 $(libcimobjects_DIR)/classes.mk : $(libcimobjects_DIR)/.genclass
 	$(AWK) '{ print "libcimobjects_SOURCES += ", $$0 }' $< >$@
 
-$(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof.cpp
-	$(target_CXX) -E -C -P -DTARGET_CIM_SERVER_$(CIM_SERVER) $(libcimobjects_CPPFLAGS) $(target_CPPFLAGS) $< >$@
+libcimobjects_MOF_CPPFLAGS = -DINSTANCE='$(MOF_INSTANCE_DEF)' -DASSOCIATION='$(MOF_ASSOCIATION_DEF)' \
+							 -DINDICATION='$(MOF_INDICATION_DEF)'
+ifeq ($(CIM_SERVER),wmi)
+MOF_INSTANCE_DEF = [dynamic, provider("$(PROVIDER_LIBRARY)")]
+MOF_ASSOCIATION_DEF = $(MOF_INSTANCE_DEF)
+MOF_INDICATION_DEF = [dynamic, provider("$(PROVIDER_LIBRARY)"), Indication]
+else
+MOF_INSTANCE_DEF = 
+MOF_ASSOCIATION_DEF = [Association]
+MOF_INDICATION_DEF = [Indication]
+endif
 
+MOF_PREPROCESS := $(target_CXX) -E -P -DTARGET_CIM_SERVER_$(CIM_SERVER) \
+						$(libcimobjects_MOF_CPPFLAGS) \
+						$(libcimobjects_CPPFLAGS) $(target_CPPFLAGS)
+
+
+$(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof.cpp
+	$(MOF_PREPROCESS) -DIMPNS=1 $< >$@
+
+$(libcimobjects_DIR)/interop.mof : $(libcimobjects_DIR)/repository.mof.cpp
+	$(MOF_PREPROCESS) -DINTEROPNS=1 $< >$@
+
+$(libcimobjects_DIR)/root.mof : $(libcimobjects_DIR)/repository.mof.cpp
+	$(MOF_PREPROCESS) -DROOTNS=1 $< >$@

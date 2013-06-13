@@ -27,9 +27,9 @@ $1 == "class" && IMPLEMENTED[$2] {
     next;
 }
 
-/\[.*Association.*\]/ { association = 1; }
-/\[.*Indication.*\]/ { indication = 1; }
+/ASSOCIATION/ { association = 1; }
+/INDICATION/ { indication = 1; }
 
-/\/\*interop\*\// { in_interop = 1; }
-/\/\*root\*\// { in_root = 1; }
+/#if.*defined(INTEROPNS)/ { in_interop = 1; }
+/#if.*defined(ROOTNS)/ { in_root = 1; }
     
