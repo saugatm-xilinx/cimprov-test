@@ -244,7 +244,7 @@ namespace solarflare
         
         void notify(const SystemElement& se)
         {
-            send(makeIndication(se));
+            this->send(makeIndication(se));
         }
     };
 
