@@ -316,7 +316,7 @@ struct WMI_DllUnregisterServer_Args
     extern "C" int cimple_wmi_adapter( \
         void* arg0, void* arg1, void* arg2, void* arg3, \
         void* arg4, void* arg5, void* arg6, void* arg7); \
-    static HMODULE _module; \
+    static HMODULE _module = NULL; \
     BOOL WINAPI CIMPLE_EXPORT DllMain(HINSTANCE instance, ULONG reason, LPVOID reserved) \
     { \
         WMI_DllMain_Args args; \

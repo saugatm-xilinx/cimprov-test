@@ -129,6 +129,8 @@ static HRESULT _registerServer(
     HKEY key2;
     LONG r;
 
+    HMODULE hmod;
+
     LOG_ENTER;
     // Format CLSID path: "Software\\classes\\CLSID\{GUID}"
 
@@ -163,6 +165,16 @@ static HRESULT _registerServer(
         RegCloseKey(key1);
         LOG_EXIT;
         return E_FAIL;
+    }
+
+    if (mod == NULL)
+    {
+        // regsvr32.exe can call DllRegisterServer() without calling
+        // DllMain() firstly where we normally obtain module handle
+        GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                          GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                          (LPCTSTR)&_registerServer, &hmod);
+        mod = hmod;
     }
 
     memset(&module, 0, sizeof(module));
