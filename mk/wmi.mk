@@ -6,6 +6,7 @@ override target_LDFLAGS = -static-libgcc -static-libstdc++ -Wl,--kill-at
 override target_SYSLIBRARIES = ole32 oleaut32 uuid
 
 override CIMPLE_PLATFORM = WIN32_IX86_MSVC
+SOEXT = dll
 
 CIM_SCHEMA_DIR = $(abspath schemas/windows)
 override CIM_SCHEMA_VERSION_MINOR = 0

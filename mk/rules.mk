@@ -68,13 +68,13 @@ $(STATIC_LIBRARIES) : %.a:
 link_static_to_shared_start = -Wl,-whole-archive
 link_static_to_shared_end = -Wl,-no-whole-archive
 
-$(SHARED_LIBRARIES) : %.so:
+SOEXT ?= so
+
+$(SHARED_LIBRARIES) : %.$(SOEXT):
 	$(CXX) -shared -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) \
 	-L. $(link_static_to_shared_start) $(addprefix -l,$(LIBRARIES)) $(link_static_to_shared_end) \
 	$(addprefix -l,$(SYSLIBRARIES))
 
-%.dll : lib%.so
-	cp $< $@
 
 $(BINARIES) : %:
 	$(CXX) -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) -L. $(addprefix -l,$(LIBRARIES)) $(addprefix -l,$(SYSLIBRARIES))
