@@ -30,6 +30,6 @@ $1 == "class" && IMPLEMENTED[$2] {
 /ASSOCIATION/ { association = 1; }
 /INDICATION/ { indication = 1; }
 
-/#if.*defined(INTEROPNS)/ { in_interop = 1; }
-/#if.*defined(ROOTNS)/ { in_root = 1; }
+/#if.*defined\(INTEROPNS\)/ { in_interop = 1; }
+/#if.*defined\(ROOTNS\)/ { in_root = 1; }
     
