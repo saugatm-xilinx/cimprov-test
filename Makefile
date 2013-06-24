@@ -38,6 +38,7 @@ include cimple/cmpi/sources.mk
 endif
 ifeq ($(CIM_INTERFACE),wmi)
 include cimple/wmi/sources.mk
+# include wmihelper/sources.mk
 endif
 
 include cimple/tools/file2c/sources.mk
