@@ -41,7 +41,6 @@
 #endif
 
 #include <linux/sockios.h>
-#include <mtd/mtd-user.h>
 
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"
@@ -583,7 +582,6 @@ namespace solarflare
 
     VersionInfo LinuxBootROM::version() const
     {
-        mtd_info_t   mtd_info;
         FILE        *mtd_list;
         char         line[BUF_MAX_LEN];
         char         dev_path[BUF_MAX_LEN];

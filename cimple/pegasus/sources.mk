@@ -9,6 +9,8 @@ libcimplepeg_SOURCES = \
 
 libcimplepeg_DIR = cimple/pegasus
 
+libcimplepeg_INCLUDES = $(libcimplepeg_DIR)
+
 libcimplepeg_TARGET = libcimplepeg.a
 
 libcimplepeg_DEPENDS = pegasus libcimple
