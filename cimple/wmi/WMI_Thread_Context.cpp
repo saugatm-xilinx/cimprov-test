@@ -84,13 +84,13 @@ static Ref<Instance> _next_instance(
     IWbemClassObject* wi = 0;
     WMI_Ref<IWbemClassObject> wi_(wi);
     ULONG count = 0;
+    HRESULT hr;
 
     // Get next WMI instance:
 
-    if (en->Next(WBEM_INFINITE, 1, &wi, &count) != WBEM_S_NO_ERROR)
-    {
+    hr = en->Next(WBEM_INFINITE, 1, &wi, &count);
+    if ((hr != WBEM_S_NO_ERROR && hr != WBEM_S_FALSE) || count != 1)
         return Ref<Instance>();
-    }
 
     // Convert to CIMPLE instance.
 
