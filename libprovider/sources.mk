@@ -71,7 +71,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 libprovider_GENERATED = module.cpp
 
 ifeq ($(CIM_INTERFACE),wmi)
-libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/register.mof
+libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof
 endif
 
 libprovider_DIR = libprovider
@@ -157,3 +157,13 @@ register: repository.reg install
 
 endif
 
+ifeq ($(CIM_SERVER),wmi)
+
+$(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/repository.mof $(MAKEFILE_LIST)
+	tac $< | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
+
+
+Install$(PROVIDER_LIBRARY).exe : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) $(libprovider_DIR)/unregister.mof
+	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' $<
+
+endif

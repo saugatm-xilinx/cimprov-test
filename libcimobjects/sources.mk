@@ -12,6 +12,7 @@ ifeq ($(CIM_SERVER),esxi)
 libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem
 endif
 
+
 include $(libcimobjects_DIR)/classes.mk
 
 libcimobjects_GENERATED = $(libcimobjects_SOURCES) $(patsubst %.cpp,%.h,$(libcimobjects_SOURCES)) classes.mk repository.mof 
@@ -54,3 +55,9 @@ $(libcimobjects_DIR)/interop.mof : $(libcimobjects_DIR)/repository.mof.cpp
 
 $(libcimobjects_DIR)/root.mof : $(libcimobjects_DIR)/repository.mof.cpp
 	$(MOF_PREPROCESS) -DROOTNS=1 $< >$@
+
+ifeq ($(CIM_SERVER),wmi)
+$(libcimobjects_DIR)/schema.mof : $(CIM_SCHEMA_DIR)/CIM_Schema.mof $(MAKEFILE_LIST)
+	cat `$(SED) -n 's!#pragma include ("\([^"]*\)")!$(CIM_SCHEMA_DIR)/\1!p' $<` >$@
+
+endif
