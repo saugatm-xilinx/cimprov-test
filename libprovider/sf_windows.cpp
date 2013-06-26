@@ -25,7 +25,11 @@ namespace solarflare
         int pci_bridge_device;  ///< PCI bridge device ID
         int pci_bridge_fn;      ///< PCI bridge function ID
 
-        int port_id;
+        int port_id;            ///< Id property value of corresponding
+                                ///  EFX_Port instance
+
+        Array<int> permanentMAC;  ///< Permanent MAC address
+        Array<int> currentMAC;    ///< Permanent MAC address
 
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const PortDescr &rhs)
@@ -98,14 +102,14 @@ namespace solarflare
         bool duplex;
         bool automode;
     public:
-        int portId;
+        PortDescr portInfo;
 
         WindowsPort(const NIC *up, unsigned i, PortDescr &descr) : 
             Port(i), 
             owner(up), 
             speed(up->maxLinkSpeed()),
             duplex(true), automode(true),
-            portId(descr.port_id) {}
+            portInfo(descr) {}
         
         virtual bool linkStatus() const { return true; }
         virtual Speed linkSpeed() const { return speed; }            
@@ -124,7 +128,15 @@ namespace solarflare
         virtual void renegotiate() {};
 
         /// @return Manufacturer-supplied MAC address
-        virtual MACAddress permanentMAC() const { return MACAddress(0, 1, 2, 3, 4, 5); };
+        virtual MACAddress permanentMAC() const
+        {
+            return MACAddress(portInfo.permanentMAC[0],
+                              portInfo.permanentMAC[1],
+                              portInfo.permanentMAC[2],
+                              portInfo.permanentMAC[3],
+                              portInfo.permanentMAC[4],
+                              portInfo.permanentMAC[5]);
+        };
 
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
@@ -146,7 +158,6 @@ namespace solarflare
         const NIC *owner;
         bool status;
         uint64 currentMTU;
-        MACAddress current;
         Port *boundPort;
     public:
         WindowsInterface(const NIC *up, unsigned i) : 
@@ -154,9 +165,8 @@ namespace solarflare
             owner(up), 
             status(false), 
             currentMTU(up->supportedMTU()),
-            current(0, 1, 2, 3, 4, 5),
             boundPort(NULL)
-        { current.address[5] += i; }
+        { }
         virtual bool ifStatus() const { return status; }
         virtual void enable(bool st) { status = st; }
 
@@ -167,9 +177,19 @@ namespace solarflare
         /// @return system interface name (e.g. ethX for Linux)
         virtual String ifName() const;
         /// @return MAC address actually in use
-        virtual MACAddress currentMAC() const { return current; }        
+        virtual MACAddress currentMAC() const
+        {
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+            return MACAddress(portInfo->currentMAC[0],
+                              portInfo->currentMAC[1],
+                              portInfo->currentMAC[2],
+                              portInfo->currentMAC[3],
+                              portInfo->currentMAC[4],
+                              portInfo->currentMAC[5]);
+        }        
         /// Change the current MAC address to @p mac
-        virtual void currentMAC(const MACAddress& mac) { current = mac; };
+        virtual void currentMAC(const MACAddress& mac) { };
 
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
@@ -200,7 +220,7 @@ namespace solarflare
             return "";
 
         snprintf(buf, 255, "Port%d",
-                 ((WindowsPort *)boundPort)->portId);
+                 ((WindowsPort *)boundPort)->portInfo.port_id);
 
         return String(buf);
     }
@@ -548,7 +568,7 @@ namespace solarflare
 
         if (wbemObjProp.vt != VT_BSTR)
         {
-            LOG_DATA("Wrong variant type %hd", (int)wbemObjProp.vt);
+            LOG_DATA("Wrong variant type 0x%hx", wbemObjProp.vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -600,6 +620,8 @@ namespace solarflare
             *value = wbemObjProp.ulVal;
         else if (wbemObjProp.vt == VT_UINT)
             *value = wbemObjProp.uintVal;
+        else if (wbemObjProp.vt == VT_UI1)
+            *value = wbemObjProp.bVal;
         else if (wbemObjProp.vt == VT_BSTR)
         {
             char *str_val = NULL;
@@ -619,12 +641,130 @@ namespace solarflare
         }
         else
         {
-            LOG_DATA("Wrong variant type %hd", (int)wbemObjProp.vt);
+            LOG_DATA("Wrong variant type 0x%hx", wbemObjProp.vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
         VariantClear(&wbemObjProp);
 
+        return 0;
+    }
+
+    ///
+    /// Get integer array property value of WMI object.
+    ///
+    /// @param wbemObj            WMI object pointer
+    /// @param propName           Property name
+    /// @param value        [out] Where to save obtained value
+    ///
+    /// @return 0 on success or error code
+    ///
+    static int wmiGetIntArrProp(IWbemClassObject *wbemObj,
+                                const char *propName,
+                                Array<int> &value)
+    {
+        HRESULT  hr;
+        VARIANT  wbemObjProp;
+        VARTYPE  vt;
+        int      dims_number;
+        LONG     LBound;
+        LONG     UBound;
+        LONG     i;
+
+        SAFEARRAY *pArray = NULL;
+
+        value.clear();
+
+        hr = wbemObj->Get(BString(propName).rep(), 0,
+                          &wbemObjProp, NULL, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("Failed to obtain value of '%s'", propName);
+            return -1;
+        }
+
+        vt = wbemObjProp.vt;
+        if (!(vt & VT_ARRAY))
+        {
+            LOG_DATA("%s(): Array flag is not set in "
+                     "variant type 0x%hx",
+                     __FUNCTION__, wbemObjProp.vt);
+            VariantClear(&wbemObjProp);
+            return -1;
+        }
+
+        vt &= (~VT_ARRAY);
+        if (vt != VT_I2 && vt != VT_I4 && vt != VT_INT &&
+            vt != VT_UI2 && vt != VT_UI4 && vt != VT_UINT &&
+            vt != VT_UI1)
+        {
+            LOG_DATA("%s(): variant type 0x%hx is not among "
+                     "known integer types",
+                     __FUNCTION__, vt);
+            VariantClear(&wbemObjProp);
+            return -1;
+        }
+
+        pArray = V_ARRAY(&wbemObjProp);
+        dims_number = SafeArrayGetDim(pArray);
+        if (dims_number != 1)
+        {
+            LOG_DATA("%s(): wrong number of array dimensions %d",
+                     __FUNCTION__, dims_number);
+            VariantClear(&wbemObjProp);
+            return -1;
+        }
+
+        hr = SafeArrayGetLBound(pArray, 1, &LBound);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to obtain lower bound of dimension, "
+                     "rc=%lx", __FUNCTION__, hr);
+            VariantClear(&wbemObjProp);
+            return -1;
+        }
+
+        hr = SafeArrayGetUBound(pArray, 1, &UBound);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to obtain upper bound of dimension, "
+                     "rc=%lx", __FUNCTION__, hr);
+            VariantClear(&wbemObjProp);
+            return -1;
+        }
+
+        for (i = LBound; i<= UBound; i++)
+        {
+            long long int el;
+            int           x;
+
+            hr = SafeArrayGetElement(pArray, &i, (void *)&el);
+            if (FAILED(hr))
+            {
+                LOG_DATA("%s(): failed to get %d element, "
+                         "rc=%lx", __FUNCTION__, i, hr);
+                VariantClear(&wbemObjProp);
+                value.clear();
+                return -1;
+            }
+
+            if (vt == VT_I2)
+                value.append(*((SHORT *)&el));
+            else if (vt == VT_I4)
+                value.append(*((LONG *)&el));
+            else if (vt == VT_INT)
+                value.append(*((INT *)&el));
+            else if (vt == VT_UI2)
+                value.append(*((USHORT *)&el));
+            else if (vt == VT_UI4)
+                value.append(*((ULONG *)&el));
+            else if (vt == VT_UINT)
+                value.append(*((UINT *)&el));
+            else if (vt == VT_UI1)
+                value.append(*((BYTE *)&el));
+        }
+
+        VariantClear(&wbemObjProp);
         return 0;
     }
 
@@ -655,7 +795,7 @@ namespace solarflare
             *value = (wbemObjProp.boolVal ? true : false);
         else
         {
-            LOG_DATA("Wrong variant type %hd", (int)wbemObjProp.vt);
+            LOG_DATA("Wrong variant type 0x%hx", wbemObjProp.vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -781,6 +921,20 @@ namespace solarflare
 
             if (dummy)
                 continue;
+
+            if (wmiGetIntArrProp(ports[i], "PermanentMacAddress",
+                                 portDescr.permanentMAC) != 0)
+            {
+                rc = -1;
+                goto cleanup;
+            }
+
+            if (wmiGetIntArrProp(ports[i], "CurrentMacAddress",
+                                 portDescr.currentMAC) != 0)
+            {
+                rc = -1;
+                goto cleanup;
+            }
 
             if (wmiEnumInstances("EFX_PciInformation", pciInfos) != 0)
             {
