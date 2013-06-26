@@ -31,6 +31,12 @@ namespace solarflare
         Array<int> permanentMAC;  ///< Permanent MAC address
         Array<int> currentMAC;    ///< Permanent MAC address
 
+        bool linkUp;            ///< Link status
+        uint64 linkSpeed;       ///< Link speed
+        int linkDuplex;         ///< Link duplex mode
+        bool autoneg;           ///< True if autonegotiation is
+                                ///  available
+
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const PortDescr &rhs)
         {
@@ -98,31 +104,38 @@ namespace solarflare
 
     class WindowsPort : public Port {
         const NIC *owner;
-        Speed speed;
-        bool duplex;
-        bool automode;
     public:
         PortDescr portInfo;
 
         WindowsPort(const NIC *up, unsigned i, PortDescr &descr) : 
             Port(i), 
             owner(up), 
-            speed(up->maxLinkSpeed()),
-            duplex(true), automode(true),
             portInfo(descr) {}
         
-        virtual bool linkStatus() const { return true; }
-        virtual Speed linkSpeed() const { return speed; }            
-        virtual void linkSpeed(Speed sp) { speed = sp; }
+        virtual bool linkStatus() const
+        {
+            return portInfo.linkUp;
+        }
+        virtual Speed linkSpeed() const
+        {
+            return speedValue(portInfo.linkSpeed);
+        }            
+        virtual void linkSpeed(Speed sp) { }
             
         /// @return full-duplex state
-        virtual bool fullDuplex() const { return duplex; }
+        virtual bool fullDuplex() const
+        {
+            return (portInfo.linkDuplex > 0 ? true : false);
+        }
         /// enable or disable full-duplex mode depending on @p fd
-        virtual void fullDuplex(bool fd) { duplex = fd; };
+        virtual void fullDuplex(bool fd) { };
         /// @return true iff autonegotiation is available
-        virtual bool autoneg() const { return automode; };
+        virtual bool autoneg() const
+        {
+            return portInfo.autoneg;
+        };
         /// enable/disable autonegotiation according to @p an
-        virtual void autoneg(bool an) { automode = an; }
+        virtual void autoneg(bool an) { }
         
         /// causes a renegotiation like 'ethtool -r'
         virtual void renegotiate() {};
@@ -141,7 +154,7 @@ namespace solarflare
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
         {
-            return owner->pciAddress().fn(elementId());
+            return owner->pciAddress().fn(0);
         }
 
         virtual void initialize() {};
@@ -194,7 +207,7 @@ namespace solarflare
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
         {
-            return owner->pciAddress().fn(elementId());
+            return owner->pciAddress().fn(0);
         }
 
         virtual Port *port() { return boundPort; }
@@ -408,7 +421,7 @@ namespace solarflare
         // separate bus, device and function numbers for PCI bridge.
         // Anyway, we do not use PCI data for any other purpose that for
         // distinguishing ports belonging to different NICs.
-        virtual PCIAddress pciAddress() const { return PCIAddress(0, 1, 2); }
+        virtual PCIAddress pciAddress() const { return PCIAddress(0, 0, 0); }
     };
 
 
@@ -593,9 +606,10 @@ namespace solarflare
     ///
     /// @return 0 on success or error code
     ///
+    template <class IntType>
     static int wmiGetIntProp(IWbemClassObject *wbemObj,
                              const char *propName,
-                             int *value)
+                             IntType *value)
     {
         HRESULT  hr;
         VARIANT  wbemObjProp;
@@ -628,7 +642,7 @@ namespace solarflare
             char *endptr = NULL;
 
             str_val = bstr2cstr(wbemObjProp.bstrVal);
-            *value = strtol(str_val, &endptr, 10);
+            *value = strtoll(str_val, &endptr, 10);
             if (endptr == NULL || *endptr != '\0')
             {
                 LOG_DATA("Failed to convert '%s' string to int",
@@ -659,9 +673,10 @@ namespace solarflare
     ///
     /// @return 0 on success or error code
     ///
+    template <class IntType>
     static int wmiGetIntArrProp(IWbemClassObject *wbemObj,
                                 const char *propName,
-                                Array<int> &value)
+                                Array<IntType> &value)
     {
         HRESULT  hr;
         VARIANT  wbemObjProp;
@@ -736,7 +751,6 @@ namespace solarflare
         for (i = LBound; i<= UBound; i++)
         {
             long long int el;
-            int           x;
 
             hr = SafeArrayGetElement(pArray, &i, (void *)&el);
             if (FAILED(hr))
@@ -913,7 +927,7 @@ namespace solarflare
         for (i = 0; i < ports.size(); i++)
         {
             if (wmiGetBoolProp(ports[i], "DummyInstance", &dummy) != 0 ||
-                wmiGetIntProp(ports[i], "Id", &portDescr.port_id) != 0)
+                wmiGetIntProp<int>(ports[i], "Id", &portDescr.port_id) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -922,15 +936,20 @@ namespace solarflare
             if (dummy)
                 continue;
 
-            if (wmiGetIntArrProp(ports[i], "PermanentMacAddress",
-                                 portDescr.permanentMAC) != 0)
-            {
-                rc = -1;
-                goto cleanup;
-            }
+            if (wmiGetIntArrProp<int>(ports[i], "PermanentMacAddress",
+                                      portDescr.permanentMAC) != 0 ||
+                wmiGetIntArrProp<int>(ports[i], "CurrentMacAddress",
+                                      portDescr.currentMAC) != 0 ||
+                wmiGetBoolProp(ports[i], "LinkUp",
+                               &portDescr.linkUp) != 0 ||
+                wmiGetIntProp<int>(ports[i], "LinkDuplex",
+                                   &portDescr.linkDuplex) != 0 ||
+                wmiGetBoolProp(ports[i], "FlowControlAutonegotiation",
+                               &portDescr.autoneg) != 0 ||
+                wmiGetIntProp<uint64>(ports[i],
+                                      "LinkCurrentSpeed",
+                                      &portDescr.linkSpeed) != 0)
 
-            if (wmiGetIntArrProp(ports[i], "CurrentMacAddress",
-                                 portDescr.currentMAC) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -946,8 +965,8 @@ namespace solarflare
             {
                 int pciPortId;
 
-                if (wmiGetIntProp(pciInfos[j], "PortId",
-                                  &pciPortId) != 0)
+                if (wmiGetIntProp<int>(pciInfos[j], "PortId",
+                                       &pciPortId) != 0)
                 {
                     rc = -1;
                     clearPciInfos = true;
@@ -968,18 +987,18 @@ namespace solarflare
                 goto cleanup;
             }
 
-            if (wmiGetIntProp(pciInfos[j], "BridgeBusNumber",
-                              &portDescr.pci_bridge_bus) != 0 ||
-                wmiGetIntProp(pciInfos[j], "BridgeDeviceNumber",
-                              &portDescr.pci_bridge_device) != 0 ||
-                wmiGetIntProp(pciInfos[j], "BridgeFunctionNumber",
-                              &portDescr.pci_bridge_fn) != 0 ||
-                wmiGetIntProp(pciInfos[j], "BusNumber",
-                              &portDescr.pci_bus) != 0 ||
-                wmiGetIntProp(pciInfos[j], "DeviceNumber",
-                              &portDescr.pci_device) != 0 ||
-                wmiGetIntProp(pciInfos[j], "FunctionNumber",
-                              &portDescr.pci_fn) != 0)
+            if (wmiGetIntProp<int>(pciInfos[j], "BridgeBusNumber",
+                                   &portDescr.pci_bridge_bus) != 0 ||
+                wmiGetIntProp<int>(pciInfos[j], "BridgeDeviceNumber",
+                                   &portDescr.pci_bridge_device) != 0 ||
+                wmiGetIntProp<int>(pciInfos[j], "BridgeFunctionNumber",
+                                   &portDescr.pci_bridge_fn) != 0 ||
+                wmiGetIntProp<int>(pciInfos[j], "BusNumber",
+                                   &portDescr.pci_bus) != 0 ||
+                wmiGetIntProp<int>(pciInfos[j], "DeviceNumber",
+                                   &portDescr.pci_device) != 0 ||
+                wmiGetIntProp<int>(pciInfos[j], "FunctionNumber",
+                                   &portDescr.pci_fn) != 0)
             {
                 LOG_DATA("Failed to obtain all required EFX_PciInformation "
                          "properties for PortId=%d", portDescr.port_id);
