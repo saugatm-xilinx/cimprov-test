@@ -88,9 +88,6 @@ CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
 #define VPD_TAG_R    0x10
 #define VPD_TAG_W    0x11
 
-// Macro to disable compiler warning about an unused parameter
-#define UNUSED(_x) (void )(_x)
-
 // Default version string
 #define DEFAULT_VERSION_STR ""
 

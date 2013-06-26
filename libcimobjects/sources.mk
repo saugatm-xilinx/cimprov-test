@@ -11,7 +11,9 @@ endif
 ifeq ($(CIM_SERVER),esxi)
 libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem
 endif
-
+ifeq ($(CIM_SERVER),wmi)
+libcimobjects_EXTRA_MOF += Win32_ComputerSystem
+endif
 
 include $(libcimobjects_DIR)/classes.mk
 

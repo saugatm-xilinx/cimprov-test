@@ -25,9 +25,11 @@ include cimple/pegasus/sources.mk
 
 PEGASUS_TOOLS_DEPS = libtoolstgt libcimplepeg 
 include cimple/tools/regmod/sources.mk
+ifeq ($(SLES10_BUILD_HOST),)
 include cimple/tools/regview/sources.mk
 include cimple/tools/ciminvoke/sources.mk
 include cimple/tools/cimlisten/sources.mk
+endif
 else ifeq ($(CIM_SERVER),wmi)
 # do nothing
 else
@@ -62,6 +64,10 @@ ifeq ($(CIM_SERVER),esxi)
 include esxi_solarflare/sources.mk
 endif
 
+ifneq ($(SLES10_BUILD_HOST),)
+include sles10/sources.mk
+endif
+
 top_LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
 
 
@@ -69,8 +75,11 @@ top_LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
 
 
 ifneq ($(CIM_SERVER),esxi)
+ifneq ($(SLES10_BUILD_HOST),)
+all : $(sles10_archive_TARGET)
+else
 all : $(libprovider_TARGET)
-
+endif
 else
 
 ifeq ($(ESXI_BUILD_HOST),)

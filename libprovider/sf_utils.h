@@ -7,6 +7,9 @@
 /// File encorporates classes that should not be subclassed for
 /// platform-specific provider implementation.
 
+// Macro to disable compiler warning about an unused parameter
+#define UNUSED(_x) (void )(_x)
+
 namespace solarflare 
 {
     // fixme: what do we actually need here?

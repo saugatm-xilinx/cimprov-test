@@ -8,6 +8,9 @@
 #include "IBMSD_SPComputerSystem.h"
 #include "PG_ComputerSystem.h"
 #endif
+#ifdef TARGET_CIM_SERVER_wmi
+#include "Win32_ComputerSystem.h"
+#endif
 #ifdef TARGET_CIM_SERVER_esxi
 #include "OMC_UnitaryComputerSystem.h"
 #endif
@@ -75,6 +78,9 @@ namespace solarflare
             &cimple::IBMSD_SPComputerSystem::static_meta_class,
             &cimple::PG_ComputerSystem::static_meta_class,
 #endif
+#ifdef TARGET_CIM_SERVER_wmi
+            &cimple::Win32_ComputerSystem::static_meta_class,
+#endif
 #ifdef TARGET_CIM_SERVER_esxi
             &cimple::OMC_UnitaryComputerSystem::static_meta_class,
 #endif
@@ -82,7 +88,6 @@ namespace solarflare
             NULL
         };
         cimple::Auto_Mutex guard(findSystemMutex);
-
 
         if (cimSystem)
             return cast<CIM_ComputerSystem *>(cimSystem.ptr());

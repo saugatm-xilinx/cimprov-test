@@ -24,9 +24,23 @@
 
 #include <linux/if.h>
 #include <linux/if_arp.h>
+
+// SLES 10 has broken ethtool.h
+#ifdef SLES10_BUILD_HOST
+#define u32 __u32
+#define u16 __u16
+#define u8 __u8
+#define u64 __u64
+#endif
 #include <linux/ethtool.h>
+#ifdef SLES10_BUILD_HOST
+#undef u8
+#undef u16
+#undef u32
+#undef u64
+#endif
+
 #include <linux/sockios.h>
-#include <mtd/mtd-user.h>
 
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"
@@ -225,6 +239,9 @@ namespace solarflare
     {
         struct ethtool_value edata;
 
+        if (!boundIface)
+            return false;
+
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GLINK, &edata) < 0)
@@ -236,6 +253,9 @@ namespace solarflare
     Port::Speed LinuxPort::linkSpeed() const
     {
         struct ethtool_cmd edata;
+
+        if (!boundIface)
+            return Speed(Port::SpeedUnknown);
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
@@ -255,6 +275,9 @@ namespace solarflare
     void LinuxPort::linkSpeed(Port::Speed sp)
     {
         struct ethtool_cmd edata;
+
+        if (!boundIface)
+            return;
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
@@ -278,6 +301,9 @@ namespace solarflare
     {
         struct ethtool_cmd edata;
 
+        if (!boundIface)
+            return false;
+
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GSET, &edata) < 0)
@@ -292,6 +318,9 @@ namespace solarflare
     void LinuxPort::fullDuplex(bool fd)
     {
         struct ethtool_cmd edata;
+
+        if (!boundIface)
+            return;
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
@@ -311,6 +340,9 @@ namespace solarflare
     {
         struct ethtool_cmd edata;
 
+        if (!boundIface)
+            return false;
+
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GSET, &edata) < 0)
@@ -325,6 +357,9 @@ namespace solarflare
     void LinuxPort::autoneg(bool an)
     {
         struct ethtool_cmd edata;
+
+        if (!boundIface)
+            return;
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
@@ -344,6 +379,9 @@ namespace solarflare
     {
         struct ethtool_cmd edata;
 
+        if (!boundIface)
+            return;
+
         memset(&edata, 0, sizeof(edata));
         linuxEthtoolCmd(boundIface->ifName().c_str(),
                         ETHTOOL_NWAY_RST, &edata);
@@ -352,6 +390,9 @@ namespace solarflare
     MACAddress LinuxPort::permanentMAC() const
     {
         struct ethtool_perm_addr    *edata;
+
+        if (!boundIface)
+            return MACAddress();
 
         edata = (ethtool_perm_addr *)calloc(1,
                     sizeof(struct ethtool_perm_addr) + ETH_ALEN);
@@ -516,6 +557,9 @@ namespace solarflare
     {
         struct ethtool_drvinfo edata;
 
+        if (!boundIface)
+            return VersionInfo("");
+
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GDRVINFO, &edata) < 0)
@@ -538,7 +582,6 @@ namespace solarflare
 
     VersionInfo LinuxBootROM::version() const
     {
-        mtd_info_t   mtd_info;
         FILE        *mtd_list;
         char         line[BUF_MAX_LEN];
         char         dev_path[BUF_MAX_LEN];
@@ -549,6 +592,9 @@ namespace solarflare
         int          fd;
         int          i;
         const char   prefix[] = BOOT_ROM_VERSION_PREFIX;
+
+        if (!boundIface)
+            return VersionInfo("");
 
         String  ifname = boundIface->ifName();
 
@@ -659,6 +705,9 @@ namespace solarflare
         struct ethtool_drvinfo  drv_data;
         struct ethtool_test    *test_data;
 
+        if (!boundIface)
+            return NotKnown;
+
         memset(&drv_data, 0, sizeof(drv_data));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GDRVINFO, &drv_data) < 0)
@@ -692,6 +741,7 @@ namespace solarflare
 
     class LinuxNIC : public NIC {
         int portNum;
+        int intfNum;
         LinuxPort port0;
         LinuxPort port1;
         LinuxInterface intf0;
@@ -709,9 +759,15 @@ namespace solarflare
         }
         virtual void setupInterfaces()
         {
-            intf0.initialize();
-            intf0.bindToPort(&port0);
-            port0.bindToIface(&intf0);
+            if (intfNum > 0)
+            {
+                intf0.initialize();
+                intf0.bindToPort(&port0);
+                port0.bindToIface(&intf0);
+            }
+            else
+                port0.bindToIface(NULL);
+
             if (portNum == 2)
             {
                 intf1.initialize();
@@ -732,14 +788,14 @@ namespace solarflare
     public:
         String sysfsPath;
 
-        LinuxNIC(unsigned idx, char *NICPath, int num,
+        LinuxNIC(unsigned idx, char *NICPath, int pnum, int inum,
                  const char *ifPath0, const char *ifPath1) :
-            NIC(idx), portNum(num),
+            NIC(idx), portNum(pnum), intfNum(inum),
             port0(this, 0), port1(this, 1),
             intf0(this, 0, ifPath0), intf1(this, 1, ifPath1),
             nicFw(this, &intf0), rom(this, &intf0),
-            diagOnline(true, this, &intf0),
-            diagOffline(false, this, &intf0),
+            diagOnline(true, this, pnum > 0 ? &intf0 : NULL),
+            diagOffline(false, this, pnum > 0 ? &intf0 : NULL),
             sysfsPath(NICPath)
         {}
 
@@ -783,18 +839,22 @@ namespace solarflare
 
         virtual bool forAllInterfaces(ElementEnumerator& en)
         {
+            if (intfNum == 0)
+                return true;
             if (!en.process(intf0))
                 return false;
-            if (portNum == 2)
+            if (intfNum == 2)
                 return en.process(intf1);
             return true;
         }
 
         virtual bool forAllInterfaces(ConstElementEnumerator& en) const
         {
+            if (intfNum == 0)
+                return true;
             if (!en.process(intf0))
                 return false;
-            if (portNum == 2)
+            if (intfNum == 2)
                 return en.process(intf1);
             return true;
         }
@@ -1204,10 +1264,10 @@ namespace solarflare
             char        buf[SYS_PATH_MAX_LEN];
             bool        res;
             int         pnum;
+            int         inum;
             char       *port_path[2] = {0, };
             char       *iface_path[2] = {0, };
             int         i;
-            bool        no_ifaces = false;
 
             struct dirent *iface;
 
@@ -1231,42 +1291,71 @@ namespace solarflare
             else
                 pnum = 1;
 
+	    inum = 0;
             for (i = 0; i < pnum; i++)
             {
                 DIR                 *net_dir;
                 struct dirent       *iface;
+                bool                 found = false;
 
                 sprintf(buf, "%s/net", port_path[i]);
                 net_dir = opendir(buf);
                 if (net_dir == NULL)
+		{
+		    net_dir = opendir(port_path[i]);
+		    if (net_dir == NULL)
+			continue;
+
+		    for (iface = readdir(net_dir); iface != NULL;
+			 iface = readdir(net_dir))
+		    {
+			if (strncmp(iface->d_name, "net:eth", 7) == 0)
+			{
+                            char        iface_link[SYS_PATH_MAX_LEN];
+                            int         len;
+
+			    sprintf(iface_link, "%s/%s", port_path[i],
+                                    iface->d_name);
+                            len = readlink(iface_link, buf, SYS_PATH_MAX_LEN);
+                            if (len < 0)
+                                continue;
+                            buf[len] = '\0';
+                            found = true;
+                            break;
+			}
+		    }
+		}
+                else
                 {
-                    no_ifaces = true;
-                    break;
-                }
-                for (iface = readdir(net_dir); iface != NULL;
-                     iface = readdir(net_dir))
-                {
-                    if (strncmp(iface->d_name, "eth", 3) == 0)
+                    for (iface = readdir(net_dir); iface != NULL;
+                         iface = readdir(net_dir))
                     {
-                        sprintf(buf, "%s/net/%s", port_path[i],
-                                iface->d_name);
-                        iface_path[i] = strdup(buf);
-                        break;
+                        if (strncmp(iface->d_name, "eth", 3) == 0)
+                        {
+                            sprintf(buf, "%s/net/%s", port_path[i],
+                                    iface->d_name);
+                            found = true;
+                            break;
+                        }
                     }
                 }
+
+                if (found)
+                {
+                    iface_path[i] = strdup(buf);
+		    inum++;
+                }
+
                 closedir(net_dir);
             }
 
-            if (!no_ifaces)
-            {
-                LinuxNIC nic = LinuxNIC(NICNum, port_path[0], pnum,
-                                    iface_path[0],
-                                    iface_path[1] ? iface_path[1] : "");
-                nic.initialize();
-                res = en.process(nic);
-                ret = ret && res;
-                NICNum++;
-            }
+	    LinuxNIC nic = LinuxNIC(NICNum, port_path[0], pnum, inum,
+			        iface_path[0] ? iface_path[0] : "",
+			        iface_path[1] ? iface_path[1] : "");
+	    nic.initialize();
+	    res = en.process(nic);
+	    ret = ret && res;
+	    NICNum++;
 
             for (i = 0; i < 2; i++)
             {
