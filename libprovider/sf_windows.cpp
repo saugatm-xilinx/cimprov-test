@@ -136,413 +136,6 @@ namespace solarflare
     ///
     typedef Array<NICDescr> NICDescrs;
 
-    class WindowsPort : public Port {
-        const NIC *owner;
-    public:
-        PortDescr portInfo;
-
-        WindowsPort(const NIC *up, unsigned i, PortDescr &descr) : 
-            Port(i), 
-            owner(up), 
-            portInfo(descr) {}
-        
-        virtual bool linkStatus() const
-        {
-            return portInfo.linkUp;
-        }
-        virtual Speed linkSpeed() const
-        {
-            return speedValue(portInfo.linkSpeed);
-        }            
-        virtual void linkSpeed(Speed sp) { }
-            
-        /// @return full-duplex state
-        virtual bool fullDuplex() const
-        {
-            return (portInfo.linkDuplex > 0 ? true : false);
-        }
-        /// enable or disable full-duplex mode depending on @p fd
-        virtual void fullDuplex(bool fd) { };
-        /// @return true iff autonegotiation is available
-        virtual bool autoneg() const
-        {
-            return portInfo.autoneg;
-        };
-        /// enable/disable autonegotiation according to @p an
-        virtual void autoneg(bool an) { }
-        
-        /// causes a renegotiation like 'ethtool -r'
-        virtual void renegotiate() {};
-
-        /// @return Manufacturer-supplied MAC address
-        virtual MACAddress permanentMAC() const
-        {
-            return MACAddress(portInfo.permanentMAC[0],
-                              portInfo.permanentMAC[1],
-                              portInfo.permanentMAC[2],
-                              portInfo.permanentMAC[3],
-                              portInfo.permanentMAC[4],
-                              portInfo.permanentMAC[5]);
-        };
-
-        virtual const NIC *nic() const { return owner; }
-        virtual PCIAddress pciAddress() const
-        {
-            return owner->pciAddress().fn(0);
-        }
-
-        virtual void initialize() {};
-
-        // Dummy operator to make possible using of cimple::Array
-        inline bool operator== (const WindowsPort &rhs)
-        {
-            UNUSED(rhs);
-            return false;
-        }
-    };
-
-    class WindowsInterface : public Interface {
-        const NIC *owner;
-        Port *boundPort;
-    public:
-        WindowsInterface(const NIC *up, unsigned i) : 
-            Interface(i), 
-            owner(up), 
-            boundPort(NULL)
-        { }
-        virtual bool ifStatus() const
-        {
-            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
-
-            return
-              (portInfo->ifInfo.AdminStatus == MIB_IF_ADMIN_STATUS_UP ? 
-                                                            true : false);
-        }
-        virtual void enable(bool st) { }
-
-        /// @return current MTU
-        virtual uint64 mtu() const
-        {
-            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
-
-            return portInfo->ifInfo.MTU;
-        }            
-        /// change MTU to @p u
-        virtual void mtu(uint64 u) { };
-        /// @return system interface name (e.g. ethX for Linux)
-        virtual String ifName() const;
-        /// @return MAC address actually in use
-        virtual MACAddress currentMAC() const
-        {
-            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
-
-            return MACAddress(portInfo->currentMAC[0],
-                              portInfo->currentMAC[1],
-                              portInfo->currentMAC[2],
-                              portInfo->currentMAC[3],
-                              portInfo->currentMAC[4],
-                              portInfo->currentMAC[5]);
-        }        
-        /// Change the current MAC address to @p mac
-        virtual void currentMAC(const MACAddress& mac) { };
-
-        virtual const NIC *nic() const { return owner; }
-        virtual PCIAddress pciAddress() const
-        {
-            return owner->pciAddress().fn(0);
-        }
-
-        virtual Port *port() { return boundPort; }
-        virtual const Port *port() const { return boundPort; }
-
-        void bindToPort(Port *p) { boundPort = p; }
-            
-        virtual void initialize() {};
-
-        // Dummy operator to make possible using of cimple::Array
-        inline bool operator== (const WindowsInterface &rhs)
-        {
-            UNUSED(rhs);
-            return false;
-        }
-    };
-
-    String WindowsInterface::ifName() const
-    {
-        PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
-
-        return portInfo->ifInfo.Name;
-    }
-    
-    class WindowsNICFirmware : public NICFirmware {
-        const NIC *owner;
-        VersionInfo vers;
-    public:
-        WindowsNICFirmware(const NIC *o, const VersionInfo &v) :
-            owner(o), vers(v) {}
-        virtual const NIC *nic() const { return owner; }
-        virtual VersionInfo version() const { return vers; }
-        virtual bool syncInstall(const char *)
-        {
-            return true;
-        }
-        virtual void initialize() {};
-    };
-
-    class WindowsBootROM : public BootROM {
-        const NIC *owner;
-        VersionInfo vers;
-    public:
-        WindowsBootROM(const NIC *o, const VersionInfo &v) :
-            owner(o), vers(v) {}
-        virtual const NIC *nic() const { return owner; }
-        virtual VersionInfo version() const { return vers; }
-        virtual bool syncInstall(const char *) { return true; }
-        virtual void initialize() {};
-    };
-
-    class WindowsDiagnostic : public Diagnostic {
-        const NIC *owner;
-        Result testPassed;
-        static const char sampleDescr[];
-        static const String diagGenName;
-    public:
-        WindowsDiagnostic(const NIC *o) :
-            Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
-        virtual Result syncTest() 
-        {
-            testPassed = Passed;
-            log().logStatus("passed");
-            return Passed;
-        }
-        virtual Result result() const { return testPassed; }
-        virtual const NIC *nic() const { return owner; }
-        virtual void initialize() {};
-        virtual const String& genericName() const { return diagGenName; }
-    };
-
-    const char WindowsDiagnostic::sampleDescr[] = "Windows Diagnostic";
-    const String WindowsDiagnostic::diagGenName = "Diagnostic";
-
-    class WindowsNIC : public NIC {
-        WindowsNICFirmware nicFw;
-        WindowsBootROM rom;
-        WindowsDiagnostic diag;
-
-    public:
-        Array<WindowsPort> ports;
-        Array<WindowsInterface> intfs;
-
-    protected:
-        virtual void setupPorts()
-        {
-            int i = 0;
-
-            for (i = 0; i < (int)ports.size(); i++)
-                ports[i].initialize();
-        }
-        virtual void setupInterfaces()
-        {
-            int i = 0;
-
-            for (i = 0; i < (int)ports.size(); i++)
-            {
-                intfs[i].initialize();
-                intfs[i].bindToPort(&ports[i]);
-            }
-        }
-        virtual void setupFirmware()
-        {
-            nicFw.initialize();
-            rom.initialize();
-        }
-        virtual void setupDiagnostics()
-        {
-            diag.initialize();
-        }
-    public:
-        WindowsNIC(unsigned idx, NICDescr &descr) :
-            NIC(idx),
-            nicFw(this,
-                  VersionInfo(
-                      descr.ports.size() > 0 ?
-                         descr.ports[0].McfwVersion.c_str() : "0.0.0")),
-            rom(this, VersionInfo("2.3.4")),
-            diag(this)
-        {
-            int i = 0;
-
-            for (i = 0; i < (int)descr.ports.size(); i++)
-            {
-                ports.append(WindowsPort(this, i, descr.ports[i]));
-                intfs.append(WindowsInterface(this, i));
-            }
-        }
-        virtual VitalProductData vitalProductData() const 
-        {
-            return VitalProductData("12345667",
-                                    "", "1111111", "2222222",
-                                    "SFC00000", "333333");
-        }
-        Connector connector() const { return RJ45; }
-        uint64 supportedMTU() const { return 9000; }
-        virtual bool forAllFw(ElementEnumerator& en)
-        {
-            if(!en.process(nicFw))
-                return false;
-            return en.process(rom);
-        }
-        virtual bool forAllFw(ConstElementEnumerator& en) const
-        {
-            if(!en.process(nicFw))
-                return false;
-            return en.process(rom);
-        }
-        virtual bool forAllPorts(ElementEnumerator& en)
-        {
-            int i = 0;
-
-            for (i = 0; i < (int)ports.size(); i++)
-                if (!en.process(ports[i]))
-                    return false;
-
-            return true;
-        }
-        
-        virtual bool forAllPorts(ConstElementEnumerator& en) const
-        {
-            int i = 0;
-
-            for (i = 0; i < (int)ports.size(); i++)
-                if (!en.process(ports[i]))
-                    return false;
-
-            return true;
-        }
-
-        virtual bool forAllInterfaces(ElementEnumerator& en)
-        {
-            int i = 0;
-
-            for (i = 0; i < (int)ports.size(); i++)
-            {
-                if (!en.process(intfs[i]))
-                    return false;
-            }
-
-            return true;
-        }
-        
-        virtual bool forAllInterfaces(ConstElementEnumerator& en) const
-        {
-            int i = 0;
-
-            for (i = 0; i < (int)ports.size(); i++)
-            {
-                if (!en.process(intfs[i]))
-                    return false;
-            }
-
-            return true;
-        }
-
-        virtual bool forAllDiagnostics(ElementEnumerator& en)
-        {
-            return en.process(diag);
-        }
-        
-        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
-        {
-            return en.process(diag);
-        }
-
-        // I failed to find PCI domain on Windows; instead there are
-        // separate bus, device and function numbers for PCI bridge.
-        // Anyway, we do not use PCI data for any other purpose that for
-        // distinguishing ports belonging to different NICs.
-        virtual PCIAddress pciAddress() const { return PCIAddress(0, 0, 0); }
-    };
-
-
-    class WindowsDriver : public Driver {
-        const Package *owner;
-        VersionInfo vers;
-        static const String drvName;
-    public:
-        WindowsDriver(const Package *pkg, const String& d, const String& sn, 
-                     const VersionInfo& v) :
-            Driver(d, sn), owner(pkg), vers(v) {}
-        virtual VersionInfo version() const { return vers; }
-        virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
-        virtual const String& genericName() const { return description(); }
-        virtual const Package *package() const { return owner; }
-    };
-
-
-    class WindowsLibrary : public Library {
-        const Package *owner;
-        VersionInfo vers;
-    public:
-        WindowsLibrary(const Package *pkg, const String& d, const String& sn, 
-                     const VersionInfo& v) :
-            Library(d, sn), owner(pkg), vers(v) {}
-        virtual VersionInfo version() const { return vers; }
-        virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
-        virtual const String& genericName() const { return description(); }
-        virtual const Package *package() const { return owner; }
-    };
-
-
-    /// @brief stub-only implementation of a software package
-    /// with kernel drivers
-    class WindowsKernelPackage : public Package {
-        WindowsDriver kernelDriver;
-    protected:
-        virtual void setupContents() { kernelDriver.initialize(); };
-    public:
-        WindowsKernelPackage() :
-            Package("NET Driver RPM", "sfc"),
-            kernelDriver(this, "NET Driver", "sfc", "3.3") {}
-        virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("3.3"); }
-        virtual bool syncInstall(const char *) { return true; }
-        virtual bool forAllSoftware(ElementEnumerator& en)
-        {
-            return en.process(kernelDriver);
-        }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
-        {
-            return en.process(kernelDriver);
-        }
-        virtual const String& genericName() const { return description(); }
-    };
-
-    /// @brief stub-only implementation of a software package
-    /// with provider library
-    class WindowsManagementPackage : public Package {
-        WindowsLibrary providerLibrary;
-    protected:
-        virtual void setupContents() { providerLibrary.initialize(); };
-    public:
-        WindowsManagementPackage() :
-            Package("CIM Provider RPM", "sfcprovider"),
-            providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
-        virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("0.1"); }
-        virtual bool syncInstall(const char *) { return true; }
-        virtual bool forAllSoftware(ElementEnumerator& en)
-        {
-            return en.process(providerLibrary);
-        }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
-        {
-            return en.process(providerLibrary);
-        }
-        virtual const String& genericName() const { return description(); }
-    };
-
     ///
     /// WMI connection (with namespace root\WMI).
     ///
@@ -1049,7 +642,8 @@ namespace solarflare
         for (i = 0; i < ports.size(); i++)
         {
             if (wmiGetBoolProp(ports[i], "DummyInstance", &dummy) != 0 ||
-                wmiGetIntProp<int>(ports[i], "Id", &portDescr.port_id) != 0 ||
+                wmiGetIntProp<int>(ports[i], "Id",
+                                   &portDescr.port_id) != 0 ||
                 wmiGetStringProp(ports[i], "McfwVersion",
                                  portDescr.McfwVersion) != 0)
             {
@@ -1208,6 +802,453 @@ cleanup:
 
         return rc;
     }
+
+    class WindowsPort : public Port {
+        const NIC *owner;
+    public:
+        PortDescr portInfo;
+
+        WindowsPort(const NIC *up, unsigned i, PortDescr &descr) : 
+            Port(i), 
+            owner(up), 
+            portInfo(descr) {}
+        
+        virtual bool linkStatus() const
+        {
+            return portInfo.linkUp;
+        }
+        virtual Speed linkSpeed() const
+        {
+            return speedValue(portInfo.linkSpeed);
+        }            
+        virtual void linkSpeed(Speed sp) { }
+            
+        /// @return full-duplex state
+        virtual bool fullDuplex() const
+        {
+            return (portInfo.linkDuplex > 0 ? true : false);
+        }
+        /// enable or disable full-duplex mode depending on @p fd
+        virtual void fullDuplex(bool fd) { };
+        /// @return true iff autonegotiation is available
+        virtual bool autoneg() const
+        {
+            return portInfo.autoneg;
+        };
+        /// enable/disable autonegotiation according to @p an
+        virtual void autoneg(bool an) { }
+        
+        /// causes a renegotiation like 'ethtool -r'
+        virtual void renegotiate() {};
+
+        /// @return Manufacturer-supplied MAC address
+        virtual MACAddress permanentMAC() const
+        {
+            return MACAddress(portInfo.permanentMAC[0],
+                              portInfo.permanentMAC[1],
+                              portInfo.permanentMAC[2],
+                              portInfo.permanentMAC[3],
+                              portInfo.permanentMAC[4],
+                              portInfo.permanentMAC[5]);
+        };
+
+        virtual const NIC *nic() const { return owner; }
+        virtual PCIAddress pciAddress() const
+        {
+            return owner->pciAddress().fn(0);
+        }
+
+        virtual void initialize() {};
+
+        // Dummy operator to make possible using of cimple::Array
+        inline bool operator== (const WindowsPort &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
+    };
+
+    class WindowsInterface : public Interface {
+        const NIC *owner;
+        Port *boundPort;
+    public:
+        WindowsInterface(const NIC *up, unsigned i) : 
+            Interface(i), 
+            owner(up), 
+            boundPort(NULL)
+        { }
+        virtual bool ifStatus() const
+        {
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+            return
+              (portInfo->ifInfo.AdminStatus == MIB_IF_ADMIN_STATUS_UP ? 
+                                                            true : false);
+        }
+        virtual void enable(bool st) { }
+
+        /// @return current MTU
+        virtual uint64 mtu() const
+        {
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+            return portInfo->ifInfo.MTU;
+        }            
+        /// change MTU to @p u
+        virtual void mtu(uint64 u) { };
+        /// @return system interface name (e.g. ethX for Linux)
+        virtual String ifName() const;
+        /// @return MAC address actually in use
+        virtual MACAddress currentMAC() const
+        {
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+            return MACAddress(portInfo->currentMAC[0],
+                              portInfo->currentMAC[1],
+                              portInfo->currentMAC[2],
+                              portInfo->currentMAC[3],
+                              portInfo->currentMAC[4],
+                              portInfo->currentMAC[5]);
+        }        
+        /// Change the current MAC address to @p mac
+        virtual void currentMAC(const MACAddress& mac) { };
+
+        virtual const NIC *nic() const { return owner; }
+        virtual PCIAddress pciAddress() const
+        {
+            return owner->pciAddress().fn(0);
+        }
+
+        virtual Port *port() { return boundPort; }
+        virtual const Port *port() const { return boundPort; }
+
+        void bindToPort(Port *p) { boundPort = p; }
+            
+        virtual void initialize() {};
+
+        // Dummy operator to make possible using of cimple::Array
+        inline bool operator== (const WindowsInterface &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
+    };
+
+    String WindowsInterface::ifName() const
+    {
+        PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+        return portInfo->ifInfo.Name;
+    }
+    
+    class WindowsNICFirmware : public NICFirmware {
+        const NIC *owner;
+        VersionInfo vers;
+    public:
+        WindowsNICFirmware(const NIC *o, const VersionInfo &v) :
+            owner(o), vers(v) {}
+        virtual const NIC *nic() const { return owner; }
+        virtual VersionInfo version() const { return vers; }
+        virtual bool syncInstall(const char *)
+        {
+            return true;
+        }
+        virtual void initialize() {};
+    };
+
+    class WindowsBootROM : public BootROM {
+        const NIC *owner;
+        VersionInfo vers;
+    public:
+        WindowsBootROM(const NIC *o, const VersionInfo &v) :
+            owner(o), vers(v) {}
+        virtual const NIC *nic() const { return owner; }
+        virtual VersionInfo version() const { return vers; }
+        virtual bool syncInstall(const char *) { return true; }
+        virtual void initialize() {};
+    };
+
+    class WindowsDiagnostic : public Diagnostic {
+        const NIC *owner;
+        Result testPassed;
+        static const char sampleDescr[];
+        static const String diagGenName;
+    public:
+        WindowsDiagnostic(const NIC *o) :
+            Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
+        virtual Result syncTest() 
+        {
+            testPassed = Passed;
+            log().logStatus("passed");
+            return Passed;
+        }
+        virtual Result result() const { return testPassed; }
+        virtual const NIC *nic() const { return owner; }
+        virtual void initialize() {};
+        virtual const String& genericName() const { return diagGenName; }
+    };
+
+    const char WindowsDiagnostic::sampleDescr[] = "Windows Diagnostic";
+    const String WindowsDiagnostic::diagGenName = "Diagnostic";
+
+    class WindowsNIC : public NIC {
+        WindowsNICFirmware nicFw;
+        WindowsBootROM rom;
+        WindowsDiagnostic diag;
+
+    public:
+        Array<WindowsPort> ports;
+        Array<WindowsInterface> intfs;
+
+    protected:
+        virtual void setupPorts()
+        {
+            int i = 0;
+
+            for (i = 0; i < (int)ports.size(); i++)
+                ports[i].initialize();
+        }
+        virtual void setupInterfaces()
+        {
+            int i = 0;
+
+            for (i = 0; i < (int)ports.size(); i++)
+            {
+                intfs[i].initialize();
+                intfs[i].bindToPort(&ports[i]);
+            }
+        }
+        virtual void setupFirmware()
+        {
+            nicFw.initialize();
+            rom.initialize();
+        }
+        virtual void setupDiagnostics()
+        {
+            diag.initialize();
+        }
+    public:
+        WindowsNIC(unsigned idx, NICDescr &descr) :
+            NIC(idx),
+            nicFw(this,
+                  VersionInfo(
+                      descr.ports.size() > 0 ?
+                         descr.ports[0].McfwVersion.c_str() : "0.0.0")),
+            rom(this, VersionInfo("2.3.4")),
+            diag(this)
+        {
+            int i = 0;
+
+            for (i = 0; i < (int)descr.ports.size(); i++)
+            {
+                ports.append(WindowsPort(this, i, descr.ports[i]));
+                intfs.append(WindowsInterface(this, i));
+            }
+        }
+        virtual VitalProductData vitalProductData() const 
+        {
+            return VitalProductData("12345667",
+                                    "", "1111111", "2222222",
+                                    "SFC00000", "333333");
+        }
+        Connector connector() const { return RJ45; }
+        uint64 supportedMTU() const { return 9000; }
+        virtual bool forAllFw(ElementEnumerator& en)
+        {
+            if(!en.process(nicFw))
+                return false;
+            return en.process(rom);
+        }
+        virtual bool forAllFw(ConstElementEnumerator& en) const
+        {
+            if(!en.process(nicFw))
+                return false;
+            return en.process(rom);
+        }
+        virtual bool forAllPorts(ElementEnumerator& en)
+        {
+            int i = 0;
+
+            for (i = 0; i < (int)ports.size(); i++)
+                if (!en.process(ports[i]))
+                    return false;
+
+            return true;
+        }
+        
+        virtual bool forAllPorts(ConstElementEnumerator& en) const
+        {
+            int i = 0;
+
+            for (i = 0; i < (int)ports.size(); i++)
+                if (!en.process(ports[i]))
+                    return false;
+
+            return true;
+        }
+
+        virtual bool forAllInterfaces(ElementEnumerator& en)
+        {
+            int i = 0;
+
+            for (i = 0; i < (int)ports.size(); i++)
+            {
+                if (!en.process(intfs[i]))
+                    return false;
+            }
+
+            return true;
+        }
+        
+        virtual bool forAllInterfaces(ConstElementEnumerator& en) const
+        {
+            int i = 0;
+
+            for (i = 0; i < (int)ports.size(); i++)
+            {
+                if (!en.process(intfs[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        virtual bool forAllDiagnostics(ElementEnumerator& en)
+        {
+            return en.process(diag);
+        }
+        
+        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
+        {
+            return en.process(diag);
+        }
+
+        // I failed to find PCI domain on Windows; instead there are
+        // separate bus, device and function numbers for PCI bridge.
+        // Anyway, we do not use PCI data for any other purpose that for
+        // distinguishing ports belonging to different NICs.
+        virtual PCIAddress pciAddress() const { return PCIAddress(0, 0, 0); }
+    };
+
+
+    class WindowsDriver : public Driver {
+        const Package *owner;
+        static const String drvName;
+    public:
+        WindowsDriver(const Package *pkg, const String& d,
+                      const String& sn) :
+            Driver(d, sn), owner(pkg) { }
+        virtual VersionInfo version() const
+        {
+            /// Version cannot be obtained from class constructor -
+            /// it is called when regsvr32 tries to register our DLL
+            /// and trying to use WMI from this context result in
+            /// hanging up or crash.
+
+            Array<IWbemClassObject *> roots;
+            int                       rc = 0;
+            unsigned int              i;
+            bool                      dummy;
+            String                    version;
+            VersionInfo               vers = VersionInfo("0.0.0");
+        
+            rc = wmiEnumInstances("EFX_Root", roots);
+            if (rc < 0)
+                return vers;
+
+            for (i = 0; i < roots.size(); i++)
+            {
+                if (wmiGetBoolProp(roots[i], "DummyInstance", &dummy) != 0)
+                    goto cleanup;
+
+                if (dummy)
+                    continue;
+
+                if (wmiGetStringProp(roots[i], "DriverBuild", version) != 0)
+                    goto cleanup;
+
+                if (version.size() > 0 && version[0] == 'v')
+                    version.remove(0, 1);
+                vers = VersionInfo(version.c_str());
+                break;
+            }
+
+cleanup:
+            for (i = 0; i < roots.size(); i++)
+                roots[i]->Release();
+            roots.clear();  
+
+            return vers;
+        }
+        virtual void initialize() {};
+        virtual bool syncInstall(const char *) { return false; }
+        virtual const String& genericName() const { return description(); }
+        virtual const Package *package() const { return owner; }
+    };
+
+
+    class WindowsLibrary : public Library {
+        const Package *owner;
+        VersionInfo vers;
+    public:
+        WindowsLibrary(const Package *pkg, const String& d, const String& sn, 
+                     const VersionInfo& v) :
+            Library(d, sn), owner(pkg), vers(v) {}
+        virtual VersionInfo version() const { return vers; }
+        virtual void initialize() {};
+        virtual bool syncInstall(const char *) { return false; }
+        virtual const String& genericName() const { return description(); }
+        virtual const Package *package() const { return owner; }
+    };
+
+
+    /// @brief stub-only implementation of a software package
+    /// with kernel drivers
+    class WindowsKernelPackage : public Package {
+        WindowsDriver kernelDriver;
+    protected:
+        virtual void setupContents() { kernelDriver.initialize(); };
+    public:
+        WindowsKernelPackage() :
+            Package("NET Driver RPM", "sfc"),
+            kernelDriver(this, "NET Driver", "sfc") {}
+        virtual PkgType type() const { return RPM; }
+        virtual VersionInfo version() const { return VersionInfo("3.3"); }
+        virtual bool syncInstall(const char *) { return true; }
+        virtual bool forAllSoftware(ElementEnumerator& en)
+        {
+            return en.process(kernelDriver);
+        }
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
+        {
+            return en.process(kernelDriver);
+        }
+        virtual const String& genericName() const { return description(); }
+    };
+
+    /// @brief stub-only implementation of a software package
+    /// with provider library
+    class WindowsManagementPackage : public Package {
+        WindowsLibrary providerLibrary;
+    protected:
+        virtual void setupContents() { providerLibrary.initialize(); };
+    public:
+        WindowsManagementPackage() :
+            Package("CIM Provider RPM", "sfcprovider"),
+            providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
+        virtual PkgType type() const { return RPM; }
+        virtual VersionInfo version() const { return VersionInfo("0.1"); }
+        virtual bool syncInstall(const char *) { return true; }
+        virtual bool forAllSoftware(ElementEnumerator& en)
+        {
+            return en.process(providerLibrary);
+        }
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
+        {
+            return en.process(providerLibrary);
+        }
+        virtual const String& genericName() const { return description(); }
+    };
 
     /// @brief stub-only System implementation
     /// @note all structures are initialised statically,
