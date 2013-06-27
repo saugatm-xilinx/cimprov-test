@@ -78,21 +78,32 @@ namespace solarflare
         Array<int> permanentMAC;  ///< Permanent MAC address
         Array<int> currentMAC;    ///< Permanent MAC address
 
-        bool linkUp;            ///< Link status
-        uint64 linkSpeed;       ///< Link speed
-        int linkDuplex;         ///< Link duplex mode
-        bool autoneg;           ///< True if autonegotiation is
-                                ///  available
+        bool linkUp() const;      ///< Link status
+        uint64 linkSpeed() const; ///< Link speed
+        int linkDuplex() const;   ///< Link duplex mode
+        bool autoneg() const;     ///< True if autonegotiation is
+                                  ///  available
 
         InterfaceInfo ifInfo;   ///< Network interface-related information
 
-        String mcfwVersion;     ///< MC firmware version
-        String bootROMVersion;  ///< BootROM version
+        String mcfwVersion() const;     ///< MC firmware version
+        String bootROMVersion() const;  ///< BootROM version
 
-        String productName;     ///< Product name from VPD
-        String productNumber;   ///< Product number from VPD
-        String serialNumber;    ///< Serial number from VPD
+        String productName() const;   ///< Get product name from VPD
+        String productNumber() const; ///< Get product number from VPD
+        String serialNumber() const;  ///< Get serial number from VPD
 
+        IWbemClassObject *efxPort;  ///< Associated EFX_Port object
+
+        PortDescr() : efxPort(NULL) {};
+
+        inline void clear()
+        {
+            if (efxPort != NULL)
+                efxPort->Release();
+
+            efxPort = NULL;
+        }
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const PortDescr &rhs)
         {
@@ -228,6 +239,9 @@ namespace solarflare
 
         str = String("");
 
+        if (wbemObj == NULL)
+            return -1;
+
         hr = wbemObj->Get(BString(propName).rep(), 0,
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
@@ -273,6 +287,9 @@ namespace solarflare
     {
         HRESULT  hr;
         VARIANT  wbemObjProp;
+
+        if (wbemObj == NULL)
+            return -1;
 
         hr = wbemObj->Get(BString(propName).rep(), 0,
                           &wbemObjProp, NULL, NULL);
@@ -349,6 +366,9 @@ namespace solarflare
         SAFEARRAY *pArray = NULL;
 
         value.clear();
+
+        if (wbemObj == NULL)
+            return -1;
 
         hr = wbemObj->Get(BString(propName).rep(), 0,
                           &wbemObjProp, NULL, NULL);
@@ -456,6 +476,9 @@ namespace solarflare
     {
         HRESULT  hr;
         VARIANT  wbemObjProp;
+
+        if (wbemObj == NULL)
+            return -1;
 
         hr = wbemObj->Get(BString(propName).rep(), 0,
                           &wbemObjProp, NULL, NULL);
@@ -591,6 +614,9 @@ namespace solarflare
         if (wmiEstablishConn() != 0)
             return -1;
 
+        if (instance == NULL)
+            return -1;
+
         hr = instance->Get(BString("__Class").rep(), 0,
                            &className, NULL, NULL);
         if (FAILED(hr))
@@ -685,6 +711,9 @@ cleanup:
         if (wmiEstablishConn() != 0)
             return -1;
 
+        if (port == NULL)
+            return -1;
+
         rc = wmiPrepareMethodCall(port, methodName, objPath, &pIn);
         if (rc < 0)
             return rc;
@@ -761,6 +790,9 @@ cleanup:
         if (wmiEstablishConn() != 0)
             return -1;
 
+        if (port == NULL)
+            return -1;
+
         rc = wmiPrepareMethodCall(port, methodName, objPath, &pIn);
         if (rc < 0)
             return rc;
@@ -835,6 +867,9 @@ cleanup:
                                 String &productNumber,
                                 String &serialNumber)
     {
+        if (port == NULL)
+            return -1;
+
         if (getPortVPDField(port, VPD_TAG_ID, 0,
                             productName) != 0 ||
             getPortVPDField(port, VPD_TAG_R, VPD_KEYWORD('P', 'N'),
@@ -844,6 +879,115 @@ cleanup:
             return -1;
 
         return 0;
+    }
+
+    /// Get link status
+    bool PortDescr::linkUp() const
+    {
+        bool result = false;
+    
+        if (wmiGetBoolProp(efxPort, "LinkUp",
+                           &result) != 0)
+            return false;
+        else
+            return result;
+    }
+
+    /// Get link speed
+    uint64 PortDescr::linkSpeed() const
+    {
+        uint64 speed = 0;
+    
+        if (wmiGetIntProp<uint64>(efxPort,
+                                  "LinkCurrentSpeed",
+                                  &speed) != 0)
+            return 0;
+        else
+            return speed;
+    }
+
+    /// Get link duplex mode
+    int PortDescr::linkDuplex() const
+    {
+        int duplex = 0;
+    
+        if (wmiGetIntProp<int>(efxPort, "LinkDuplex",
+                               &duplex) != 0)
+            return 0;
+        else
+            return duplex;
+    }
+
+    /// Check whether autonegotiation is available
+    bool PortDescr::autoneg() const
+    {
+        bool result = false;
+    
+        if (wmiGetBoolProp(efxPort,
+                           "FlowControlAutonegotiation",
+                           &result) != 0)
+            return false;
+        else
+            return result;
+    }
+
+    /// Get MC firmware version
+    String PortDescr::mcfwVersion() const
+    {
+        String vers;
+    
+        if (wmiGetStringProp(efxPort, "McfwVersion",
+                             vers) != 0)
+            return String("");
+        else
+            return vers;
+    }
+
+    /// Get BootROM version
+    String PortDescr::bootROMVersion() const
+    {
+        String vers;
+    
+        if (getPortBootROMVersion(efxPort, vers) != 0)
+            return String("");
+        else
+            return vers;
+    }
+
+    /// Get product name from VPD for SF Ethernet port
+    String PortDescr::productName() const
+    {
+        String pname; 
+
+        if (getPortVPDField(efxPort, VPD_TAG_ID, 0,
+                            pname) != 0)
+            return String("");
+        else
+            return pname;
+    }
+
+    /// Get product number from VPD for SF Ethernet port
+    String PortDescr::productNumber() const
+    {
+        String pnum; 
+
+        if (getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('P', 'N'),
+                            pnum) != 0)
+            return String("");
+        else
+            return pnum;
+    }
+
+    /// Get serial number from VPD for SF Ethernet port
+    String PortDescr::serialNumber() const
+    {
+        String snum; 
+
+        if (getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('S', 'N'),
+                            snum) != 0)
+            return String("");
+        else
+            return snum;
     }
 
     ///
@@ -951,9 +1095,7 @@ cleanup:
         {
             if (wmiGetBoolProp(ports[i], "DummyInstance", &dummy) != 0 ||
                 wmiGetIntProp<int>(ports[i], "Id",
-                                   &portDescr.port_id) != 0 ||
-                wmiGetStringProp(ports[i], "McfwVersion",
-                                 portDescr.mcfwVersion) != 0)
+                                   &portDescr.port_id) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -962,25 +1104,10 @@ cleanup:
             if (dummy)
                 continue;
 
-            if (getPortBootROMVersion(ports[i],
-                                      portDescr.bootROMVersion) != 0 ||
-                wmiGetIntArrProp<int>(ports[i], "PermanentMacAddress",
+            if (wmiGetIntArrProp<int>(ports[i], "PermanentMacAddress",
                                       portDescr.permanentMAC) != 0 ||
                 wmiGetIntArrProp<int>(ports[i], "CurrentMacAddress",
-                                      portDescr.currentMAC) != 0 ||
-                wmiGetBoolProp(ports[i], "LinkUp",
-                               &portDescr.linkUp) != 0 ||
-                wmiGetIntProp<int>(ports[i], "LinkDuplex",
-                                   &portDescr.linkDuplex) != 0 ||
-                wmiGetBoolProp(ports[i], "FlowControlAutonegotiation",
-                               &portDescr.autoneg) != 0 ||
-                wmiGetIntProp<uint64>(ports[i],
-                                      "LinkCurrentSpeed",
-                                      &portDescr.linkSpeed) != 0 ||
-                getPortVPDFields(ports[i],
-                                 portDescr.productName,
-                                 portDescr.productNumber,
-                                 portDescr.serialNumber) != 0)
+                                      portDescr.currentMAC) != 0)
 
             {
                 rc = -1;
@@ -1066,7 +1193,16 @@ cleanup:
                     break;
             }
             if (pci_cmp_rc != 0)
+            {
+                portDescr.efxPort = ports[i];
+                ports[i] = NULL;
                 portDescrs.insert(j, portDescr);
+            }
+            else
+            {
+                ports[i]->Release();
+                ports[i] = NULL;
+            }
         }
 
         for (j = 0; j < portDescrs.size(); j++)
@@ -1111,8 +1247,15 @@ cleanup:
         }
 
         for (i = 0; i < ports.size(); i++)
-            ports[i]->Release();
+            if (ports[i] != NULL)
+                ports[i]->Release();
         ports.clear();
+
+        if (rc != 0)
+        {
+            for (i = 0; i < portDescrs.size(); i++)
+                portDescrs[i].clear();
+        }
 
         return rc;
     }
@@ -1126,28 +1269,33 @@ cleanup:
             Port(i), 
             owner(up), 
             portInfo(descr) {}
+
+        void clear()
+        {
+            portInfo.clear();
+        }
         
         virtual bool linkStatus() const
         {
-            return portInfo.linkUp;
+            return portInfo.linkUp();
         }
         virtual Speed linkSpeed() const
         {
-            return speedValue(portInfo.linkSpeed);
+            return speedValue(portInfo.linkSpeed());
         }            
         virtual void linkSpeed(Speed sp) { }
             
         /// @return full-duplex state
         virtual bool fullDuplex() const
         {
-            return (portInfo.linkDuplex > 0 ? true : false);
+            return (portInfo.linkDuplex() > 0 ? true : false);
         }
         /// enable or disable full-duplex mode depending on @p fd
         virtual void fullDuplex(bool fd) { };
-        /// @return true iff autonegotiation is available
+        /// @return true if autonegotiation is available
         virtual bool autoneg() const
         {
-            return portInfo.autoneg;
+            return portInfo.autoneg();
         };
         /// enable/disable autonegotiation according to @p an
         virtual void autoneg(bool an) { }
@@ -1257,12 +1405,11 @@ cleanup:
     
     class WindowsNICFirmware : public NICFirmware {
         const NIC *owner;
-        VersionInfo vers;
     public:
-        WindowsNICFirmware(const NIC *o, const VersionInfo &v) :
-            owner(o), vers(v) {}
+        WindowsNICFirmware(const NIC *o) :
+            owner(o) {}
         virtual const NIC *nic() const { return owner; }
-        virtual VersionInfo version() const { return vers; }
+        virtual VersionInfo version() const;
         virtual bool syncInstall(const char *)
         {
             return true;
@@ -1272,12 +1419,11 @@ cleanup:
 
     class WindowsBootROM : public BootROM {
         const NIC *owner;
-        VersionInfo vers;
     public:
-        WindowsBootROM(const NIC *o, const VersionInfo &v) :
-            owner(o), vers(v) {}
+        WindowsBootROM(const NIC *o) :
+            owner(o) {}
         virtual const NIC *nic() const { return owner; }
-        virtual VersionInfo version() const { return vers; }
+        virtual VersionInfo version() const;
         virtual bool syncInstall(const char *) { return true; }
         virtual void initialize() {};
     };
@@ -1343,14 +1489,8 @@ cleanup:
     public:
         WindowsNIC(unsigned idx, NICDescr &descr) :
             NIC(idx),
-            nicFw(this,
-                  VersionInfo(
-                      descr.ports.size() > 0 ?
-                         descr.ports[0].mcfwVersion.c_str() : "0.0.0")),
-            rom(this,
-                VersionInfo(
-                      descr.ports.size() > 0 ?
-                         descr.ports[0].bootROMVersion.c_str() : "0.0.0")),
+            nicFw(this),
+            rom(this),
             diag(this)
         {
             int i = 0;
@@ -1361,6 +1501,15 @@ cleanup:
                 intfs.append(WindowsInterface(this, i));
             }
         }
+
+        void clear()
+        {
+            unsigned int i = 0;
+
+            for (i = 0; i < ports.size(); i++)
+                ports[i].clear();
+        }
+
         virtual VitalProductData vitalProductData() const 
         {
           
@@ -1368,12 +1517,12 @@ cleanup:
             {
                 const PortDescr *portInfo = &ports[0].portInfo;
 
-                return VitalProductData(portInfo->serialNumber,
+                return VitalProductData(portInfo->serialNumber(),
                                         "",
-                                        portInfo->serialNumber,
-                                        portInfo->productNumber,
-                                        portInfo->productName,
-                                        portInfo->productNumber);
+                                        portInfo->serialNumber(),
+                                        portInfo->productNumber(),
+                                        portInfo->productName(),
+                                        portInfo->productNumber());
             }
             else
                 return VitalProductData("", "", "", "", "", "");
@@ -1654,6 +1803,7 @@ cleanup:
             nic.initialize();
             res = en.process(nic);
             ret = ret && res;
+            nic.clear();
         }
 
         return ret;
@@ -1681,4 +1831,22 @@ cleanup:
     WindowsSystem WindowsSystem::target;
 
     System& System::target = WindowsSystem::target;
+
+    VersionInfo WindowsNICFirmware::version() const
+    {
+        if (((WindowsNIC *)owner)->ports.size() == 0)
+            return VersionInfo("0.0.0");
+        else
+            return VersionInfo(((WindowsNIC *)owner)->ports[0].
+                                         portInfo.mcfwVersion().c_str());
+    }
+
+    VersionInfo WindowsBootROM::version() const
+    {
+        if (((WindowsNIC *)owner)->ports.size() == 0)
+            return VersionInfo("0.0.0");
+        else
+            return VersionInfo(((WindowsNIC *)owner)->ports[0].
+                                      portInfo.bootROMVersion().c_str());
+    }
 }
