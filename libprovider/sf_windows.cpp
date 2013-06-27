@@ -15,6 +15,12 @@
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
 #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 
+/// This value was taken from
+/// v5-incoming:src/driver/win/bus/driver/bus_ioctl.h
+/// It is used to obtain BootROM version via
+/// EFX_Port_Firmware_Version_Read method.
+#define REFLASH_TARGET_BOOTROM 2
+
 namespace solarflare 
 {
     using cimple::BString;
@@ -69,7 +75,8 @@ namespace solarflare
 
         InterfaceInfo ifInfo;   ///< Network interface-related information
 
-        String McfwVersion;     ///< MC firmware version
+        String mcfwVersion;     ///< MC firmware version
+        String bootROMVersion;  ///< BootROM version
 
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const PortDescr &rhs)
@@ -539,6 +546,178 @@ namespace solarflare
     }
 
     ///
+    /// Get WMI path and input parameters object to call a given method
+    /// for a given instance.
+    ///
+    /// @param instance         WMI object instance pointer
+    /// @param methodName       Method name
+    /// @param objPath    [out] Instance path to be used for calling method
+    /// @param pIn        [out] Input parameters object
+    ///
+    static int wmiPrepareMethodCall(IWbemClassObject *instance,
+                                    BString &methodName,
+                                    BString &objPath,
+                                    IWbemClassObject **pIn)
+    {
+        HRESULT hr;
+
+        VARIANT className;
+        VARIANT path;
+
+        IWbemClassObject *classObj = NULL;
+        IWbemClassObject *pInDef = NULL;
+
+        bool className_got = false;
+        bool path_got = false;
+        bool classObj_got = false;
+        bool pInDef_got = false;
+        int  rc = 0;
+
+        if (wmiEstablishConn() != 0)
+            return -1;
+
+        hr = instance->Get(BString("__Class").rep(), 0,
+                           &className, NULL, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to obtain class name of WMI object, "
+                     "rc=%lx", __FUNCTION__, hr);
+            return -1;
+        }
+        className_got = true;
+
+        hr = instance->Get(BString("__Path").rep(), 0,
+                           &path, NULL, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to obtain path of WMI object, "
+                     "rc=%lx", __FUNCTION__, hr);
+            rc = -1;
+            goto cleanup;
+        }
+        path_got = true;
+
+        hr = rootWMIConn->GetObject(className.bstrVal, 0, NULL,
+                                    &classObj, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to obtain class definition "
+                     "of WMI object, rc=%lx", __FUNCTION__, hr);
+            rc = -1;
+            goto cleanup;
+        }
+        classObj_got = true;
+
+        hr = classObj->GetMethod(methodName.rep(), 0, &pInDef,
+                                 NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to obtain method definition "
+                     "for WMI object, rc=%lx", __FUNCTION__, hr);
+            rc = -1;
+            goto cleanup;
+        }
+        pInDef_got = true;
+
+        hr = pInDef->SpawnInstance(0, pIn);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to obtain input parameters instance, "
+                     "rc=%lx", __FUNCTION__, hr);
+            rc = -1;
+            goto cleanup;
+        }
+
+        objPath.set(path.bstrVal, cimple::BSTR_TAG);
+        path.bstrVal = NULL;
+cleanup:
+        if (className_got)
+            VariantClear(&className);
+        if (path_got)
+            VariantClear(&path);
+        if (classObj_got)
+            classObj->Release();
+        if (pInDef_got)
+            pInDef->Release();
+
+        return rc;
+    }
+
+    ///
+    /// Get BootROM version for Ethernet port.
+    ///
+    /// @param port        EFX_Port object pointer
+    /// @param vers  [out] BootROM version
+    ///
+    /// @return 0 on success or -1 on failure
+    ///
+    /// @note Do not call this function on dummy EFX_Port instance,
+    ///       it will result in crash.
+    ///
+    static int getPortBootROMVersion(IWbemClassObject *port,
+                                     String &vers)
+    {
+        HRESULT hr;
+        int     rc;
+        BString objPath;
+        int     CompletionCode;
+        BString methodName("EFX_Port_Firmware_Version_Read");
+        VARIANT targetType;
+        
+        IWbemClassObject *pIn = NULL;
+        IWbemClassObject *pOut = NULL;
+
+        if (wmiEstablishConn() != 0)
+            return -1;
+
+        rc = wmiPrepareMethodCall(port, methodName, objPath, &pIn);
+        if (rc < 0)
+            return rc;
+
+        targetType.vt = VT_I4;
+        targetType.lVal = REFLASH_TARGET_BOOTROM;
+        hr = pIn->Put(BString("TargetType").rep(), 0,
+                      &targetType, 0);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to set TargetType for firmrmware "
+                     "version reading method, rc=%lx", __FUNCTION__, hr);
+            pIn->Release();
+            return -1;
+        }
+
+        hr = rootWMIConn->ExecMethod(objPath.rep(), methodName.rep(),
+                                     0, NULL, pIn, &pOut, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to call firmware version reading "
+                     "method, rc=%lx", __FUNCTION__, hr);
+            pIn->Release();
+            return -1;
+        }
+
+        rc = wmiGetIntProp<int>(pOut, "CompletionCode", &CompletionCode);
+        if (rc < 0)
+        {
+            pIn->Release();
+            pOut->Release();
+            return rc;
+        }
+
+        rc = wmiGetStringProp(pOut, "VersionString", vers);
+        if (rc < 0)
+        {
+            pIn->Release();
+            pOut->Release();
+            return rc;
+        }
+
+        pIn->Release();
+        pOut->Release();
+        return 0;
+    }
+
+    ///
     /// Get information about available network interfaces.
     ///
     /// @param info          [out] Where to save interfaces information
@@ -645,7 +824,7 @@ namespace solarflare
                 wmiGetIntProp<int>(ports[i], "Id",
                                    &portDescr.port_id) != 0 ||
                 wmiGetStringProp(ports[i], "McfwVersion",
-                                 portDescr.McfwVersion) != 0)
+                                 portDescr.mcfwVersion) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -654,7 +833,9 @@ namespace solarflare
             if (dummy)
                 continue;
 
-            if (wmiGetIntArrProp<int>(ports[i], "PermanentMacAddress",
+            if (getPortBootROMVersion(ports[i],
+                                      portDescr.bootROMVersion) != 0 ||
+                wmiGetIntArrProp<int>(ports[i], "PermanentMacAddress",
                                       portDescr.permanentMAC) != 0 ||
                 wmiGetIntArrProp<int>(ports[i], "CurrentMacAddress",
                                       portDescr.currentMAC) != 0 ||
@@ -1033,8 +1214,11 @@ cleanup:
             nicFw(this,
                   VersionInfo(
                       descr.ports.size() > 0 ?
-                         descr.ports[0].McfwVersion.c_str() : "0.0.0")),
-            rom(this, VersionInfo("2.3.4")),
+                         descr.ports[0].mcfwVersion.c_str() : "0.0.0")),
+            rom(this,
+                VersionInfo(
+                      descr.ports.size() > 0 ?
+                         descr.ports[0].bootROMVersion.c_str() : "0.0.0")),
             diag(this)
         {
             int i = 0;
