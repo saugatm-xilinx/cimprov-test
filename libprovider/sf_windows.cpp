@@ -21,11 +21,22 @@
 /// EFX_Port_Firmware_Version_Read method.
 #define REFLASH_TARGET_BOOTROM 2
 
+/// VPD tags
+#define VPD_TAG_ID   0x02
+#define VPD_TAG_END  0x0f
+#define VPD_TAG_R    0x10
+#define VPD_TAG_W    0x11
+
+/// Get VPD keyword value from symbols
+#define VPD_KEYWORD(a, b)         ((a) | ((b) << 8))
+
 namespace solarflare 
 {
     using cimple::BString;
     using cimple::bstr2cstr;
     using cimple::wstr2str;
+    using cimple::uint8;
+    using cimple::uint16;
 
     ///
     /// Information about network interface
@@ -77,6 +88,10 @@ namespace solarflare
 
         String mcfwVersion;     ///< MC firmware version
         String bootROMVersion;  ///< BootROM version
+
+        String productName;     ///< Product name from VPD
+        String productNumber;   ///< Product number from VPD
+        String serialNumber;    ///< Serial number from VPD
 
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const PortDescr &rhs)
@@ -718,6 +733,120 @@ cleanup:
     }
 
     ///
+    /// Get VPD field value for Solarflare Ethernet port.
+    ///
+    /// @param port                 EFX_Port object pointer
+    /// @param tag                  VPD tag
+    /// @param keyword              VPD keyword
+    /// @param value          [out] Where to save field value
+    ///
+    /// @return 0 on success or -1 on failure
+    ///
+    static int getPortVPDField(IWbemClassObject *port,
+                               uint8 tag,
+                               uint16 keyword,
+                               String &value)
+    {
+        HRESULT hr;
+        int     rc;
+        BString objPath;
+        int     CompletionCode;
+        BString methodName("EFX_Port_ReadVpdKeyword");
+        VARIANT propTag;
+        VARIANT propKeyword;
+        
+        IWbemClassObject *pIn = NULL;
+        IWbemClassObject *pOut = NULL;
+
+        if (wmiEstablishConn() != 0)
+            return -1;
+
+        rc = wmiPrepareMethodCall(port, methodName, objPath, &pIn);
+        if (rc < 0)
+            return rc;
+
+        propTag.vt = VT_UI1;
+        propTag.bVal = tag;
+        hr = pIn->Put(BString("Tag").rep(), 0,
+                      &propTag, 0);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to set Tag for VPD "
+                     "field reading method, rc=%lx", __FUNCTION__, hr);
+            pIn->Release();
+            return -1;
+        }
+
+        propKeyword.vt = VT_I4;
+        propKeyword.lVal = keyword;
+        hr = pIn->Put(BString("Keyword").rep(), 0,
+                      &propKeyword, 0);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to set Keyword for VPD "
+                     "field reading method, rc=%lx", __FUNCTION__, hr);
+            pIn->Release();
+            return -1;
+        }
+
+        hr = rootWMIConn->ExecMethod(objPath.rep(), methodName.rep(),
+                                     0, NULL, pIn, &pOut, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to call firmware version reading "
+                     "method, rc=%lx", __FUNCTION__, hr);
+            pIn->Release();
+            return -1;
+        }
+
+        rc = wmiGetIntProp<int>(pOut, "CompletionCode", &CompletionCode);
+        if (rc < 0)
+        {
+            pIn->Release();
+            pOut->Release();
+            return rc;
+        }
+
+        rc = wmiGetStringProp(pOut, "Value", value);
+        if (rc < 0)
+        {
+            pIn->Release();
+            pOut->Release();
+            return rc;
+        }
+
+        pIn->Release();
+        pOut->Release();
+        return 0;
+    }
+
+    ///
+    /// Get VPD fields for Solarflare Ethernet port.
+    ///
+    /// @param port                 EFX_Port object pointer
+    /// @param productName    [out] Where to save product name
+    /// @param productNumber  [out] Where to save product number
+    /// @param serialNumber   [out] Where to save serial number
+    ///
+    /// @return 0 on success or -1 on failure
+    ///
+    static int getPortVPDFields(IWbemClassObject *port,
+                                String &productName,
+                                String &productNumber,
+                                String &serialNumber)
+    {
+        if (getPortVPDField(port, VPD_TAG_ID, 0,
+                            productName) != 0 ||
+            getPortVPDField(port, VPD_TAG_R, VPD_KEYWORD('P', 'N'),
+                            productNumber) != 0 ||
+            getPortVPDField(port, VPD_TAG_R, VPD_KEYWORD('S', 'N'),
+                            serialNumber) != 0)
+            return -1;
+
+        return 0;
+    }
+
+    ///
     /// Get information about available network interfaces.
     ///
     /// @param info          [out] Where to save interfaces information
@@ -847,7 +976,11 @@ cleanup:
                                &portDescr.autoneg) != 0 ||
                 wmiGetIntProp<uint64>(ports[i],
                                       "LinkCurrentSpeed",
-                                      &portDescr.linkSpeed) != 0)
+                                      &portDescr.linkSpeed) != 0 ||
+                getPortVPDFields(ports[i],
+                                 portDescr.productName,
+                                 portDescr.productNumber,
+                                 portDescr.serialNumber) != 0)
 
             {
                 rc = -1;
@@ -1176,7 +1309,6 @@ cleanup:
         WindowsNICFirmware nicFw;
         WindowsBootROM rom;
         WindowsDiagnostic diag;
-
     public:
         Array<WindowsPort> ports;
         Array<WindowsInterface> intfs;
@@ -1231,11 +1363,40 @@ cleanup:
         }
         virtual VitalProductData vitalProductData() const 
         {
-            return VitalProductData("12345667",
-                                    "", "1111111", "2222222",
-                                    "SFC00000", "333333");
+          
+            if (ports.size() > 0)
+            {
+                const PortDescr *portInfo = &ports[0].portInfo;
+
+                return VitalProductData(portInfo->serialNumber,
+                                        "",
+                                        portInfo->serialNumber,
+                                        portInfo->productNumber,
+                                        portInfo->productName,
+                                        portInfo->productNumber);
+            }
+            else
+                return VitalProductData("", "", "", "", "", "");
         }
-        Connector connector() const { return RJ45; }
+        Connector connector() const
+        {
+            VitalProductData        vpd = vitalProductData();
+            const char             *part = vpd.part().c_str();
+            char                    last = 'T';
+
+            if (*part != '\0')
+                last = part[strlen(part) - 1];
+
+            switch (last)
+            {
+                case 'F': return NIC::SFPPlus;
+                case 'K': // fallthrough
+                case 'H': return NIC::Mezzanine;
+                case 'T': return NIC::RJ45;
+
+                default: return NIC::RJ45;
+            }
+        }
         uint64 supportedMTU() const
         {
             // This one defined in the driver (EFX_MAX_MTU)
