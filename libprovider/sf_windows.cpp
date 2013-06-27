@@ -69,6 +69,8 @@ namespace solarflare
 
         InterfaceInfo ifInfo;   ///< Network interface-related information
 
+        String McfwVersion;     ///< MC firmware version
+
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const PortDescr &rhs)
         {
@@ -361,7 +363,10 @@ namespace solarflare
     public:
         WindowsNIC(unsigned idx, NICDescr &descr) :
             NIC(idx),
-            nicFw(this, VersionInfo("1.2.3")),
+            nicFw(this,
+                  VersionInfo(
+                      descr.ports.size() > 0 ?
+                         descr.ports[0].McfwVersion.c_str() : "0.0.0")),
             rom(this, VersionInfo("2.3.4")),
             diag(this)
         {
@@ -600,10 +605,13 @@ namespace solarflare
     ///
     static int wmiGetStringProp(IWbemClassObject *wbemObj,
                                 const char *propName,
-                                char **value)
+                                String &str)
     {
         HRESULT  hr;
         VARIANT  wbemObjProp;
+        char    *value;
+
+        str = String("");
 
         hr = wbemObj->Get(BString(propName).rep(), 0,
                           &wbemObjProp, NULL, NULL);
@@ -619,14 +627,17 @@ namespace solarflare
             VariantClear(&wbemObjProp);
             return -1;
         }
-        *value = bstr2cstr(wbemObjProp.bstrVal);
+        value = bstr2cstr(wbemObjProp.bstrVal);
         VariantClear(&wbemObjProp);
 
-        if (*value == NULL)
+        if (value == NULL)
         {
             LOG_DATA("%s(): null string obtained", __FUNCTION__);
             return -1;
         }
+
+        str = String(value);
+        delete[] value;
 
         return 0;
     }
@@ -1038,7 +1049,9 @@ namespace solarflare
         for (i = 0; i < ports.size(); i++)
         {
             if (wmiGetBoolProp(ports[i], "DummyInstance", &dummy) != 0 ||
-                wmiGetIntProp<int>(ports[i], "Id", &portDescr.port_id) != 0)
+                wmiGetIntProp<int>(ports[i], "Id", &portDescr.port_id) != 0 ||
+                wmiGetStringProp(ports[i], "McfwVersion",
+                                 portDescr.McfwVersion) != 0)
             {
                 rc = -1;
                 goto cleanup;
