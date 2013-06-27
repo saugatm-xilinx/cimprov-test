@@ -1,3 +1,4 @@
+#include <winsock2.h>
 #include "sf_platform.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
@@ -7,10 +8,39 @@
 #include <cimple/wmi/BString.h>
 #include <cimple/wmi/utils.h>
 
+#include <ws2ipdef.h>
+#include <iphlpapi.h>
+
+/// Memory allocation for WinAPI calls
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+
 namespace solarflare 
 {
     using cimple::BString;
     using cimple::bstr2cstr;
+    using cimple::wstr2str;
+
+    ///
+    /// Information about network interface
+    ///
+    class InterfaceInfo
+    {
+    public:
+        String Name;          ///< Interface name
+        String Descr;         ///< Interface description
+        DWORD Index;          ///< Interface index
+        DWORD MTU;            ///< Interface MTU
+        DWORD AdminStatus;    ///< Interface administrative status
+        Array<int> PhysAddr;  ///< Interface physical address
+
+        // Dummy operator to make possible using of cimple::Array
+        inline bool operator== (const InterfaceInfo &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
+    };
 
     ///
     /// Description of Ethernet port.
@@ -36,6 +66,8 @@ namespace solarflare
         int linkDuplex;         ///< Link duplex mode
         bool autoneg;           ///< True if autonegotiation is
                                 ///  available
+
+        InterfaceInfo ifInfo;   ///< Network interface-related information
 
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const PortDescr &rhs)
@@ -169,24 +201,32 @@ namespace solarflare
 
     class WindowsInterface : public Interface {
         const NIC *owner;
-        bool status;
-        uint64 currentMTU;
         Port *boundPort;
     public:
         WindowsInterface(const NIC *up, unsigned i) : 
             Interface(i), 
             owner(up), 
-            status(false), 
-            currentMTU(up->supportedMTU()),
             boundPort(NULL)
         { }
-        virtual bool ifStatus() const { return status; }
-        virtual void enable(bool st) { status = st; }
+        virtual bool ifStatus() const
+        {
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+            return
+              (portInfo->ifInfo.AdminStatus == MIB_IF_ADMIN_STATUS_UP ? 
+                                                            true : false);
+        }
+        virtual void enable(bool st) { }
 
         /// @return current MTU
-        virtual uint64 mtu() const { return currentMTU; }            
+        virtual uint64 mtu() const
+        {
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+            return portInfo->ifInfo.MTU;
+        }            
         /// change MTU to @p u
-        virtual void mtu(uint64 u) { currentMTU = u; };
+        virtual void mtu(uint64 u) { };
         /// @return system interface name (e.g. ethX for Linux)
         virtual String ifName() const;
         /// @return MAC address actually in use
@@ -227,15 +267,9 @@ namespace solarflare
 
     String WindowsInterface::ifName() const
     {
-        char buf[255];
-        
-        if (boundPort == NULL)
-            return "";
+        PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
 
-        snprintf(buf, 255, "Port%d",
-                 ((WindowsPort *)boundPort)->portInfo.port_id);
-
-        return String(buf);
+        return portInfo->ifInfo.Name;
     }
     
     class WindowsNICFirmware : public NICFirmware {
@@ -901,11 +935,83 @@ namespace solarflare
     }
 
     ///
+    /// Get information about available network interfaces.
+    ///
+    /// @param info          [out] Where to save interfaces information
+    ///
+    /// @return 0 on success or -1 on failure
+    ///
+    static int getInterfacesInfo(Array<InterfaceInfo> &info)
+    {
+        PIP_INTERFACE_INFO pInfo = NULL;
+        ULONG              outBufLen = 0;
+        DWORD              dwRetVal;
+        ULONG              ulRetVal;
+        int                i;
+        unsigned int       j;
+
+        dwRetVal = GetInterfaceInfo(NULL, &outBufLen);
+        if (dwRetVal == ERROR_INSUFFICIENT_BUFFER)
+        {
+            pInfo = (IP_INTERFACE_INFO *)MALLOC(outBufLen);
+            if (pInfo == NULL)
+            {
+                LOG_DATA("Failed to allocate memory "
+                         "for GetInterfaceInfo()");
+                return -1;
+            }
+        }
+
+        dwRetVal = GetInterfaceInfo(pInfo, &outBufLen);
+        if (dwRetVal != NO_ERROR)
+        {
+            LOG_DATA("The second call of GetInterfaceInfo() failed, "
+                     "dwRetVal=%d", dwRetVal);
+            FREE(pInfo);
+            return -1;
+        }
+
+        for (i = 0; i < pInfo->NumAdapters; i++)
+        {
+            MIB_IFROW     mibIfRow;
+            InterfaceInfo intfInfo;
+
+            memset(&mibIfRow, 0, sizeof(mibIfRow));
+            mibIfRow.dwIndex = pInfo->Adapter[i].Index;
+
+            ulRetVal = GetIfEntry(&mibIfRow);
+            if (ulRetVal != NO_ERROR)
+            {
+                LOG_DATA("GetIfEntry(dwIndex=%d) failed with rc=%lu",
+                         ulRetVal);
+                FREE(pInfo);
+                info.clear();
+                return -1;
+            }
+
+            intfInfo.Name = wstr2str(pInfo->Adapter[i].Name);
+            intfInfo.Descr = String("");
+            for (j = 0; j < mibIfRow.dwDescrLen; j++)
+                intfInfo.Descr.append(mibIfRow.bDescr[j]);
+            intfInfo.Index = pInfo->Adapter[i].Index;
+            intfInfo.MTU = mibIfRow.dwMtu;
+            intfInfo.AdminStatus =  mibIfRow.dwAdminStatus;
+            intfInfo.PhysAddr.clear();
+            for (j = 0; j < mibIfRow.dwPhysAddrLen; j++)
+                intfInfo.PhysAddr.append((int)mibIfRow.bPhysAddr[j]);
+            info.append(intfInfo);
+        }
+
+        FREE(pInfo);
+        return 0;
+    }
+
+    ///
     /// Get descriptions for all Solarflare NICs on the machine.
     ///
     /// @param nics          [out] Where to save NIC descriptions
     ///
-    /// @return 0 on success or error code
+    /// @return 0 on success or -1 on failure
     ///
     static int getNICs(NICDescrs &nics)
     {
@@ -913,6 +1019,7 @@ namespace solarflare
         Array<IWbemClassObject *> ports;
         Array<IWbemClassObject *> pciInfos;
         Array<PortDescr>          portDescrs;
+        Array<InterfaceInfo>      intfsInfo;
         PortDescr                 portDescr;
         unsigned int              i;
         unsigned int              j;
@@ -921,6 +1028,10 @@ namespace solarflare
         int                       pci_cmp_rc;
 
         rc = wmiEnumInstances("EFX_Port", ports);
+        if (rc < 0)
+            return rc;
+
+        rc = getInterfacesInfo(intfsInfo);
         if (rc < 0)
             return rc;
 
@@ -954,6 +1065,22 @@ namespace solarflare
                 rc = -1;
                 goto cleanup;
             }
+
+            for (j = 0; j < intfsInfo.size(); j++)
+            {
+                if (intfsInfo[j].PhysAddr == portDescr.currentMAC)
+                    break;
+            }
+
+            if (j == intfsInfo.size())
+            {
+                LOG_DATA("Failed to find network interface information "
+                         "for portId=%d", portDescr.port_id);
+                rc = -1;
+                goto cleanup;
+            }
+
+            portDescr.ifInfo = intfsInfo[j];
 
             if (wmiEnumInstances("EFX_PciInformation", pciInfos) != 0)
             {
