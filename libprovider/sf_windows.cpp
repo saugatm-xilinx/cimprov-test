@@ -1236,7 +1236,11 @@ cleanup:
                                     "SFC00000", "333333");
         }
         Connector connector() const { return RJ45; }
-        uint64 supportedMTU() const { return 9000; }
+        uint64 supportedMTU() const
+        {
+            // This one defined in the driver (EFX_MAX_MTU)
+            return 9216;
+        }
         virtual bool forAllFw(ElementEnumerator& en)
         {
             if(!en.process(nicFw))
