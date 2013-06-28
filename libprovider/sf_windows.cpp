@@ -30,6 +30,9 @@
 /// Get VPD keyword value from symbols
 #define VPD_KEYWORD(a, b)         ((a) | ((b) << 8))
 
+/// Can be returned by methods of EFX_* classes as an indication of success
+#define BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED  0x20000000
+
 namespace solarflare 
 {
     using cimple::BString;
@@ -175,11 +178,15 @@ namespace solarflare
     static IWbemServices *rootWMIConn = NULL;
 
     ///
-    /// Establish WMI connection.
+    /// Establish WMI connection with a given namespace.
+    ///
+    /// @param ns           Namespace
+    /// @param svc    [out] Where to save connected IWbemServices
     ///
     /// @return 0 on success, -1 on failure
     ///
-    static int wmiEstablishConn()
+    static int wmiEstablishConnNs(const char *ns,
+                                  IWbemServices **svc)
     {
         HRESULT       hr;
         IWbemLocator *wbemLocator = NULL;
@@ -196,18 +203,29 @@ namespace solarflare
             return -1;
         }
 
-        hr = wbemLocator->ConnectServer(BString("\\\\.\\ROOT\\WMI").rep(),
+        hr = wbemLocator->ConnectServer(BString(ns).rep(),
                                         NULL, NULL, NULL, 0, NULL, NULL,
-                                        &rootWMIConn);
+                                        svc);
         if (FAILED(hr))
         {
             LOG_DATA("ConnectServer() failed, rc = %lx", hr);
-            rootWMIConn = NULL;
+            *svc = NULL;
             return -1;
         }
 
         wbemLocator->Release();
         return 0;
+    }
+
+    ///
+    /// Establish WMI connection.
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    static int wmiEstablishConn()
+    {
+        return wmiEstablishConnNs("\\\\.\\ROOT\\WMI",
+                                  &rootWMIConn);
     }
 
     ///
@@ -504,12 +522,15 @@ namespace solarflare
     ///
     /// Enumerate WMI object instances.
     ///
+    /// @param wbemSvc            If not NULL, will be used
+    ///                           instead of rootWMIConn
     /// @param className          Object class name
     /// @param instances    [out] Where to save obtained instances
     ///
     /// @return 0 on success or error code
     ///
-    static int wmiEnumInstances(const char *className,
+    static int wmiEnumInstances(IWbemServices *wbemSvc,
+                                const char *className,
                                 Array<IWbemClassObject *> &instances)
     {
         HRESULT               hr;
@@ -520,12 +541,14 @@ namespace solarflare
         unsigned int          i;
         BString               bstr(className);
 
-        if (wmiEstablishConn() != 0)
+        if (wbemSvc == NULL && wmiEstablishConn() != 0)
             return -1;
+        else if (wbemSvc == NULL)
+            wbemSvc = rootWMIConn;
 
-        hr = rootWMIConn->CreateInstanceEnum(bstr.rep(),
-                                             WBEM_FLAG_SHALLOW, NULL,
-                                             &enumWbemObj);
+        hr = wbemSvc->CreateInstanceEnum(bstr.rep(),
+                                         WBEM_FLAG_SHALLOW, NULL,
+                                         &enumWbemObj);
         if (FAILED(hr))
         {
             LOG_DATA("CreateInstanceEnum() failed, rc = %lx", hr);
@@ -1083,7 +1106,7 @@ cleanup:
         bool                      clearPciInfos = false;
         int                       pci_cmp_rc;
 
-        rc = wmiEnumInstances("EFX_Port", ports);
+        rc = wmiEnumInstances(NULL, "EFX_Port", ports);
         if (rc < 0)
             return rc;
 
@@ -1130,7 +1153,8 @@ cleanup:
 
             portDescr.ifInfo = intfsInfo[j];
 
-            if (wmiEnumInstances("EFX_PciInformation", pciInfos) != 0)
+            if (wmiEnumInstances(NULL, "EFX_PciInformation",
+                                 pciInfos) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -1347,7 +1371,24 @@ cleanup:
               (portInfo->ifInfo.AdminStatus == MIB_IF_ADMIN_STATUS_UP ? 
                                                             true : false);
         }
-        virtual void enable(bool st) { }
+
+        virtual void enable(bool st)
+        {
+            DWORD      rc;
+            MIB_IFROW  mibIfRow;
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+        
+            memset(&mibIfRow, 0, sizeof(mibIfRow));
+            mibIfRow.dwIndex = portInfo->ifInfo.Index;
+            if (st)
+                mibIfRow.dwAdminStatus = MIB_IF_ADMIN_STATUS_UP;
+            else
+                mibIfRow.dwAdminStatus = MIB_IF_ADMIN_STATUS_DOWN;
+
+            rc = SetIfEntry(&mibIfRow);
+            if (rc != NO_ERROR)
+                LOG_DATA("SetIfEntry() failed with rc=0x%lx", (long int)rc);
+        }
 
         /// @return current MTU
         virtual uint64 mtu() const
@@ -1373,7 +1414,7 @@ cleanup:
                               portInfo->currentMAC[5]);
         }        
         /// Change the current MAC address to @p mac
-        virtual void currentMAC(const MACAddress& mac) { };
+        virtual void currentMAC(const MACAddress& mac);
 
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
@@ -1403,6 +1444,156 @@ cleanup:
         return portInfo->ifInfo.Name;
     }
     
+    void WindowsInterface::currentMAC(const MACAddress& mac)
+    {
+        PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+
+        Array<IWbemClassObject *>   efxNetAdapters;
+
+        unsigned int              i;
+        LONG                      j;
+        BString                   objPath;
+        long int                  CompletionCode;
+        IWbemClassObject         *pIn = NULL;
+        IWbemClassObject         *pOut = NULL;
+
+        HRESULT   hr;
+        VARIANT   macValue;
+
+        SAFEARRAYBOUND bound[1];
+
+        BString methodName("EFX_NetworkAdapter_SetNetworkAddress");
+
+        if (wmiEnumInstances(NULL, "EFX_NetworkAdapter",
+                             efxNetAdapters) != 0)
+            return;
+
+        for (i = 0; i < efxNetAdapters.size(); i++)
+        {
+            bool       dummy;
+            Array<int> netAddr;
+
+            if (wmiGetBoolProp(efxNetAdapters[i], "DummyInstance",
+                               &dummy) != 0)
+            {
+                LOG_DATA("%s(): failed to get DummyInstance property "
+                         "value for EFX_NetworkAdapter class",
+                         __FUNCTION__);
+                goto cleanup;
+            }
+
+            if (dummy)
+                continue;
+
+            if (wmiGetIntArrProp<int>(efxNetAdapters[i], "NetworkAddress",
+                                      netAddr) != 0)
+            {
+                LOG_DATA("%s(): failed to get NetworkAddress property "
+                         "value for EFX_NetworkAdapter class",
+                         __FUNCTION__);
+                goto cleanup;
+            }
+
+            if (netAddr == portInfo->currentMAC)
+                break;
+        }
+
+        if (i == efxNetAdapters.size())
+        {
+            LOG_DATA("%s(): failed to find matching EFX_NetworkAdapter "
+                     "instance", __FUNCTION__);
+            goto cleanup;
+        }
+
+        if (wmiPrepareMethodCall(efxNetAdapters[i], methodName,
+                                 objPath, &pIn) != 0)
+            goto cleanup;
+
+        macValue.vt = (VT_BOOL | VT_ARRAY);
+        bound[0].lLbound = 0;
+        bound[0].cElements = 6;
+        V_ARRAY(&macValue) = SafeArrayCreate(VT_BOOL, 1, bound);
+        if (V_ARRAY(&macValue) == NULL)
+        {
+            LOG_DATA("%s(): failed to create array for MAC representation",
+                     __FUNCTION__);
+            goto cleanup;
+        }
+
+        for (j = 0; j < 6; j++)
+        {
+            hr = SafeArrayPutElement(V_ARRAY(&macValue), &j,
+                                     (void *)&mac.address[j]);
+            if (FAILED(hr))
+            {
+                LOG_DATA("%s(): failed to prepare MAC value for calling "
+                         "SetNetwordAddress(), rc=%lx", __FUNCTION__, hr);
+                VariantClear(&macValue);
+                goto cleanup;
+            }
+        }
+
+        hr = pIn->Put(BString("Value").rep(), 0, &macValue, 0);
+        VariantClear(&macValue);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to set MAC value for calling "
+                     "SetNetwordAddress(), rc=%lx", __FUNCTION__, hr);
+            goto cleanup;
+        }
+
+        hr = rootWMIConn->ExecMethod(objPath.rep(), methodName.rep(),
+                                     0, NULL, pIn, &pOut, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to call "
+                     "EFX_NetworkAdapter_SetNetworkAddress "
+                     "method, rc=%lx", __FUNCTION__, hr);
+            goto cleanup;
+        }
+
+        if (wmiGetIntProp<long int>(pOut, "CompletionCode",
+                                    &CompletionCode) != 0)
+            goto cleanup;
+
+        if (CompletionCode != 0 &&
+            CompletionCode != BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED)
+        {
+            LOG_DATA("%s(): wrong completion code %ld (0x%lx) returned",
+                     __FUNCTION__, CompletionCode, CompletionCode);
+            goto cleanup;
+        }
+
+        if (CompletionCode == BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED)
+        {
+            // Applying MAC address change by disabling/enabling of network
+            // adapter.
+            if (ifStatus())
+            {
+                enable(false);
+                enable(true);
+            }
+            else
+            {
+                enable(true);
+                enable(false);
+            }
+        }
+
+cleanup:
+
+        if (pIn != NULL)
+            pIn->Release();
+        if (pOut != NULL)
+            pOut->Release();
+
+        for (i = 0; i < efxNetAdapters.size(); i++)
+        {
+            efxNetAdapters[i]->Release();
+            efxNetAdapters[i] = NULL;
+        }
+    }
+
     class WindowsNICFirmware : public NICFirmware {
         const NIC *owner;
     public:
@@ -1650,7 +1841,7 @@ cleanup:
             String                    version;
             VersionInfo               vers = VersionInfo("0.0.0");
         
-            rc = wmiEnumInstances("EFX_Root", roots);
+            rc = wmiEnumInstances(NULL, "EFX_Root", roots);
             if (rc < 0)
                 return vers;
 
