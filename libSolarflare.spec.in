@@ -1,6 +1,6 @@
 Name: cimprovider-%{PROVIDER_LIBRARY}
 Version: %{PROVIDER_VERSION}
-Release:        1%{?dist}
+Release:        %{RELEASE_TAG}
 Summary: CIM provider for Solarflare NIC management
 
 Group: Applications/System
@@ -47,9 +47,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%{PROVIDER_ROOT}/bin/regmod
+%attr(500,root,root) %{PROVIDER_ROOT}/bin/regmod
 %{PROVIDER_LIBPATH}/%{PROVIDER_SO}
-%{PROVIDER_ROOT}/mof/repository.mof
+%attr(444,root,root) %{PROVIDER_ROOT}/mof/repository.mof
 %doc
 
 %changelog
