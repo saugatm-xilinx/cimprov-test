@@ -25,6 +25,7 @@ INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToPr
 
 PROVIDER_LIBRARY=Solarflare
 PROVIDER_VERSION=1.0
+PROVIDER_REVISION=0.0
 
 override host_CPPFLAGS += -D_GNU_SOURCE -I.
 

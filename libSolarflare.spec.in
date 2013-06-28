@@ -1,5 +1,5 @@
-Name: cimprovider-%{PROVIDER_LIBRARY}
-Version: %{PROVIDER_VERSION}
+Name: %{PROVIDER_PACKAGE}
+Version: %{PROVIDER_VERSION}.%{PROVIDER_REVISION}
 Release:        %{RELEASE_TAG}
 Summary: CIM provider for Solarflare NIC management
 
