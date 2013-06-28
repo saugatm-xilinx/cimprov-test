@@ -1347,7 +1347,24 @@ cleanup:
               (portInfo->ifInfo.AdminStatus == MIB_IF_ADMIN_STATUS_UP ? 
                                                             true : false);
         }
-        virtual void enable(bool st) { }
+
+        virtual void enable(bool st)
+        {
+            DWORD      rc;
+            MIB_IFROW  mibIfRow;
+            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+        
+            memset(&mibIfRow, 0, sizeof(mibIfRow));
+            mibIfRow.dwIndex = portInfo->ifInfo.Index;
+            if (st)
+                mibIfRow.dwAdminStatus = MIB_IF_ADMIN_STATUS_UP;
+            else
+                mibIfRow.dwAdminStatus = MIB_IF_ADMIN_STATUS_DOWN;
+
+            rc = SetIfEntry(&mibIfRow);
+            if (rc != NO_ERROR)
+                LOG_DATA("SetIfEntry() failed with rc=0x%lx", (long int)rc);
+        }
 
         /// @return current MTU
         virtual uint64 mtu() const
