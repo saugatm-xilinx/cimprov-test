@@ -1507,7 +1507,10 @@ cleanup:
 
         if (wmiPrepareMethodCall(efxNetAdapters[i], methodName,
                                  objPath, &pIn) != 0)
+        {
+            pIn = NULL;
             goto cleanup;
+        }
 
         macValue.vt = (VT_BOOL | VT_ARRAY);
         bound[0].lLbound = 0;
@@ -1547,8 +1550,9 @@ cleanup:
         if (FAILED(hr))
         {
             LOG_DATA("%s(): failed to call "
-                     "EFX_NetworkAdapter_SetNetworkAddress "
+                     "EFX_NetworkAdapter_SetNetworkAddress() "
                      "method, rc=%lx", __FUNCTION__, hr);
+            pOut = NULL;
             goto cleanup;
         }
 
@@ -1559,24 +1563,43 @@ cleanup:
         if (CompletionCode != 0 &&
             CompletionCode != BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED)
         {
-            LOG_DATA("%s(): wrong completion code %ld (0x%lx) returned",
+            LOG_DATA("%s(): wrong completion code %ld (0x%lx) "
+                     "returned by method "
+                     "EFX_NetworkAdapter_SetNetworkAddress()",
                      __FUNCTION__, CompletionCode, CompletionCode);
             goto cleanup;
         }
 
         if (CompletionCode == BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED)
         {
-            // Applying MAC address change by disabling/enabling of network
-            // adapter.
-            if (ifStatus())
+            BString methodApplyName("EFX_NetworkAdapter_ApplyChanges");
+            
+            if (pOut != NULL)
+                pOut->Release();
+            pOut = NULL;
+
+            hr = rootWMIConn->ExecMethod(objPath.rep(),
+                                         methodApplyName.rep(),
+                                         0, NULL, NULL, &pOut, NULL);
+            if (FAILED(hr))
             {
-                enable(false);
-                enable(true);
+                LOG_DATA("%s(): failed to call "
+                         "EFX_NetworkAdapter_ApplyChanges() "
+                         "method, rc=%lx", __FUNCTION__, hr);
+                goto cleanup;
             }
-            else
+
+            if (wmiGetIntProp<long int>(pOut, "CompletionCode",
+                                        &CompletionCode) != 0)
+                goto cleanup;
+
+            if (CompletionCode != 0)
             {
-                enable(true);
-                enable(false);
+                LOG_DATA("%s(): wrong completion code %ld (0x%lx) "
+                         "returned by method "
+                         "EFX_NetworkAdapter_ApplyChanges()",
+                         __FUNCTION__, CompletionCode, CompletionCode);
+                goto cleanup;
             }
         }
 
