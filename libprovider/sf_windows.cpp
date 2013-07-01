@@ -1284,8 +1284,76 @@ cleanup:
         return rc;
     }
 
+    class WindowsDiagnostic : public Diagnostic {
+        const Port *owner;
+        Result testPassed;
+        static const String diagGenName;
+        IWbemClassObject *efxDiagTest;
+    public:
+        WindowsDiagnostic(const Port *o) :
+            Diagnostic(""), owner(o), testPassed(NotKnown),
+            efxDiagTest(NULL) { }
+        void setEfxDiagTest (IWbemClassObject *obj)
+        {
+            efxDiagTest = obj;
+        }
+        void clear()
+        {
+            if (efxDiagTest != NULL)
+                efxDiagTest->Release();
+            efxDiagTest = NULL;
+        }
+        virtual Result syncTest() 
+        {
+            testPassed = Passed;
+            log().logStatus("passed");
+            return Passed;
+        }
+        virtual Result result() const { return testPassed; }
+        virtual const NIC *nic() const { return owner->nic(); }
+        virtual void initialize()
+        {
+            String d;
+
+            if (efxDiagTest == NULL)
+                return;
+
+            if (wmiGetStringProp(efxDiagTest, "Description", d) == 0)
+                setDescription(d);
+        };
+        virtual const String& genericName() const { return diagGenName; }
+
+        String name() const
+        {
+            String testName;
+            Buffer buf;
+
+            buf.appends(owner->name().c_str());
+            buf.append(' ');
+            buf.append_uint16(owner->elementId());
+            buf.appends(": ");
+
+            if (wmiGetStringProp(efxDiagTest, "Name", testName) == 0)
+                buf.appends(testName.c_str());
+            else
+                buf.appends("Unknown test");
+
+            return buf.data();
+        }
+
+        // Dummy operator to make possible using of cimple::Array
+        inline bool operator== (const WindowsDiagnostic &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
+    };
+
+    const String WindowsDiagnostic::diagGenName = "Diagnostic";
+
     class WindowsPort : public Port {
         const NIC *owner;
+        Array<WindowsDiagnostic> diags;
     public:
         PortDescr portInfo;
 
@@ -1296,7 +1364,13 @@ cleanup:
 
         void clear()
         {
+            unsigned int i;
+
             portInfo.clear();
+
+            for (i = 0; i < diags.size(); i++)
+                diags[i].clear();
+            diags.clear();
         }
         
         virtual bool linkStatus() const
@@ -1344,7 +1418,81 @@ cleanup:
             return owner->pciAddress().fn(0);
         }
 
-        virtual void initialize() {};
+        virtual void initialize()
+        {
+            int                       rc = 0;
+            Array<IWbemClassObject *> efxDiagTests;
+            unsigned int              i;
+            bool                      dummy;
+            bool                      willBlock;
+            int                       Id;
+ 
+            rc = wmiEnumInstances(NULL, "EFX_DiagnosticTest",
+                                  efxDiagTests);
+            if (rc != 0)
+                return;
+
+            for (i = 0; i < efxDiagTests.size(); i++)
+            {
+                WindowsDiagnostic diag((Port *)this);
+
+                if ((rc = wmiGetIntProp<int>(efxDiagTests[i], "PortId",
+                                             &Id)) != 0)
+                    goto cleanup;
+                if (Id != portInfo.port_id)
+                    continue;
+
+                if ((rc = wmiGetBoolProp(efxDiagTests[i], "DummyInstance",
+                                         &dummy)) != 0)
+                    goto cleanup;
+                if (dummy)
+                    continue;
+
+                // Do not run tests from provider which "require user
+                // assistance".
+                if ((rc = wmiGetBoolProp(efxDiagTests[i], "WillBlock",
+                                         &willBlock)) != 0)
+                    goto cleanup;
+                if (willBlock)
+                    continue;
+
+                diag.setEfxDiagTest(efxDiagTests[i]);
+                efxDiagTests[i] = NULL;
+                diag.initialize();
+                diags.append(diag);
+            }
+
+cleanup:
+            for (i = 0; i < efxDiagTests.size(); i++)
+                if (efxDiagTests[i] != NULL)
+                    efxDiagTests[i]->Release();
+            if (rc != 0)
+            {
+                for (i = 0; i < diags.size(); i++)
+                    diags[i].clear();
+                diags.clear();
+            }
+        };
+
+        virtual bool forAllDiagnostics(ElementEnumerator& en)
+        {
+            unsigned int i;
+
+            for (i = 0; i < diags.size(); i++)
+                en.process(diags[i]);
+
+            return true;
+        }
+        
+        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
+        {
+            unsigned int i;
+
+            for (i = 0; i < diags.size(); i++)
+                en.process(diags[i]);
+
+            return true;
+        }
 
         // Dummy operator to make possible using of cimple::Array
         inline bool operator== (const WindowsPort &rhs)
@@ -1642,33 +1790,9 @@ cleanup:
         virtual void initialize() {};
     };
 
-    class WindowsDiagnostic : public Diagnostic {
-        const NIC *owner;
-        Result testPassed;
-        static const char sampleDescr[];
-        static const String diagGenName;
-    public:
-        WindowsDiagnostic(const NIC *o) :
-            Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
-        virtual Result syncTest() 
-        {
-            testPassed = Passed;
-            log().logStatus("passed");
-            return Passed;
-        }
-        virtual Result result() const { return testPassed; }
-        virtual const NIC *nic() const { return owner; }
-        virtual void initialize() {};
-        virtual const String& genericName() const { return diagGenName; }
-    };
-
-    const char WindowsDiagnostic::sampleDescr[] = "Windows Diagnostic";
-    const String WindowsDiagnostic::diagGenName = "Diagnostic";
-
     class WindowsNIC : public NIC {
         WindowsNICFirmware nicFw;
         WindowsBootROM rom;
-        WindowsDiagnostic diag;
     public:
         Array<WindowsPort> ports;
         Array<WindowsInterface> intfs;
@@ -1696,16 +1820,12 @@ cleanup:
             nicFw.initialize();
             rom.initialize();
         }
-        virtual void setupDiagnostics()
-        {
-            diag.initialize();
-        }
+        virtual void setupDiagnostics() { }
     public:
         WindowsNIC(unsigned idx, NICDescr &descr) :
             NIC(idx),
             nicFw(this),
-            rom(this),
-            diag(this)
+            rom(this)
         {
             int i = 0;
 
@@ -1827,12 +1947,22 @@ cleanup:
 
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
-            return en.process(diag);
+            unsigned int i;
+
+            for (i = 0; i < ports.size(); i++)
+                ports[i].forAllDiagnostics(en);
+
+            return true;
         }
         
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
-            return en.process(diag);
+            unsigned int i;
+
+            for (i = 0; i < ports.size(); i++)
+                ports[i].forAllDiagnostics(en);
+
+            return true;
         }
 
         // I failed to find PCI domain on Windows; instead there are

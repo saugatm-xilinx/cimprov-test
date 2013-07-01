@@ -32,6 +32,12 @@ namespace solarflare
         /// @return Human readable description.
         const String& description() const { return descr; }
 
+        /// Change human readable description.
+        void setDescription(const String& d)
+        {
+            descr = d;
+        }
+
         /// The ordinal number of the element inside its parent.  That is
         /// relevant for 'homogenenous' elements such as NICs or
         /// ports. Software elements are all different in some sense, so
