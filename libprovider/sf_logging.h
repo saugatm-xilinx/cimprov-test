@@ -91,16 +91,17 @@ namespace solarflare
             enabled(true), defaultLevel(lvl), size(sz), 
             entries(new LogEntry[sz]), serial(0), descr(d) {}
 
-        /// Copy constructor
+        /// Copy constructor - do not copy lock!
         Logger(const Logger &src) : enabled(src.enabled),
           defaultLevel(src.defaultLevel), size(src.size),
-          lock(src.lock), formatter(src.formatter),
+          formatter(src.formatter),
           serial(src.serial), descr(src.descr)
         {
             unsigned int i = 0;
 
             entries = new LogEntry[src.size];
-            for (i = 0; i < src.size; i++)
+
+            for (i = 0; i < src.serial; i++)
                 entries[i] = LogEntry(src.entries[i]);
         }
 

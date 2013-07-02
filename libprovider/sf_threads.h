@@ -73,6 +73,9 @@ namespace solarflare
         /// Constructors.
         Thread() : state(NotRun), id("") {}
         Thread(String sid) : state(NotRun), id(sid) {}
+        /// Copy constructor - defined to avoid attempt to copy stateLock
+        Thread(const Thread &src) : cimple::Thread(src),
+          state(src.state), startedAt(src.startedAt), id(src.id) {}
         virtual ~Thread() {}
 
         /// Find thread in threads list
