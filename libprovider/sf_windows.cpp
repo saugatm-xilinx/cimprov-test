@@ -530,7 +530,8 @@ namespace solarflare
     /// @return 0 on success or error code
     ///
     static int wmiEnumInstances(IWbemServices *wbemSvc,
-                                const char *className,
+                                const char *query,
+                                bool useInstanceEnum,
                                 Array<IWbemClassObject *> &instances)
     {
         HRESULT               hr;
@@ -539,19 +540,28 @@ namespace solarflare
         int                   rc = 0;
         ULONG                 count;
         unsigned int          i;
-        BString               bstr(className);
+        BString               bstrQuery(query);
 
         if (wbemSvc == NULL && wmiEstablishConn() != 0)
             return -1;
         else if (wbemSvc == NULL)
             wbemSvc = rootWMIConn;
 
-        hr = wbemSvc->CreateInstanceEnum(bstr.rep(),
-                                         WBEM_FLAG_SHALLOW, NULL,
-                                         &enumWbemObj);
+        if (useInstanceEnum)
+            hr = wbemSvc->CreateInstanceEnum(bstrQuery.rep(),
+                                             WBEM_FLAG_SHALLOW, NULL,
+                                             &enumWbemObj);
+        else
+            hr = wbemSvc->ExecQuery(BString("WQL").rep(),
+                                    bstrQuery.rep(), 0,
+                                    NULL, &enumWbemObj);
+
         if (FAILED(hr))
         {
-            LOG_DATA("CreateInstanceEnum() failed, rc = %lx", hr);
+            LOG_DATA("%s() failed, rc = %lx",
+                     useInstanceEnum ?
+                          "CreateInstanceEnum" : "ExecQuery",
+                     hr);
             return -1;
         }
 
@@ -672,24 +682,28 @@ namespace solarflare
         }
         classObj_got = true;
 
-        hr = classObj->GetMethod(methodName.rep(), 0, &pInDef,
-                                 NULL);
-        if (FAILED(hr))
+        if (pIn != NULL)
         {
-            LOG_DATA("%s(): failed to obtain method definition "
-                     "for WMI object, rc=%lx", __FUNCTION__, hr);
-            rc = -1;
-            goto cleanup;
-        }
-        pInDef_got = true;
+            hr = classObj->GetMethod(methodName.rep(), 0, &pInDef,
+                                     NULL);
+            if (FAILED(hr))
+            {
+                LOG_DATA("%s(): failed to obtain method definition "
+                         "for WMI object, rc=%lx", __FUNCTION__, hr);
+                rc = -1;
+                goto cleanup;
+            }
+            pInDef_got = true;
 
-        hr = pInDef->SpawnInstance(0, pIn);
-        if (FAILED(hr))
-        {
-            LOG_DATA("%s(): failed to obtain input parameters instance, "
-                     "rc=%lx", __FUNCTION__, hr);
-            rc = -1;
-            goto cleanup;
+            hr = pInDef->SpawnInstance(0, pIn);
+            if (FAILED(hr))
+            {
+                LOG_DATA("%s(): failed to obtain input "
+                         "parameters instance, rc=%lx",
+                         __FUNCTION__, hr);
+                rc = -1;
+                goto cleanup;
+            }
         }
 
         objPath.set(path.bstrVal, cimple::BSTR_TAG);
@@ -705,6 +719,48 @@ cleanup:
             pInDef->Release();
 
         return rc;
+    }
+
+    static int wmiExecMethod(const String &objPath,
+                             const String &methodName,
+                             IWbemClassObject *pIn = NULL,
+                             IWbemClassObject **pOut = NULL)
+    {
+        HRESULT   hr;
+        long int  completionCode;
+        int       rc;
+
+        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
+                                     BString(methodName).rep(),
+                                     0, NULL, pIn, pOut, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to call %s() "
+                     "method, rc=%lx", __FUNCTION__,
+                     methodName.c_str(), hr);
+            return -1;
+        }
+
+        rc = wmiGetIntProp<long int>(*pOut, "CompletionCode",
+                                     &completionCode);
+        if (rc != 0)
+        {
+            (*pOut)->Release();
+            *pOut = NULL;
+            return -1;
+        }
+        if (completionCode != 0)
+        {
+            LOG_DATA("%s(): %s() method returned wrong completion "
+                     "code %ld (0x%lx)", __FUNCTION__,
+                     methodName.c_str(), completionCode,
+                     completionCode);
+            (*pOut)->Release();
+            *pOut = NULL;
+            return -1;
+        }
+
+        return 0;
     }
 
     ///
@@ -1106,7 +1162,7 @@ cleanup:
         bool                      clearPciInfos = false;
         int                       pci_cmp_rc;
 
-        rc = wmiEnumInstances(NULL, "EFX_Port", ports);
+        rc = wmiEnumInstances(NULL, "EFX_Port", true, ports);
         if (rc < 0)
             return rc;
 
@@ -1154,7 +1210,7 @@ cleanup:
             portDescr.ifInfo = intfsInfo[j];
 
             if (wmiEnumInstances(NULL, "EFX_PciInformation",
-                                 pciInfos) != 0)
+                                 true, pciInfos) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -1292,7 +1348,7 @@ cleanup:
     public:
         WindowsDiagnostic(const Port *o) :
             Diagnostic(""), owner(o), testPassed(NotKnown),
-            efxDiagTest(NULL) { }
+            efxDiagTest(NULL) {}
         void setEfxDiagTest (IWbemClassObject *obj)
         {
             efxDiagTest = obj;
@@ -1305,9 +1361,91 @@ cleanup:
         }
         virtual Result syncTest() 
         {
-            testPassed = Passed;
-            log().logStatus("passed");
-            return Passed;
+#define QUERY_LEN 1000
+            IWbemClassObject *pOut = NULL;
+
+            HRESULT   hr;
+            String    diagTestPath;
+            String    jobPath;
+            String    createJobMethod("EFX_DiagnosticTest_CreateJob");
+            String    deleteJobMethod("EFX_DiagnosticJob_Delete");
+            int       rc;
+            long int  completionCode;
+            uint64    jobId;
+            char      query[QUERY_LEN];
+
+            Array<IWbemClassObject *> jobs;
+            unsigned int              i;
+
+            testPassed = Failed;
+
+            if (wmiEstablishConn() != 0)
+                goto cleanup;
+
+            rc = wmiGetStringProp(efxDiagTest, "__Path",
+                                  diagTestPath);
+            if (rc != 0)
+                goto cleanup;
+
+            rc = wmiExecMethod(diagTestPath, createJobMethod,
+                               NULL, &pOut);
+            if (rc != 0)
+                goto cleanup;
+
+            rc = wmiGetIntProp<uint64>(pOut, "JobId",
+                                       &jobId);
+            if (rc != 0)
+                goto cleanup;
+
+            LOG_DATA("JobID obtained is %llu",
+                     (long long unsigned int)jobId);
+
+            rc = snprintf(query, QUERY_LEN, "Select * From "
+                          "EFX_DiagnosticJob Where Id=%lu",
+                          (long unsigned int)jobId);
+            if (rc < 0 || rc >= QUERY_LEN)
+            {
+                LOG_DATA("%s(): failed to create query to search "
+                         "for matching EFX_DiagnosticJob",
+                         __FUNCTION__);
+                goto cleanup;
+            }
+
+            rc = wmiEnumInstances(NULL, query,
+                                  false, jobs);
+            if (rc != 0)
+                goto cleanup;
+            if (jobs.size() != 1)
+            {
+                LOG_DATA("%s(): incorrect number %u of matching "
+                         "diagnostic jobs found", __FUNCTION__,
+                         jobs.size());
+                goto cleanup;
+            }
+
+            rc = wmiGetStringProp(jobs[0], "__Path",
+                                  jobPath);
+            if (rc != 0)
+                goto cleanup;
+
+            pOut->Release();
+            pOut = NULL;
+
+            rc = wmiExecMethod(jobPath, deleteJobMethod,
+                               NULL, &pOut);
+            if (rc != 0)
+                goto cleanup;
+
+cleanup:
+            if (pOut != NULL)
+                pOut->Release();
+            log().logStatus(testPassed == Passed ? "passed" : "failed");
+
+            for (i = 0; i < jobs.size(); i++)
+                jobs[i]->Release();
+
+            return testPassed;
+#undef QUERY_LEN
         }
         virtual Result result() const { return testPassed; }
         virtual const NIC *nic() const { return owner->nic(); }
@@ -1353,7 +1491,7 @@ cleanup:
 
     class WindowsPort : public Port {
         const NIC *owner;
-        Array<WindowsDiagnostic> diags;
+        Array<WindowsDiagnostic *> diags;
     public:
         PortDescr portInfo;
 
@@ -1369,7 +1507,11 @@ cleanup:
             portInfo.clear();
 
             for (i = 0; i < diags.size(); i++)
-                diags[i].clear();
+            {
+                diags[i]->clear();
+                delete diags[i];
+                diags[i] = NULL;
+            }
             diags.clear();
         }
         
@@ -1427,14 +1569,18 @@ cleanup:
             bool                      willBlock;
             int                       Id;
  
+            WindowsDiagnostic *diag = NULL;
+
             rc = wmiEnumInstances(NULL, "EFX_DiagnosticTest",
-                                  efxDiagTests);
+                                  true, efxDiagTests);
             if (rc != 0)
                 return;
 
             for (i = 0; i < efxDiagTests.size(); i++)
             {
-                WindowsDiagnostic diag((Port *)this);
+                if (diag != NULL)
+                    delete diag;
+                diag = new WindowsDiagnostic((Port *)this);
 
                 if ((rc = wmiGetIntProp<int>(efxDiagTests[i], "PortId",
                                              &Id)) != 0)
@@ -1456,20 +1602,29 @@ cleanup:
                 if (willBlock)
                     continue;
 
-                diag.setEfxDiagTest(efxDiagTests[i]);
+                diag->setEfxDiagTest(efxDiagTests[i]);
                 efxDiagTests[i] = NULL;
-                diag.initialize();
+                diag->initialize();
                 diags.append(diag);
+                diag = NULL;
             }
 
 cleanup:
+            if (diag != NULL)
+                delete diag;
+
             for (i = 0; i < efxDiagTests.size(); i++)
                 if (efxDiagTests[i] != NULL)
                     efxDiagTests[i]->Release();
+
             if (rc != 0)
             {
                 for (i = 0; i < diags.size(); i++)
-                    diags[i].clear();
+                {
+                    diags[i]->clear();
+                    delete diags[i];
+                    diags[i] = NULL;
+                }
                 diags.clear();
             }
         };
@@ -1477,21 +1632,23 @@ cleanup:
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             unsigned int i;
+            bool         ret = true;
 
             for (i = 0; i < diags.size(); i++)
-                en.process(diags[i]);
+                ret = ret && en.process(*(diags[i]));
 
-            return true;
+            return ret;
         }
         
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             unsigned int i;
+            bool         ret = true;
 
             for (i = 0; i < diags.size(); i++)
-                en.process(diags[i]);
+                ret = ret && en.process(*(diags[i]));
 
-            return true;
+            return ret;
         }
 
         // Dummy operator to make possible using of cimple::Array
@@ -1613,7 +1770,7 @@ cleanup:
         BString methodName("EFX_NetworkAdapter_SetNetworkAddress");
 
         if (wmiEnumInstances(NULL, "EFX_NetworkAdapter",
-                             efxNetAdapters) != 0)
+                             true, efxNetAdapters) != 0)
             return;
 
         for (i = 0; i < efxNetAdapters.size(); i++)
@@ -1948,21 +2105,23 @@ cleanup:
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             unsigned int i;
+            bool         ret = true;
 
             for (i = 0; i < ports.size(); i++)
-                ports[i].forAllDiagnostics(en);
+                ret = ret && ports[i].forAllDiagnostics(en);
 
-            return true;
+            return ret;
         }
         
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             unsigned int i;
+            bool         ret = true;
 
             for (i = 0; i < ports.size(); i++)
-                ports[i].forAllDiagnostics(en);
+                ret = ret && ports[i].forAllDiagnostics(en);
 
-            return true;
+            return ret;
         }
 
         // I failed to find PCI domain on Windows; instead there are
@@ -1994,7 +2153,7 @@ cleanup:
             String                    version;
             VersionInfo               vers = VersionInfo("0.0.0");
         
-            rc = wmiEnumInstances(NULL, "EFX_Root", roots);
+            rc = wmiEnumInstances(NULL, "EFX_Root", true, roots);
             if (rc < 0)
                 return vers;
 

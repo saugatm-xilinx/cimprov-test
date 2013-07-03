@@ -52,6 +52,8 @@ namespace solarflare
             virtual unsigned percentage() const;
             virtual void update(Thread *tempThread);
             virtual String getThreadID() const;
+
+            friend class Diagnostic;
         };
         /// Diagnostic thread object
         DiagnosticThread diagThread;
@@ -64,8 +66,15 @@ namespace solarflare
         ///
         /// @param d    Description
         Diagnostic(const String& d) :
-            SystemElement(d), diagThread(this)
-        {}
+            SystemElement(d), diagThread(this) {}
+
+        /// Copy constructor
+        Diagnostic(const Diagnostic& src) :
+            SystemElement(src), NICElement(src),
+            diagThread(src.diagThread)
+        {
+            diagThread.owner = this;
+        }
 
         /// Runs the diagnostic either synchronously or not
         void run(bool sync = true);

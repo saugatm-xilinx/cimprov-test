@@ -199,6 +199,34 @@ class SF_DiagnosticUseOfLog : CIM_UseOfLog {
 
 INSTANCE
 class SF_DiagnosticTest : CIM_DiagnosticTest {
+#if defined(TARGET_CIM_SERVER_wmi)
+// On Windows [implemented] qualifier should be specified for
+// actually implemented method, so we have to copy this method
+// definition from DMTF schema here.
+   [implemented]
+   uint32 RunDiagnosticService(
+         [IN, Description ( 
+             "Specifies the element upon which the "
+             "DiagnosticService SHOULD be run." )]
+      CIM_ManagedSystemElement REF ManagedElement, 
+         [IN, Description ( 
+             "A string containing an encoding of the "
+             "DiagnosticSettingData instance to be applied to "
+             "the diagnostic. If null, the diagnostic\'s "
+             "defaults are used." ), 
+          EmbeddedInstance ( "CIM_DiagnosticSettingData" )]
+      string DiagnosticSettings, 
+         [IN, Description ( 
+             "A string containing an encoding of the "
+             "JobSettingData instance to be applied to the "
+             "resulting job. If null, the job\'s defaults are "
+             "used." ), 
+          EmbeddedInstance ( "CIM_JobSettingData" )]
+      string JobSettings, 
+         [IN ( false ), OUT, Description ( 
+             "Returns a reference to the resulting Job." )]
+      CIM_ConcreteJob REF Job);
+#endif
 };
 
 INSTANCE
