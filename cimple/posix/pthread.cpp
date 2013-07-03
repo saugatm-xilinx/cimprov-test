@@ -31,6 +31,8 @@
 #include <windows.h>
 #include <errno.h>
 
+#include <cimple/wmi/log.h>
+
 #define for if (0) ; else for
 
 POSIX_NAMESPACE_BEGIN
@@ -465,6 +467,8 @@ int pthread_create(
     void* arg)
 {
     pthread_attr_rep_t* attr_rep = (pthread_attr_rep_t*)attr;
+    HANDLE              token;
+    bool                set_thread_token = false;
 
     //
     // Initialize _self_key.
@@ -503,10 +507,32 @@ int pthread_create(
         pthread_mutex_init(&rep->join_mutex, NULL);
     }
 
-    // Create thread:
+    if (!OpenThreadToken(GetCurrentThread(), TOKEN_IMPERSONATE,
+                         FALSE, &token))
+        LOG_DATA("%s(): failed to open thread token", __FUNCTION__);
+    else
+        set_thread_token = true;
 
-    if ((rep->handle = CreateThread(NULL, 0, _proc, rep, 0, NULL)) == NULL)
+    // Create thread:
+    if ((rep->handle = CreateThread(NULL, 0, _proc, rep,
+                                    set_thread_token ? CREATE_SUSPENDED : 0,
+                                    NULL)) == NULL)
     {
+        _destroy_thread_rep(rep);
+        return -1;
+    }
+
+    // If parent thread impersonated other user, so should do
+    // the new thread.
+    if (set_thread_token && !SetThreadToken(&rep->handle, token))
+        LOG_DATA("%s(): failed to set thread token", __FUNCTION__);
+
+    if (set_thread_token && ResumeThread(rep->handle) == (DWORD)-1)
+    {
+        LOG_DATA("%s(): failed to resume thread after setting the token",
+                 __FUNCTION__);
+        TerminateThread(rep->handle, 0);
+        CloseHandle(rep->handle);
         _destroy_thread_rep(rep);
         return -1;
     }
