@@ -33,6 +33,17 @@
 /// Can be returned by methods of EFX_* classes as an indication of success
 #define BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED  0x20000000
 
+/// Job states in EFX_DiagnosticJob
+enum {
+  JobCreated = 0,
+  JobPending,
+  JobRunning,
+  JobWaiting,
+  JobAbortingFromRun,
+  JobComplete,
+  JobAbortingFromOther
+};
+
 namespace solarflare 
 {
     using cimple::BString;
@@ -40,6 +51,8 @@ namespace solarflare
     using cimple::wstr2str;
     using cimple::uint8;
     using cimple::uint16;
+    using cimple::Mutex;
+    using cimple::Auto_Mutex;
 
     ///
     /// Information about network interface
@@ -626,14 +639,15 @@ namespace solarflare
     /// @param pIn        [out] Input parameters object
     ///
     static int wmiPrepareMethodCall(IWbemClassObject *instance,
-                                    BString &methodName,
-                                    BString &objPath,
+                                    String &methodName,
+                                    String &objPath,
                                     IWbemClassObject **pIn)
     {
         HRESULT hr;
 
-        VARIANT className;
-        VARIANT path;
+        VARIANT  className;
+        VARIANT  path;
+        char    *value = NULL;
 
         IWbemClassObject *classObj = NULL;
         IWbemClassObject *pInDef = NULL;
@@ -684,7 +698,7 @@ namespace solarflare
 
         if (pIn != NULL)
         {
-            hr = classObj->GetMethod(methodName.rep(), 0, &pInDef,
+            hr = classObj->GetMethod(BString(methodName).rep(), 0, &pInDef,
                                      NULL);
             if (FAILED(hr))
             {
@@ -706,8 +720,10 @@ namespace solarflare
             }
         }
 
-        objPath.set(path.bstrVal, cimple::BSTR_TAG);
-        path.bstrVal = NULL;
+        value = bstr2cstr(path.bstrVal);
+        objPath = String(value);
+        delete[] value;
+
 cleanup:
         if (className_got)
             VariantClear(&className);
@@ -730,9 +746,14 @@ cleanup:
         long int  completionCode;
         int       rc;
 
+        IWbemClassObject *tmpPOut = NULL;
+
+        if (pOut != NULL)
+            *pOut = NULL;
+
         hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
                                      BString(methodName).rep(),
-                                     0, NULL, pIn, pOut, NULL);
+                                     0, NULL, pIn, &tmpPOut, NULL);
         if (FAILED(hr))
         {
             LOG_DATA("%s(): failed to call %s() "
@@ -741,12 +762,12 @@ cleanup:
             return -1;
         }
 
-        rc = wmiGetIntProp<long int>(*pOut, "CompletionCode",
+        rc = wmiGetIntProp<long int>(tmpPOut, "CompletionCode",
                                      &completionCode);
         if (rc != 0)
         {
-            (*pOut)->Release();
-            *pOut = NULL;
+            tmpPOut->Release();
+            tmpPOut = NULL;
             return -1;
         }
         if (completionCode != 0)
@@ -755,10 +776,15 @@ cleanup:
                      "code %ld (0x%lx)", __FUNCTION__,
                      methodName.c_str(), completionCode,
                      completionCode);
-            (*pOut)->Release();
-            *pOut = NULL;
+            tmpPOut->Release();
+            tmpPOut = NULL;
             return -1;
         }
+
+        if (pOut != NULL)
+            *pOut = tmpPOut;
+        else
+            tmpPOut->Release();
 
         return 0;
     }
@@ -779,9 +805,9 @@ cleanup:
     {
         HRESULT hr;
         int     rc;
-        BString objPath;
+        String  objPath;
         int     CompletionCode;
-        BString methodName("EFX_Port_Firmware_Version_Read");
+        String  methodName("EFX_Port_Firmware_Version_Read");
         VARIANT targetType;
         
         IWbemClassObject *pIn = NULL;
@@ -809,7 +835,8 @@ cleanup:
             return -1;
         }
 
-        hr = rootWMIConn->ExecMethod(objPath.rep(), methodName.rep(),
+        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
+                                     BString(methodName).rep(),
                                      0, NULL, pIn, &pOut, NULL);
         if (FAILED(hr))
         {
@@ -857,9 +884,9 @@ cleanup:
     {
         HRESULT hr;
         int     rc;
-        BString objPath;
+        String  objPath;
         int     CompletionCode;
-        BString methodName("EFX_Port_ReadVpdKeyword");
+        String  methodName("EFX_Port_ReadVpdKeyword");
         VARIANT propTag;
         VARIANT propKeyword;
         
@@ -900,7 +927,8 @@ cleanup:
             return -1;
         }
 
-        hr = rootWMIConn->ExecMethod(objPath.rep(), methodName.rep(),
+        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
+                                     BString(methodName).rep(),
                                      0, NULL, pIn, &pOut, NULL);
         if (FAILED(hr))
         {
@@ -1345,10 +1373,13 @@ cleanup:
         Result testPassed;
         static const String diagGenName;
         IWbemClassObject *efxDiagTest;
+        IWbemClassObject *currentJob;
+        mutable Mutex currentJobLock;
     public:
         WindowsDiagnostic(const Port *o) :
             Diagnostic(""), owner(o), testPassed(NotKnown),
-            efxDiagTest(NULL) {}
+            efxDiagTest(NULL), currentJob(NULL),
+            currentJobLock(false) {}
         void setEfxDiagTest (IWbemClassObject *obj)
         {
             efxDiagTest = obj;
@@ -1359,94 +1390,7 @@ cleanup:
                 efxDiagTest->Release();
             efxDiagTest = NULL;
         }
-        virtual Result syncTest() 
-        {
-#define QUERY_LEN 1000
-            IWbemClassObject *pOut = NULL;
-
-            HRESULT   hr;
-            String    diagTestPath;
-            String    jobPath;
-            String    createJobMethod("EFX_DiagnosticTest_CreateJob");
-            String    deleteJobMethod("EFX_DiagnosticJob_Delete");
-            int       rc;
-            long int  completionCode;
-            uint64    jobId;
-            char      query[QUERY_LEN];
-
-            Array<IWbemClassObject *> jobs;
-            unsigned int              i;
-
-            testPassed = Failed;
-
-            if (wmiEstablishConn() != 0)
-                goto cleanup;
-
-            rc = wmiGetStringProp(efxDiagTest, "__Path",
-                                  diagTestPath);
-            if (rc != 0)
-                goto cleanup;
-
-            rc = wmiExecMethod(diagTestPath, createJobMethod,
-                               NULL, &pOut);
-            if (rc != 0)
-                goto cleanup;
-
-            rc = wmiGetIntProp<uint64>(pOut, "JobId",
-                                       &jobId);
-            if (rc != 0)
-                goto cleanup;
-
-            LOG_DATA("JobID obtained is %llu",
-                     (long long unsigned int)jobId);
-
-            rc = snprintf(query, QUERY_LEN, "Select * From "
-                          "EFX_DiagnosticJob Where Id=%lu",
-                          (long unsigned int)jobId);
-            if (rc < 0 || rc >= QUERY_LEN)
-            {
-                LOG_DATA("%s(): failed to create query to search "
-                         "for matching EFX_DiagnosticJob",
-                         __FUNCTION__);
-                goto cleanup;
-            }
-
-            rc = wmiEnumInstances(NULL, query,
-                                  false, jobs);
-            if (rc != 0)
-                goto cleanup;
-            if (jobs.size() != 1)
-            {
-                LOG_DATA("%s(): incorrect number %u of matching "
-                         "diagnostic jobs found", __FUNCTION__,
-                         jobs.size());
-                goto cleanup;
-            }
-
-            rc = wmiGetStringProp(jobs[0], "__Path",
-                                  jobPath);
-            if (rc != 0)
-                goto cleanup;
-
-            pOut->Release();
-            pOut = NULL;
-
-            rc = wmiExecMethod(jobPath, deleteJobMethod,
-                               NULL, &pOut);
-            if (rc != 0)
-                goto cleanup;
-
-cleanup:
-            if (pOut != NULL)
-                pOut->Release();
-            log().logStatus(testPassed == Passed ? "passed" : "failed");
-
-            for (i = 0; i < jobs.size(); i++)
-                jobs[i]->Release();
-
-            return testPassed;
-#undef QUERY_LEN
-        }
+        virtual Result syncTest();
         virtual Result result() const { return testPassed; }
         virtual const NIC *nic() const { return owner->nic(); }
         virtual void initialize()
@@ -1459,6 +1403,54 @@ cleanup:
             if (wmiGetStringProp(efxDiagTest, "Description", d) == 0)
                 setDescription(d);
         };
+        virtual unsigned percentage() const
+        {
+            Auto_Mutex    guard(currentJobLock);
+            unsigned int  progress;
+            int           rc;
+
+            if (currentJob == NULL)
+                return 100;
+
+            rc = wmiGetIntProp<unsigned int>(currentJob, "Progress",
+                                             &progress);
+            if (rc != 0)
+                return 0;
+            else
+                return progress;
+        }
+        virtual void stop()
+        {
+            Auto_Mutex    guard(currentJobLock);
+            String        abortMethod("EFX_DiagnosticJob_Abort");
+            String        jobPath;
+            int           rc;
+        
+            if (currentJob == NULL)
+                return;
+
+            rc = wmiGetStringProp(currentJob, "__Path", jobPath);
+            if (rc != 0)
+                return;
+
+            wmiExecMethod(jobPath, abortMethod,
+                          NULL, NULL);
+        };
+        virtual bool isDestructive() const
+        {
+            bool          requiresQuiescence = false;
+            int           rc;
+
+            if (efxDiagTest == NULL)
+                return false;
+
+            rc = wmiGetBoolProp(efxDiagTest, "RequiresQuiescence",
+                                &requiresQuiescence);
+            if (rc != 0)
+                return true; // Suppose the worst
+
+            return requiresQuiescence;
+        }
         virtual const String& genericName() const { return diagGenName; }
 
         String name() const
@@ -1495,7 +1487,7 @@ cleanup:
     public:
         PortDescr portInfo;
 
-        WindowsPort(const NIC *up, unsigned i, PortDescr &descr) : 
+        WindowsPort(const NIC *up, unsigned i, PortDescr &descr) :
             Port(i), 
             owner(up), 
             portInfo(descr) {}
@@ -1757,7 +1749,7 @@ cleanup:
 
         unsigned int              i;
         LONG                      j;
-        BString                   objPath;
+        String                    objPath;
         long int                  CompletionCode;
         IWbemClassObject         *pIn = NULL;
         IWbemClassObject         *pOut = NULL;
@@ -1767,7 +1759,7 @@ cleanup:
 
         SAFEARRAYBOUND bound[1];
 
-        BString methodName("EFX_NetworkAdapter_SetNetworkAddress");
+        String methodName("EFX_NetworkAdapter_SetNetworkAddress");
 
         if (wmiEnumInstances(NULL, "EFX_NetworkAdapter",
                              true, efxNetAdapters) != 0)
@@ -1850,7 +1842,8 @@ cleanup:
             goto cleanup;
         }
 
-        hr = rootWMIConn->ExecMethod(objPath.rep(), methodName.rep(),
+        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
+                                     BString(methodName).rep(),
                                      0, NULL, pIn, &pOut, NULL);
         if (FAILED(hr))
         {
@@ -1877,14 +1870,14 @@ cleanup:
 
         if (CompletionCode == BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED)
         {
-            BString methodApplyName("EFX_NetworkAdapter_ApplyChanges");
+            String methodApplyName("EFX_NetworkAdapter_ApplyChanges");
             
             if (pOut != NULL)
                 pOut->Release();
             pOut = NULL;
 
-            hr = rootWMIConn->ExecMethod(objPath.rep(),
-                                         methodApplyName.rep(),
+            hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
+                                         BString(methodApplyName).rep(),
                                          0, NULL, NULL, &pOut, NULL);
             if (FAILED(hr))
             {
@@ -2351,5 +2344,313 @@ cleanup:
         else
             return VersionInfo(((WindowsNIC *)owner)->ports[0].
                                       portInfo.bootROMVersion().c_str());
+    }
+
+    ///
+    /// Update WMI object pointer by replacing with got more
+    /// recently by the same path.
+    ///
+    /// @param obj    WMI object pointer to be updated
+    ///
+    /// @return 0 on success or -1 on failure
+    ///
+    static int updateWbemClassObject(IWbemClassObject **obj)
+    {
+        String            objPath;
+        IWbemClassObject *newObj = NULL;
+        int               rc = 0;
+        HRESULT           hr;
+
+        if ((rc = wmiEstablishConn()) != 0)
+            return rc;
+        if (obj == NULL)
+            return -1;
+
+        rc = wmiGetStringProp(*obj, "__Path", objPath);
+        if (rc != 0)
+            return rc;
+
+        hr = rootWMIConn->GetObject(BString(objPath).rep(),
+                                    WBEM_FLAG_RETURN_WBEM_COMPLETE,
+                                    NULL, &newObj, NULL);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to get object '%s', rc = %ld (0x%lx)",
+                     __FUNCTION__, objPath.c_str(), hr, hr);
+            return -1;
+        }
+
+        (*obj)->Release();
+        *obj = newObj;
+
+        return 0;
+    }
+
+    Diagnostic::Result WindowsDiagnostic::syncTest() 
+    {
+#define QUERY_LEN 1000
+        static Mutex  lock(false);
+        Auto_Mutex    guard(lock);
+
+        IWbemClassObject *pIn = NULL;
+        IWbemClassObject *pOut = NULL;
+
+        HRESULT   hr;
+        String    diagTestPath;
+        String    jobPath;
+        String    createJobMethod("EFX_DiagnosticTest_CreateJob");
+        String    deleteJobMethod("EFX_DiagnosticJob_Delete");
+        String    startJobMethod("EFX_DiagnosticJob_Start");
+        int       rc;
+        long int  completionCode;
+        uint64    jobId;
+        char      query[QUERY_LEN];
+
+        Array<IWbemClassObject *> jobs;
+        Array<IWbemClassObject *> jobConfs;
+        unsigned int              iterNum;
+        unsigned int              i;
+        VARIANT                   argWait;
+        bool                      job_created = false;
+        bool                      requiresQuiescence = false;
+        unsigned int              likelyRunTime = 0;
+        unsigned int              maxRunTime = 0;
+        unsigned int              elapsedRunTime = 0;
+        unsigned int              timeToWait = 100;
+        bool                      awakePort = false;
+        String                    portPath;
+
+        testPassed = Failed;
+
+        if (wmiEstablishConn() != 0)
+            goto cleanup;
+
+        rc = wmiGetStringProp(efxDiagTest, "__Path",
+                              diagTestPath);
+        if (rc != 0)
+            goto cleanup;
+
+        rc = wmiGetIntProp<unsigned int>(efxDiagTest, "LikelyRunTime",
+                                         &likelyRunTime);
+        if (rc != 0)
+            goto cleanup;
+
+        rc = wmiGetBoolProp(efxDiagTest, "RequiresQuiescence",
+                            &requiresQuiescence);
+        if (rc != 0)
+            goto cleanup;
+
+        if (requiresQuiescence)
+        {
+            bool    quiescenceSupported = false;
+            bool    quiescent = false;
+            String  quiescingMethod("EFX_Port_Quiesce");
+
+            rc = wmiGetBoolProp(
+                          ((WindowsPort *)owner)->portInfo.efxPort,
+                          "QuiescenceSupported", &quiescenceSupported);
+            if (rc != 0)
+                goto cleanup;
+            if (!quiescenceSupported)
+            {
+                LOG_DATA("%s(): ethernet port %s cannot be quiesced",
+                         __FUNCTION__,
+                         ((WindowsPort *)owner)->name().c_str());
+                rc = -1;
+                goto cleanup;
+            }
+
+            rc = wmiGetBoolProp(
+                          ((WindowsPort *)owner)->portInfo.efxPort,
+                          "Quiescent", &quiescent);
+            if (rc != 0)
+                goto cleanup;
+
+            if (!quiescent)
+            {
+                rc = wmiPrepareMethodCall(
+                                 ((WindowsPort *)owner)->portInfo.efxPort,
+                                 quiescingMethod,
+                                 portPath, NULL);
+                if (rc != 0)
+                    goto cleanup;
+
+                rc = wmiExecMethod(portPath, quiescingMethod,
+                                   NULL, NULL);
+                if (rc != 0)
+                    goto cleanup;
+
+                awakePort = true;
+            }
+        }
+
+        rc = wmiExecMethod(diagTestPath, createJobMethod,
+                           NULL, &pOut);
+        if (rc != 0)
+            goto cleanup;
+
+        rc = wmiGetIntProp<uint64>(pOut, "JobId",
+                                   &jobId);
+        if (rc != 0)
+            goto cleanup;
+
+        rc = snprintf(query, QUERY_LEN, "Select * From "
+                      "EFX_DiagnosticJob Where Id=%lu",
+                      (long unsigned int)jobId);
+        if (rc < 0 || rc >= QUERY_LEN)
+        {
+            LOG_DATA("%s(): failed to create query to search "
+                     "for matching EFX_DiagnosticJob",
+                     __FUNCTION__);
+            goto cleanup;
+        }
+
+        rc = wmiEnumInstances(NULL, query,
+                              false, jobs);
+        if (rc != 0)
+            goto cleanup;
+        if (jobs.size() != 1)
+        {
+            LOG_DATA("%s(): incorrect number %u of matching "
+                     "diagnostic jobs found", __FUNCTION__,
+                     jobs.size());
+            rc = -1;
+            goto cleanup;
+        }
+
+        rc = wmiGetStringProp(jobs[0], "__Path", jobPath);
+        if (rc != 0)
+            goto cleanup;
+        job_created = true;
+
+        rc = snprintf(query, QUERY_LEN, "Select * From "
+                      "EFX_DiagnosticConfigurationParams Where Id=%lu",
+                      (long unsigned int)jobId);
+        if (rc < 0 || rc >= QUERY_LEN)
+        {
+            LOG_DATA("%s(): failed to create query to search "
+                     "for matching EFX_DiagnosticConfigurationParams",
+                     __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+
+        rc = wmiEnumInstances(NULL, query,
+                              false, jobConfs);
+        if (jobConfs.size() != 1)
+        {
+            LOG_DATA("%s(): incorrect number %u of matching "
+                     "diagnostic job configurations found",
+                     __FUNCTION__,
+                     jobConfs.size());
+            goto cleanup;
+        }
+
+        rc = wmiGetIntProp<unsigned int>(jobConfs[0], "Iterations",
+                                         &iterNum);
+        if (rc != 0)
+            goto cleanup;
+
+        currentJobLock.lock();
+        currentJob = jobs[0];
+        currentJobLock.unlock();
+
+        pOut->Release();
+        pOut = NULL;
+
+        rc = wmiPrepareMethodCall(jobs[0], startJobMethod,
+                                  jobPath, &pIn);
+        if (rc != 0)
+            goto cleanup;
+
+        argWait.vt = VT_BOOL;
+        argWait.boolVal = false;
+        hr = pIn->Put(BString("wait").rep(), 0,
+                      &argWait, 0);
+        if (FAILED(hr))
+        {
+            LOG_DATA("%s(): failed to set wait argument for %s"
+                     "method, rc=%lx", startJobMethod.c_str(),
+                     __FUNCTION__, hr);
+            rc = -1;
+            goto cleanup;
+        }
+
+        rc = wmiExecMethod(jobPath, startJobMethod,
+                           pIn, NULL);
+        if (rc != 0)
+            goto cleanup;
+
+        maxRunTime = (likelyRunTime * 5) + 1000;
+        do {
+            int jobState;
+
+            Sleep(timeToWait);
+            elapsedRunTime += timeToWait;
+
+            currentJobLock.lock();
+            rc = updateWbemClassObject(&currentJob);
+            if (rc != 0)
+            {
+                currentJobLock.unlock();
+                goto cleanup;
+            }
+            jobs[0] = currentJob;
+            currentJobLock.unlock();
+
+            rc = wmiGetIntProp<int>(jobs[0], "State", &jobState);
+            if (rc != 0)
+                goto cleanup;
+            if (jobState == JobComplete)
+                break;
+        } while (elapsedRunTime < maxRunTime);
+
+cleanup:
+        if (rc == 0)
+        {
+            unsigned int iterPassedNum = 0;
+
+            rc = wmiGetIntProp<unsigned int>(jobs[0], "PassCount",
+                                             &iterPassedNum);
+            if (rc == 0)
+            {
+                if (iterPassedNum == iterNum)
+                    testPassed = Passed;
+                else
+                    LOG_DATA("%s(): only %u of %u iteration passed",
+                             __FUNCTION__, iterPassedNum, iterNum);
+            }
+        }
+
+        if (pOut != NULL)
+            pOut->Release();
+
+        if (pIn != NULL)
+            pIn->Release();
+
+        currentJobLock.lock();
+        currentJob = NULL;
+        currentJobLock.unlock();
+        if (job_created)
+            wmiExecMethod(jobPath, deleteJobMethod,
+                          NULL, NULL);
+
+        if (awakePort)
+        {
+            String  awakeMethod("EFX_Port_Awaken");
+
+            wmiExecMethod(portPath, awakeMethod,
+                          NULL, NULL);
+        }
+
+        for (i = 0; i < jobs.size(); i++)
+            jobs[i]->Release();
+        for (i = 0; i < jobConfs.size(); i++)
+            jobConfs[i]->Release();
+
+        log().logStatus(testPassed == Passed ? "passed" : "failed");
+
+        return testPassed;
+#undef QUERY_LEN
     }
 }
