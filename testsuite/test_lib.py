@@ -93,7 +93,11 @@ def profile_registered(profile_name):
     
     wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD), ns)
-    inst_list = wbemclient.EnumerateInstances('SF_RegisteredProfile')
+    try:
+        inst_list = wbemclient.EnumerateInstances('SF_RegisteredProfile')
+    except:
+        logger.error('Failed to enumerate SF_RegisteredProfile instances')
+        return False
     for inst in inst_list:
         if inst[u'RegisteredName'] == profile_name:
             return True
@@ -144,13 +148,15 @@ def profile_check(prof_list, spec_list, ns):
             for req_prop in class_spec[SC_PROP]:
                 logger.info("Checking property {0}".format(req_prop))
                 try:
-                    if inst.properties[req_prop].value == None:
+                    if ((TESTER_WMI and not inst[req_prop]) or
+                        (not TESTER_WMI and inst.properties[req_prop].value == None)):
                         logger.error(("Required property {0} " +
                                       "has NULL value").format(req_prop))
                 except Exception, e:
                     logger.error(("Failed to get property " +
                                 "{0} of {1}:\n{2}").format(
-                                            req_prop, inst.path, e))
+                                            req_prop,
+                                            TESTER_WMI and inst or inst.path, e))
                     global_passed = False
                     class_passed = False
 
@@ -160,6 +166,9 @@ def profile_check(prof_list, spec_list, ns):
                                                 assoc_spec[SC_ASSOC_RCL],
                                                 assoc_spec[SC_ASSOC_NUM])
                 logger.info("Checking association instance counts: " + title)
+                if TESTER_WMI:
+                    logger.warn("Unsupported for WMI")
+                    break
                 try:
                     assoc_list = wbemclient.Associators(inst.path,
                         AssocClass=assoc_spec[SC_ASSOC_ACL],
