@@ -1,0 +1,9 @@
+TESTER_DESCRIPTION="Configuration for running on Windows host"
+TESTER_HOST= 'Fixme: unsupported'
+TESTER_USER= 'Administrator'
+TESTER_PASSWORD= 'news@ben'
+TESTER_NS = '\\\\root\\cimv2'
+TESTER_INTEROP_NS = '\\\\root\\interop'
+TESTER_WMI = True
+LOGGER_NAME = 'tester'
+LOGGER_FILE = 'tester.log'

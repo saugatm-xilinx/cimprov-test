@@ -23,7 +23,7 @@ TESTER_PACKAGE_LIST = {
 
 # Set up logger
 logger = logging.getLogger(LOGGER_NAME)
-hdlr = logging.FileHandler("/tmp/tester.log", mode="w")
+hdlr = logging.FileHandler(LOGGER_FILE, mode="w")
 formatter = logging.Formatter("%(levelname)s %(asctime)s \n%(message)s\n")
 hdlr.setFormatter(formatter)
 logger.addHandler(hdlr) 
