@@ -15,13 +15,16 @@
 # count         Number of test runs in each thread
 #
 
-import pywbem
 import thread
 import time
 import logging
 from test_lib import ns_check, class_list_fget, assoc_traversal, enum_check
 from tester_vars import *
 from tester_hlpr import *
+if TESTER_WMI:
+    import pywmic as wbemcli
+else:
+    import pywbem as wbemcli
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -102,7 +105,7 @@ def test_function(param = {}):
                         data["over"] = False
                         data["count"] = count
                         data["classes"] = class_list
-                        data["cli"] = pywbem.WBEMConnection(TESTER_HOST,
+                        data["cli"] = wbemcli.WBEMConnection(TESTER_HOST,
                                             (TESTER_USER, TESTER_PASSWORD),
                                             TESTER_NS)
                         thread.start_new_thread(data["func"], (data, ))

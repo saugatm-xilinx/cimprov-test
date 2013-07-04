@@ -14,10 +14,13 @@
 # role          If True, specify the role for RI/RIN operation
 #
 
-import pywbem
 from test_lib import assoc_traversal, class_list_fget
 from tester_vars import *
 from tester_hlpr import *
+if TESTER_WMI:
+    import pywmic as wbemcli
+else:
+    import pywbem as wbemcli
 
 def test_function(param = {}):
     """Check association references"""
@@ -31,7 +34,7 @@ def test_function(param = {}):
         if param.get(par_name) != None:
             def_param[par_name] = [param[par_name]]
     
-    wbemclient = pywbem.WBEMConnection(TESTER_HOST,
+    wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD),
                                        TESTER_NS)
     for names_only in def_param['names_only']:

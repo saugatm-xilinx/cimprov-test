@@ -1,12 +1,16 @@
 #!/usr/bin/python
 
-import pywbem
 import os
 import sys
 import string
 import time
 import logging
 from tester_vars import *
+
+if TESTER_WMI:
+    import pywmic as wbemcli
+else:
+    import pywbem as wbemcli
 
 CLASS_LIST_ENV_NAME = 'CIMPROV_CLASSES'
 logger = logging.getLogger(LOGGER_NAME)
@@ -66,7 +70,7 @@ def enum_check(cli, class_list):
 
 def ns_check(check_ns):
     spl = check_ns.rsplit("/", 1)
-    wbemclient = pywbem.WBEMConnection(TESTER_HOST,
+    wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD),
                                        spl[0])
     logger.info('Checking %s/%s existance...',  spl[0], spl[1])
@@ -87,7 +91,7 @@ def ns_check(check_ns):
 def profile_registered(profile_name):
     ns = TESTER_INTEROP_NS
     
-    wbemclient = pywbem.WBEMConnection(TESTER_HOST,
+    wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD), ns)
     inst_list = wbemclient.EnumerateInstances('SF_RegisteredProfile')
     for inst in inst_list:
@@ -117,7 +121,7 @@ def profile_check(prof_list, spec_list, ns):
     
     logger.info("Checking profile classes...")
     
-    wbemclient = pywbem.WBEMConnection(TESTER_HOST,
+    wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD),
                                        ns)
     for class_spec in spec_list:
@@ -214,7 +218,7 @@ def state_change(conn, inst_path, state):
 
 def req_state_change_check(ns, class_name, state, timeout):
     passed = True
-    wbemclient = pywbem.WBEMConnection(TESTER_HOST,
+    wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD), ns)
     inst_list = wbemclient.EnumerateInstances(class_name)
     inst_num = 0
@@ -223,7 +227,7 @@ def req_state_change_check(ns, class_name, state, timeout):
         logger.info("instance #{0}".format(inst_num))
         # Change state
         rc = state_change(wbemclient, inst.path,
-                          pywbem.Uint16(state))
+                          wbemcli.Uint16(state))
         if rc != RC_OK:
             passed = False
             continue
@@ -242,7 +246,7 @@ def req_state_change_check(ns, class_name, state, timeout):
         
         # Restore old state
         rc = state_change(wbemclient, inst.path,
-                          pywbem.Uint16(inst[u'EnabledState']))
+                          wbemcli.Uint16(inst[u'EnabledState']))
         if rc != RC_OK:
             passed = False
     return passed

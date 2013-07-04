@@ -8,10 +8,14 @@
 # - verify that the same number of results are returned for both operations
 #
 
-import pywbem
 from test_lib import enum_check, class_list_fget
 from tester_vars import *
 from tester_hlpr import *
+
+if TESTER_WMI:
+    import pywmic as wbemcli
+else:
+    import pywbem as wbemcli
 
 def test_function(param={}):
     """Check EnumerateInstance and EnumerateInstanceName operations"""
@@ -23,7 +27,7 @@ def test_function(param={}):
         test_result(TEST_NAME, None)
         return
     
-    wbemclient = pywbem.WBEMConnection(TESTER_HOST,
+    wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD),
                                        TESTER_NS)
     res = enum_check(wbemclient, class_list)
