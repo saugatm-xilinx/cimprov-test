@@ -60,6 +60,7 @@ $(libcimobjects_DIR)/root.mof : $(libcimobjects_DIR)/repository.mof.cpp
 
 ifeq ($(CIM_SERVER),wmi)
 $(libcimobjects_DIR)/schema.mof : $(CIM_SCHEMA_DIR)/CIM_Schema.mof $(MAKEFILE_LIST)
-	cat `$(SED) -n 's!#pragma include ("\([^"]*\)")!$(CIM_SCHEMA_DIR)/\1!p' $<` >$@
+	cat `$(SED) -n 's!#pragma include ("\(CIM_[^"]*\)")!$(CIM_SCHEMA_DIR)/\1!p' $<` | \
+		$(SED) 's/\[\([^]]*\)Association,[[:space:]]*/\[\1/; s/\[\([^]]*\)Abstract,[[:space:]]*/\[\1/' >$@
 
 endif

@@ -159,11 +159,20 @@ endif
 
 ifeq ($(CIM_SERVER),wmi)
 
+$(libprovider_TARGET) : $(libprovider_DIR)/resource.o
+
+$(libprovider_DIR)/resource.o : WINDRES_CPPFLAGS = -DPROVIDER_LIBRARY=\\\"$(PROVIDER_LIBRARY)\\0\\\" \
+												   -DPROVIDER_VERSION=\\\"$(PROVIDER_VERSION).$(PROVIDER_REVISION)\\0\\\" \
+												   -DPROVIDER_VERSION_MAJOR=$(PROVIDER_VERSION_MAJOR) \
+												   -DPROVIDER_VERSION_MINOR=$(PROVIDER_VERSION_MINOR) \
+												   -DPROVIDER_REVISION_NO=0 -DPROVIDER_BUILD_NO=0
+
 $(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/repository.mof $(MAKEFILE_LIST)
 	tac $< | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
 
 
-Install$(PROVIDER_LIBRARY).exe : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) $(libprovider_DIR)/unregister.mof
+Install$(PROVIDER_LIBRARY).exe : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) \
+								 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' $<
 
 endif

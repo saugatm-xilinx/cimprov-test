@@ -1,0 +1,42 @@
+#include <windows.h>
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION    	PROVIDER_VERSION_MAJOR, PROVIDER_VERSION_MINOR, PROVIDER_REVISION_NO, PROVIDER_BUILD_NO
+PRODUCTVERSION 	PROVIDER_VERSION_MAJOR, PROVIDER_VERSION_MINOR, PROVIDER_REVISION_NO, PROVIDER_BUILD_NO
+FILEFLAGSMASK  	VS_FFI_FILEFLAGSMASK
+FILEFLAGS      	VS_FF_PRERELEASE
+FILEOS         	VOS__WINDOWS32
+FILETYPE       	VFT_DLL
+FILESUBTYPE    	VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "Solarflare\0"
+            VALUE "FileDescription",  "Solarflare CIM provider\0"
+            VALUE "FileVersion",      PROVIDER_VERSION
+            VALUE "InternalName",     PROVIDER_LIBRARY
+/*
+            VALUE "LegalCopyright",   VER_LEGALCOPYRIGHT_STR
+            VALUE "LegalTrademarks1", VER_LEGALTRADEMARKS1_STR
+            VALUE "LegalTrademarks2", VER_LEGALTRADEMARKS2_STR
+            VALUE "OriginalFilename", VER_ORIGINALFILENAME_STR
+*/
+            VALUE "ProductName",      "Solarflare CIM provider\0"
+            VALUE "ProductVersion",   PROVIDER_VERSION
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        /* The following line should only be modified for localized versions.     */
+        /* It consists of any number of WORD,WORD pairs, with each pair           */
+        /* describing a language,codepage combination supported by the file.      */
+        /*                                                                        */
+        /* For example, a file might have values "0x409,1252" indicating that it  */
+        /* supports English language (0x409) in the Windows ANSI codepage (1252). */
+
+        VALUE "Translation", 0x409, 1252
+
+    END
+END

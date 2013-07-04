@@ -55,6 +55,9 @@ lib$(PROVIDER_LIBRARY).spec : lib$(PROVIDER_LIBRARY).spec.in $(MAKEFILE_LIST)
 	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
+%.o: %.rc
+	$(WINDRES) -o $@ -i $< $(WINDRES_CPPFLAGS)
+
 ifneq ($(MAKECMDGOALS),clean)
 include $(patsubst %.cpp,%.d,$(ALL_SOURCES))
 endif

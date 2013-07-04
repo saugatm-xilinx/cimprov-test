@@ -4,12 +4,15 @@
 #include <cimple/Strings.h>
 
 #include <wbemprov.h>
+#include <tchar.h>
 #include <cimple/wmi/log.h>
 #include <cimple/wmi/BString.h>
 #include <cimple/wmi/utils.h>
 
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
+
+static const GUID GUID_DEVINTERFACE_NET = { 0xCAC88484, 0x7515, 0x4C03, {0x82, 0xE6, 0x71, 0xA8, 0x7A, 0xBA, 0xC3, 0x61}};
 
 /// Memory allocation for WinAPI calls
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
@@ -87,6 +90,7 @@ namespace solarflare
         int pci_bridge_bus;     ///< PCI brige bus ID
         int pci_bridge_device;  ///< PCI bridge device ID
         int pci_bridge_fn;      ///< PCI bridge function ID
+        String deviceInstanceName; ///< WDM device instance name
 
         int port_id;            ///< Id property value of corresponding
                                 ///  EFX_Port instance
@@ -191,6 +195,11 @@ namespace solarflare
     static IWbemServices *rootWMIConn = NULL;
 
     ///
+    /// WMI connection (with namespace root\WMI).
+    ///
+    static IWbemServices *cimWMIConn = NULL;
+
+    ///
     /// Establish WMI connection with a given namespace.
     ///
     /// @param ns           Namespace
@@ -203,9 +212,6 @@ namespace solarflare
     {
         HRESULT       hr;
         IWbemLocator *wbemLocator = NULL;
-
-        if (rootWMIConn != NULL)
-            return 0;
 
         hr = CoCreateInstance(CLSID_WbemLocator, NULL,
                               CLSCTX_INPROC_SERVER,
@@ -237,8 +243,21 @@ namespace solarflare
     ///
     static int wmiEstablishConn()
     {
-        return wmiEstablishConnNs("\\\\.\\ROOT\\WMI",
-                                  &rootWMIConn);
+        int rc = 0;
+        
+        if (rootWMIConn == NULL)
+        {
+            rc  = wmiEstablishConnNs("\\\\.\\ROOT\\WMI",
+                                     &rootWMIConn);
+            if (rc != 0)
+                return rc;
+        }
+        if (cimWMIConn == NULL)
+        {
+            rc = wmiEstablishConnNs("\\\\.\\ROOT\\CIMV2",
+                                    &cimWMIConn);
+        }
+        return rc;
     }
 
     ///
@@ -249,6 +268,10 @@ namespace solarflare
         if (rootWMIConn != NULL)
             rootWMIConn->Release();
         rootWMIConn = NULL;
+
+        if (cimWMIConn != NULL)
+            cimWMIConn->Release();
+        cimWMIConn = NULL;
     }
 
     ///
@@ -532,6 +555,41 @@ namespace solarflare
         return 0;
     }
 
+    /// Iterate over all WMI objects in enumWbemObj and them into instances array
+    ///
+    /// @param enumWbemObj   WMI enumerator
+    /// @param instances     Target object holding array
+    ///
+    /// @return 0 on success or error code
+    static int wmiCollectInstances(IEnumWbemClassObject     *enumWbemObj,
+                                   Array<IWbemClassObject *> &instances)
+    {
+        IWbemClassObject *wbemObj = NULL;
+        HRESULT           hr;
+        int               rc = 0;
+        ULONG             count;
+
+        for (;;)
+        {
+            hr = enumWbemObj->Next(WBEM_INFINITE, 1, &wbemObj, &count);
+            if (hr != WBEM_S_NO_ERROR && hr != WBEM_S_FALSE)
+            {
+                LOG_DATA("%s(): IEnumWbemClassObject::Next() "
+                         "failed with rc=%lx", __FUNCTION__, hr);
+                for (unsigned i = 0; i < instances.size(); i++)
+                    instances[i]->Release();
+                instances.clear();
+                rc = -1;
+                break;
+            }
+            if (count == 0)
+                break;
+
+            instances.append(wbemObj);
+        }
+        return rc;
+    }
+
     ///
     /// Enumerate WMI object instances.
     ///
@@ -549,9 +607,7 @@ namespace solarflare
     {
         HRESULT               hr;
         IEnumWbemClassObject *enumWbemObj = NULL;
-        IWbemClassObject     *wbemObj = NULL;
         int                   rc = 0;
-        ULONG                 count;
         unsigned int          i;
         BString               bstrQuery(query);
 
@@ -578,28 +634,55 @@ namespace solarflare
             return -1;
         }
 
-        while (1)
-        {
-            hr = enumWbemObj->Next(WBEM_INFINITE, 1, &wbemObj, &count);
-            if (hr != WBEM_S_NO_ERROR && hr != WBEM_S_FALSE)
-            {
-                LOG_DATA("%s(): IEnumWbemClasObject::Next() "
-                         "failed with rc=%lx", __FUNCTION__, hr);
-                for (i = 0; i < instances.size(); i++)
-                    instances[i]->Release();
-                instances.clear();
-                rc = -1;
-                break;
-            }
-            if (count == 0)
-                break;
-
-            instances.append(wbemObj);
-        }
+        rc = wmiCollectInstances(enumWbemObj, instances);
 
         enumWbemObj->Release();
         return rc;
     }
+
+    ///
+    /// Enumerate WMI object instances matching a certain WQL expression.
+    ///
+    /// @param wbemSvc            If not NULL, will be used
+    ///                           instead of rootWMIConn
+    /// @param search             WQL search expression
+    /// @param instances    [out] Where to save obtained instances
+    ///
+    /// @return 0 on success or error code
+    ///
+    static int wmiExecQuery(IWbemServices *wbemSvc,
+                            const char *search,
+                            Array<IWbemClassObject *> &instances)
+    {
+        HRESULT               hr;
+        IEnumWbemClassObject *enumWbemObj = NULL;
+        int                   rc = 0;
+        ULONG                 count;
+        unsigned int          i;
+        static BString wqlName("WQL");
+        static BString searchBstr(search);
+
+        if (wbemSvc == NULL && wmiEstablishConn() != 0)
+            return -1;
+        else if (wbemSvc == NULL)
+            wbemSvc = rootWMIConn;
+
+        hr = wbemSvc->ExecQuery(wqlName.rep(),
+                                searchBstr.rep(),
+                                WBEM_FLAG_FORWARD_ONLY, NULL,
+                                &enumWbemObj);
+        if (FAILED(hr))
+        {
+            LOG_DATA("ExecQuery() failed, rc = %lx", hr);
+            return -1;
+        }
+
+        rc = wmiCollectInstances(enumWbemObj, instances);
+
+        enumWbemObj->Release();
+        return rc;
+    }
+
 
     ///
     /// Get WMI object by a given path.
@@ -609,14 +692,18 @@ namespace solarflare
     ///
     /// @return 0 on success or error code
     ///
-    static int wmiGetObject(const char *objPath, IWbemClassObject **obj)
+    static int wmiGetObject(IWbemServices *wbemSvc, 
+                            const char *objPath, IWbemClassObject **obj)
     {
         HRESULT hr;
 
         if (wmiEstablishConn() != 0)
             return -1;
 
-        hr = rootWMIConn->GetObject(BString(objPath).rep(),
+        if (wbemSvc == NULL)
+            wbemSvc = cimWMIConn;
+        
+        hr = wbemSvc->GetObject(BString(objPath).rep(),
                                     WBEM_FLAG_RETURN_WBEM_COMPLETE,
                                     NULL, obj, NULL);
         if (FAILED(hr))
@@ -1211,6 +1298,12 @@ cleanup:
             if (dummy)
                 continue;
 
+            if (wmiGetStringProp(ports[i], "InstanceName",
+                                 portDescr.deviceInstanceName) != 0)
+            {
+                rc = -1;
+                goto cleanup;
+            }
             if (wmiGetIntArrProp<int>(ports[i], "PermanentMacAddress",
                                       portDescr.permanentMAC) != 0 ||
                 wmiGetIntArrProp<int>(ports[i], "CurrentMacAddress",
@@ -1940,9 +2033,56 @@ cleanup:
         virtual void initialize() {};
     };
 
+    class WindowsDriver : public Driver {
+        VersionInfo vers;
+    public:
+        WindowsDriver(const NICDescr &ndesc);
+        WindowsDriver(const String& d, const String& sn,
+                     const VersionInfo& v) :
+            Driver(d, sn), vers(v) {}
+        virtual VersionInfo version() const { return vers; }
+        virtual void initialize() {};
+        virtual bool syncInstall(const char *) { return false; }
+        virtual const String& genericName() const { return description(); }
+        virtual const Package *package() const { return NULL; }
+    };
+
+    WindowsDriver::WindowsDriver(const NICDescr &ndesc) : Driver("", "")
+    {
+        String path("SELECT * FROM Win32_PnPSignedDriver WHERE DeviceID='");
+        
+        const char *inst = ndesc.ports[0].deviceInstanceName.c_str();
+        const char *lastUnderscore = strrchr(inst, '_');
+
+        for (; *inst != '\0' && inst != lastUnderscore; inst++)
+        {
+            if (*inst == '\\')
+                path.append('\\');
+            path.append(*inst);
+        }
+        path.append('\'');
+
+        wmiEstablishConn();
+        Array<IWbemClassObject *> drivers;
+        if (wmiExecQuery(cimWMIConn, path.c_str(), drivers) < 0)
+            return;
+
+        if (drivers.size() > 0)
+        {
+            String version;
+            String description;
+            String sysname;
+            wmiGetStringProp(drivers[0], "DriverVersion", version);
+            wmiGetStringProp(drivers[0], "Description", description);
+            wmiGetStringProp(drivers[0], "InfName", sysname);
+            *this = WindowsDriver(description, sysname, VersionInfo(version.c_str()));
+        }
+    }
+
     class WindowsNIC : public NIC {
         WindowsNICFirmware nicFw;
         WindowsBootROM rom;
+        mutable WindowsDriver nicDriver;
     public:
         Array<WindowsPort> ports;
         Array<WindowsInterface> intfs;
@@ -1975,7 +2115,8 @@ cleanup:
         WindowsNIC(unsigned idx, NICDescr &descr) :
             NIC(idx),
             nicFw(this),
-            rom(this)
+            rom(this),
+            nicDriver(descr)
         {
             int i = 0;
 
@@ -2122,133 +2263,112 @@ cleanup:
         // Anyway, we do not use PCI data for any other purpose that for
         // distinguishing ports belonging to different NICs.
         virtual PCIAddress pciAddress() const { return PCIAddress(0, 0, 0); }
+
+        virtual Driver *driver() const { return &nicDriver; }
     };
-
-
-    class WindowsDriver : public Driver {
-        const Package *owner;
-        static const String drvName;
-    public:
-        WindowsDriver(const Package *pkg, const String& d,
-                      const String& sn) :
-            Driver(d, sn), owner(pkg) { }
-        virtual VersionInfo version() const
-        {
-            /// Version cannot be obtained from class constructor -
-            /// it is called when regsvr32 tries to register our DLL
-            /// and trying to use WMI from this context result in
-            /// hanging up or crash.
-
-            Array<IWbemClassObject *> roots;
-            int                       rc = 0;
-            unsigned int              i;
-            bool                      dummy;
-            String                    version;
-            VersionInfo               vers = VersionInfo("0.0.0");
-        
-            rc = wmiEnumInstances(NULL, "EFX_Root", true, roots);
-            if (rc < 0)
-                return vers;
-
-            for (i = 0; i < roots.size(); i++)
-            {
-                if (wmiGetBoolProp(roots[i], "DummyInstance", &dummy) != 0)
-                    goto cleanup;
-
-                if (dummy)
-                    continue;
-
-                if (wmiGetStringProp(roots[i], "DriverBuild", version) != 0)
-                    goto cleanup;
-
-                if (version.size() > 0 && version[0] == 'v')
-                    version.remove(0, 1);
-                vers = VersionInfo(version.c_str());
-                break;
-            }
-
-cleanup:
-            for (i = 0; i < roots.size(); i++)
-                roots[i]->Release();
-            roots.clear();  
-
-            return vers;
-        }
-        virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
-        virtual const String& genericName() const { return description(); }
-        virtual const Package *package() const { return owner; }
-    };
-
 
     class WindowsLibrary : public Library {
         const Package *owner;
-        VersionInfo vers;
+        const VersionInfo vers;
+        WindowsLibrary(const Package *pkg, const char *dllName,
+                       const char *descr, const VersionInfo& vi) :
+            Library(descr, dllName), owner(pkg), vers(vi) {}
     public:
-        WindowsLibrary(const Package *pkg, const String& d, const String& sn, 
-                     const VersionInfo& v) :
-            Library(d, sn), owner(pkg), vers(v) {}
-        virtual VersionInfo version() const { return vers; }
+        static WindowsLibrary dllLibrary(const Package *pkg, const char *dllName);
+        static WindowsLibrary moduleLibrary(const Package *pkg);
+        virtual VersionInfo version() const { return vers; };
         virtual void initialize() {};
         virtual bool syncInstall(const char *) { return false; }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
 
+    WindowsLibrary WindowsLibrary::dllLibrary(const Package *pkg,
+                                              const char *dllName)
+    {
+        DWORD size = GetFileVersionInfoSizeA(dllName, NULL);
+        void *data = new char[size];
+        GetFileVersionInfoA(dllName, 0, size, data);
+        VS_FIXEDFILEINFO *fixedInfo;
+        const char *descr;
+        const char *vstr;
+        unsigned blocklen;
 
-    /// @brief stub-only implementation of a software package
-    /// with kernel drivers
-    class WindowsKernelPackage : public Package {
-        WindowsDriver kernelDriver;
-    protected:
-        virtual void setupContents() { kernelDriver.initialize(); };
-    public:
-        WindowsKernelPackage() :
-            Package("NET Driver RPM", "sfc"),
-            kernelDriver(this, "NET Driver", "sfc") {}
-        virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("3.3"); }
-        virtual bool syncInstall(const char *) { return true; }
-        virtual bool forAllSoftware(ElementEnumerator& en)
-        {
-            return en.process(kernelDriver);
-        }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
-        {
-            return en.process(kernelDriver);
-        }
-        virtual const String& genericName() const { return description(); }
-    };
+        VerQueryValue(data, _T("\\"), (void **)&fixedInfo, &blocklen);
+        VerQueryValue(data, _T("\\StringFileInfo\\040904E4\\FileDescription"),
+                      (void **)&descr, &blocklen);
+        VerQueryValue(data, _T("\\StringFileInfo\\040904E4\\ProductVersion"),
+                      (void **)&vstr, &blocklen);
+
+        return WindowsLibrary(pkg, dllName, descr,
+                              VersionInfo(fixedInfo->dwProductVersionMS >> 16,
+                                          fixedInfo->dwProductVersionMS & 0xFFFFU,
+                                          fixedInfo->dwProductVersionLS >> 16,
+                                          fixedInfo->dwProductVersionLS & 0xFFFFU,
+                                          vstr,
+                                          Datetime(((uint64)fixedInfo->dwFileDateMS << 32) |
+                                                   fixedInfo->dwFileDateLS)));
+
+    }
+
+    WindowsLibrary WindowsLibrary::moduleLibrary(const Package *pkg)
+    {
+        HMODULE hmod;
+        char path[MAX_PATH + 1];
+
+        GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT |
+                          GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                          (LPCTSTR)&moduleLibrary,
+                          &hmod);
+        GetModuleFileNameA(hmod,  path, sizeof(path));
+        return dllLibrary(pkg, path);
+    }
 
     /// @brief stub-only implementation of a software package
     /// with provider library
     class WindowsManagementPackage : public Package {
         WindowsLibrary providerLibrary;
+
+       static const char *getUninstallerPath()
+       {
+           static char path[MAX_PATH];
+           DWORD len = sizeof(path);
+           RegGetValue(HKEY_LOCAL_MACHINE,
+                       _T("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
+                       _T("UninstallString"),
+                       RRF_RT_REG_SZ,
+                       NULL,
+                       path,
+                       &len);
+           return path;
+
+       }
+
     protected:
         virtual void setupContents() { providerLibrary.initialize(); };
     public:
         WindowsManagementPackage() :
-            Package("CIM Provider RPM", "sfcprovider"),
-            providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
-        virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("0.1"); }
+            Package("CIM Provider MSI", getUninstallerPath()),
+            providerLibrary(WindowsLibrary::moduleLibrary(this)) {}
+        virtual PkgType type() const { return MSI; }
+        virtual VersionInfo version() const { return providerLibrary.version(); }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(providerLibrary);
         }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const
         {
             return en.process(providerLibrary);
         }
         virtual const String& genericName() const { return description(); }
     };
 
+
     /// @brief stub-only System implementation
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
     class WindowsSystem : public System {
-        WindowsKernelPackage kernelPackage;
         WindowsManagementPackage mgmtPackage;
         WindowsSystem() {};
         ~WindowsSystem();
@@ -2260,9 +2380,10 @@ cleanup:
 
         void setupPackages()
         {
-            kernelPackage.initialize();
             mgmtPackage.initialize();
         };
+        bool forAllDrivers(ConstElementEnumerator& en) const;
+        bool forAllDrivers(ElementEnumerator& en);
     public:
         static WindowsSystem target;
         bool is64bit() const { return true; }
@@ -2271,6 +2392,8 @@ cleanup:
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
+        bool forAllSoftware(ConstElementEnumerator& en) const;
+        bool forAllSoftware(ElementEnumerator& en);
     };
 
     WindowsSystem::~WindowsSystem()
@@ -2278,10 +2401,10 @@ cleanup:
         wmiReleaseConn();
     }
 
-    bool WindowsSystem::forAllNICs(ConstElementEnumerator& en) const
+    bool WindowsSystem::forAllNICs(ElementEnumerator& en)
     {
         NICDescrs   nics;
-        int         i;
+        unsigned    i;
         bool        res;
         bool        ret = true;
         int         rc;
@@ -2292,7 +2415,7 @@ cleanup:
             return false;
         }
 
-        for (i = 0; i < (int)nics.size(); i++)
+        for (i = 0; i < nics.size(); i++)
         {
             WindowsNIC  nic(i, nics[i]);
 
@@ -2305,23 +2428,68 @@ cleanup:
         return ret;
     }
 
-    bool WindowsSystem::forAllNICs(ElementEnumerator& en)
+    bool WindowsSystem::forAllNICs(ConstElementEnumerator& en) const
     {
-        return forAllNICs((ConstElementEnumerator&) en); 
+        return const_cast<WindowsSystem *>(this)->forAllNICs((ElementEnumerator&) en); 
+    }
+
+    bool WindowsSystem::forAllDrivers(ElementEnumerator &en)
+    {
+        int  rc;
+        bool result = true;
+        Array<IWbemClassObject *> drivers;
+
+        rc = wmiExecQuery(cimWMIConn, 
+                          "SELECT * FROM Win32_PnPSignedDriver WHERE Manufacturer='Solarflare'", drivers);
+        if (rc < 0)
+            return false;
+
+        for (unsigned i = 0; i < drivers.size(); i++)
+        {
+            String version;
+            String description;
+            String sysname;
+            wmiGetStringProp(drivers[i], "DriverVersion", version);
+            wmiGetStringProp(drivers[i], "Description", description);
+            wmiGetStringProp(drivers[i], "InfName", sysname);
+            WindowsDriver drv(description, sysname, VersionInfo(version.c_str()));
+
+            if (!en.process(drv))
+            {
+                result = false;
+                break;
+            }
+        }
+        return result;
+    }
+
+    bool WindowsSystem::forAllDrivers(ConstElementEnumerator& en) const
+    {
+        return const_cast<WindowsSystem *>(this)->forAllDrivers((ElementEnumerator&) en); 
     }
     
     bool WindowsSystem::forAllPackages(ConstElementEnumerator& en) const
     {
-        if (!en.process(kernelPackage))
-            return false;
         return en.process(mgmtPackage);
     }
     
     bool WindowsSystem::forAllPackages(ElementEnumerator& en)
     {
-        if (!en.process(kernelPackage))
-            return false;
         return en.process(mgmtPackage);
+    }
+
+    bool WindowsSystem::forAllSoftware(ConstElementEnumerator& en) const
+    {
+        if (!System::forAllSoftware(en))
+            return false;
+        return forAllDrivers(en);
+    }
+    
+    bool WindowsSystem::forAllSoftware(ElementEnumerator& en)
+    {
+        if (!System::forAllSoftware(en))
+            return false;
+        return forAllDrivers(en);
     }
 
     WindowsSystem WindowsSystem::target;
