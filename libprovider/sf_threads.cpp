@@ -64,6 +64,7 @@ namespace solarflare
         bool status = threadProc();
 
         stateLock.lock();
+        finishedAt = cimple::Datetime::now();
         if (state == Aborting)
             state = Aborted;
         else
@@ -115,6 +116,16 @@ namespace solarflare
         return t;
     }
 
+    Datetime Thread::finishTime() const
+    {
+        Datetime t;
+
+        stateLock.lock();
+        t = finishedAt;
+        stateLock.unlock();
+        return t;
+    }
+
     void Thread::start(bool sync)
     {
         if (!sync)
@@ -131,7 +142,10 @@ namespace solarflare
         state = Running;
         startedAt = cimple::Datetime::now();
         if (Thread::create_detached(*this, doThread, (void *)threadID().c_str()))
+        {
+            finishedAt = startedAt;
             state = Aborted;
+        }
     }
 
     void Thread::stop(bool sync)

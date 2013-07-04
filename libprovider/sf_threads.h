@@ -48,6 +48,9 @@ namespace solarflare
         /// Start time
         Datetime startedAt;
 
+        /// Finish time
+        Datetime finishedAt;
+
     protected:
         /// Unique ID of thread
         String id;
@@ -75,7 +78,8 @@ namespace solarflare
         Thread(String sid) : state(NotRun), id(sid) {}
         /// Copy constructor - defined to avoid attempt to copy stateLock
         Thread(const Thread &src) : cimple::Thread(src),
-          state(src.state), startedAt(src.startedAt), id(src.id) {}
+          state(src.state), startedAt(src.startedAt),
+          finishedAt(src.finishedAt), id(src.id) {}
         virtual ~Thread() {}
 
         /// Find thread in threads list
@@ -105,6 +109,9 @@ namespace solarflare
 
         /// @return start time of the thread
         Datetime startTime() const;
+
+        /// @return finish time of the thread
+        Datetime finishTime() const;
 
         /// Makes the thread running. The state is set to Running.
         /// If we run asynchroniosly, call findUpdate() to

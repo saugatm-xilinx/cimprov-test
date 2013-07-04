@@ -259,6 +259,7 @@ namespace solarflare
     {
         Thread *th = const_cast<SystemElement&>(obj).embeddedThread();
         SF_ConcreteJob *job = static_cast<SF_ConcreteJob *>(reference(obj, idx));
+        Thread::State st;
         
         job->Name.set(job->InstanceID.value);
 #if CIM_SCHEMA_VERSION_MINOR > 0
@@ -312,7 +313,17 @@ namespace solarflare
         job->DeleteOnCompletion.set(false);
 #endif
         job->StartTime.set(th->startTime());
-        job->ElapsedTime.set(Datetime(Datetime::now().usec() - job->StartTime.value.usec()));
+
+        st = th->currentState();
+        if (st == Thread::Running || st == Thread::Aborting)
+            job->ElapsedTime.set(Datetime(Datetime::now().usec() -
+                                          job->StartTime.value.usec()));
+        else if (th->finishTime().usec() > job->StartTime.value.usec())
+            job->ElapsedTime.set(Datetime(th->finishTime().usec() -
+                                          job->StartTime.value.usec()));
+        else
+            job->ElapsedTime.set(Datetime((uint64)0));
+
         return job;
     }
 
