@@ -286,13 +286,6 @@ class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
 };
 #endif
 
-#if defined(TARGET_CIM_SERVER_wmi) && defined(IMPNS)
-INSTANCE
-class Win32_ComputerSystem : CIM_UnitaryComputerSystem
-{
-};
-#endif
-
 #if defined(TARGET_CIM_SERVER_pegasus) && defined(IMPNS)
 INSTANCE
 class IBMPSG_ComputerSystem : CIM_UnitaryComputerSystem
