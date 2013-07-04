@@ -34,7 +34,7 @@ Qualifier DeleteBy : string = Null,
     Scope(class);
 
 Qualifier Privileges : string[],
-    Scope(method, property),
+    Scope(class, association, method, property),
     Flavor(ToSubclass);
 
 Qualifier Constructor : boolean = false,
@@ -54,6 +54,29 @@ Qualifier Fixed : boolean = false,
 
 Qualifier Optional : boolean = false,
     Scope(parameter);
+
+Qualifier CIM_Key : boolean = false,
+    Scope(property, reference),
+	    Flavor(DisableOverride, ToSubclass);
+
+Qualifier Singleton : boolean = false,
+    Scope(class),
+        Flavor(ToSubclass);
+
+[abstract]class __NotifyStatus
+{
+  uint32 StatusCode;
+};
+
+
+class __ExtendedStatus : __NotifyStatus
+{
+  string Description;
+  string Operation;
+  string ParameterInfo;
+  string ProviderName;
+  uint32 StatusCode;
+};
 
 [indication]
 class __ExtrinsicEvent
