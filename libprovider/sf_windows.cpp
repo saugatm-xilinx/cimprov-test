@@ -5,14 +5,12 @@
 
 #include <wbemprov.h>
 #include <tchar.h>
-#include <cimple/wmi/log.h>
+#include <cimple/log.h>
 #include <cimple/wmi/BString.h>
 #include <cimple/wmi/utils.h>
 
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
-
-static const GUID GUID_DEVINTERFACE_NET = { 0xCAC88484, 0x7515, 0x4C03, {0x82, 0xE6, 0x71, 0xA8, 0x7A, 0xBA, 0xC3, 0x61}};
 
 /// Memory allocation for WinAPI calls
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
@@ -218,7 +216,7 @@ namespace solarflare
                               IID_IWbemLocator, (LPVOID *)&wbemLocator);
         if (FAILED(hr))
         {
-            LOG_DATA("CoCreateInstance() failed, rc = %lx", hr);
+            CIMPLE_ERR(("CoCreateInstance() failed, rc = %lx", hr));
             return -1;
         }
 
@@ -227,7 +225,7 @@ namespace solarflare
                                         svc);
         if (FAILED(hr))
         {
-            LOG_DATA("ConnectServer() failed, rc = %lx", hr);
+            CIMPLE_ERR(("ConnectServer() failed, rc = %lx", hr));
             *svc = NULL;
             return -1;
         }
@@ -300,13 +298,13 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("Failed to obtain value of '%s'", propName);
+            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
             return -1;
         }
 
         if (wbemObjProp.vt != VT_BSTR)
         {
-            LOG_DATA("Wrong variant type 0x%hx", wbemObjProp.vt);
+            CIMPLE_ERR(("Wrong variant type 0x%hx", wbemObjProp.vt));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -315,7 +313,7 @@ namespace solarflare
 
         if (value == NULL)
         {
-            LOG_DATA("%s(): null string obtained", __FUNCTION__);
+            CIMPLE_ERR(("%s():   null string obtained", __FUNCTION__));
             return -1;
         }
 
@@ -349,7 +347,7 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("Failed to obtain value of '%s'", propName);
+            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
             return -1;
         }
 
@@ -376,8 +374,8 @@ namespace solarflare
             *value = strtoll(str_val, &endptr, 10);
             if (endptr == NULL || *endptr != '\0')
             {
-                LOG_DATA("Failed to convert '%s' string to int",
-                         str_val);
+                CIMPLE_ERR(("Failed to convert '%s' string to int",
+                            str_val));
                 VariantClear(&wbemObjProp);
                 delete[] str_val;
                 return -1;
@@ -386,7 +384,7 @@ namespace solarflare
         }
         else
         {
-            LOG_DATA("Wrong variant type 0x%hx", wbemObjProp.vt);
+            CIMPLE_ERR(("Wrong variant type 0x%hx", wbemObjProp.vt));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -428,16 +426,16 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("Failed to obtain value of '%s'", propName);
+            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
             return -1;
         }
 
         vt = wbemObjProp.vt;
         if (!(vt & VT_ARRAY))
         {
-            LOG_DATA("%s(): Array flag is not set in "
-                     "variant type 0x%hx",
-                     __FUNCTION__, wbemObjProp.vt);
+            CIMPLE_ERR(("%s():   Array flag is not set in "
+                        "variant type 0x%hx",
+                        __FUNCTION__, wbemObjProp.vt));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -447,9 +445,9 @@ namespace solarflare
             vt != VT_UI2 && vt != VT_UI4 && vt != VT_UINT &&
             vt != VT_UI1)
         {
-            LOG_DATA("%s(): variant type 0x%hx is not among "
-                     "known integer types",
-                     __FUNCTION__, vt);
+            CIMPLE_ERR(("%s():   variant type 0x%hx is not among "
+                        "known integer types",
+                        __FUNCTION__, vt));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -458,8 +456,8 @@ namespace solarflare
         dims_number = SafeArrayGetDim(pArray);
         if (dims_number != 1)
         {
-            LOG_DATA("%s(): wrong number of array dimensions %d",
-                     __FUNCTION__, dims_number);
+            CIMPLE_ERR(("%s():   wrong number of array dimensions %d",
+                        __FUNCTION__, dims_number));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -467,8 +465,8 @@ namespace solarflare
         hr = SafeArrayGetLBound(pArray, 1, &LBound);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to obtain lower bound of dimension, "
-                     "rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to obtain lower bound of dimension, "
+                        "rc=%lx", __FUNCTION__, hr));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -476,8 +474,8 @@ namespace solarflare
         hr = SafeArrayGetUBound(pArray, 1, &UBound);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to obtain upper bound of dimension, "
-                     "rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to obtain upper bound of dimension, "
+                        "rc=%lx", __FUNCTION__, hr));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -489,8 +487,8 @@ namespace solarflare
             hr = SafeArrayGetElement(pArray, &i, (void *)&el);
             if (FAILED(hr))
             {
-                LOG_DATA("%s(): failed to get %d element, "
-                         "rc=%lx", __FUNCTION__, i, hr);
+                CIMPLE_ERR(("%s():   failed to get %d element, "
+                            "rc=%lx", __FUNCTION__, i, hr));
                 VariantClear(&wbemObjProp);
                 value.clear();
                 return -1;
@@ -538,7 +536,7 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("Failed to obtain value of '%s'", propName);
+            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
             return -1;
         }
 
@@ -546,7 +544,7 @@ namespace solarflare
             *value = (wbemObjProp.boolVal ? true : false);
         else
         {
-            LOG_DATA("Wrong variant type 0x%hx", wbemObjProp.vt);
+            CIMPLE_ERR(("Wrong variant type 0x%hx", wbemObjProp.vt));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -574,8 +572,8 @@ namespace solarflare
             hr = enumWbemObj->Next(WBEM_INFINITE, 1, &wbemObj, &count);
             if (hr != WBEM_S_NO_ERROR && hr != WBEM_S_FALSE)
             {
-                LOG_DATA("%s(): IEnumWbemClassObject::Next() "
-                         "failed with rc=%lx", __FUNCTION__, hr);
+                CIMPLE_ERR(("%s():   IEnumWbemClassObject::Next() "
+                            "failed with rc=%lx", __FUNCTION__, hr));
                 for (unsigned i = 0; i < instances.size(); i++)
                     instances[i]->Release();
                 instances.clear();
@@ -627,10 +625,10 @@ namespace solarflare
 
         if (FAILED(hr))
         {
-            LOG_DATA("%s() failed, rc = %lx",
-                     useInstanceEnum ?
-                          "CreateInstanceEnum" : "ExecQuery",
-                     hr);
+            CIMPLE_ERR(("%s() failed, rc = %lx",
+                        useInstanceEnum ?
+                        "CreateInstanceEnum" : "ExecQuery",
+                        hr));
             return -1;
         }
 
@@ -673,7 +671,7 @@ namespace solarflare
                                 &enumWbemObj);
         if (FAILED(hr))
         {
-            LOG_DATA("ExecQuery() failed, rc = %lx", hr);
+            CIMPLE_ERR(("ExecQuery() failed, rc = %lx", hr));
             return -1;
         }
 
@@ -708,8 +706,8 @@ namespace solarflare
                                     NULL, obj, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): IWbemClassObject::GetObject(%s) failed with "
-                     "rc = %lx", __FUNCTION__, objPath, hr);
+            CIMPLE_ERR(("%s():   IWbemClassObject::GetObject(%s) failed with "
+                        "rc = %lx", __FUNCTION__, objPath, hr));
             return -1;
         }
 
@@ -755,8 +753,8 @@ namespace solarflare
                            &className, NULL, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to obtain class name of WMI object, "
-                     "rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to obtain class name of WMI object, "
+                        "rc=%lx", __FUNCTION__, hr));
             return -1;
         }
         className_got = true;
@@ -765,8 +763,8 @@ namespace solarflare
                            &path, NULL, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to obtain path of WMI object, "
-                     "rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to obtain path of WMI object, "
+                        "rc=%lx", __FUNCTION__, hr));
             rc = -1;
             goto cleanup;
         }
@@ -776,8 +774,8 @@ namespace solarflare
                                     &classObj, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to obtain class definition "
-                     "of WMI object, rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to obtain class definition "
+                        "of WMI object, rc=%lx", __FUNCTION__, hr));
             rc = -1;
             goto cleanup;
         }
@@ -789,8 +787,8 @@ namespace solarflare
                                      NULL);
             if (FAILED(hr))
             {
-                LOG_DATA("%s(): failed to obtain method definition "
-                         "for WMI object, rc=%lx", __FUNCTION__, hr);
+                CIMPLE_ERR(("%s():   failed to obtain method definition "
+                            "for WMI object, rc=%lx", __FUNCTION__, hr));
                 rc = -1;
                 goto cleanup;
             }
@@ -799,9 +797,9 @@ namespace solarflare
             hr = pInDef->SpawnInstance(0, pIn);
             if (FAILED(hr))
             {
-                LOG_DATA("%s(): failed to obtain input "
-                         "parameters instance, rc=%lx",
-                         __FUNCTION__, hr);
+                CIMPLE_ERR(("%s():   failed to obtain input "
+                            "parameters instance, rc=%lx",
+                            __FUNCTION__, hr));
                 rc = -1;
                 goto cleanup;
             }
@@ -843,9 +841,9 @@ cleanup:
                                      0, NULL, pIn, &tmpPOut, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to call %s() "
-                     "method, rc=%lx", __FUNCTION__,
-                     methodName.c_str(), hr);
+            CIMPLE_ERR(("%s():   failed to call %s() "
+                        "method, rc=%lx", __FUNCTION__,
+                        methodName.c_str(), hr));
             return -1;
         }
 
@@ -859,10 +857,10 @@ cleanup:
         }
         if (completionCode != 0)
         {
-            LOG_DATA("%s(): %s() method returned wrong completion "
-                     "code %ld (0x%lx)", __FUNCTION__,
-                     methodName.c_str(), completionCode,
-                     completionCode);
+            CIMPLE_ERR(("%s():   %s() method returned wrong completion "
+                        "code %ld (0x%lx)", __FUNCTION__,
+                        methodName.c_str(), completionCode,
+                        completionCode));
             tmpPOut->Release();
             tmpPOut = NULL;
             return -1;
@@ -916,8 +914,8 @@ cleanup:
                       &targetType, 0);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to set TargetType for firmrmware "
-                     "version reading method, rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to set TargetType for firmrmware "
+                        "version reading method, rc=%lx", __FUNCTION__, hr));
             pIn->Release();
             return -1;
         }
@@ -927,8 +925,8 @@ cleanup:
                                      0, NULL, pIn, &pOut, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to call firmware version reading "
-                     "method, rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to call firmware version reading "
+                        "method, rc=%lx", __FUNCTION__, hr));
             pIn->Release();
             return -1;
         }
@@ -996,8 +994,8 @@ cleanup:
                       &propTag, 0);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to set Tag for VPD "
-                     "field reading method, rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to set Tag for VPD "
+                        "field reading method, rc=%lx", __FUNCTION__, hr));
             pIn->Release();
             return -1;
         }
@@ -1008,8 +1006,8 @@ cleanup:
                       &propKeyword, 0);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to set Keyword for VPD "
-                     "field reading method, rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to set Keyword for VPD "
+                        "field reading method, rc=%lx", __FUNCTION__, hr));
             pIn->Release();
             return -1;
         }
@@ -1019,8 +1017,8 @@ cleanup:
                                      0, NULL, pIn, &pOut, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to call firmware version reading "
-                     "method, rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to call firmware version reading "
+                        "method, rc=%lx", __FUNCTION__, hr));
             pIn->Release();
             return -1;
         }
@@ -1206,8 +1204,8 @@ cleanup:
             pInfo = (IP_INTERFACE_INFO *)MALLOC(outBufLen);
             if (pInfo == NULL)
             {
-                LOG_DATA("Failed to allocate memory "
-                         "for GetInterfaceInfo()");
+                CIMPLE_ERR(("Failed to allocate memory "
+                            "for GetInterfaceInfo()"));
                 return -1;
             }
         }
@@ -1215,8 +1213,8 @@ cleanup:
         dwRetVal = GetInterfaceInfo(pInfo, &outBufLen);
         if (dwRetVal != NO_ERROR)
         {
-            LOG_DATA("The second call of GetInterfaceInfo() failed, "
-                     "dwRetVal=%d", dwRetVal);
+            CIMPLE_ERR(("The second call of GetInterfaceInfo() failed, "
+                        "dwRetVal=%d", dwRetVal));
             FREE(pInfo);
             return -1;
         }
@@ -1232,8 +1230,8 @@ cleanup:
             ulRetVal = GetIfEntry(&mibIfRow);
             if (ulRetVal != NO_ERROR)
             {
-                LOG_DATA("GetIfEntry(dwIndex=%d) failed with rc=%lu",
-                         ulRetVal);
+                CIMPLE_ERR(("GetIfEntry(dwIndex=%d) failed with rc=%lu",
+                            ulRetVal));
                 FREE(pInfo);
                 info.clear();
                 return -1;
@@ -1322,8 +1320,8 @@ cleanup:
 
             if (j == intfsInfo.size())
             {
-                LOG_DATA("Failed to find network interface information "
-                         "for portId=%d", portDescr.port_id);
+                CIMPLE_ERR(("Failed to find network interface information "
+                            "for portId=%d", portDescr.port_id));
                 rc = -1;
                 goto cleanup;
             }
@@ -1356,8 +1354,8 @@ cleanup:
                 break;
             if (j == pciInfos.size())
             {
-                LOG_DATA("Failed to find matching EFX_PciInformation for "
-                         "PortId=%d", portDescr.port_id);
+                CIMPLE_ERR(("Failed to find matching EFX_PciInformation for "
+                            "PortId=%d", portDescr.port_id));
                 rc = -1;
                 clearPciInfos = true;
                 goto cleanup;
@@ -1376,8 +1374,8 @@ cleanup:
                 wmiGetIntProp<int>(pciInfos[j], "FunctionNumber",
                                    &portDescr.pci_fn) != 0)
             {
-                LOG_DATA("Failed to obtain all required EFX_PciInformation "
-                         "properties for PortId=%d", portDescr.port_id);
+                CIMPLE_ERR(("Failed to obtain all required EFX_PciInformation "
+                            "properties for PortId=%d", portDescr.port_id));
                 rc = -1;
                 clearPciInfos = true;
                 goto cleanup;
@@ -1777,7 +1775,7 @@ cleanup:
 
             rc = SetIfEntry(&mibIfRow);
             if (rc != NO_ERROR)
-                LOG_DATA("SetIfEntry() failed with rc=0x%lx", (long int)rc);
+                CIMPLE_ERR(("SetIfEntry() failed with rc=0x%lx", (long int)rc));
         }
 
         /// @return current MTU
@@ -1866,9 +1864,9 @@ cleanup:
             if (wmiGetBoolProp(efxNetAdapters[i], "DummyInstance",
                                &dummy) != 0)
             {
-                LOG_DATA("%s(): failed to get DummyInstance property "
-                         "value for EFX_NetworkAdapter class",
-                         __FUNCTION__);
+                CIMPLE_ERR(("%s():   failed to get DummyInstance property "
+                            "value for EFX_NetworkAdapter class",
+                            __FUNCTION__));
                 goto cleanup;
             }
 
@@ -1878,9 +1876,9 @@ cleanup:
             if (wmiGetIntArrProp<int>(efxNetAdapters[i], "NetworkAddress",
                                       netAddr) != 0)
             {
-                LOG_DATA("%s(): failed to get NetworkAddress property "
-                         "value for EFX_NetworkAdapter class",
-                         __FUNCTION__);
+                CIMPLE_ERR(("%s():   failed to get NetworkAddress property "
+                            "value for EFX_NetworkAdapter class",
+                            __FUNCTION__));
                 goto cleanup;
             }
 
@@ -1890,8 +1888,8 @@ cleanup:
 
         if (i == efxNetAdapters.size())
         {
-            LOG_DATA("%s(): failed to find matching EFX_NetworkAdapter "
-                     "instance", __FUNCTION__);
+            CIMPLE_ERR(("%s():   failed to find matching EFX_NetworkAdapter "
+                        "instance", __FUNCTION__));
             goto cleanup;
         }
 
@@ -1908,8 +1906,8 @@ cleanup:
         V_ARRAY(&macValue) = SafeArrayCreate(VT_BOOL, 1, bound);
         if (V_ARRAY(&macValue) == NULL)
         {
-            LOG_DATA("%s(): failed to create array for MAC representation",
-                     __FUNCTION__);
+            CIMPLE_ERR(("%s():   failed to create array for MAC representation",
+                        __FUNCTION__));
             goto cleanup;
         }
 
@@ -1919,8 +1917,8 @@ cleanup:
                                      (void *)&mac.address[j]);
             if (FAILED(hr))
             {
-                LOG_DATA("%s(): failed to prepare MAC value for calling "
-                         "SetNetwordAddress(), rc=%lx", __FUNCTION__, hr);
+                CIMPLE_ERR(("%s():   failed to prepare MAC value for calling "
+                            "SetNetwordAddress(), rc=%lx", __FUNCTION__, hr));
                 VariantClear(&macValue);
                 goto cleanup;
             }
@@ -1930,8 +1928,8 @@ cleanup:
         VariantClear(&macValue);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to set MAC value for calling "
-                     "SetNetwordAddress(), rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to set MAC value for calling "
+                        "SetNetwordAddress(), rc=%lx", __FUNCTION__, hr));
             goto cleanup;
         }
 
@@ -1940,9 +1938,9 @@ cleanup:
                                      0, NULL, pIn, &pOut, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to call "
-                     "EFX_NetworkAdapter_SetNetworkAddress() "
-                     "method, rc=%lx", __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to call "
+                        "EFX_NetworkAdapter_SetNetworkAddress() "
+                        "method, rc=%lx", __FUNCTION__, hr));
             pOut = NULL;
             goto cleanup;
         }
@@ -1954,10 +1952,10 @@ cleanup:
         if (CompletionCode != 0 &&
             CompletionCode != BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED)
         {
-            LOG_DATA("%s(): wrong completion code %ld (0x%lx) "
-                     "returned by method "
-                     "EFX_NetworkAdapter_SetNetworkAddress()",
-                     __FUNCTION__, CompletionCode, CompletionCode);
+            CIMPLE_ERR(("%s():   wrong completion code %ld (0x%lx)) "
+                        "returned by method "
+                        "EFX_NetworkAdapter_SetNetworkAddress()",
+                        __FUNCTION__, CompletionCode, CompletionCode));
             goto cleanup;
         }
 
@@ -1974,9 +1972,9 @@ cleanup:
                                          0, NULL, NULL, &pOut, NULL);
             if (FAILED(hr))
             {
-                LOG_DATA("%s(): failed to call "
-                         "EFX_NetworkAdapter_ApplyChanges() "
-                         "method, rc=%lx", __FUNCTION__, hr);
+                CIMPLE_ERR(("%s():   failed to call "
+                            "EFX_NetworkAdapter_ApplyChanges() "
+                            "method, rc=%lx", __FUNCTION__, hr));
                 goto cleanup;
             }
 
@@ -1986,10 +1984,10 @@ cleanup:
 
             if (CompletionCode != 0)
             {
-                LOG_DATA("%s(): wrong completion code %ld (0x%lx) "
-                         "returned by method "
-                         "EFX_NetworkAdapter_ApplyChanges()",
-                         __FUNCTION__, CompletionCode, CompletionCode);
+                CIMPLE_ERR(("%s():   wrong completion code %ld (0x%lx) "
+                            "returned by method "
+                            "EFX_NetworkAdapter_ApplyChanges()",
+                            __FUNCTION__, CompletionCode, CompletionCode));
                 goto cleanup;
             }
         }
@@ -2411,7 +2409,7 @@ cleanup:
 
         if ((rc = getNICs(nics)) < 0)
         {
-            LOG_DATA("Failed to obtain info about NICs");
+            CIMPLE_ERR(("Failed to obtain info about NICs"));
             return false;
         }
 
@@ -2543,8 +2541,8 @@ cleanup:
                                     NULL, &newObj, NULL);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to get object '%s', rc = %ld (0x%lx)",
-                     __FUNCTION__, objPath.c_str(), hr, hr);
+            CIMPLE_ERR(("%s():   failed to get object '%s', rc = %ld (0x%lx)",
+                        __FUNCTION__, objPath.c_str(), hr, hr));
             return -1;
         }
 
@@ -2621,9 +2619,9 @@ cleanup:
                 goto cleanup;
             if (!quiescenceSupported)
             {
-                LOG_DATA("%s(): ethernet port %s cannot be quiesced",
-                         __FUNCTION__,
-                         ((WindowsPort *)owner)->name().c_str());
+                CIMPLE_ERR(("%s():   ethernet port %s cannot be quiesced",
+                            __FUNCTION__,
+                            ((WindowsPort *)owner)->name().c_str()));
                 rc = -1;
                 goto cleanup;
             }
@@ -2667,9 +2665,9 @@ cleanup:
                       (long unsigned int)jobId);
         if (rc < 0 || rc >= QUERY_LEN)
         {
-            LOG_DATA("%s(): failed to create query to search "
+            CIMPLE_ERR(("%s():   failed to create query to search "
                      "for matching EFX_DiagnosticJob",
-                     __FUNCTION__);
+                     __FUNCTION__));
             goto cleanup;
         }
 
@@ -2679,9 +2677,9 @@ cleanup:
             goto cleanup;
         if (jobs.size() != 1)
         {
-            LOG_DATA("%s(): incorrect number %u of matching "
+            CIMPLE_ERR(("%s():   incorrect number %u of matching "
                      "diagnostic jobs found", __FUNCTION__,
-                     jobs.size());
+                     jobs.size()));
             rc = -1;
             goto cleanup;
         }
@@ -2696,9 +2694,9 @@ cleanup:
                       (long unsigned int)jobId);
         if (rc < 0 || rc >= QUERY_LEN)
         {
-            LOG_DATA("%s(): failed to create query to search "
+            CIMPLE_ERR(("%s():   failed to create query to search "
                      "for matching EFX_DiagnosticConfigurationParams",
-                     __FUNCTION__);
+                     __FUNCTION__));
             rc = -1;
             goto cleanup;
         }
@@ -2707,10 +2705,10 @@ cleanup:
                               false, jobConfs);
         if (jobConfs.size() != 1)
         {
-            LOG_DATA("%s(): incorrect number %u of matching "
-                     "diagnostic job configurations found",
-                     __FUNCTION__,
-                     jobConfs.size());
+            CIMPLE_ERR(("%s():   incorrect number %u of matching "
+                        "diagnostic job configurations found",
+                        __FUNCTION__,
+                        jobConfs.size()));
             goto cleanup;
         }
 
@@ -2737,9 +2735,9 @@ cleanup:
                       &argWait, 0);
         if (FAILED(hr))
         {
-            LOG_DATA("%s(): failed to set wait argument for %s"
-                     "method, rc=%lx", startJobMethod.c_str(),
-                     __FUNCTION__, hr);
+            CIMPLE_ERR(("%s():   failed to set wait argument for %s"
+                        "method, rc=%lx", startJobMethod.c_str(),
+                        __FUNCTION__, hr));
             rc = -1;
             goto cleanup;
         }
@@ -2785,8 +2783,8 @@ cleanup:
                 if (iterPassedNum == iterNum)
                     testPassed = Passed;
                 else
-                    LOG_DATA("%s(): only %u of %u iteration passed",
-                             __FUNCTION__, iterPassedNum, iterNum);
+                    CIMPLE_ERR(("%s():   only %u of %u iteration passed",
+                             __FUNCTION__, iterPassedNum, iterNum));
             }
         }
 

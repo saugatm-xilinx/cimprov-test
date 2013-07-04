@@ -83,14 +83,14 @@ public:
         IWbemServices __RPC_FAR* __RPC_FAR* services,
         IWbemCallResult __RPC_FAR* __RPC_FAR* result) 
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
         
     HRESULT STDMETHODCALLTYPE CancelAsyncCall( 
         IWbemObjectSink __RPC_FAR* objectSink)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
         
@@ -98,7 +98,7 @@ public:
         long flags,
         IWbemObjectSink __RPC_FAR* __RPC_FAR* objectSink)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
         
@@ -109,7 +109,7 @@ public:
         IWbemClassObject __RPC_FAR* __RPC_FAR* classObject,
         IWbemCallResult __RPC_FAR* __RPC_FAR* callResult)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
         
@@ -125,7 +125,7 @@ public:
         IWbemContext __RPC_FAR* context,
         IWbemCallResult __RPC_FAR* __RPC_FAR* callResult) 
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
         
@@ -135,7 +135,7 @@ public:
         IWbemContext __RPC_FAR* context,
         IWbemObjectSink __RPC_FAR* objectSink)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
         
@@ -211,7 +211,7 @@ public:
         IWbemContext __RPC_FAR* context,
         IEnumWbemClassObject __RPC_FAR* __RPC_FAR* enumObject)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
     
@@ -236,7 +236,7 @@ public:
         IWbemContext __RPC_FAR* context,
         IEnumWbemClassObject __RPC_FAR* __RPC_FAR* enumObject)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
     
@@ -254,7 +254,7 @@ public:
         IWbemContext __RPC_FAR* context,
         IEnumWbemClassObject __RPC_FAR* __RPC_FAR* enumObject)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
     
@@ -265,7 +265,7 @@ public:
         IWbemContext __RPC_FAR* context,
         IWbemObjectSink __RPC_FAR* objectSink)
     {
-        LOG_ENTER;
+        CIMPLE_ENTER;
         return WBEM_E_NOT_SUPPORTED;
     }
     

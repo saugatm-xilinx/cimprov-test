@@ -31,10 +31,6 @@
 #include <windows.h>
 #include <errno.h>
 
-#include <cimple/wmi/log.h>
-
-#define for if (0) ; else for
-
 POSIX_NAMESPACE_BEGIN
 
 //==============================================================================
@@ -507,10 +503,8 @@ int pthread_create(
         pthread_mutex_init(&rep->join_mutex, NULL);
     }
 
-    if (!OpenThreadToken(GetCurrentThread(), TOKEN_IMPERSONATE,
+    if (OpenThreadToken(GetCurrentThread(), TOKEN_IMPERSONATE,
                          FALSE, &token))
-        LOG_DATA("%s(): failed to open thread token", __FUNCTION__);
-    else
         set_thread_token = true;
 
     // Create thread:
@@ -524,13 +518,11 @@ int pthread_create(
 
     // If parent thread impersonated other user, so should do
     // the new thread.
-    if (set_thread_token && !SetThreadToken(&rep->handle, token))
-        LOG_DATA("%s(): failed to set thread token", __FUNCTION__);
-
+    if (set_thread_token)
+        SetThreadToken(&rep->handle, token);
+    
     if (set_thread_token && ResumeThread(rep->handle) == (DWORD)-1)
     {
-        LOG_DATA("%s(): failed to resume thread after setting the token",
-                 __FUNCTION__);
         TerminateThread(rep->handle, 0);
         CloseHandle(rep->handle);
         _destroy_thread_rep(rep);

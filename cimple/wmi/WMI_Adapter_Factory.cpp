@@ -45,17 +45,17 @@ STDMETHODIMP WMI_Adapter_Factory::QueryInterface(
     REFIID riid, 
     LPVOID* ptr)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     *ptr = NULL;
 
     if (riid == IID_IUnknown || riid == IID_IClassFactory)
     {
         *ptr = this;
         ((LPUNKNOWN)*ptr)->AddRef();
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return NOERROR;
     }
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return E_NOINTERFACE;
 }
 
@@ -66,13 +66,13 @@ STDMETHODIMP_(ULONG) WMI_Adapter_Factory::AddRef()
 
 STDMETHODIMP_(ULONG) WMI_Adapter_Factory::Release()
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     ULONG n = InterlockedDecrement(&_refs);
 
     if (n == 0)
         delete this;
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return n;
 }
 
@@ -81,12 +81,12 @@ STDMETHODIMP WMI_Adapter_Factory::CreateInstance(
     REFIID riid, 
     LPVOID* ptr)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     *ptr = NULL;
 
     if (outer)
     {
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return CLASS_E_NOAGGREGATION;
     }
 
@@ -94,7 +94,7 @@ STDMETHODIMP WMI_Adapter_Factory::CreateInstance(
 
     if (!adapter)
     {
-        LOG_EXIT;
+        CIMPLE_EXIT;
             return E_OUTOFMEMORY;
     }
 
@@ -103,7 +103,7 @@ STDMETHODIMP WMI_Adapter_Factory::CreateInstance(
     if (FAILED(hr))
         delete adapter;
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return hr;
 }
 
@@ -114,7 +114,7 @@ STDMETHODIMP WMI_Adapter_Factory::LockServer(BOOL lock)
     else
         InterlockedDecrement(&WMI_Adapter::lock);
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return NOERROR;
 }
 

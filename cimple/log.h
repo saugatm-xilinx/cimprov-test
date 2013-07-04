@@ -110,7 +110,7 @@ enum Log_Level
  * Any other arguments are arguments for processing of the fmt.
  *  
  * Example 
- *     log(LL_DBG, __FILE__, __LINE__,
+ *     log(::cimple::LL_DBG, __FILE__, __LINE__,
  *         "my name is %s; my age is %d", "John", 12);
  */
 CIMPLE_PRINTF_ATTR(4, 5)
@@ -137,7 +137,7 @@ void log(
  * @param ap va_list
  * \code 
  * Example: 
- *     vlog(LL_DBG, __FILE__, __LINE__, "variable x = %u", x);
+ *     vlog(::cimple::LL_DBG, __FILE__, __LINE__, "variable x = %u", x);
  * \endcode
  */
 CIMPLE_CIMPLE_LINKAGE
@@ -212,7 +212,7 @@ struct Log_Call_Frame
 /**
     Macro to simplify definition of fatal log entry. The ARGS
     consists of the fmt and argument components equivalent to
-    the log method. The macro supplies the LL_FATAL, __FILE__
+    the log method. The macro supplies the ::cimple::LL_FATAL, __FILE__
     and __LINE__ parameters WARNING: Invocations of this macro
     MUST USE double quotes for the ARGS.
     \code Example:
@@ -223,9 +223,9 @@ struct Log_Call_Frame
 #define CIMPLE_FATAL(ARGS) \
     do \
     { \
-        if (_log_enabled_state) \
+        if (::cimple::_log_enabled_state)       \
         { \
-            Log_Call_Frame frame(LL_FATAL, __FILE__, __LINE__); \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_FATAL, __FILE__, __LINE__); \
             frame.invoke ARGS; \
         } \
     } \
@@ -246,9 +246,9 @@ struct Log_Call_Frame
 #define CIMPLE_ERR(ARGS) \
     do \
     { \
-        if (_log_enabled_state) \
+        if (::cimple::_log_enabled_state)       \
         { \
-            Log_Call_Frame frame(LL_ERR, __FILE__, __LINE__); \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_ERR, __FILE__, __LINE__); \
             frame.invoke ARGS; \
         } \
     } \
@@ -268,10 +268,10 @@ struct Log_Call_Frame
 #define CIMPLE_WARN(ARGS) \
     do \
     { \
-        if(_log_enabled_state) \
+        if(::cimple::_log_enabled_state)        \
         { \
-        Log_Call_Frame frame(LL_WARN, __FILE__, __LINE__); \
-        frame.invoke ARGS; \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_WARN, __FILE__, __LINE__); \
+            frame.invoke ARGS;                                  \
         } \
     } \
     while (0)
@@ -290,15 +290,15 @@ struct Log_Call_Frame
 #define CIMPLE_INFO(ARGS) \
     do \
     { \
-        if(_log_enabled_state) \
+        if(::cimple::_log_enabled_state)        \
         {   \
-        Log_Call_Frame frame(LL_INFO, __FILE__, __LINE__); \
-        frame.invoke ARGS; \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_INFO, __FILE__, __LINE__); \
+            frame.invoke ARGS;                                  \
         } \
     } \
     while (0)
 /**
-*   Macro to simplify definition of debug (LL_DBG) severity log
+*   Macro to simplify definition of debug (::cimple::LL_DBG) severity log
 *   entries. The ARGS consists of the fmt and argument
 *   components equivalent to the log method and using definitons
 *   from printf. WARNING: Invocations of this macro MUST USE
@@ -311,15 +311,18 @@ struct Log_Call_Frame
 #define CIMPLE_DBG(ARGS) \
     do \
     { \
-        if(_log_enabled_state) \
+        if(::cimple::_log_enabled_state)        \
         {   \
-        Log_Call_Frame frame(LL_DBG, __FILE__, __LINE__); \
-        frame.invoke ARGS; \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_DBG, __FILE__, __LINE__); \
+            frame.invoke ARGS;                                  \
         } \
     } \
     while (0)
 
 #endif  // DISABLE_LOG_MACROS_OPT
+
+#define CIMPLE_ENTER CIMPLE_DBG(("ENTER %s", __FUNCTION__))
+#define CIMPLE_EXIT  CIMPLE_DBG(("EXIT %s", __FUNCTION__))
 
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////

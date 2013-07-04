@@ -57,6 +57,11 @@ DEFINE_GUID(IID_IWbemEventProvider, 0xe245105b, 0xb06e, 0x11d0, 0xad, 0x61, 0x00
 DEFINE_GUID(IID_IWbemEventProviderQuerySink, 0x580acaf8, 0xfa1c, 0x11d0, 0xad, 0x72, 0x00, 0xc0, 0x4f, 0xd8, 0xfd, 0xff);
 DEFINE_GUID(IID_IWbemProviderInit, 0x1be41572, 0x91dd, 0x11d1, 0xae, 0xb2, 0x00, 0xc0, 0x4f, 0xb6, 0x88, 0x20);
 DEFINE_GUID(IID_IWbemUnboundObjectSink, 0xe246107b, 0xb06e, 0x11d0, 0xad, 0x61, 0x00, 0xc0, 0x4f, 0xd8, 0xfd, 0xff);
+
+DEFINE_GUID(IID_IWbemHiPerfProvider, 0x49353c93, 0x516b, 0x11d1, 0xae, 0xa6, 0x00, 0xc0, 0x4f, 0xb6, 0x88, 0x20);
+DEFINE_GUID(IID_IWbemEventConsumerProvider, 0xe246107a, 0xb06e, 0x11d0, 0xad, 0x61, 0x00, 0xc0, 0x4f, 0xd8, 0xfd, 0xff);
+DEFINE_GUID(IID_IWbemEventProviderSecurity, 0x631f7d96, 0xd993, 0x11d2, 0xb3, 0x39, 0x00, 0x10, 0x5a, 0x1f, 0x4a, 0xaf);
+DEFINE_GUID(IID_IWbemPropertyProvider, 0xCE61E841, 0x65BC, 0x11d0, 0xb6, 0xbd, 0x00, 0xAA, 0x00, 0x32, 0x40, 0xC7);
 };
 #endif
 
@@ -98,7 +103,7 @@ public:
 
 static void _formatGUID(REFGUID guid, char str[128])
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WCHAR wstr[128];
     memset(wstr, 0, sizeof(wstr));
 
@@ -111,7 +116,7 @@ static void _formatGUID(REFGUID guid, char str[128])
 static void _formatCLSID(REFGUID guid, char clsid[128])
 {
     char str[128];
-    LOG_ENTER;
+    CIMPLE_ENTER;
     _formatGUID(guid, str);
     StringCbCopy(clsid, 128, "Software\\classes\\CLSID\\");
     StringCbCat(clsid, 128, (LPCTSTR)str);
@@ -131,7 +136,7 @@ static HRESULT _registerServer(
 
     HMODULE hmod;
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
     // Format CLSID path: "Software\\classes\\CLSID\{GUID}"
 
     _formatCLSID(*guid, clsid);
@@ -143,7 +148,7 @@ static HRESULT _registerServer(
 
     if (r != ERROR_SUCCESS)
     {
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_FAIL;
     }
 
@@ -153,7 +158,7 @@ static HRESULT _registerServer(
     if (r != ERROR_SUCCESS)
     {
         RegCloseKey(key1);
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_FAIL;
     }
 
@@ -163,7 +168,7 @@ static HRESULT _registerServer(
     if (r != ERROR_SUCCESS)
     {
         RegCloseKey(key1);
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_FAIL;
     }
 
@@ -186,7 +191,7 @@ static HRESULT _registerServer(
     {
         RegCloseKey(key2);
         RegCloseKey(key1);
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_FAIL;
     }
 
@@ -199,14 +204,14 @@ static HRESULT _registerServer(
     {
         RegCloseKey(key2);
         RegCloseKey(key1);
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_FAIL;
     }
 
     RegCloseKey(key1);
     RegCloseKey(key2);
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return NOERROR;
 }
 
@@ -217,7 +222,7 @@ static HRESULT _unregisterServer(const GUID* guid)
     HKEY key;
     DWORD r;
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
     // Format GUID path:
 
     _formatGUID(*guid, guidstr);
@@ -247,13 +252,13 @@ static HRESULT _unregisterServer(const GUID* guid)
         RegCloseKey(key);
     }
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return NOERROR;
 }
 
 static int _get_classname(IWbemClassObject* co, String& classname)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     classname.clear();
 
     BString nm((wchar_t *)L"__CLASS", WSTR_TAG);
@@ -263,13 +268,13 @@ static int _get_classname(IWbemClassObject* co, String& classname)
     if (!SUCCEEDED(hr) || V_VT(&v) != VT_BSTR)
     {
         VariantClear(&v);
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return -1;
     }
 
     classname = bstr2str(V_BSTR(&v));
     VariantClear(&v);
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return 0;
 }
 
@@ -289,7 +294,7 @@ WMI_Adapter::WMI_Adapter(
     BSTR password,
     IWbemContext* context) : _refs(0), _reg(reg), _services(0)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WMI_Thread_Context_Pusher pusher;
 
     InterlockedIncrement(&WMI_Adapter::numInstances);
@@ -300,14 +305,14 @@ WMI_Adapter::WMI_Adapter(
         h->load();
         _handles.append(h);
     }
-    LOG_EXIT;
+    CIMPLE_EXIT;
 }
 
 WMI_Adapter::~WMI_Adapter()
 {
     WMI_Thread_Context_Pusher pusher;
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
 
     for (size_t i = 0; i < _handles.size(); i++)
     {
@@ -319,7 +324,7 @@ WMI_Adapter::~WMI_Adapter()
         _services->Release();
 
     InterlockedDecrement(&WMI_Adapter::numInstances);
-    LOG_EXIT;
+    CIMPLE_EXIT;
 }
 
 static void _print_guid(REFIID riid, char buf[1024])
@@ -368,9 +373,9 @@ STDMETHODIMP WMI_Adapter::QueryInterface(REFIID riid, LPVOID* ptr)
            IWbemProviderInit
     */
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
 
-    __log("this=%p\n", this);
+    CIMPLE_DBG(("this=%p", this));
 
     //wchar buf[1024];
     //char[] str;
@@ -384,119 +389,117 @@ STDMETHODIMP WMI_Adapter::QueryInterface(REFIID riid, LPVOID* ptr)
     if (riid == IID_IWbemServices)
     {
        *ptr = (IWbemServices*)this;
-       __log("%s\n", "IwbemServices IID");
+       CIMPLE_DBG(("%s", "IwbemServices IID"));
        AddRef();
-       LOG_EXIT;
+       CIMPLE_EXIT;
        return NOERROR;
     }
     else if (riid == IID_IWbemEventProviderQuerySink)
     {
        *ptr = (IWbemEventProviderQuerySink*)this;
-       __log("%s\n", "IID_IWbemEventProviderQuerySink");
+       CIMPLE_DBG(("%s", "IID_IWbemEventProviderQuerySink"));
        AddRef();
-       LOG_EXIT;
+       CIMPLE_EXIT;
        return NOERROR;
     }
     else if (riid == IID_IWbemEventProvider)
     {
        *ptr = (IWbemEventProvider*)this;
-       __log("%s\n", "IID_IWbemEventProvider");
+       CIMPLE_DBG(("%s", "IID_IWbemEventProvider"));
        AddRef();
-       LOG_EXIT;
+       CIMPLE_EXIT;
        return NOERROR;
     }
     else if (riid == IID_IWbemProviderInit)
     {
        *ptr = (IWbemProviderInit*)this;
 
-       __log("%s\n", "IID_IWbemProviderInit");
+       CIMPLE_DBG(("%s", "IID_IWbemProviderInit"));
        AddRef();
-       LOG_EXIT;
+       CIMPLE_EXIT;
        return NOERROR;
     }
     else if (riid == IID_IWbemUnboundObjectSink)
     {
-        __log("%s\n", "IID_IWbemUnboundObjectSink");
+        CIMPLE_DBG(("%s", "IID_IWbemUnboundObjectSink"));
         *ptr = NULL;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_NOINTERFACE;
     }
-#if 0
     else if (riid == IID_IWbemHiPerfProvider)
     {
-        __log("%s\n", "IID_IWbemHiPerfProvider");
+        CIMPLE_DBG(("%s", "IID_IWbemHiPerfProvider"));
         *ptr = NULL;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_NOINTERFACE;
     }
     else if (riid == IID_IWbemEventConsumerProvider)
     {
-        __log("%s\n", "IID_IWbemEventConsumerProvider");
+        CIMPLE_DBG(("%s", "IID_IWbemEventConsumerProvider"));
         *ptr = NULL;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_NOINTERFACE;
     }
-    /* this one undefined
+#if 0
     else if (riid == IID_IWbemEventConsumerProviderEx)
     {
-        __log("%s\n", "IID_IWbemEventConsumerProviderEx");
+        CIMPLE_DBG(("%s", "IID_IWbemEventConsumerProviderEx"));
         *ptr = NULL;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_NOINTERFACE;
     }
-    */
+#endif
     else if (riid == IID_IWbemEventProviderSecurity)
     {
-        __log("%s\n", "IID_IWbemEventProviderSecurity");
+        CIMPLE_DBG(("%s", "IID_IWbemEventProviderSecurity"));
         *ptr = NULL;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_NOINTERFACE;
     }
     else if (riid == IID_IWbemPropertyProvider)
     {
-        __log("%s\n", "IID_IWbemEventProviderSecurity");
+        CIMPLE_DBG(("%s", "IID_IWbemEventProviderSecurity"));
         *ptr = NULL;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return E_NOINTERFACE;
     }
-#endif
     else if (riid == IID_IUnknown)
     {
        *ptr = (IWbemProviderInit*)this;
-       __log("%s\n", "IID_IUnknown");
+       CIMPLE_DBG(("%s", "IID_IUnknown"));
 
        AddRef();
-       LOG_EXIT;
+       CIMPLE_EXIT;
        return NOERROR;
     }
     
     {
         char buf[1024];
         _print_guid(riid, buf);
-        __log("UNHANDLED IID: %s\n",buf);
+        CIMPLE_WARN(("UNHANDLED IID: %s", buf));
     }
 
     *ptr = NULL;
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return E_NOINTERFACE;
 }
 
 STDMETHODIMP_(ULONG) WMI_Adapter::AddRef()
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     return ++_refs;
-    LOG_EXIT;
+    CIMPLE_EXIT;
 }
 
 STDMETHODIMP_(ULONG) WMI_Adapter::Release()
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     ULONG n = InterlockedDecrement(&_refs);
 
     if (n == 0)
         delete this;
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return n;
 }
 
@@ -509,7 +512,7 @@ STDMETHODIMP WMI_Adapter::Initialize(
     IWbemContext* context,
     IWbemProviderInitSink* initSink)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     if (!services)
     {
         initSink->SetStatus(WBEM_E_FAILED, 0);
@@ -521,7 +524,7 @@ STDMETHODIMP WMI_Adapter::Initialize(
         initSink->SetStatus(WBEM_S_INITIALIZED, 0);
     }
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return WBEM_S_NO_ERROR;
 }
 
@@ -539,12 +542,12 @@ static bool _enum_instances_proc(
     Enum_Instances_Status status,
     void* client_data)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     Enum_Instances_Proc_Data* data = (Enum_Instances_Proc_Data*)client_data;
 
     if (!inst)
     {
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return false;
     }
 
@@ -558,7 +561,7 @@ static bool _enum_instances_proc(
         data->handler->Indicate(1, &wi);
     }
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return true;
 }
 
@@ -568,7 +571,7 @@ HRESULT WMI_Adapter::_create_instance(
     IWbemContext __RPC_FAR* context,
     IWbemObjectSink __RPC_FAR* handler)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     Impersonator impersonator;
 
     // Get the classname.
@@ -647,7 +650,7 @@ HRESULT WMI_Adapter::_create_instance(
     }
 
     // Unreachable!
-    LOG_EXIT;
+    CIMPLE_EXIT;
     RETURN_CODE(handler, WBEM_E_FAILED);
 }
 
@@ -657,7 +660,7 @@ HRESULT WMI_Adapter::_modify_instance(
     IWbemContext __RPC_FAR* context,
     IWbemObjectSink __RPC_FAR* handler)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     Impersonator impersonator;
 
     // Get the classname.
@@ -747,7 +750,7 @@ HRESULT STDMETHODCALLTYPE WMI_Adapter::PutInstanceAsync(
 {
     WMI_Thread_Context_Pusher pusher;
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
     // Dispatch to _create_instance() or _modify_instance().
 
     if (flags & WBEM_FLAG_CREATE_ONLY)
@@ -785,7 +788,7 @@ HRESULT WMI_Adapter::CreateInstanceEnumAsync(
     IWbemObjectSink* handler)
 #endif
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WMI_Thread_Context_Pusher pusher;
 
     Impersonator impersonator;
@@ -846,7 +849,7 @@ SCODE WMI_Adapter::GetObjectAsync(
     WMI_Thread_Context_Pusher pusher;
     Impersonator impersonator;
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
 
     // Check parameters:
 
@@ -925,7 +928,7 @@ HRESULT WMI_Adapter::DeleteInstanceAsync(
     IWbemContext __RPC_FAR* context,
     IWbemObjectSink __RPC_FAR* handler)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WMI_Thread_Context_Pusher pusher;
     Impersonator impersonator;
 
@@ -999,7 +1002,7 @@ HRESULT WMI_Adapter::DeleteInstanceAsync(
 
 static int _parse_wql(const String& query, String& classname)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     const char* p = query.c_str();
 
     // Skip whitespace:
@@ -1074,7 +1077,7 @@ HRESULT WMI_Adapter::ExecQueryAsync(
     IWbemContext __RPC_FAR* context,
     IWbemObjectSink __RPC_FAR* handler)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WMI_Thread_Context_Pusher pusher;
 
     // Reject non-wql queries.
@@ -1148,7 +1151,7 @@ HRESULT WMI_Adapter::ExecMethodAsync(
     Impersonator impersonator;
     HRESULT hr;
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
     // Check parameters:
 
     if (!objectPath || !methodName || !context || !handler)
@@ -1306,7 +1309,7 @@ HRESULT STDMETHODCALLTYPE WMI_Adapter::NewQuery(
     __RPC__in WBEM_WSTR queryLanguage,
     __RPC__in WBEM_WSTR queryExpression)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     _numQueries++;
 
     return S_OK;
@@ -1315,7 +1318,7 @@ HRESULT STDMETHODCALLTYPE WMI_Adapter::NewQuery(
 HRESULT STDMETHODCALLTYPE WMI_Adapter::CancelQuery(
     unsigned long id)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WMI_Thread_Context_Pusher pusher;
 
     // If no more queries left, then disable indications on all indication
@@ -1350,7 +1353,7 @@ struct Indication_Proc_Data
 
 static bool _indication_proc(Instance* indication, void* client_data)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     Indication_Proc_Data* data = (Indication_Proc_Data*)client_data;
     Auto_Mutex am(data->mutex);
 
@@ -1388,7 +1391,7 @@ HRESULT WMI_Adapter::ProvideEvents(
     IWbemObjectSink* sink,
     long lFlags)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WMI_Thread_Context_Pusher pusher;
 
     // Enable indications on all indication provider:
@@ -1417,7 +1420,7 @@ HRESULT WMI_Adapter::ProvideEvents(
 
 Provider_Handle* WMI_Adapter::_find_handle(const String& class_name)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     for (size_t i = 0; i < _handles.size(); i++)
     {
         Provider_Handle* h = _handles[i];
@@ -1444,24 +1447,24 @@ using namespace cimple;
 
 static void _DllMain(WMI_DllMain_Args* args)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     if (DLL_PROCESS_ATTACH == args->reason)
         *args->module = args->instance;
 
     args->result = TRUE;
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return;
 }
 
 static void _DllGetClassObject(WMI_DllGetClassObject_Args* args)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     WMI_Adapter_Factory* factory;
 
     if (*args->clsid != *args->guid)
     {
         args->result = E_FAIL;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return;
     }
 
@@ -1470,7 +1473,7 @@ static void _DllGetClassObject(WMI_DllGetClassObject_Args* args)
     if (!factory)
     {
         args->result = E_OUTOFMEMORY;
-        LOG_EXIT;
+        CIMPLE_EXIT;
         return;
     }
 
@@ -1480,32 +1483,32 @@ static void _DllGetClassObject(WMI_DllGetClassObject_Args* args)
         delete factory;
 
     args->result = hr;
-    LOG_EXIT;
+    CIMPLE_EXIT;
 }
 
 static void _DllCanUnloadNow(WMI_DllCanUnloadNow_Args* args)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     if (WMI_Adapter::numInstances == 0 && WMI_Adapter::lock == 0)
         args->result = S_OK;
     else
         args->result = S_FALSE;
-    LOG_EXIT;
+    CIMPLE_EXIT;
 }
 
 static void _DllRegisterServer(WMI_DllRegisterServer_Args* args)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     args->result = 
         _registerServer(args->guid, *args->module, args->module_name, "Both");
-    LOG_EXIT;
+    CIMPLE_EXIT;
 }
 
 static void _DllUnregisterServer(WMI_DllUnregisterServer_Args* args)
 {
-    LOG_ENTER;
+    CIMPLE_ENTER;
     args->result = _unregisterServer(args->guid);
-    LOG_EXIT;
+    CIMPLE_EXIT;
 }
 
 extern "C" 
@@ -1522,7 +1525,7 @@ int cimple_wmi_adapter(
 {
     // Extract parameters:
 
-    LOG_ENTER;
+    CIMPLE_ENTER;
 
     long function = (long)arg1;
 
@@ -1557,11 +1560,11 @@ int cimple_wmi_adapter(
         }
         default:
         {
-            LOG_EXIT;
+            CIMPLE_EXIT;
             return -1;
         }
     }
 
-    LOG_EXIT;
+    CIMPLE_EXIT;
     return 0;
 }
