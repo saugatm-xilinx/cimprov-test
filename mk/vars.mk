@@ -12,7 +12,7 @@ DEFAULT_UPSTREAM_REPOSITORY ?= https://oktetlabs.ru/purgatorium/prj/level5/cim
 CIM_SCHEMA_REPOSITORY=$(DEFAULT_UPSTREAM_REPOSITORY)
 
 ifeq ($(CIM_SERVER),wmi)
-IMP_NAMESPACE=root/default
+IMP_NAMESPACE=root/cimv2
 else
 IMP_NAMESPACE=root/solarflare
 endif
