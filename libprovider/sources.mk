@@ -71,7 +71,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 libprovider_GENERATED = module.cpp
 
 ifeq ($(CIM_INTERFACE),wmi)
-libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof
+libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof $(MSI_NAME)
 endif
 
 libprovider_DIR = libprovider
@@ -170,9 +170,15 @@ $(libprovider_DIR)/resource.o : WINDRES_CPPFLAGS = -DPROVIDER_LIBRARY=\\\"$(PROV
 $(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/repository.mof $(MAKEFILE_LIST)
 	tac $< | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
 
+.PHONY : msi
 
-Install$(PROVIDER_LIBRARY).exe : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) \
-								 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
+PROVIDER_MSI_PACKAGE=sf_cim_provider
+MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_windows_32-64.exe
+
+msi : $(MSI_NAME)
+
+$(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) \
+	 		 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' $<
 
 endif
