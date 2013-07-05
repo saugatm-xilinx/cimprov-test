@@ -84,7 +84,7 @@ namespace solarflare
     const char BootROM::romSysname[] = "";
 
     const char NIC::nicDescription[] = "Solarflare NIC";
-    const String NIC::nicName = "Solarflare: Ethernet Adapter";
+    const String NIC::nicName = "Ethernet Adapter";
 
     const String System::manfId = "Solarflare Inc.";
     const String System::nsPrefix = "Solarflare";
