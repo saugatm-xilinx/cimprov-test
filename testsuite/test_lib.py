@@ -53,7 +53,7 @@ def enum_check(cli, class_list):
             inst_list = cli.EnumerateInstances(cl)
             inst_name_list = cli.EnumerateInstanceNames(cl)
         except Exception, e:
-            logger.error("Failed to enumerate class instances:\n{0}".format(e))
+            logger.error('Failed to enumerate class instances:\n%s', e)
             passed = False
             continue
         if len(inst_list) != len(inst_name_list):
@@ -120,8 +120,7 @@ def profile_check(prof_list, spec_list, ns):
     logger.info("Checking profiles registration...")
     for profile in prof_list:
         res = profile_registered(profile)
-        logger.info("Profile {0}: {1}".format(
-                    profile, res and "OK" or "ENOENT"))
+        logger.info("Profile %s: %s" % (profile, res and "OK" or "ENOENT"))
     
     logger.info("Checking profile classes...")
     
@@ -134,35 +133,35 @@ def profile_check(prof_list, spec_list, ns):
         try:
             inst_list = wbemclient.EnumerateInstances(class_spec[SC_NAME])
         except Exception, e:
-            logger.error("Failed to enumerate instances:\n{0}".format(e))
+            logger.error("Failed to enumerate instances:\n%s", e)
             global_passed = False
-            logger.info("Class {0} FAILED".format(class_spec[SC_NAME]))
+            logger.info("Class %s FAILED", class_spec[SC_NAME])
             continue
         
         inst_count = 0
         for inst in inst_list:
             inst_count += 1
-            logger.info("Instance #{0}".format(inst_count))
+            logger.info("Instance #%s", inst_count)
 
             # Checking properties
             for req_prop in class_spec[SC_PROP]:
-                logger.info("Checking property {0}".format(req_prop))
+                logger.info("Checking property %s", req_prop)
                 try:
                     if ((TESTER_WMI and not inst[req_prop]) or
                         (not TESTER_WMI and inst.properties[req_prop].value == None)):
-                        logger.error(("Required property {0} " +
-                                      "has NULL value").format(req_prop))
+                        logger.error("Required property %s " +
+                                      "has NULL value", req_prop)
                 except Exception, e:
                     logger.error(("Failed to get property " +
-                                "{0} of {1}:\n{2}").format(
+                                "%s of %s:\n%s"),
                                             req_prop,
-                                            TESTER_WMI and inst or inst.path, e))
+                                            TESTER_WMI and inst or inst.path, e)
                     global_passed = False
                     class_passed = False
 
             # Checking associations
             for assoc_spec in class_spec[SC_ASSOC]:
-                title = "{0} - {1} x{2}".format(assoc_spec[SC_ASSOC_ACL],
+                title = "%s - %s x%s" % (assoc_spec[SC_ASSOC_ACL],
                                                 assoc_spec[SC_ASSOC_RCL],
                                                 assoc_spec[SC_ASSOC_NUM])
                 logger.info("Checking association instance counts: " + title)
@@ -174,7 +173,7 @@ def profile_check(prof_list, spec_list, ns):
                         AssocClass=assoc_spec[SC_ASSOC_ACL],
                         ResultClass=assoc_spec[SC_ASSOC_RCL])
                 except Exception, e:
-                    logger.error("Failed to get associators:\n{0}".format(e))
+                    logger.error("Failed to get associators:\n%s", e)
                     global_passed = False
                     class_passed = False
                     continue
@@ -183,28 +182,28 @@ def profile_check(prof_list, spec_list, ns):
                 for assoc in assoc_list:
                     assoc_count += 1
                 if assoc_count != assoc_spec[SC_ASSOC_NUM]:
-                    logger.error(("{0}: unexpected assotiators number: " +
-                                  "{1} instead of {2}").format(
-                                            title, assoc_count,
-                                            assoc_spec[SC_ASSOC_NUM]))
+                    logger.error("%s: unexpected assotiators number: " +
+                                  "%s instead of %s",
+                                        title, assoc_count,
+                                        assoc_spec[SC_ASSOC_NUM])
                     global_passed = False
                     class_passed = False
 
         if class_spec[SC_INST_NUM] > 0:
-            total = "{0}: expected {1} {2}".format(
-                class_spec[SC_NAME], class_spec[SC_INST_NUM],
+            total = "%s: expected %s %s" % (class_spec[SC_NAME],
+                class_spec[SC_INST_NUM],
                 class_spec[SC_INST_NUM] == 1 and "instance" or "instances")
             logger.info(total)
             
             if (class_spec[SC_INST_NUM] != inst_count):
-                logger.error(("{0}: unexpected instance count: " +
-                              "{1} instead of {2}").format(
+                logger.error("%s: unexpected instance count: " +
+                              "%s instead of %s",
                                 class_spec[SC_NAME], inst_count,
-                                class_spec[SC_INST_NUM]))
+                                class_spec[SC_INST_NUM])
                 global_passed = False
                 class_passed = False
-        logger.info("Class {0} {1}".format(class_spec[SC_NAME],
-                        class_passed and "PASSED" or "FAILED"))
+        logger.info("Class %s %s", class_spec[SC_NAME],
+                        class_passed and "PASSED" or "FAILED")
     return global_passed
 
 ######################
@@ -218,8 +217,8 @@ def state_change(conn, inst_path, state):
         (rval, out_params) = conn.InvokeMethod('RequestStateChange',
                                     inst_path, RequestedState=state)
     except Exception, e:
-        logger.error("Failed to change state of {0} to {1}:\n{2}".format(
-                                                inst_path, state, e))
+        logger.error("Failed to change state of %s to %s:\n%s",
+                     inst_path, state, e)
         (rval, out_params) = (RC_FAIL, {})
     
     #TODO: do we need out_params ?
@@ -233,7 +232,7 @@ def req_state_change_check(ns, class_name, state, timeout):
     inst_num = 0
     for inst in inst_list:
         inst_num += 1
-        logger.info("instance #{0}".format(inst_num))
+        logger.info("instance #%s", inst_num)
         # Change state
         rc = state_change(wbemclient, inst.path,
                           wbemcli.Uint16(state))
@@ -247,9 +246,9 @@ def req_state_change_check(ns, class_name, state, timeout):
         # Check oper state
         new_inst = wbemclient.GetInstance(inst.path)
         if new_inst[u'EnabledState'] != state:
-            logger.error(("Oper state of instance {0} is unexpected: " +
-                        "{1} instead of {2}").format(inst.path,
-                        new_inst[u'EnabledState'], state))
+            logger.error("Oper state of instance %s is unexpected: " +
+                        "%s instead of %s", inst.path,
+                        new_inst[u'EnabledState'], state)
             passed = False
             continue
         
@@ -310,12 +309,12 @@ def assoc_traversal(cli, class_list, is_assoc,
     global_passed = True
     if is_assoc:
         logger.info("Association traversal parameters:\n" +
-                    "names_only = {0}\nrole = {1}\nres_role = {2}".format(
-                    names_only, role, res_role))
+                    "names_only = %s\nrole = %s\nres_role = %s",
+                    names_only, role, res_role)
     else:
         logger.info("Reference traversal parameters:\n" +
-                    "names_only = {0}\nrole = {1}".format(
-                    names_only, role))
+                    "names_only = %s\nrole = %s",
+                    names_only, role)
 
     for cl in class_list:
         passed = True
@@ -329,7 +328,7 @@ def assoc_traversal(cli, class_list, is_assoc,
             ref = [{}, {}]
             num = 0
             cross_ns = False
-            logger.info("Checking {0} instance {1}".format(cl, inst))
+            logger.info("Checking %s instance %s", cl, inst)
             for key, prop in inst.properties.items():
                 if prop.type == 'reference':
                     ref[num]['path'] = prop.value
@@ -337,7 +336,7 @@ def assoc_traversal(cli, class_list, is_assoc,
                     num +=1
                     #TODO: ignore >2-way associations
             for r in ref:
-                logger.info("Get reference instance:\n{0}".format(r))
+                logger.info("Get reference instance:\n%s", r)
                 if r['path'].namespace != TESTER_NS:
                     #TODO: proper handling
                     logger.warn("Cross-namespace reference - ignore");
@@ -347,8 +346,8 @@ def assoc_traversal(cli, class_list, is_assoc,
                     r['inst'] = cli.GetInstance(r['path'])
                 except Exception, e:
                     logger.error(
-                    "Failed to get reference instance:\n{0}".format(e))
-                    logger.info("Namespace is {0}\n".format(r['path'].namespace))
+                    "Failed to get reference instance:\n%s", e)
+                    logger.info("Namespace is %s\n", r['path'].namespace)
                     passed = False
                     global_passed = False
             
@@ -362,6 +361,6 @@ def assoc_traversal(cli, class_list, is_assoc,
                                      role, res_role)
             passed = passed and func(cli, 1, ref, cl, names_only,
                                      role, res_role)
-        logger.info("{0}: {1}".format(cl, passed and "PASSED" or "FAILED"))
+        logger.info("%s: %s", cl, passed and "PASSED" or "FAILED")
     return global_passed
 

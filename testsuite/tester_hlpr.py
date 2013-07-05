@@ -7,9 +7,9 @@ from tester_vars import *
 def test_start(name, descr):
     logger = logging.getLogger(LOGGER_NAME)
     fmt = "Starting test " + name
-    fmt = "{0:60s}".format(fmt)
+    fmt = "%-60s" % fmt
     sys.stdout.write(fmt)
-    logger.info("TEST {0}: {1}".format(name, descr))
+    logger.info("TEST %s: %s", name, descr)
 
 def test_result(name, res):
     logger = logging.getLogger(LOGGER_NAME)
@@ -20,7 +20,7 @@ def test_result(name, res):
     else:
         res = "FAILED"
     print res
-    logger.info("TEST {0}: {1}".format(name, res))
+    logger.info("TEST %s: %s",name, res)
 
 def test_param_str2bool(s):
     if type(s) == type(""):
