@@ -383,6 +383,9 @@ namespace solarflare
     {
         const solarflare::HostSWElement& he = static_cast<const solarflare::HostSWElement&>(se);
         
+        if (he.package() == NULL)
+            return NULL;
+        
         SF_BundleComponent *link = SF_BundleComponent::create(true);
         link->GroupComponent = 
         cast<CIM_SoftwareIdentity *>(he.package()->cimReference(SF_SoftwareIdentity::static_meta_class));
@@ -801,6 +804,9 @@ namespace solarflare
     SoftwareServiceAffectsElementHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const HostSWElement& hsw = static_cast<const HostSWElement&>(se);
+        if (hsw.package() == NULL)
+            return NULL;
+
         SF_ServiceAffectsSoftware *link = SF_ServiceAffectsSoftware::create(true);
 
         link->AffectedElement = cast<cimple::CIM_SoftwareIdentity *>(se.cimReference(SF_SoftwareIdentity::static_meta_class));
