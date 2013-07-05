@@ -12,14 +12,18 @@ class WBEMConnection(object):
             user = 'user=%s' % `self.creds[0]`
         return "%s(%s, %s, namespace=%s)" % (self.__class__.__name__, `self.url`,
                                              user, `self.default_namespace`)
-    def EnumerateInstances(self, ClassName, namespace = None, **params):
+    def EnumerateInstances(self, ClassName, namespace = None):
         if namespace is None:
             namespace = self.default_namespace
         cmd = ["wmic.exe", "/namespace:" + namespace, "path", ClassName, "get", "/value"]
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        if proc.returncode != 0:
+            raise Exception('wmic exited with status %r: %r' % (p.returncode, err))
+        lines = out.split('\r\r\n')
         instances = []
         inst = {}
-        for line in proc.stdout:
+        for line in lines:
             stripped_line = line.strip()
             if stripped_line:
                 prop = stripped_line.split('=')
@@ -28,8 +32,10 @@ class WBEMConnection(object):
                 if inst:
                     instances.append(inst)
                     inst = {}
+        if inst:
+            instances.append(inst)
         return instances
-    def EnumerateInstanceNames(self, ClassName, namespace = None, **params):
-        return self.EnumerateInstances(ClassName, namespace, params)
+    def EnumerateInstanceNames(self, ClassName, namespace = None):
+        return self.EnumerateInstances(ClassName, namespace)
 
 
