@@ -17,21 +17,46 @@ class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 #if defined(IMPNS)
 ASSOCIATION
 class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
-      [Override("Dependent")]
+#ifdef TARGET_CIM_SERVER_wmi
+    [Override ( "Antecedent" ), Key]
+   CIM_SoftwareIdentity REF Antecedent;
+#endif
+      [Override("Dependent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+      ]
    CIM_PortController REF Dependent;
+
 };
 
 ASSOCIATION
 class SF_DiagElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
-      [Override("Dependent")]
+#ifdef TARGET_CIM_SERVER_wmi
+    [Override ( "Antecedent" ), Key]
+   CIM_SoftwareIdentity REF Antecedent;
+#endif
+      [Override("Dependent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+      ]
    CIM_DiagnosticTest REF Dependent;
 };
 
 ASSOCIATION
 class SF_BundleComponent : CIM_OrderedComponent {
-      [Override("GroupComponent")]
+      [Override("GroupComponent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+]
    CIM_SoftwareIdentity REF GroupComponent;
-      [Override("PartComponent")]
+      [Override("PartComponent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+]
    CIM_SoftwareIdentity REF PartComponent;
 };
 
@@ -57,6 +82,10 @@ class SF_PhysicalConnector : CIM_PhysicalConnector {
 
 ASSOCIATION
 class SF_ConnectorOnNIC : CIM_ConnectorOnPackage {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [Override("GroupComponent"),Key] CIM_PhysicalPackage Ref GroupComponent;
+  [Override("PartComponent"),Key] CIM_PhysicalConnector Ref PartComponent;
+#endif
 };
 
 INSTANCE
@@ -79,16 +108,28 @@ class SF_PortController : CIM_PortController {
 #if defined(ROOTNS) || defined(IMPNS)
 ASSOCIATION
 class SF_SystemDevice : CIM_SystemDevice {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [Override("GroupComponent"),Key] CIM_System Ref GroupComponent;
+  [Override("PartComponent"),Key] CIM_LogicalDevice Ref PartComponent;
+#endif
 };
 #endif
 
 #if defined(IMPNS)
 ASSOCIATION
 class SF_ConnectorRealizesPort : CIM_Realizes {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
+  [Override("Dependent"),Key] CIM_LogicalDevice Ref Dependent;
+#endif
 };
 
 ASSOCIATION
 class SF_CardRealizesController : CIM_Realizes {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
+  [Override("Dependent"),Key] CIM_LogicalDevice Ref Dependent;
+#endif
 };
 
 INSTANCE
@@ -97,6 +138,10 @@ class SF_LANEndpoint : CIM_LANEndpoint {
 
 ASSOCIATION
 class SF_NICSAPImplementation : CIM_DeviceSAPImplementation {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [Override("Antecedent"),Key] CIM_LogicalDevice Ref Antecedent;
+  [Override("Dependent"),Key] CIM_ServiceAccessPoint Ref Dependent;
+#endif
 };
 
 INSTANCE
@@ -145,15 +190,27 @@ class SF_ServiceAffectsSoftware : CIM_ServiceAffectsElement {
 #if defined(IMPNS) || defined(ROOTNS)
 ASSOCIATION
 class SF_HostedService : CIM_HostedService {
+#if defined(TARGET_CIM_SERVER_wmi)
+    [read,Override("Antecedent"),Key] CIM_System Ref Antecedent;
+    [read,Override("Dependent"),Key] CIM_Service Ref Dependent;
+#endif
 };
 #endif
 
 #if defined(IMPNS)
 ASSOCIATION
 class SF_ControlledBy : CIM_ControlledBy {
-      [Override("Dependent")]
+      [Override("Dependent")
+#if defined(TARGET_CIM_SERVER_wmi)
+       ,Key
+#endif
+]
    CIM_EthernetPort REF Dependent;
-      [Override("Antecedent")]
+      [Override("Antecedent")
+#if defined(TARGET_CIM_SERVER_wmi)
+       ,Key
+#endif
+]
    CIM_PortController REF Antecedent;
 };
 #endif
@@ -161,6 +218,10 @@ class SF_ControlledBy : CIM_ControlledBy {
 #if defined(IMPNS) || defined(ROOTNS)
 ASSOCIATION
 class SF_HostedAccessPoint : CIM_HostedAccessPoint {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [read, Override("Antecedent"), Key] CIM_System Ref Antecedent;
+  [read, Override("Dependent"), Key] CIM_ServiceAccessPoint Ref Dependent;
+#endif
 };
 #endif
 
@@ -251,6 +312,13 @@ class SF_DiagnosticServiceCapabilities : CIM_DiagnosticServiceCapabilities {
 
 ASSOCIATION
 class SF_RecordAppliesToElement : CIM_RecordAppliesToElement {
+#if defined(TARGET_CIM_SERVER_wmi)
+    [Override ( "Antecedent" ), Key]
+    CIM_RecordForLog REF Antecedent;
+
+    [Override ( "Dependent" ), Key]
+    CIM_ManagedSystemElement REF Dependent;
+#endif
 };
 
 ASSOCIATION
@@ -293,12 +361,23 @@ class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
 
 ASSOCIATION
 class SF_ReferencedProfile : CIM_ReferencedProfile {
+#if defined(TARGET_CIM_SERVER_wmi)
+    [Override ( "Antecedent" ), Key]
+    CIM_RegisteredProfile REF Antecedent;
+
+    [Override ( "Dependent" ),  Key]
+   CIM_RegisteredProfile REF Dependent;
+#endif
 };
 #endif
 
 #if defined(IMPNS) || defined(ROOTNS)
 ASSOCIATION
 class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [Override("Antecedent"),Key] CIM_PhysicalPackage Ref Antecedent;
+  [Override("Dependent"),Key] CIM_UnitaryComputerSystem Ref Dependent;
+#endif
 };
 #endif
 
