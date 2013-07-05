@@ -262,7 +262,15 @@ class SF_LogManagesRecord : CIM_LogManagesRecord {
 #if defined(ROOTNS) || defined(IMPNS)
 ASSOCIATION
 class SF_SystemUseOfLog : CIM_UseOfLog {
-      [Override("Dependent")]
+#if defined(TARGET_CIM_SERVER_wmi)
+      [Override ( "Antecedent" ), Key]
+   CIM_Log REF Antecedent;
+#endif
+      [Override("Dependent")
+#if defined(TARGET_CIM_SERVER_wmi)
+       , Key
+#endif
+]
    CIM_ComputerSystem REF Dependent;
 };
 #endif
@@ -270,7 +278,16 @@ class SF_SystemUseOfLog : CIM_UseOfLog {
 #if defined(IMPNS)
 ASSOCIATION
 class SF_DiagnosticUseOfLog : CIM_UseOfLog {
-      [Override("Dependent")]
+#if defined(TARGET_CIM_SERVER_wmi)
+      [Override ( "Antecedent" ), Key]
+   CIM_Log REF Antecedent;
+#endif
+
+      [Override("Dependent")
+#if defined(TARGET_CIM_SERVER_wmi)
+       , Key
+#endif
+]
    CIM_DiagnosticTest REF Dependent;
 };
 
