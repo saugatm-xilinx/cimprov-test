@@ -89,9 +89,9 @@ def test_function(param = {}):
                 for count in def_param["count"]:
                     count = int(count)
                     test_start(TEST_NAME, test_function.__doc__)
-                    logger.info(("Parameters:\nenum = {0}\nassoc = {1}" +
-                                "\nrefer = {2}\ncount = {3}").format(
-                                enum, assoc, refer, count))
+                    logger.info("Parameters:\nenum = %s\nassoc = %s" +
+                                "\nrefer = %s\ncount = %s",
+                                enum, assoc, refer, count)
                     if class_list == None:
                         test_result(TEST_NAME, None)
                         continue
