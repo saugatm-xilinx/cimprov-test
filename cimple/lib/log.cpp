@@ -94,7 +94,7 @@
 // none.  When enabled it generates entries to the emergency log file for
 // many of the steps if reading the config file and initializing the log files.
 // Uncommnet the following line to enable the diagnostics.
-//#define CIMPLE_LOG_DIAG_ENABLE 1
+// #define CIMPLE_LOG_DIAG_ENABLE 1
 
 // This define enables the capability to show log handling errors to an
 // emergency log file in those cases where CIMPLE gets errors in the 
@@ -179,7 +179,7 @@ static const size_t _num_strings =
 // Internal function to output errors  and diagnosticsin Log file handling.
 // This should only be called by functions in log.cpp and only through the
 // LOG_ERR and LOG_DIAG macros.
-#if !defined CIMPLE_SHOW_LOG_ERRORS_ENABLE || !defined CIMPLE_LOG_DIAG_ENABLE
+#if defined CIMPLE_SHOW_LOG_ERRORS_ENABLE || defined CIMPLE_LOG_DIAG_ENABLE
 
     //CIMPLE_PRINTF_ATTR(3, 4) // generates warning flag
 static void  _log_err_output(

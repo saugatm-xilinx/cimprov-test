@@ -146,8 +146,9 @@ File_Lock::File_Lock(const char* path)
 
     do
     {
-        _rep->handle = CreateFile(path, GENERIC_READ | GENERIC_WRITE, 0, NULL, 
-            OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        _rep->handle = CreateFile(path, GENERIC_READ | GENERIC_WRITE, 
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, 
+                                  OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     }
     while ((GetLastError() == ERROR_SHARING_VIOLATION));
 }
