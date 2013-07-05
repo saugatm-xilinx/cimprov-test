@@ -41,10 +41,18 @@ class SF_ComputerSystem : CIM_ComputerSystem {
 
 INSTANCE
 class SF_NICCard : CIM_Card {
+#if defined(TARGET_CIM_SERVER_wmi)
+    [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
+    [Read,Key : DisableOverride,Override("Tag")] string Tag;
+#endif
 };
 
 INSTANCE
 class SF_PhysicalConnector : CIM_PhysicalConnector {
+#if defined(TARGET_CIM_SERVER_wmi)
+    [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
+    [Read,Key : DisableOverride,Override("Tag")] string Tag;
+#endif
 };
 
 ASSOCIATION
@@ -53,10 +61,18 @@ class SF_ConnectorOnNIC : CIM_ConnectorOnPackage {
 
 INSTANCE
 class SF_EthernetPort : CIM_EthernetPort {
+    [Key,Read,Override("CreationClassName")] string CreationClassName;
+    [read,Key,Override("DeviceID")] string DeviceID;
+    [Key,Read,Override("SystemCreationClassName")] string SystemCreationClassName;
+    [Key,Read,Override("SystemName")] string SystemName;
 };
 
 INSTANCE
 class SF_PortController : CIM_PortController {
+    [Key,Read,Override("CreationClassName")] string CreationClassName;
+    [read,Key,Override("DeviceID")] string DeviceID;
+    [Key,Read,Override("SystemCreationClassName")] string SystemCreationClassName;
+    [Key,Read,Override("SystemName")] string SystemName;
 };
 #endif
 
