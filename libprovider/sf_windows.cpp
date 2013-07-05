@@ -2212,7 +2212,7 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)ports.size(); i++)
+            for (i = 0; i < (int)intfs.size(); i++)
             {
                 if (!en.process(intfs[i]))
                     return false;
@@ -2225,7 +2225,7 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)ports.size(); i++)
+            for (i = 0; i < (int)intfs.size(); i++)
             {
                 if (!en.process(intfs[i]))
                     return false;
