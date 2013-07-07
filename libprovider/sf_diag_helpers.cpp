@@ -275,12 +275,16 @@ namespace solarflare
         if (test == NULL)
             return false;
 
+#if !defined(TARGET_CIM_SERVER_wmi)
+        // In Windows CIM schema, there is no such properties among keys
+        // of CIM_DiagnosticTest, so all these would be NULL.
         if (test->CreationClassName.null || test->Name.null || 
             test->CreationClassName.value != "SF_DiagnosticTest" ||
             test->SystemCreationClassName.null || test->SystemName.null)
             return false;
         if (!isOurSystem(test->SystemCreationClassName.value, test->SystemName.value))
             return false;
+#endif
         
         return test->Name.value == instanceID(se.name());
     }
