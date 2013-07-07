@@ -1215,8 +1215,16 @@ Instance* model_path_to_instance(
 
         const Meta_Feature* mf = find_feature(mc, name.c_str());
 
+#ifndef CIMPLE_WINDOWS_MSVC
+        // Check whether property from a path is a key was disabled
+        // on Windows to avoid troubles with changing keys in different
+        // versions of Windows CIM schema.
         if (!mf || !(mf->flags & CIMPLE_FLAG_KEY))
             return 0;
+#else
+        if (!mf)
+            return 0;
+#endif
 
         // Count the key.
 
@@ -1357,8 +1365,13 @@ Instance* model_path_to_instance(
             p++;
     }
 
+#ifndef CIMPLE_WINDOWS_MSVC
+        // Check whether property from path is a key was disabled
+        // on Windows to avoid troubles with changing keys in
+        // different versions of Windows CIM schema.
     if (num_keys_found != mc->num_keys)
         return 0;
+#endif
 
     return inst.steal();
 }
