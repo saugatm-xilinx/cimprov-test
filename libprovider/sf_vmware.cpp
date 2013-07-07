@@ -2126,7 +2126,7 @@ curl_fail:
     public:
         static VMwareSystem target;
         bool is64bit() const { return true; }
-        OSType osType() const { return RHEL; }
+        OSType osType() const { return VMWareESXi; }
         bool forAllNICs(ConstElementEnumerator& en) const;
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;

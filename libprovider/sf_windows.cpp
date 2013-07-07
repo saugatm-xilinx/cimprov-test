@@ -32,6 +32,7 @@
 #define VPD_KEYWORD(a, b)         ((a) | ((b) << 8))
 
 /// Can be returned by methods of EFX_* classes as an indication of success
+/// with need of calling changes applying method aftewards.
 #define BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED  0x20000000
 
 /// Job states in EFX_DiagnosticJob
@@ -227,6 +228,7 @@ namespace solarflare
         {
             CIMPLE_ERR(("ConnectServer() failed, rc = %lx", hr));
             *svc = NULL;
+            wbemLocator->Release();
             return -1;
         }
 
@@ -553,7 +555,8 @@ namespace solarflare
         return 0;
     }
 
-    /// Iterate over all WMI objects in enumWbemObj and them into instances array
+    /// Iterate over all WMI objects in enumWbemObj and add them into
+    /// instances array
     ///
     /// @param enumWbemObj   WMI enumerator
     /// @param instances     Target object holding array
@@ -657,6 +660,7 @@ namespace solarflare
         int                   rc = 0;
         ULONG                 count;
         unsigned int          i;
+
         static BString wqlName("WQL");
         static BString searchBstr(search);
 
@@ -702,8 +706,8 @@ namespace solarflare
             wbemSvc = cimWMIConn;
         
         hr = wbemSvc->GetObject(BString(objPath).rep(),
-                                    WBEM_FLAG_RETURN_WBEM_COMPLETE,
-                                    NULL, obj, NULL);
+                                WBEM_FLAG_RETURN_WBEM_COMPLETE,
+                                NULL, obj, NULL);
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   IWbemClassObject::GetObject(%s) failed with "
@@ -912,6 +916,7 @@ cleanup:
         targetType.lVal = REFLASH_TARGET_BOOTROM;
         hr = pIn->Put(BString("TargetType").rep(), 0,
                       &targetType, 0);
+        VariantClear(&targetType);
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to set TargetType for firmrmware "
@@ -992,6 +997,7 @@ cleanup:
         propTag.bVal = tag;
         hr = pIn->Put(BString("Tag").rep(), 0,
                       &propTag, 0);
+        VariantClear(&propTag);
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to set Tag for VPD "
@@ -1004,6 +1010,7 @@ cleanup:
         propKeyword.lVal = keyword;
         hr = pIn->Put(BString("Keyword").rep(), 0,
                       &propKeyword, 0);
+        VariantClear(&propKeyword);
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to set Keyword for VPD "
@@ -1350,8 +1357,6 @@ cleanup:
                 if (pciPortId == portDescr.port_id)
                     break;
             }
-            if (rc != 0)
-                break;
             if (j == pciInfos.size())
             {
                 CIMPLE_ERR(("Failed to find matching EFX_PciInformation for "
@@ -2052,6 +2057,8 @@ cleanup:
         const char *inst = ndesc.ports[0].deviceInstanceName.c_str();
         const char *lastUnderscore = strrchr(inst, '_');
 
+        unsigned int i = 0;
+
         for (; *inst != '\0' && inst != lastUnderscore; inst++)
         {
             if (*inst == '\\')
@@ -2060,7 +2067,9 @@ cleanup:
         }
         path.append('\'');
 
-        wmiEstablishConn();
+        if (wmiEstablishConn() != 0)
+            return;
+
         Array<IWbemClassObject *> drivers;
         if (wmiExecQuery(cimWMIConn, path.c_str(), drivers) < 0)
             return;
@@ -2075,6 +2084,9 @@ cleanup:
             wmiGetStringProp(drivers[0], "InfName", sysname);
             *this = WindowsDriver(description, sysname, VersionInfo(version.c_str()));
         }
+
+        for (i = 0; i < drivers.size(); i++)
+            drivers[i]->Release();
     }
 
     class WindowsNIC : public NIC {
@@ -2291,6 +2303,7 @@ cleanup:
         const char *descr;
         const char *vstr;
         unsigned blocklen;
+        VersionInfo ver;
 
         VerQueryValue(data, _T("\\"), (void **)&fixedInfo, &blocklen);
         VerQueryValue(data, _T("\\StringFileInfo\\040904E4\\FileDescription"),
@@ -2298,15 +2311,16 @@ cleanup:
         VerQueryValue(data, _T("\\StringFileInfo\\040904E4\\ProductVersion"),
                       (void **)&vstr, &blocklen);
 
-        return WindowsLibrary(pkg, dllName, descr,
-                              VersionInfo(fixedInfo->dwProductVersionMS >> 16,
-                                          fixedInfo->dwProductVersionMS & 0xFFFFU,
-                                          fixedInfo->dwProductVersionLS >> 16,
-                                          fixedInfo->dwProductVersionLS & 0xFFFFU,
-                                          vstr,
-                                          Datetime(((uint64)fixedInfo->dwFileDateMS << 32) |
-                                                   fixedInfo->dwFileDateLS)));
-
+        ver =  VersionInfo(fixedInfo->dwProductVersionMS >> 16,
+                           fixedInfo->dwProductVersionMS & 0xFFFFU,
+                           fixedInfo->dwProductVersionLS >> 16,
+                           fixedInfo->dwProductVersionLS & 0xFFFFU,
+                           vstr,
+                           Datetime(((uint64)fixedInfo->dwFileDateMS << 32) |
+                                    fixedInfo->dwFileDateLS));
+        delete[] (char *)data;
+        
+        return WindowsLibrary(pkg, dllName, descr, ver);
     }
 
     WindowsLibrary WindowsLibrary::moduleLibrary(const Package *pkg)
@@ -2339,7 +2353,6 @@ cleanup:
                        path,
                        &len);
            return path;
-
        }
 
     protected:
@@ -2385,7 +2398,37 @@ cleanup:
     public:
         static WindowsSystem target;
         bool is64bit() const { return true; }
-        OSType osType() const { return RHEL; }
+        OSType osType() const
+        {
+            OSVERSIONINFOEX verInfo;
+
+            memset(&verInfo, 0, sizeof(verInfo));
+            verInfo.dwOSVersionInfoSize = sizeof(verInfo);
+
+            if (!GetVersionEx((OSVERSIONINFO *)&verInfo))
+            {
+                CIMPLE_ERR(("%s():    failed to call GetVersionEx()",
+                            __FUNCTION__));
+                // FIXME: no "unknown" value in enum
+                return WindowsServer2003;
+            }
+
+            if (verInfo.dwMajorVersion == 6 &&
+                verInfo.dwMinorVersion == 1 &&
+                verInfo.wProductType != VER_NT_WORKSTATION)
+                return WindowsServer2008R2;
+            else if (verInfo.dwMajorVersion == 6 &&
+                verInfo.dwMinorVersion == 0 &&
+                verInfo.wProductType != VER_NT_WORKSTATION)
+                return WindowsServer2008;
+            else if (verInfo.dwMajorVersion == 5 &&
+                verInfo.dwMinorVersion == 2 &&
+                GetSystemMetrics(SM_SERVERR2) == 0)
+                return WindowsServer2003;
+
+            // FIXME: no "unknown" value in enum
+            return WindowsServer2003;
+        }
         bool forAllNICs(ConstElementEnumerator& en) const;
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;
@@ -2438,7 +2481,8 @@ cleanup:
         Array<IWbemClassObject *> drivers;
 
         rc = wmiExecQuery(cimWMIConn, 
-                          "SELECT * FROM Win32_PnPSignedDriver WHERE Manufacturer='Solarflare'", drivers);
+                          "SELECT * FROM Win32_PnPSignedDriver WHERE "
+                          "Manufacturer='Solarflare'", drivers);
         if (rc < 0)
             return false;
 
@@ -2458,6 +2502,10 @@ cleanup:
                 break;
             }
         }
+
+        for (unsigned i = 0; i < drivers.size(); i++)
+            drivers[i]->Release();
+
         return result;
     }
 
@@ -2733,6 +2781,7 @@ cleanup:
         argWait.boolVal = false;
         hr = pIn->Put(BString("wait").rep(), 0,
                       &argWait, 0);
+        VariantClear(&argWait);
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to set wait argument for %s"
