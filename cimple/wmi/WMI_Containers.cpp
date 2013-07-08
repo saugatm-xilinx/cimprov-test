@@ -56,6 +56,7 @@ static size_t _get_size(IWbemClassObject* _instance)
 
     _instance->EndEnumeration();
 
+    CIMPLE_DBG(("size = %u", size));
     return size;
 }
 
@@ -81,6 +82,7 @@ static int _get_name(
         {
             name_out.assign(bstr2str(name));
             _instance->EndEnumeration();
+            CIMPLE_DBG(("name at %u = %s", pos, name_out.c_str()));
             return 0;
         }
 
@@ -88,6 +90,7 @@ static int _get_name(
     }
 
     _instance->EndEnumeration();
+    CIMPLE_ERR(("name at %u not found", pos));
 
     // Not found!
     return -1;
@@ -130,6 +133,7 @@ static int _get_value(
 
     _instance->EndEnumeration();
 
+    CIMPLE_ERR(("value at %u not found", pos));
     // Not found!
     return -1;
 }

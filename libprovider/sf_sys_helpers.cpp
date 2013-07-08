@@ -114,8 +114,10 @@ namespace solarflare
     {
         for (unsigned i = 0;  Logger::knownLogs[i] != NULL; i++)
         {
-            if (idx < Logger::knownLogs[i]->currentSize())
+            unsigned sz = Logger::knownLogs[i]->currentSize();
+            if (idx < sz)
                 return i;
+            idx -= sz;
         }
         return unsigned(-1);
     }
@@ -303,7 +305,7 @@ namespace solarflare
         
         SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
 
-        link->Log = cast<cimple::CIM_Log *>(se.cimReference(SF_RecordLog::static_meta_class, idx));
+        link->Log = cast<cimple::CIM_Log *>(se.cimReference(SF_RecordLog::static_meta_class, logId));
         link->Record = static_cast<cimple::CIM_RecordForLog *>(entry);
 
         return link;

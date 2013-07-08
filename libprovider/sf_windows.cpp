@@ -983,6 +983,8 @@ cleanup:
         IWbemClassObject *pIn = NULL;
         IWbemClassObject *pOut = NULL;
 
+        CIMPLE_DBG(("%s: tag=%u, keyword=%u", __FUNCTION__, tag, keyword));
+
         if (wmiEstablishConn() != 0)
             return -1;
 
@@ -1019,6 +1021,8 @@ cleanup:
             return -1;
         }
 
+        CIMPLE_DBG(("%s(): %s %s", __FUNCTION__, 
+                    objPath.c_str(), methodName.c_str()));
         hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
                                      BString(methodName).rep(),
                                      0, NULL, pIn, &pOut, NULL);
