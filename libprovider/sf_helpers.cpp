@@ -100,61 +100,76 @@ namespace solarflare
         cimple::Instance_Enumerator profIE;
 
         if (cimple::cimom::enum_instances(interopNS,
-                cimRPModel.ptr(), profIE) != 0)
-            return cimSystem.ptr();
-        
-        for (cimInstance = profIE(); !!cimInstance;
-             profIE++, cimInstance = profIE())
+                cimRPModel.ptr(), profIE) == 0)
         {
-            cimBSP.reset(cast<CIM_RegisteredProfile *>(cimInstance.ptr()));
-            if (!(cimBSP->RegisteredName.null) &&
-                strcmp(cimBSP->RegisteredName.value.c_str(),
-                        "Base Server") == 0)
-                break;
-            cimBSP.reset(cast<CIM_RegisteredProfile *>(NULL));
-        }
-
-        if (cimBSP.ptr())
-        {
-            // Try to find association with Base Server profile
-            for (const char * const *ns = namespaces; *ns != NULL; ns++)
+            for (cimInstance = profIE(); !!cimInstance;
+                 profIE++, cimInstance = profIE())
             {
-                if (strcmp(*ns, solarflareNS) == 0)
-                    continue;
- 
-                Ref<Instance> assocInstance;
-                Ref<CIM_ElementConformsToProfile> cimAssocModel =
-                                        CIM_ElementConformsToProfile::create();
-                Ref<CIM_ElementConformsToProfile> cimAssoc;
-                cimple::Instance_Enumerator assocIE;
+                cimBSP.reset(cast<CIM_RegisteredProfile *>
+                                              (cimInstance.ptr()));
+                if (!(cimBSP->RegisteredName.null) &&
+                    strcmp(cimBSP->RegisteredName.value.c_str(),
+                            "Base Server") == 0)
+                    break;
+                cimBSP.reset(cast<CIM_RegisteredProfile *>(NULL));
+            }
 
-                if (cimple::cimom::enum_instances(*ns, cimAssocModel.ptr(),
-                                                  assocIE) != 0)
-                    return cimSystem.ptr();
-               
-                for (assocInstance = assocIE(); !!assocInstance;
-                     assocIE++, assocInstance = assocIE())
+            if (cimBSP.ptr())
+            {
+                // Try to find association with Base Server profile
+                for (const char * const *ns = namespaces; *ns != NULL; ns++)
                 {
-                    cimAssoc.reset(cast<CIM_ElementConformsToProfile *>(
-                                                    assocInstance.ptr()));
-                    if (cimAssoc->ConformantStandard &&
-                        !(cimAssoc->ConformantStandard->InstanceID.null) &&
-                        strcmp(cimAssoc->ConformantStandard->InstanceID.value.c_str(),
-                               cimBSP->InstanceID.value.c_str()) == 0)
-                    {
-                        if (cimAssoc->ManagedElement)
-                        {
-                            cimSystem.reset(cast<CIM_ComputerSystem *>(
-                                                    cimAssoc->ManagedElement));
-                            break;
-                        }
-                    }
-                    
-                    cimAssoc.reset(cast<CIM_ElementConformsToProfile *>(NULL));
-                }
+                    if (strcmp(*ns, solarflareNS) == 0)
+                        continue;
+     
+                    Ref<Instance> assocInstance;
+                    Ref<CIM_ElementConformsToProfile> cimAssocModel =
+                                    CIM_ElementConformsToProfile::create();
+                    Ref<CIM_ElementConformsToProfile> cimAssoc;
+                    cimple::Instance_Enumerator assocIE;
 
-                if (cimSystem.ptr())
-                    return cimSystem.ptr();     
+                    if (cimple::cimom::enum_instances(*ns,
+                                                      cimAssocModel.ptr(),
+                                                      assocIE) != 0)
+                    {
+                        CIMPLE_ERR(("%s():    failed to enumerate "
+                                    "CIM_ElementConformsToProfile",
+                                    __FUNCTION__));
+                        if (cimSystem.ptr() == NULL)
+                            CIMPLE_ERR(("%s():    returning NULL "
+                                        "as system", __FUNCTION__));
+                        return cimSystem.ptr();
+                    }
+                   
+                    for (assocInstance = assocIE(); !!assocInstance;
+                         assocIE++, assocInstance = assocIE())
+                    {
+                        cimAssoc.reset(
+                              cast<CIM_ElementConformsToProfile *>(
+                                                   assocInstance.ptr()));
+                        if (
+                      cimAssoc->ConformantStandard &&
+                      !(cimAssoc->ConformantStandard->InstanceID.null) &&
+                      strcmp(cimAssoc->ConformantStandard->
+                                          InstanceID.value.c_str(),
+                             cimBSP->InstanceID.value.c_str()) == 0)
+                        {
+                            if (cimAssoc->ManagedElement)
+                            {
+                                cimSystem.reset(
+                                    cast<CIM_ComputerSystem *>(
+                                               cimAssoc->ManagedElement));
+                                break;
+                            }
+                        }
+                        
+                        cimAssoc.reset(
+                            cast<CIM_ElementConformsToProfile *>(NULL));
+                    }
+
+                    if (cimSystem.ptr())
+                        return cimSystem.ptr();     
+                }
             }
         }
  
@@ -180,6 +195,8 @@ namespace solarflare
         {
             cimSystem.reset(cast<CIM_ComputerSystem *>(sysInstance.ptr()));
         }
+        if (cimSystem.ptr() == NULL)
+            CIMPLE_ERR(("%s(): system not found, returning NULL", __FUNCTION__));
         return cimSystem.ptr();
     }
 
