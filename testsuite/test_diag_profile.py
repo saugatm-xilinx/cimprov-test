@@ -7,7 +7,7 @@ from tester_hlpr import *
 PROFILE_LIST = ['Diagnostics', 'Job Control', 'Record Log']
 
 SPEC_CLASSES_LIST = [
-    ['CIM_AvailableDiagnosticService',
+    ['SF_AvailableDiagnosticService',
         ['ServiceProvided',
          'UserOfService',
          'EstimatedDurationOfService'
@@ -15,7 +15,7 @@ SPEC_CLASSES_LIST = [
         [],
         0
     ],
-    ['CIM_ConcreteJob',
+    ['SF_ConcreteJob',
         ['InstanceID', 
          'Name',
          'JobState',
@@ -29,7 +29,7 @@ SPEC_CLASSES_LIST = [
         [],
         0
     ],
-    ['CIM_DiagnosticCompletionRecord',
+    ['SF_DiagnosticCompletionRecord',
         ['InstanceID',
          'CreationTimeStamp',
          'RecordData',
@@ -46,30 +46,13 @@ SPEC_CLASSES_LIST = [
         [],
         0
     ],
-    ['CIM_DiagnosticLog',
+    ['SF_DiagnosticLog',
         ['InstanceID'
         ],
         [],
         0
     ],
-    ['CIM_DiagnosticServiceRecord',
-        ['InstanceID',
-         'CreationTimeStamp',
-         'RecordData',
-         'RecordFormat',
-         'LoopsPassed',
-         'LoopsFailed',
-         #'ErrorCode',
-         #'ErrorCount',
-         'ServiceName',
-         'ManagedElementType',
-         #'OtherRecordTypeDescription',
-         'ExpirationDate'
-        ],
-        [],
-        0
-    ],
-    ['CIM_DiagnosticTest',
+    ['SF_DiagnosticTest',
         ['SystemCreationClassName',
          'SystemName',
          'CreationClassName',
@@ -79,53 +62,46 @@ SPEC_CLASSES_LIST = [
          #'OtherCharacteristicsDescriptions'
         ],
         [],
-        # [['CIM_ElementSoftwareIdentity', 'CIM_SoftwareIdentity', 1]],
+        # [['SF_ElementSoftwareIdentity', 'SF_SoftwareIdentity', 1]],
         ## we don't have separate diagnostic tool, so no association
         0
     ],
-    ['CIM_ElementSoftwareIdentity',
+    ['SF_ElementSoftwareIdentity',
         ['Antecedent',
          'Dependent'
         ],
         [],
         0
     ],
-    ['CIM_HostedService',
+    ['SF_HostedService',
         ['Antecedent',
          'Dependent'
         ],
         [],
         0
     ],
-    ['CIM_LogManagesRecord',
+    ['SF_LogManagesRecord',
         ['Log',
          'Record'
         ],
         [],
         0
     ],
-    ['CIM_OwningJobElement',
+    ['SF_OwningJobElement',
         ['OwningElement',
          'OwnedElement'
         ],
         [],
         0
     ],
-    ['CIM_ServiceAffectsElement',
+    ['SF_ServiceAffectsSystem',
         ['AffectedElement',
          'AffectingElement'
         ],
         [],
         0
     ],
-    ['CIM_ServiceAvailableToElement',
-        ['ServiceProvided',
-         'UserOfService'
-        ],
-        [],
-        0
-    ],
-    ['CIM_SoftwareIdentity',
+    ['SF_SoftwareIdentity',
         ['InstanceID',
          'MajorVersion',
          'MinorVersion',
@@ -136,7 +112,7 @@ SPEC_CLASSES_LIST = [
         [],
         0
     ],
-    ['CIM_RecordLog',
+    ['SF_RecordLog',
         ['InstanceID',
          'MaxNumberOfRecords',
          'LogState',
@@ -149,19 +125,34 @@ SPEC_CLASSES_LIST = [
         [],
         0
     ],
-    ['CIM_UseOfLog',
+    ['SF_SystemUseOfLog',
+        ['Antecedent',
+         'Dependent'
+        ],
+        [],
+        0
+    ],
+    ['SF_DiagnosticUseOfLog',
         ['Antecedent',
          'Dependent'
         ],
         [],
         0
     ]
+
 ]
+
+WMI_UNSUPP_LIST = {
+        'SF_ConcreteJob' : ['PercentComplete'],
+        'SF_RecordLog' : ['OperationalStatus', 'HealthState', 'ElementName'],
+        'SF_DiagnosticTest' : ['ElementName']
+}                
 
 def test_function(param = {}):
     """Diagnostics, Job Control and Record Log profiles testing..."""
     TEST_NAME = "diag_profile"
 
     test_start(TEST_NAME, test_function.__doc__)
-    res = profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, TESTER_NS)
+    res = profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, TESTER_NS,
+            TESTER_WMI and WMI_UNSUPP_LIST or {})
     test_result(TEST_NAME, res)

@@ -1,4 +1,16 @@
 import subprocess
+import re
+
+class CIMInstance:
+    def __init__(self, path = None, prop = {}):
+        self.properties = dict(prop)
+        self.path = path
+        
+    def __repr__(self):
+        if self.path is None:
+            return "%s" % self.properties
+        else:
+            return self.path
 
 class WBEMConnection(object):
     def __init__(self, url, creds = None, default_namespace = '\\\\root\\cimv2'):
@@ -19,23 +31,57 @@ class WBEMConnection(object):
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = proc.communicate()
         if proc.returncode != 0:
-            raise Exception('wmic exited with status %r: %r' % (p.returncode, err))
+            raise Exception('wmic exited with status %r: %r' % (proc.returncode, err))
         lines = out.split('\r\r\n')
         instances = []
-        inst = {}
+        inst = CIMInstance()
         for line in lines:
             stripped_line = line.strip()
             if stripped_line:
-                prop = stripped_line.split('=')
-                inst[prop[0]] = prop[1]
+                prop = stripped_line.split('=', 1)
+                inst.properties[prop[0]] = prop[1]
             else:
-                if inst:
+                if inst.properties:
                     instances.append(inst)
-                    inst = {}
-        if inst:
+                    inst = CIMInstance()
+        if inst.properties:
             instances.append(inst)
         return instances
-    def EnumerateInstanceNames(self, ClassName, namespace = None):
-        return self.EnumerateInstances(ClassName, namespace)
 
+    def EnumerateInstanceNames(self, ClassName, namespace = None):
+        if namespace is None:
+            namespace = self.default_namespace
+        cmd = ["wmic.exe", "/namespace:" + namespace, "path", ClassName, "get", "__path", "/value"]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        if proc.returncode != 0:
+            raise Exception('wmic exited with status %r: %r' % (proc.returncode, err))
+        lines = out.split('\r\r\n')
+        instances = []
+        inst = CIMInstance()
+        for line in lines:
+            stripped_line = line.strip()
+            if stripped_line:
+                prop = stripped_line.split('=', 1)
+                if prop[0][0] != '_':
+                    inst.properties[prop[0]] = prop[1]
+            else:
+                if inst.properties:
+                    instances.append(inst)
+                    inst = CIMInstance()
+        if inst.properties:
+            instances.append(inst)
+        return instances
+
+    def AssociatorsCheck(self, ClassName, namespace = None):
+        if namespace is None:
+            namespace = self.default_namespace
+        cmd =  ["wmic.exe", "/namespace:" + namespace, "path", ClassName, "assoc"]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = proc.communicate()
+        if proc.returncode != 0:
+            raise Exception('wmic exited with status %r:\n%r' % (proc.returncode, err))
+        if err:
+            raise Exception("wmic stderr:\n%r" % err)
+        return True
 

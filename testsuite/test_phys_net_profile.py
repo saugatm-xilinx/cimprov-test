@@ -10,79 +10,103 @@ PROFILE_LIST = ['Physical Asset', 'Ethernet Port', 'Host LAN Network Port']
 
 # Specification
 SPEC_CLASSES_LIST = [
-    ['CIM_Card',
-        ['Tag', 'CreationClassName', 'PackageType', 'ElementName'],
-        [['CIM_Realizes', 'CIM_PortController', 1],
-         ['CIM_ConnectorOnPackage', 'CIM_PhysicalConnector', 2]
+    ['SF_NICCard',
+        ['Tag', 'CreationClassName', 'PackageType', 'Name', 'ElementName',
+         'HostingBoard', 'Manufacturer', 'Model', 'SerialNumber',
+         'PartNumber', 'SKU'],
+        [['SF_CardRealizesController', 'SF_PortController', 1],
+         ['SF_ConnectorOnNIC', 'SF_PhysicalConnector', 2]
         ],
         CARD_NUM,
     ],
-    ['CIM_PhysicalConnector',
+    ['SF_ComputerSystemPackage',
+        ['Antecedent', 'Dependent', 'PlatformGUID'],
+        [],
+        CARD_NUM
+    ],
+    ['SF_PhysicalConnector',
         ['Tag', 'CreationClassName', 'ConnectorLayout', 'ElementName'],
-        [['CIM_Realizes', 'CIM_EthernetPort', 1],
-         ['CIM_ConnectorOnPackage','CIM_Card', 1]
+        [['SF_ConnectorRealizesPort', 'SF_EthernetPort', 1],
+         ['SF_ConnectorOnNIC','SF_NICCard', 1]
         ],
         CARD_NUM * 2,
     ],
-    ['CIM_ConnectorOnPackage',
+    ['SF_ConnectorOnNIC',
         ['GroupComponent', 'PartComponent'],
         [],
         CARD_NUM * 2,
     ],
-    ['CIM_EthernetPort',
+    ['SF_EthernetPort',
         ['Name', 'LinkTechnology', 'PermanentAddress',
-         'NetworkAddresses', 'DeviceID', 'PortNumber'],
-        [['CIM_ControlledBy', 'CIM_PortController', 1],
-         ['CIM_Realizes', 'CIM_PhysicalConnector', 1],
+         'NetworkAddresses', 'DeviceID', 'PortNumber',
+         'PortType', 'Capabilities', 'EnabledCapabilities',
+         'Speed', 'MaxSpeed'],
+        [['SF_ControlledBy', 'SF_PortController', 1],
+         ['SF_ConnectorRealizesPort', 'SF_PhysicalConnector', 1],
         ],
         CARD_NUM * 2
     ],
-    ['CIM_PortController',
-        ['Name', 'DeviceID', 'ControllerType'],
-        [['CIM_ControlledBy', 'CIM_EthernetPort', 2],
-         ['CIM_Realizes', 'CIM_Card', 1],
+    ['SF_PortController',
+        ['Name', 'DeviceID', 'ControllerType', 'ProtocolSupported',
+         'CreationClassName', 'MaxNumberControlled'],
+        [['SF_ControlledBy', 'SF_EthernetPort', 2],
+         ['SF_CardRealizesController', 'SF_NICCard', 1],
         ],
         CARD_NUM
     ],
-    ['CIM_ControlledBy',
+    ['SF_ControlledBy',
         ['Antecedent', 'Dependent'],
         [],
         CARD_NUM * 2
     ],    
-    ['CIM_Realizes',
+    ['SF_CardRealizesController',
         ['Antecedent', 'Dependent'],
         [],
-        CARD_NUM * 3
+        CARD_NUM
     ],
-    ['CIM_SystemDevice',
+    ['SF_ConnectorRealizesPort',
+        ['Antecedent', 'Dependent'],
+        [],
+        CARD_NUM * 2
+    ],
+    ['SF_SystemDevice',
         ['GroupComponent', 'PartComponent'],
         [],
         CARD_NUM * 3
     ],
-    ['CIM_LANEndpoint',
+    ['SF_LANEndpoint',
         ['SystemCreationClassName', 'CreationClassName', 'SystemName',
          'Name', 'NameFormat', 'ProtocolIFType', 'MACAddress',
          'RequestedState', 'EnabledState', 'ElementName'],
-        [['CIM_DeviceSAPImplementation', 'CIM_EthernetPort', 1],
+        [['SF_NICSAPImplementation', 'SF_EthernetPort', 1],
         ],
         CARD_NUM * 2
     ],
-    ['CIM_DeviceSAPImplementation',
+    ['SF_NICSAPImplementation',
         ['Antecedent', 'Dependent'],
         [],
         CARD_NUM * 2
     ],
-    ['CIM_HostedAccessPoint',
+    ['SF_HostedAccessPoint',
         ['Antecedent', 'Dependent'],
         [],
         CARD_NUM * 2
     ]
 ]
 
+WMI_UNSUPP_LIST = {
+        'SF_NICCard' : ['PackageType', 'ElementName'],
+        'SF_PhysicalConnector' : ['ConnectorLayout', 'ElementName'],
+        'SF_LANEndpoint' : ['RequestedState', 'EnabledState', 'ElementName'],
+        'SF_ComputerSystemPackage' : ['PlatformGUID'],
+        'SF_PortCOntroller' : ['ProtocolSupported']
+}
+
 def test_function(param = {}):
     """Physical asset, Ethernet and Host LAN Network Port profiles testing"""
     TEST_NAME = "phys_net_profile"
     
     test_start(TEST_NAME, test_function.__doc__)
-    res = profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, TESTER_NS)
+    res = profile_check(PROFILE_LIST, SPEC_CLASSES_LIST, TESTER_NS,
+            TESTER_WMI and WMI_UNSUPP_LIST or {})
     test_result(TEST_NAME, res)

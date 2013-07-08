@@ -36,7 +36,7 @@ def class_list_fget():
 # Enumeration
 #######################
 
-def enum_check(cli, class_list):
+def enum_check(cli, class_list, check_keys=False):
     """Check EnumerateInstance and EnumerateInstanceName operations
     for specified class list.
     
@@ -55,12 +55,33 @@ def enum_check(cli, class_list):
         except Exception, e:
             logger.error('Failed to enumerate class instances:\n%s', e)
             passed = False
+            logger.info("%s: FAILED", cl)
             continue
         if len(inst_list) != len(inst_name_list):
             logger.error('Number of ei and ein doesn\'t match: %d != %d',
                           len(inst_list), len(inst_name_list))
             passed = False
-            res = "FAILED"
+            logger.info("%s: FAILED", cl)
+            continue
+
+        if len(inst_list) == 0:
+            logger.warn("No instances of %s", cl)
+        logger.info("Number of instances of %s: %d", cl, len(inst_list))
+
+        if check_keys:
+            for idx in range(len(inst_list)):
+                for key in inst_name_list[idx].properties:
+                    try:
+                        if (inst_name_list[idx].properties[key] !=
+                                inst_list[idx].properties[key]):
+                            passed = False
+                            logger.error("Key property %s doesn't match " + 
+                                "for EI and EIN", key)
+                            res = "FAILED"
+                    except Exception, e:
+                        logger.error("Error while comparing keys: %s", e)
+                        passed = False
+                        res = "FAILED"
         logger.info("%s: %s", cl, res)
     return passed
 
@@ -69,18 +90,19 @@ def enum_check(cli, class_list):
 ##################
 
 def ns_check(check_ns):
-    spl = check_ns.rsplit("/", 1)
+    spl = check_ns.rsplit(TESTER_WMI and "\\" or "/", 1)
     wbemclient = wbemcli.WBEMConnection(TESTER_HOST,
                                        (TESTER_USER, TESTER_PASSWORD),
                                        spl[0])
-    logger.info('Checking %s/%s existance...',  spl[0], spl[1])
+    logger.info('Checking %s existance in %s...',  spl[1], spl[0])
     try:
         ns_list = wbemclient.EnumerateInstanceNames('__Namespace')
-    except:
-        logger.error('Failed to enumerate namespaces names')
+    except Exception, e:
+        logger.error('Failed to enumerate namespaces names: %s', e)
         return False
     for ns in ns_list:
-        if ns[u'Name'] == spl[1]:
+        ns_name = TESTER_WMI and ns.properties['Name'] or ns[u'Name']
+        if ns_name.upper() == spl[1].upper():
             return True
     return False
 
@@ -99,11 +121,12 @@ def profile_registered(profile_name):
         logger.error('Failed to enumerate SF_RegisteredProfile instances')
         return False
     for inst in inst_list:
-        if inst[u'RegisteredName'] == profile_name:
+        check_name = TESTER_WMI and inst.properties['RegisteredName'] or inst[u'RegisteredName']
+        if check_name == profile_name:
             return True
     return False
 
-def profile_check(prof_list, spec_list, ns):
+def profile_check(prof_list, spec_list, ns, unsupp_list={}):
     
     # Indices of specification list
     SC_NAME         = 0
@@ -145,9 +168,12 @@ def profile_check(prof_list, spec_list, ns):
 
             # Checking properties
             for req_prop in class_spec[SC_PROP]:
+                if class_spec[SC_NAME] in unsupp_list.keys():
+                    if req_prop in unsupp_list[class_spec[SC_NAME]]:
+                        continue
                 logger.info("Checking property %s", req_prop)
                 try:
-                    if ((TESTER_WMI and not inst[req_prop]) or
+                    if ((TESTER_WMI and not inst.properties[req_prop]) or
                         (not TESTER_WMI and inst.properties[req_prop].value == None)):
                         logger.error("Required property %s " +
                                       "has NULL value", req_prop)
@@ -363,4 +389,22 @@ def assoc_traversal(cli, class_list, is_assoc,
                                      role, res_role)
         logger.info("%s: %s", cl, passed and "PASSED" or "FAILED")
     return global_passed
+
+
+def associators_simple_check(cli, class_list, ns):
+    passed = True
+    if not TESTER_WMI:
+        logger.warn("This test is supported only for WMI")
+        return passed
+    
+    for class_name in class_list:
+        try:
+            res = cli.AssociatorsCheck(class_name, ns)
+        except Exception, e:
+            logger.error("Class %s associators exception: %s", class_name, e)
+            res = False
+            passed = False
+        logger.info("Associators check of %s result: %s", class_name,
+                 res and "PASSED" or "FAILED")
+    return passed
 

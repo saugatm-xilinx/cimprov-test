@@ -32,4 +32,8 @@ def test_function(param={}):
                                        TESTER_NS)
     res = enum_check(wbemclient, class_list)
     test_result(TEST_NAME, res)
-
+    
+    if TESTER_WMI:
+        test_start(TEST_NAME, test_function.__doc__)
+        res = enum_check(wbemclient, class_list, True)
+        test_result(TEST_NAME, res)

@@ -18,7 +18,8 @@ TESTER_PACKAGE_LIST = {
         "diag_profile" : {}},
     "misc" : {
         "req_state_change" : {},
-        "namespace" : {}}
+        "namespace" : {},
+        "associators_simple_check": {}}
 }
 
 # Set up logger

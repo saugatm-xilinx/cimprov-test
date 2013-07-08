@@ -6,35 +6,35 @@ from tester_hlpr import *
 
 # Specification
 SPEC_CLASSES_LIST = [
-    ['CIM_HostedService',
+    ['SF_HostedService',
         ['Antecedent', 'Dependent'],
         [],
         0
     ],
-    ['CIM_SoftwareInstallationService',
+    ['SF_SoftwareInstallationService',
         ['SystemCreationClassName', 'SystemName',
          'CreationClassName', 'Name'],
         [],
         0,
     ],
-    ['CIM_ElementCapabilities',
+    ['SF_ElementCapabilities',
         ['ManagedElement', 'Capabilities'],
         [],
         0
     ],
 ###    skipped
-#    ['CIM_SoftwareInstallationCapabilities',
+#    ['SF_SoftwareInstallationCapabilities',
 #        ['InstanceID', 'SupportedInstallOptions'],
 #        [],
 #        0
 #    ],
 ###    
-    ['CIM_ServiceAffectsElement',
+    ['SF_ServiceAffectsSystem',
         ['AffectedElement', 'AffectingElement'],
         [],
         0
     ],
-    ['CIM_SoftwareIdentity',
+    ['SF_SoftwareIdentity',
         ['InstanceID', 'IsEntity', 'VersionString',
          'MajorVersion', 'MinorVersion', 'RevisionNumber',
 ###     skipped
@@ -44,55 +44,55 @@ SPEC_CLASSES_LIST = [
         [],
         0
     ],
-    ['CIM_InstalledSoftwareIdentity',
+    ['SF_InstalledSoftwareIdentity',
         ['System', 'InstalledSoftware'],
         [],
         0
     ],
-    ['CIM_ElementSoftwareIdentity',
+    ['SF_ElementSoftwareIdentity',
         ['Antecedent', 'Dependent', 'ElementSoftwareStatus'],
         [],
         0
     ],
 ###    skipped
-#    ['CIM_SystemSpecificCollection',
+#    ['SF_SystemSpecificCollection',
 #        [],
 #        [],
 #        0
 #    ],
-#    ['CIM_HostedCollection',
+#    ['SF_HostedCollection',
 #        [],
 #        [],
 #        0
 #    ],
-#    ['CIM_MemberOfCollection',
+#    ['SF_MemberOfCollection',
 #        [],
 #        [],
 #        0
 #    ],
-#    ['CIM_SoftwareIdentityResource',
+#    ['SF_SoftwareIdentityResource',
 #        [],
 #        [],
 #        0
 #    ],
-#    ['CIM_SAPAvailableForElement',
+#    ['SF_SAPAvailableForElement',
 #        [],
 #        [],
 #        0
 #    ],
-#    ['CIM_HostedAccessPoint',
+#    ['SF_HostedAccessPoint',
 #        ['Antecedent', 'Dependent'],
 #        [],
 #        0
 #    ],
 ###    
-    ['CIM_OrderedComponent',
+    ['SF_BundleComponent',
         ['GroupComponent', 'PartComponent', 'AssignedSequence'],
         [],
         0
     ],
 ###    skipped
-#    ['CIM_OrderedDependency',
+#    ['SF_OrderedDependency',
 #        ['GroupComponent', 'PartComponent', 'AssignedSequence'],
 #        [],
 #        0
