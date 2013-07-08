@@ -1028,7 +1028,7 @@ cleanup:
                                      0, NULL, pIn, &pOut, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to call firmware version reading "
+            CIMPLE_ERR(("%s():   failed to call VPD keyword reading "
                         "method, rc=%lx", __FUNCTION__, hr));
             pIn->Release();
             return -1;
