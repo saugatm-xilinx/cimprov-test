@@ -1021,11 +1021,11 @@ cleanup:
             return -1;
         }
 
-        CIMPLE_DBG(("%s(): %s %s", __FUNCTION__, 
-                    objPath.c_str(), methodName.c_str()));
+        CoImpersonateClient();
         hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
                                      BString(methodName).rep(),
                                      0, NULL, pIn, &pOut, NULL);
+        CoRevertToSelf();
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to call VPD keyword reading "

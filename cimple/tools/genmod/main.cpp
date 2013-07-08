@@ -237,6 +237,8 @@ static void gen_register(const char* module_name, const cimple::UUID& uuid)
         "{\n"
         "    Name = \"%s\";\n"
         "    ClsId = \"{%s}\";\n"
+        "    ImpersonationLevel = 1;\n"
+        "    PerUserInitialization = TRUE;\n"
         "};\n"
         "\n"
         "instance of __InstanceProviderRegistration\n"
