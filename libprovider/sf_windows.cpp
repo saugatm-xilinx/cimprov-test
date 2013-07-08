@@ -1288,7 +1288,7 @@ cleanup:
 
         rc = getInterfacesInfo(intfsInfo);
         if (rc < 0)
-            return rc;
+            goto cleanup;
 
         for (i = 0; i < ports.size(); i++)
         {
