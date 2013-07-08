@@ -177,7 +177,7 @@ MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_window
 
 msi : $(MSI_NAME)
 
-$(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) \
+$(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt \
 	 		 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' $<
 

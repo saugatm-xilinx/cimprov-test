@@ -10,7 +10,7 @@ OutFile "${INSTALLERNAME}"
 
 InstallDir "$PROGRAMFILES\${PROVIDERNAME}"
 
-!insertmacro MUI_PAGE_LICENSE "Solarflare.nsi"
+!insertmacro MUI_PAGE_LICENSE "sf-license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
