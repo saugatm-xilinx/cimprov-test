@@ -503,6 +503,7 @@ int pthread_create(
         pthread_mutex_init(&rep->join_mutex, NULL);
     }
 
+    CoImpersonateClient();
     if (OpenThreadToken(GetCurrentThread(), TOKEN_IMPERSONATE,
                          FALSE, &token))
         set_thread_token = true;
@@ -513,6 +514,7 @@ int pthread_create(
                                     NULL)) == NULL)
     {
         _destroy_thread_rep(rep);
+        CoRevertToSelf();
         return -1;
     }
 
@@ -526,8 +528,10 @@ int pthread_create(
         TerminateThread(rep->handle, 0);
         CloseHandle(rep->handle);
         _destroy_thread_rep(rep);
+        CoRevertToSelf();
         return -1;
     }
+    CoRevertToSelf();
 
     // Stick this rep into the join list (if joinable).
 

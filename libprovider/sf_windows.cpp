@@ -840,9 +840,11 @@ cleanup:
         if (pOut != NULL)
             *pOut = NULL;
 
+        CoImpersonateClient();
         hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
                                      BString(methodName).rep(),
                                      0, NULL, pIn, &tmpPOut, NULL);
+        CoRevertToSelf();
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to call %s() "
@@ -925,9 +927,11 @@ cleanup:
             return -1;
         }
 
+        CoImpersonateClient();
         hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
                                      BString(methodName).rep(),
                                      0, NULL, pIn, &pOut, NULL);
+        CoRevertToSelf();
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to call firmware version reading "
@@ -1942,9 +1946,11 @@ cleanup:
             goto cleanup;
         }
 
+        CoImpersonateClient();
         hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
                                      BString(methodName).rep(),
                                      0, NULL, pIn, &pOut, NULL);
+        CoRevertToSelf();
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to call "
@@ -1976,9 +1982,11 @@ cleanup:
                 pOut->Release();
             pOut = NULL;
 
+            CoImpersonateClient();
             hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
                                          BString(methodApplyName).rep(),
                                          0, NULL, NULL, &pOut, NULL);
+            CoRevertToSelf();
             if (FAILED(hr))
             {
                 CIMPLE_ERR(("%s():   failed to call "
