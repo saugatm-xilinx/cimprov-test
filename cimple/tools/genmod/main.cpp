@@ -253,6 +253,15 @@ static void gen_register(const char* module_name, const cimple::UUID& uuid)
         "instance of __MethodProviderRegistration\n"
         "{\n"
         "    Provider = $P;\n"
+        "};\n"
+        "instance of __EventProviderRegistration\n"
+        "{\n"
+        "    Provider = $P;\n"
+        "    EventQueryList = { \"SELECT * FROM SF_JobCreated\",\n"
+        "                       \"SELECT * FROM SF_JobStarted\",\n"
+        "                       \"SELECT * FROM SF_JobError\",\n"
+        "                       \"SELECT * FROM SF_JobSuccess\",\n"
+        "                       \"SELECT * FROM SF_Alert\" };\n"
         "};\n";
 
     fprintf(os, REGISTER_FMT, module_name, buf);
