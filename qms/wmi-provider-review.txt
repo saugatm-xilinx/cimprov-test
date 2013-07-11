@@ -1,0 +1,300 @@
+ID OKTL-#######
+
+COPYRIGHT Copyright(C) OKTET Labs 2012
+
+RESPMGR Konstantin Ushakov <kostik@oktetlabs.ru>
+
+SOURCES
+ssh://oktetlabs.ru//srv/repos/hg/solarflare/cimprov/libprovider 393755090de6
+
+COMPLY
+SF-110525-PS-1
+
+SCOPE
+WMI provider
+
+MODERATOR Artem Andreev <artem@oktetlabs.ru>
+
+# Review notes prepared by Moderator or other reviewer (for sub-review CRR)
+# should follow here. Each note is started from keyword "DEFECT" or "OPINION".
+#
+# Type of the defect should be specified for "DEFECT" notes.
+# One of attributes should be used:
+#     MAJOR     defect may lead to incorrect product behavior or system crash
+#     MINOR     code is not efficient, portable or extensible
+#     STYLE     code style violation, wrong English, lack of comments
+#     QUESTION  reviewer does not understand something, the code
+#               should be at least clarified
+#
+# "OPINION" note may be used for note, which is not approved by Moderator.
+# Type of the note may be changed by responsible manager requested the review
+# before processing of notes by Code Author. During notes processing
+# "OPINION" notes may be ignored.
+#
+# Notes may have three attributes: "STATUS", "AUTHOR" and "TAG". 
+#
+# "AUTHOR" attribute (author of the note) is mandatory for "OPINION" note 
+# and should be accompanied by a full name or nick. It may appear several 
+# times. It is useful for "OPINION" notes and review reports merged from
+# several children.
+#
+# "TAG" attribute is an optional name assigned by creator of the note
+# for further referring. TAG should be unique within all CRRs produced
+# by initial one. For example, it may look like <author_name>.<number>
+# or <CRR identifier>.number.
+#
+# "STATUS" attribute may have following values:
+#     "FIXED"    - defect described by the note is fixed, may be accompanied 
+#                  by the full name or nick of the author of the fix
+#     "REJECTED" - it's not bug, it's feature :) Should be discussed
+#                  with the Moderator or Responsible Manager.
+#     "CHECKED"  - fixing of the defect is checked by the checker
+#
+# Each note should refer to particular place in the sources (specifying
+# the line and optionally file name, if several files are reviewed) 
+# or marked as "general" (for particular file or all reviewed sources).
+#
+# It's allowed to author provide some comments. They may be placed
+# near the note and prepended by '#'.
+#
+# For example:
+# DEFECT MAJOR AUTHOR Margarita M. Osipova STATUS FIXED helen # OOPS!
+# ugly.c line 10000: memory is not deallocated.
+
+DEFECT QUESTION
+sf_windows.cpp:16-17 Why are these macros necessary?
+
+DEFECT MINOR
+sf_windows.cpp:19-48 These definitions should be kept in sync with v5 tree
+
+DEFECT MAJOR
+sf_windows.cpp:72-77,126-131,178-183,1579-1583,1751-1754,1834-1838 OMTFG! 
+Implementing correct equality would take less time than commenting the intention...
+
+DEFECT MAJOR
+sf_windows.cpp:133-161 Make me unsee this
+A comparison function cannot return "bool", for the start.
+You cannot be by any means sure that -1 is correctly representable!
+
+DEFECT STYLE
+sf_windows.cpp:86-91,170-174
+Duplicating the set of fields, esp. public, is a bad idea.
+Esp. taking into account that we have PCIAddress class.
+
+DEFECT QUESTION
+sf_windows.cpp:337
+Do we really need to make a template over integers?
+Wouldn't it suffice just to store data into a widest possible integer?
+
+DEFECT STYLE # maybe
+sf_windows.cpp:356-370,449-513
+If you go the template way, that should perhaps be factored out as
+template parameters as well. On the other hand, that would require a COM
+value be of a specific integer type which may be too strong a requirement
+
+DEFECT STYLE
+sf_windows.cpp:356-370,449-513
+However, using two different ways of doing the same task is definitely
+bad coding. Actually, if not using template parameters, this code shall be factored
+out as a separate procedure.
+
+DEFECT QUESTION
+sf_windows.cpp:370-386,513
+A string value is convertable to int, but an array of strings is
+not convertable to an array of ints. Is it intentional?
+
+DEFECT MINOR
+sf_windows.cpp:513
+No check is done for invalid COM type here
+
+DEFECT MAJOR
+sf_windows.cpp:615-618
+That's unreliable. The code
+   wmiEnumInstances(cimWMIConn, ...) 
+works totally unexpectedly if wmiEstablishConn() is not called
+explicitly beforehand (because cimWMIConn == NULL in this case).
+Better way is to return an error if wbemSvc == NULL.
+Yes, in my pieces of code here this abomination is cloned, I know.
+
+DEFECT STYLE
+sf_windows.cpp:605-606
+I am not sure I like combinining instance enumeration and
+exec query into one function, because that makes the semantics
+of "query" parameter depending on "useInstanceEnum" which is
+almost always bad coding (because looking at the calling point,
+it's hard to tell what's going on). But anyway, if you do this,
+you should have removed wmiExecQuery which serves exactly the same
+purpose.
+
+DEFECT STYLE
+sf_windows.cpp:744-747,817-824
+Instead of using these flags you shuld initialize VARIANT variables
+with VT_NULL type. Then you use VariantClear unconditionally and
+pInDef/classObj shall be just checked for NULL.
+
+DEFECT QUESTION
+sf_windows.cpp:930-934,1028-1033
+Is there a reason that is not implemented throuh wmiExecMethod
+defined above? 
+
+DEFECT STYLE
+sf_windows.cpp:943-961,1041-1059
+That should be factored out, irrespective of the above question
+
+DEFECT STYLE
+sf_windows.cpp:1094-1100,1106-1113,1119-1125,1131-1138,1144-1150,1167-1173,1179-1185,1191-1197
+The pattern: "check for an error and return the value to which a variable
+was initialized in case of an error" is only code bloating. 
+    bool PortDescr::linkUp() const
+    {
+        bool result = false;
+    
+        wmiGetBoolProp(efxPort, "LinkUp", &result);
+        return result;
+    }
+is much clearer a code and it loses nothing in correctness. 
+And if you want to check for an error here, 
+you'd better log an error message.
+
+DEFECT STYLE
+sf_windows.cpp:1219
+Any reason of not using any of C/C++ standard memory management
+
+DEFECT STYLE
+sf_windows.cpp:1257-1258
+String::append(s, n) shall be used instead
+
+DEFECT QUESTION
+sf_windows.cpp:1263-1264
+What's going on here?
+
+DEFECT MINOR 
+sf_windows.cpp:1303,1687,1877
+Consider using ExecQuery with DummyInstance=false
+
+DEFECT MINOR # may be
+sf_windows.cpp:1346-1367
+Why not using GetObject by InstanceName, instead of linear search?
+
+DEFECT STYLE # major style
+sf_windows.cpp:1401-1452
+Really, while the purpose of the code is clear by external force and
+there seems to be nothing really wrong about it, it shall be rewritten.
+It stinks.
+
+DEFECT QUESTION
+sf_windows.cpp:1481,1512,1528
+Why is this lock necessary? I'd expect SF WMI object do necessary
+serialization on their own, not?
+
+DEFECT STYLE
+sf_windows.cpp:1666
+Any reason of naming variable "Id" with uppercase "I"?
+
+DEFECT STYLE
+sf_windows.cpp:1679
+Cast is not needed here, and is error-prone.
+
+DEFECT MINOR
+sf_windows.cpp:1684
+I suspect you could just use ExecQuery with a given PortId
+
+DEFECT MINOR
+sf_windows.cpp:1698
+The same stuff, for WillBlock.
+
+DEFECT STYLE
+sf_windows.cpp:1760,1769,1780,1797,1808,1843,1850
+No, you should not code like this, definitely.
+At the very least you shall declare boundPort as WindowsPort *
+and only cast once in bindToPort(). Exposing PortDescr as a 
+public field is also not the best idea, provide needed accessors
+in WindowsPort instead
+
+DEFECT MINOR
+sf_windows.cpp:1868-1910
+Again, why not using ExecQuery with appropriate conditions?
+
+DEFECT STYLE
+sf_windows.cpp:1927
+Magic number detected
+
+DEFECT STYLE
+sf_windows.cpp:1949-1975,1985-2008
+Again code duplication for method calling
+
+DEFECT STYLE
+sf_windows.cpp:2199
+Magic number detected
+
+DEFECT STYLE
+sf_windows.cpp:2278
+Smart but why not just break off the loop?
+
+DEFECT MINOR
+sf_windows.cpp:2287
+Failing to fill in a single field is not an excuse for not
+filling all other fields which are all known to you anyway
+
+DEFECT QUESTION
+sf_windows.cpp:2438
+What's the purpose of calling GetSystemMetrics?
+
+DEFECT MAJOR
+sf_windows.cpp:2477
+If ElementEnumerator::process return false, it shall stop
+further enumeration.
+
+DEFECT STYLE
+sf_windows.cpp:2559,2568
+Bad C++, one shall never use casting in such way
+
+DEFECT STYLE
+sf_windows.cpp:2671-2710
+That shall be factored out into a separate function
+
+DEFECT MINOR
+sf_windows.cpp:2723,2752
+You shall always use snprintf(buf, sizeof(buf), ...)
+for array buffers, that's the only way to guarantee buffer
+size correctness
+
+DEFECT STYLE
+sf_windows.cpp:2723-2750,2752-2778
+That two code blocks shall be factored out into a function
+
+DEFECT QUESTION
+sf_windows.cpp:2781,2819,2859
+What's going on here?
+
+DEFECT STYLE
+sf_windows.cpp general
+The file needs to be split into several parts, e.g.
+one which is specific to WMI calls and another for OS abstraction
+library classes, or whatever.
+
+DEFECT STYLE
+sf_windows.cpp general
+"goto cleanup" pattern is usually not a very good idea for C++.
+In most cases, there are better and safer alternatives, based
+on destructors for local objects and/or exception handling.
+
+DEFECT STYLE
+sf_windows.cpp general
+In C++ you shall at all costs avoid C-style casts, like
+   (X *)Y
+and use more controlled options such as static_cast or
+const_cast
+
+#BUGID
+# Identifier of the bug for code review notes processing.
+# Bug may be created either by manager or by moderator after review.
+# Bug should refer to CRR URL.
+
+#RESULT
+# Specify review meeting result and recommendations to responsible manager here:
+#     review was not performed because ...
+#     code development should be stopped because ...
+#     additional review is necessary because ...
+#     code may be released after notes processing during ...
+#     code may be released (approved) immediately.
