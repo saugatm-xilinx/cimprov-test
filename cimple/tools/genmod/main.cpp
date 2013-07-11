@@ -204,7 +204,8 @@ static void gen_guid(const char* module_name, const cimple::UUID& uuid)
     printf("Created %s\n", fn);
 }
 
-static void gen_register(const char* module_name, const cimple::UUID& uuid)
+static void gen_register(const char* module_name, const cimple::UUID& uuid, 
+                         vector<string>& classes)
 {
     // Open file:
 
@@ -253,193 +254,41 @@ static void gen_register(const char* module_name, const cimple::UUID& uuid)
         "instance of __MethodProviderRegistration\n"
         "{\n"
         "    Provider = $P;\n"
-        "};\n"
-        "instance of __EventProviderRegistration\n"
-        "{\n"
-        "    Provider = $P;\n"
-        "    EventQueryList = { \"SELECT * FROM SF_JobCreated\",\n"
-        "                       \"SELECT * FROM SF_JobStarted\",\n"
-        "                       \"SELECT * FROM SF_JobError\",\n"
-        "                       \"SELECT * FROM SF_JobSuccess\",\n"
-        "                       \"SELECT * FROM SF_Alert\" };\n"
         "};\n";
+    
 
     fprintf(os, REGISTER_FMT, module_name, buf);
 
-    printf("Created %s\n", fn);
-}
 
-static void gen_module(const char* module_name, int argc, char** argv)
-{
-    // Build provider info list.
+    fputs("instance of __EventProviderRegistration\n"
+          "{\n"
+          "    Provider = $P;\n"
+          "    EventQueryList = {", os);
 
-    vector<const MOF_Class_Decl*> cds;
-
-    for (int i = 0; i < argc; i++)
+    bool firstIndication = true;
+    for (unsigned i = 0; i < classes.size(); i++)
     {
         // Lookup class.
 
-        const char* class_name = argv[i];
+        const char* class_name = classes[i].c_str();
         const MOF_Class_Decl* cd = MOF_Class_Decl::find((char*)class_name);
 
         if (!cd)
             err("no such class in MOF repository: %s", class_name);
 
-        cds.push_back(cd);
-    }
-
-    // Check force (-f) option.
-
-    const char file_name[] = "module.cpp";
-
-    // Open output file.
-
-    FILE* os = fopen(file_name, "wb");
-
-    if (!os)
-        err("failed to open \"%s\"", file_name);
-
-    // Generate warning block.
-
-    gen_warning(os);
-
-    // Generate the NOCHKSRC flag for pegasus chksrc program
-    // The output code will have lines longer than 80 characters.
-    fprintf(os,"/* NOCHKSRC */\n");
-
-    // Includes:
-
-    fprintf(os, "#include <cimple/cimple.h>\n");
-
-    for (size_t i = 0; i < cds.size(); i++)
-    {
-        fprintf(os, "#include \"%s_Provider.h\"\n", cds[i]->name);
-    }
-
-    fprintf(os, "\n");
-
-    // CIMPLE namespace:
-
-    fprintf(os, "using namespace cimple;\n");
-    fprintf(os, "\n");
-
-    // Write proc() functions.
-
-    for (size_t i = 0; i < cds.size(); i++)
-        write_proc(os, cds[i]);
-
-    // Module:
-
-    fprintf(os, "CIMPLE_MODULE(%s_Module);\n", module_name);
-
-    // Providers:
-
-    for (size_t i = 0; i < cds.size(); i++)
-    {
-        const char* cn = cds[i]->name;
-        int mask = cds[i]->qual_mask;
-
-        if (mask & MOF_QT_INDICATION)
-            fprintf(os, "CIMPLE_INDICATION_PROVIDER(%s_Provider);\n", cn);
-        else if (mask & MOF_QT_ASSOCIATION)
-            fprintf(os, "CIMPLE_ASSOCIATION_PROVIDER(%s_Provider);\n", cn);
-        else
-            fprintf(os, "CIMPLE_INSTANCE_PROVIDER(%s_Provider);\n", cn);
-    }
-
-    fprintf(os, "\n");
-
-    // Generate Pegasus entry point.
-
-    fprintf(os, "#ifdef CIMPLE_PEGASUS_MODULE\n");
-    fprintf(os, "  CIMPLE_PEGASUS_PROVIDER_ENTRY_POINT;\n");
-    fprintf(os, "# define __CIMPLE_FOUND_ENTRY_POINT\n");
-    fprintf(os, "#endif\n");
-    fprintf(os, "\n");
-
-    // Generate CMPI entry point.
-
-    fprintf(os, "#ifdef CIMPLE_CMPI_MODULE\n");
-
-    for (size_t i = 0; i < cds.size(); i++)
-    {
-        const char* cn = cds[i]->name;
-        int mask = cds[i]->qual_mask;
+        int mask = cd->qual_mask;
 
         if (mask & MOF_QT_INDICATION)
         {
-            fprintf(os, 
-                "  CIMPLE_CMPI_INDICATION_PROVIDER(%s_Provider);\n", cn);
-            fprintf(os, 
-                "  CIMPLE_CMPI_INDICATION_PROVIDER2(%s_Provider, %s);\n",
-                cn, cn);
-        }
-        else if (mask & MOF_QT_ASSOCIATION)
-        {
-            fprintf(os, 
-                "  CIMPLE_CMPI_ASSOCIATION_PROVIDER(%s_Provider);\n",
-                cn);
-            fprintf(os, 
-                "  CIMPLE_CMPI_ASSOCIATION_PROVIDER2(%s_Provider, %s);\n",
-                cn, cn);
-        }
-        else
-        {
-            fprintf(os, 
-                "  CIMPLE_CMPI_INSTANCE_PROVIDER(%s_Provider);\n", cn);
-            fprintf(os, 
-                "  CIMPLE_CMPI_INSTANCE_PROVIDER2(%s_Provider, %s);\n", cn, cn);
+            fprintf(os, "%s\"SELECT * FROM %s\"", 
+                    firstIndication ? "" : ",\n\t",
+                    class_name);
+            firstIndication = false;
         }
     }
+    fputs("};\n};\n", os);
 
-    fprintf(os, "# define __CIMPLE_FOUND_ENTRY_POINT\n");
-    fprintf(os, "#endif\n");
-    fprintf(os, "\n");
-
-    // Generate OpenWBEM entry point.
-
-    fprintf(os, "#ifdef CIMPLE_OPENWBEM_MODULE\n");
-    fprintf(os, "  CIMPLE_OPENWBEM_PROVIDER(%s_Module);\n", module_name);
-    fprintf(os, "# define __CIMPLE_FOUND_ENTRY_POINT\n");
-    fprintf(os, "#endif\n\n");
-
-    // Generate WMI entry point.
-
-    /*
-        #ifdef CIMPLE_WMI_MODULE
-          // {23CB8761-914A-11cf-B705-00AA0062CBBB}
-          DEFINE_GUID(CLSID_Gadget_Module,
-            0x23cb8761, 0x914a,
-            0x11cf, 0xb7, 0x5,
-            0x0, 0xaa, 0x0, 0x62,
-            0xcb, 0xbb);
-          CIMPLE_WMI_PROVIDER_ENTRY_POINTS(CLSID_Gadget_Module)
-        # define __CIMPLE_FOUND_ENTRY_POINT
-        #endif
-    */
-    {
-        fprintf(os, "#ifdef CIMPLE_WMI_MODULE\n");
-        fprintf(os, "# include \"guid.h\"\n");
-        fprintf(os, "  CIMPLE_WMI_PROVIDER_ENTRY_POINTS(CLSID_%s_Module)\n",
-            module_name);
-        fprintf(os, "# define __CIMPLE_FOUND_ENTRY_POINT\n");
-        fprintf(os, "#endif\n\n");
-    }
-
-    // Generate check for entry point.
-
-    const char MESSAGE[] = 
-        "No provider entry point found. Please define one of the following: "
-        "CIMPLE_PEGASUS_MODULE, CIMPLE_CMPI_MODULE, CIMPLE_OPENWBEM_MODULE, "
-        "CIMPLE_WMI_MODULE";
-
-    fprintf(os, "#ifndef __CIMPLE_FOUND_ENTRY_POINT\n");
-    fprintf(os, "# error \"%s\"\n", MESSAGE);
-    fprintf(os, "#endif\n");
-
-    printf("Created %s\n", file_name);
-
-    fclose(os);
+    printf("Created %s\n", fn);
 }
 
 static void gen_module_file(const char* module_name, vector<string>& classes)
@@ -766,7 +615,7 @@ int main(int argc, char** argv)
         cimple::create_uuid(uuid);
 
         gen_guid(argv[0], uuid);
-        gen_register(argv[0], uuid);
+        gen_register(argv[0], uuid, classes);
     }
 
 
