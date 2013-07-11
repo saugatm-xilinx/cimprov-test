@@ -49,6 +49,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_DiagnosticUseOfLog_Provider.cpp \
 	SF_ComputerSystemPackage_Provider.cpp \
 	SF_JobStarted_Provider.cpp \
+	SF_JobProgress_Provider.cpp \
 	SF_JobCreated_Provider.cpp \
 	SF_JobError_Provider.cpp \
 	SF_JobSuccess_Provider.cpp \

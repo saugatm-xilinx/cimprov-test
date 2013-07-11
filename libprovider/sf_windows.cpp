@@ -1,5 +1,6 @@
 #include <winsock2.h>
 #include "sf_platform.h"
+#include "sf_provider.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 
@@ -2643,6 +2644,8 @@ cleanup:
         unsigned int              maxRunTime = 0;
         unsigned int              elapsedRunTime = 0;
         unsigned int              timeToWait = 100;
+        unsigned int              percentage_prev = 0;
+        unsigned int              percentage_cur = 0;
         bool                      awakePort = false;
         String                    portPath;
 
@@ -2809,6 +2812,7 @@ cleanup:
             goto cleanup;
 
         maxRunTime = (likelyRunTime * 5) + 1000;
+        percentage_prev = percentage_cur = percentage();
         do {
             int jobState;
 
@@ -2825,11 +2829,15 @@ cleanup:
             jobs[0] = currentJob;
             currentJobLock.unlock();
 
+            percentage_prev = percentage_cur;
+            percentage_cur = percentage();
             rc = wmiGetIntProp<int>(jobs[0], "State", &jobState);
             if (rc != 0)
                 goto cleanup;
             if (jobState == JobComplete)
                 break;
+            if (percentage_prev != percentage_cur)
+                onJobProgress.notify(*this);
         } while (elapsedRunTime < maxRunTime);
 
 cleanup:

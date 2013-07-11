@@ -512,6 +512,11 @@ class SF_JobError : CIM_InstModification
 };
 
 INDICATION
+class SF_JobProgress : CIM_InstModification
+{
+};
+
+INDICATION
 class SF_JobSuccess : CIM_InstModification
 {
 };

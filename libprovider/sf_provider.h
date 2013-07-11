@@ -11,6 +11,7 @@
 #include "SF_ConcreteJob.h"
 #include "SF_JobCreated.h"
 #include "SF_JobStarted.h"
+#include "SF_JobProgress.h"
 #include "SF_JobError.h"
 #include "SF_JobSuccess.h"
 #include "SF_Alert.h"
@@ -272,6 +273,7 @@ namespace solarflare
 
     extern CIMInstanceNotify<cimple::SF_JobCreated> onJobCreated;
     extern CIMJobChangeStateNotify<cimple::SF_JobStarted> onJobStarted;
+    extern CIMJobChangeStateNotify<cimple::SF_JobProgress> onJobProgress;
     extern CIMJobChangeStateNotify<cimple::SF_JobError> onJobError;
     extern CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess;
 

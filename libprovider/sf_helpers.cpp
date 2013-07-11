@@ -211,10 +211,12 @@ namespace solarflare
     CIMInstanceNotify<cimple::SF_JobCreated> onJobCreated(cimple::SF_ConcreteJob::static_meta_class);
 #if CIM_SCHEMA_VERSION_MINOR > 0
     CIMJobChangeStateNotify<cimple::SF_JobStarted> onJobStarted(cimple::SF_ConcreteJob::_OperationalStatus::enum_Dormant);
+    CIMJobChangeStateNotify<cimple::SF_JobProgress> onJobProgress(cimple::SF_ConcreteJob::_OperationalStatus::enum_OK);
     CIMJobChangeStateNotify<cimple::SF_JobError> onJobError(cimple::SF_ConcreteJob::_OperationalStatus::enum_OK);
     CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess(cimple::SF_ConcreteJob::_OperationalStatus::enum_OK);
 #else
     CIMJobChangeStateNotify<cimple::SF_JobStarted> onJobStarted(0);
+    CIMJobChangeStateNotify<cimple::SF_JobProgress> onJobProgress(0);
     CIMJobChangeStateNotify<cimple::SF_JobError> onJobError(0);
     CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess(0);
 #endif
