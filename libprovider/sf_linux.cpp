@@ -444,6 +444,9 @@ namespace solarflare
         void bindToPort(Port *p) { boundPort = p; }
 
         virtual void initialize() {};
+
+        /// Check if link status has changed from @p prev to @p exp
+        bool linkAlarm(bool prev, bool exp) const;
     };
 
     bool LinuxInterface::ifStatus() const
@@ -536,6 +539,13 @@ namespace solarflare
             ifr.ifr_hwaddr.sa_data[i] = mac.address[i];
 
         linuxIOctlCmd(ifName().c_str(), SIOCSIFHWADDR, &ifr);
+    }
+
+    bool LinuxInterface::linkAlarm(bool prev, bool exp) const
+    {
+        bool cur = ifStatus();
+
+        return (prev != cur) && (prev == exp);
     }
 
     class LinuxNICFirmware : public NICFirmware {
@@ -873,6 +883,9 @@ namespace solarflare
         }
 
         virtual PCIAddress pciAddress() const;
+
+        bool tempAlarm() const;
+        bool voltAlarm() const;
     };
 
     VitalProductData LinuxNIC::vitalProductData() const
@@ -1021,6 +1034,56 @@ namespace solarflare
             deviceId = strtoul(buf, NULL, 16);
 
         return PCIAddress(domain, bus, deviceId);
+    }
+
+    bool LinuxNIC::tempAlarm() const
+    {
+        char            buf[BUF_MAX_LEN];
+        int             i;
+        bool            alarm = false;
+
+        for (i = 1;; i++)
+        {
+            char temp_name[BUF_MAX_LEN];
+
+            sprintf(temp_name, "temp%d_alarm", i);
+            if (linuxDeviceGetAttr(sysfsPath.c_str(), temp_name,
+                                   buf, sizeof(buf)) < 0)
+                break;
+
+            if (*buf == '1')
+            {
+                alarm = true;
+                break;
+            }
+        }
+
+        return alarm;
+    }
+
+    bool LinuxNIC::voltAlarm() const
+    {
+        char            buf[BUF_MAX_LEN];
+        int             i;
+        bool            alarm = false;
+
+        for (i = 1;; i++)
+        {
+            char temp_name[BUF_MAX_LEN];
+
+            sprintf(temp_name, "in%d_alarm", i);
+            if (linuxDeviceGetAttr(sysfsPath.c_str(), temp_name,
+                                   buf, sizeof(buf)) < 0)
+                break;
+
+            if (*buf == '1')
+            {
+                alarm = true;
+                break;
+            }
+        }
+
+        return alarm;
     }
 
     class LinuxDriver : public Driver {
