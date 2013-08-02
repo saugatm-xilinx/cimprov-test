@@ -234,10 +234,24 @@ public:
 
         String s;
 
+
         if (instance_to_model_path(x, s) == 0)
         {
+            const char* p = s.c_str();
+            String out;
+
+            while (*p)
+            {
+                char c = *p++;
+
+                if (c == '\\')
+                    out.append('\\');
+
+                out.append(c);
+            }
+
             _rep.vt = VT_BSTR;
-            _rep.bstrVal = cstr2bstr(s.c_str());
+            _rep.bstrVal = cstr2bstr(out.c_str());
         }
     }
 
