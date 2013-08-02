@@ -114,7 +114,7 @@ class CIM_ClusteringService : CIM_Service
 class CIM_ServiceAccessPoint : CIM_LogicalElement
 {
   [CIM_Key : ToSubclass,MaxLen(256) : ToSubclass,Read : ToSubclass] string CreationClassName;
-  [Override("Name"),Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Read : ToSubclass] string Name;
+  [Override("Name"),CIM_Key : ToSubclass DisableOverride,MaxLen(256) : ToSubclass,Read : ToSubclass] string Name;
   [Propagated("CIM_System.CreationClassName") : ToSubclass,CIM_Key : ToSubclass,MaxLen(256) : ToSubclass,Read : ToSubclass] string SystemCreationClassName;
   [Propagated("CIM_System.Name") : ToSubclass,CIM_Key : ToSubclass,MaxLen(256) : ToSubclass,Read : ToSubclass] string SystemName;
   [Read : ToSubclass,Schema("Win32") : ToSubclass] uint32 Type;
