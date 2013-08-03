@@ -112,7 +112,10 @@ namespace solarflare
                     Time::sleep(10 * Time::MSEC);
 
                 if (thread_send.get() > 0)
+                {
                     thread_send.dec();
+                    CIMClass::destroy(obj);
+                }
             }
             else
                 CIMClass::destroy(obj);
@@ -156,7 +159,9 @@ namespace solarflare
                 if (owner->thread_send.get())
                 {
                     if (owner->handler != NULL)
-                            owner->handler->handle(owner->obj_to_send);
+                        owner->handler->handle(owner->obj_to_send);
+                    else
+                        CIMClass::destroy(owner->obj_to_send);
                     owner->thread_send.dec();
                 }
 
@@ -413,7 +418,8 @@ namespace solarflare
                 for (i = 0; i < owner->instancesInfo.size(); i++)
                 {
                     Array<AlertProps> alertsProps;
-                    if (owner->instancesInfo[i]->check(alertsProps))
+                    if (owner->handler != NULL &&
+                        owner->instancesInfo[i]->check(alertsProps))
                     {
                         for (j = 0; j < alertsProps.size(); j++)
                             owner->handler->handle(
