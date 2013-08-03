@@ -30,6 +30,9 @@ namespace cimple
 namespace solarflare
 {
     using cimple::Instance;
+    using cimple::uint16;
+    using cimple::Array;
+    using cimple::String;
 
     /// @brief Abstract class for ties between CIM classes and #SystemElement.
     /// This class is subclassed internally for descendants of #SystemElement.
@@ -82,8 +85,6 @@ namespace solarflare
     
     template <class CIMClass>
     class CIMNotify {
-        cimple::Indication_Handler<CIMClass> *handler;
-        cimple::Atomic_Counter thread_continue;
         cimple::Atomic_Counter thread_send;
         cimple::Thread provider_thread;
         cimple::Mutex send_lock;
@@ -92,6 +93,10 @@ namespace solarflare
         CIMClass *obj_to_send;
 
     protected:
+        cimple::Indication_Handler<CIMClass> *handler;
+        cimple::Atomic_Counter thread_continue;
+        cimple::Thread_Proc threadProc;
+
         virtual void send(CIMClass *obj)
         {
             using namespace cimple;
@@ -113,8 +118,10 @@ namespace solarflare
                 CIMClass::destroy(obj);
         }
 
-        CIMNotify() : handler(NULL), send_lock(false),
-                      thread_lock(false), thread_not_joined(false) {}
+        CIMNotify() : send_lock(false),
+                      thread_lock(false), thread_not_joined(false),
+                      handler(NULL), 
+                      threadProc(threadFunc) {}
 
         virtual ~CIMNotify()
         {
@@ -135,7 +142,7 @@ namespace solarflare
             handler = NULL;
         }
 
-        static void *thread_func(void *arg)
+        static void *threadFunc(void *arg)
         {
             using namespace cimple;
 
@@ -160,7 +167,7 @@ namespace solarflare
         }
 
     public:
-        void enable(cimple::Indication_Handler<CIMClass> *hnd)
+        virtual void enable(cimple::Indication_Handler<CIMClass> *hnd)
         {
             using namespace cimple;
 
@@ -182,11 +189,11 @@ namespace solarflare
             {
                 thread_continue.inc();
                 Thread::create_joinable(provider_thread,
-                                        (Thread_Proc)thread_func,
+                                        (Thread_Proc)threadProc,
                                         this);
             }
         }
-        void disable()
+        virtual void disable()
         {
             cimple::Auto_Mutex auto_mutex(thread_lock);
 
@@ -277,27 +284,198 @@ namespace solarflare
     extern CIMJobChangeStateNotify<cimple::SF_JobError> onJobError;
     extern CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess;
 
+    ///
+    /// Properties of SF_Alert filled by platform-specific code.
+    ///
+    class AlertProps {
+    public:
+        uint16 alertType;           ///< Type of alert
+        uint16 perceivedSeverity;   ///< Perceived severity
+        String description;         ///< Description of alert indication
+
+        /// Comparison operator is required by cimple::Array
+        inline bool operator== (const AlertProps &rhs)
+        {
+            if (alertType == rhs.alertType &&
+                perceivedSeverity == rhs.perceivedSeverity &&
+                description == rhs.description)
+                return true;
+
+            return false;
+        }
+    };
+
+    ///
+    /// An abstract class containing a platform specific function
+    /// to check for alert(s), arguments to be passed to it and
+    /// auxiliary data as well. It should be subclassed in platform
+    /// specific implementation.
+    ///
+    class AlertInstInfo {
+    public:
+        AlertInstInfo() {};
+
+        /// Function to check for alerts
+        ///
+        /// @param alertsProps  Array with descriptions of alerts
+        ///                     to be generated
+        ///
+        /// @return true is some alerts were detected, false otherwise
+        virtual bool check(Array<AlertProps> &alertsProps) = 0;
+
+        String instPath; ///< Path to instance for which alerts are checked
+
+        /// Comparison operator is required by cimple::Array
+        inline bool operator== (const AlertInstInfo &rhs)
+        {
+            if (instPath == rhs.instPath)
+                return true;
+
+            return false;
+        }
+    };
+
+    ///
+    /// Type of function used to register all the alerts to be checked by
+    /// adding corresponding AlertInstInfo instances in the array.
+    ///
+    typedef int (*FillInstsInfoFunc)(Array<AlertInstInfo *> &info);
+
+    ///
+    /// Class template for provider specific alert indications.
+    ///
     template <class CIMClass>
     class CIMAlertNotify : public CIMNotify<CIMClass> {
-        const cimple::Meta_Class& alertMC;
-    public:
-        CIMAlertNotify(const cimple::Meta_Class amc) : CIMNotify<CIMClass>(), alertMC(amc) {}
-#if 0
-        virtual void alert(const SystemElement& se)
-        {
-            const CIMHelper *helper = se.cimDispatch(sourceMC);
-            CIMClass *indication = CIMClass::create(true);
 
-            if (helper == NULL)
-                return;
-            
-            indication->SourceInstance = helper->instance(se, 0);
-            indication->SourceInstanceModelPath.null = false;
-            cimple::instance_to_model_path(indication->SourceInstance, 
-                                           indication->SourceInstanceModelPath.value);
+        Array<AlertInstInfo *> instancesInfo; ///< Registered alerts to be
+                                              ///  checked and reported
+
+        FillInstsInfoFunc fillInstancesInfo;  ///< Pointer to the platform
+                                              ///  specific function used
+                                              ///  to fill instancesInfo
+    protected:
+        ///
+        /// Create an indication object according to given properties
+        /// 
+        /// @return Indication object pointer
+        ///
+        virtual CIMClass *makeIndication(uint16 alertType,
+                                         uint16 perceivedSeverity,
+                                         String description,
+                                         String instPath)
+        {
+            CIMClass *indication = CIMClass::create(true);
+            Instance *instance = NULL;
+
+            indication->Description.null = false;
+            indication->Description.value = description;
+            indication->AlertingManagedElement.null = false;
+            indication->AlertingManagedElement.value = instPath;
+            indication->AlertingElementFormat.null = false;
+            indication->AlertingElementFormat.value =
+                    cimple::CIM_AlertIndication::_AlertingElementFormat::
+                                                        enum_CIMObjectPath;
+            indication->AlertType.null = false;
+            indication->AlertType.value = alertType;
+            indication->PerceivedSeverity.null = false;
+            indication->PerceivedSeverity.value = perceivedSeverity;
+
             return indication;
         }
-#endif
+
+        ///
+        /// Main function for thread used to check for
+        /// alerts and report them.
+        ///
+        /// @param arg  Pointer to alert indication class instance
+        ///             containing information about alerts to
+        ///             be checked
+        ///
+        /// @return NULL
+        ///
+        static void *alertThreadFunc(void *arg)
+        {
+            using namespace cimple;
+
+            unsigned int i;
+            unsigned int j;
+            uint16       alertType;
+            uint16       perceivedSeverity;
+            String       description;
+
+            CIMAlertNotify<CIMClass> *owner =
+                                (CIMAlertNotify<CIMClass> *)arg;
+            while (1)
+            {
+                if (!owner->thread_continue.get())
+                    break;
+
+                for (i = 0; i < owner->instancesInfo.size(); i++)
+                {
+                    Array<AlertProps> alertsProps;
+                    if (owner->instancesInfo[i]->check(alertsProps))
+                    {
+                        for (j = 0; j < alertsProps.size(); j++)
+                            owner->handler->handle(
+                                owner->makeIndication(
+                                        alertsProps[j].alertType,
+                                        alertsProps[j].perceivedSeverity,
+                                        alertsProps[j].description,
+                                        owner->instancesInfo[i]->instPath));
+                    }
+                }
+
+                Time::sleep(500 * Time::MSEC);
+            }
+
+            return NULL;
+        }
+
+    public:
+        CIMAlertNotify() :
+          CIMNotify<CIMClass>(),
+          fillInstancesInfo(NULL)
+        {
+            this->threadProc = alertThreadFunc;
+        }
+
+        /// Clear array of alerts to be checked
+        void instsInfoClear()
+        {
+            unsigned int i;
+
+            for (i = 0; i < instancesInfo.size(); i++)
+            {
+                delete instancesInfo[i];
+                instancesInfo[i] = NULL;
+            }
+            instancesInfo.clear();
+        }
+
+        /// Enable alerts checking and reporting
+        virtual void enable(cimple::Indication_Handler<CIMClass> *hnd)
+        {
+            if (fillInstancesInfo == NULL)
+                return;
+            instsInfoClear();
+            if (fillInstancesInfo(instancesInfo) < 0)
+                return;
+            CIMNotify<CIMClass>::enable(hnd);
+        }
+
+        /// Disable alerts checking and reporting
+        virtual void disable()
+        {
+            instsInfoClear();
+            CIMNotify<CIMClass>::disable();
+        }
+
+        /// Set function to obtain information about alerts to
+        /// be checked on current platform
+        virtual void setFillInstancesInfo(FillInstsInfoFunc f)
+        {
+            fillInstancesInfo = f;
+        }
     };
 
     extern CIMAlertNotify<cimple::SF_Alert> onAlert;

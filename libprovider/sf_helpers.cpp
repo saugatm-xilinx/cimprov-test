@@ -221,6 +221,8 @@ namespace solarflare
     CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess(0);
 #endif
 
+    CIMAlertNotify<cimple::SF_Alert> onAlert;
+
     bool Action::process(SystemElement& se)
     {
         const CIMHelper *helper = se.cimDispatch(*sample->meta_class);

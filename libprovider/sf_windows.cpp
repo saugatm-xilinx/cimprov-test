@@ -13,6 +13,8 @@
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
 
+#include <SF_EthernetPort.h>
+
 /// Memory allocation for WinAPI calls
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
 #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
@@ -36,6 +38,8 @@
 /// with need of calling changes applying method aftewards.
 #define BUS_WMI_COMPLETION_CODE_APPLY_REQUIRED  0x20000000
 
+#define WMI_QUERY_MAX 1000
+
 /// Job states in EFX_DiagnosticJob
 enum {
   JobCreated = 0,
@@ -56,6 +60,9 @@ namespace solarflare
     using cimple::uint16;
     using cimple::Mutex;
     using cimple::Auto_Mutex;
+    using cimple::Ref;
+    using cimple::SF_EthernetPort;
+    using cimple::cast;
 
     ///
     /// Information about network interface
@@ -131,7 +138,7 @@ namespace solarflare
             return false;
         }
 
-        inline bool pci_compare(const PortDescr &x)
+        inline int pci_compare(const PortDescr &x)
         {
             if (pci_bridge_bus > x.pci_bridge_bus)
                 return 1;
@@ -2388,13 +2395,162 @@ cleanup:
         virtual const String& genericName() const { return description(); }
     };
 
+    static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info);
+
+    class WindowsAlertInstInfo : public AlertInstInfo {
+        int  portId;
+        bool prevLinkState;
+        bool linkStateFirstTime;
+
+        bool checkLinkState(IWbemClassObject *port, AlertProps &alert)
+        {
+            bool         linkUp = false;
+            bool         result = false;
+
+            if (wmiGetBoolProp(port, "LinkUp", &linkUp) < 0)
+                return false;
+
+            if (!linkUp && prevLinkState && !linkStateFirstTime)
+            {
+                alert.alertType = cimple::CIM_AlertIndication::
+                                         _AlertType::enum_Device_Alert;
+                alert.perceivedSeverity = cimple::CIM_AlertIndication::
+                                         _PerceivedSeverity::enum_Major;
+                alert.description = "Link went down";
+
+                result = true;
+            }
+            linkStateFirstTime = false;
+            prevLinkState = linkUp;
+            return result;
+        }
+
+    public:
+        WindowsAlertInstInfo() : linkStateFirstTime(true) {};
+        virtual bool check(Array<AlertProps> &alertsProps)
+        {
+            char query[WMI_QUERY_MAX]; 
+            int  rc;
+
+            unsigned int i;
+            bool         linkUp = false;
+            bool         result = false;
+            AlertProps   alert;
+
+            Array<IWbemClassObject *> ports;
+
+            rc = snprintf(query, WMI_QUERY_MAX, "SELECT * FROM EFX_Port "
+                          "WHERE Id='%d' AND DummyInstance='False'",
+                          this->portId);
+            if (rc < 0 || rc >= WMI_QUERY_MAX)
+                return -1;
+
+            rc = wmiEnumInstances(NULL, query, false, ports);
+            if (rc < 0)
+                return false;
+
+            if (ports.size() != 1)
+            {
+                CIMPLE_ERR(("%s(): for id=%d wrong number "
+                            "%u of matching ports obtained",
+                            __FUNCTION__, this->portId,
+                            ports.size()));
+                goto cleanup;
+            }
+
+            if (checkLinkState(ports[0], alert))
+            {
+                alertsProps.append(alert);
+                result = true;
+            }
+cleanup:
+            for (i = 0; i < ports.size(); i++)
+                ports[i]->Release();
+            return result;
+        }
+
+        friend int windowsFillInstancesInfo(
+                                        Array<AlertInstInfo *> &info);
+    };
+
+    static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info)
+    {
+        Ref<SF_EthernetPort>  cimModel = SF_EthernetPort::create();
+        Ref<Instance>         cimInstance;
+        Ref<SF_EthernetPort>  sfEthPort;
+
+        cimple::Instance_Enumerator ie;
+
+        NICDescrs nics;
+
+        unsigned int i;
+        unsigned int j;
+        String       path;
+
+        if (getNICs(nics) < 0)
+            return -1;
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+            return -1;
+
+        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
+        {
+            WindowsAlertInstInfo *instInfo = NULL;
+
+            if (cimple::instance_to_model_path(cimInstance.ptr(),
+                                               path) < 0)
+            {
+                for (i = 0; i < info.size(); i++)
+                    delete info[i];
+                info.clear();
+                return -1;
+            }
+
+            sfEthPort.reset(cast<SF_EthernetPort *>(cimInstance.ptr()));
+            if (sfEthPort->DeviceID.null)
+            {
+                for (i = 0; i < info.size(); i++)
+                    delete info[i];
+                info.clear();
+                return -1;
+            }
+
+            for (i = 0; i < nics.size(); i++)
+            {
+                for (j = 0; j < nics[i].ports.size(); j++)
+                    if (nics[i].ports[j].ifInfo.Name ==
+                                              sfEthPort->DeviceID.value)
+                        break;
+                if (j < nics[i].ports.size())
+                    break;
+            }
+            if (i >= nics.size())
+            {
+                for (i = 0; i < info.size(); i++)
+                    delete info[i];
+                info.clear();
+                return -1;
+            }
+
+            instInfo = new WindowsAlertInstInfo();
+            instInfo->portId = nics[i].ports[j].port_id;
+            instInfo->instPath = path;
+            info.append(instInfo);
+        }
+
+        return 0;
+    }
 
     /// @brief stub-only System implementation
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
     class WindowsSystem : public System {
         WindowsManagementPackage mgmtPackage;
-        WindowsSystem() {};
+        WindowsSystem()
+        {
+            onAlert.setFillInstancesInfo(windowsFillInstancesInfo);
+        };
         ~WindowsSystem();
     protected:
         void setupNICs()
