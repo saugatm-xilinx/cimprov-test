@@ -2395,13 +2395,31 @@ cleanup:
         virtual const String& genericName() const { return description(); }
     };
 
+    /// Predeclaration
     static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info);
 
+    ///
+    /// Class defining alert indication to be checked on Windows
+    ///
     class WindowsAlertInstInfo : public AlertInstInfo {
-        int  portId;
-        bool prevLinkState;
-        bool linkStateFirstTime;
+        int  portId;                ///< Id of EFX_Port instance
+                                    ///  to be checked for alert
+                                    ///  conditions.
 
+        bool prevLinkState;         ///< Previously determined link state
+        bool linkStateFirstTime;    ///< Whether link state is checked
+                                    ///  first time (in this case
+                                    ///  prevLinkState is not defined yet)
+
+        ///
+        /// Check state of the link.
+        ///
+        /// @param port         Pointer to IWbemClassObject allowing
+        ///                     to access related EFX_Port instance
+        /// @param alert  [out] Where to save alert indication properties
+        ///                     to be set
+        /// @return true if alert indication should be generated,
+        //          false otherwise
         bool checkLinkState(IWbemClassObject *port, AlertProps &alert)
         {
             bool         linkUp = false;
@@ -2427,6 +2445,18 @@ cleanup:
 
     public:
         WindowsAlertInstInfo() : linkStateFirstTime(true) {};
+
+        ///
+        /// Check for alert conditions, fill alertsProps with
+        /// alert indication descriptions if alert indications
+        /// should be generated.
+        ///
+        /// @param alertsProps  Where to save descriptions of
+        ///                     alert indications to be generated
+        ///
+        /// @return true if some alert indications should be generated,
+        ///         false otherwise.
+        ///
         virtual bool check(Array<AlertProps> &alertsProps)
         {
             char query[WMI_QUERY_MAX]; 
@@ -2473,6 +2503,13 @@ cleanup:
                                         Array<AlertInstInfo *> &info);
     };
 
+    ///
+    /// Fill array of alert indication descriptions.
+    ///
+    /// @param info   [out] Array to be filled
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
     static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info)
     {
         Ref<SF_EthernetPort>  cimModel = SF_EthernetPort::create();
