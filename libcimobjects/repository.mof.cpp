@@ -135,10 +135,12 @@ class SF_CardRealizesController : CIM_Realizes {
 INSTANCE
 class SF_LANEndpoint : CIM_LANEndpoint {
 #if defined(TARGET_CIM_SERVER_wmi)
-    [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("Name")] string Name;
+#if 0
+    [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("SystemCreationClassName")] string SystemCreationClassName;
     [Read,Key : DisableOverride,Override("SystemName")] string SystemName;
+#endif
 #endif
 };
 
