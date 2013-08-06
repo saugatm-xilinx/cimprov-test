@@ -2910,7 +2910,7 @@ cleanup:
         rc = snprintf(query, sizeof(query), "Select * From "
                       "EFX_DiagnosticConfigurationParams Where Id=%lu",
                       static_cast<long unsigned int>(jobId));
-        if (rc < 0 || rc >= static_cast<int>sizeof(query))
+        if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
         {
             CIMPLE_ERR(("%s():   failed to create query to search "
                      "for matching EFX_DiagnosticConfigurationParams",
