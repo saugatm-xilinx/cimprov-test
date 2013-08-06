@@ -226,7 +226,8 @@ namespace solarflare
 
         hr = CoCreateInstance(CLSID_WbemLocator, NULL,
                               CLSCTX_INPROC_SERVER,
-                              IID_IWbemLocator, (LPVOID *)&wbemLocator);
+                              IID_IWbemLocator,
+                              reinterpret_cast<LPVOID *>(&wbemLocator));
         if (FAILED(hr))
         {
             CIMPLE_ERR(("CoCreateInstance() failed, rc = %lx", hr));
@@ -498,7 +499,8 @@ namespace solarflare
         {
             long long int el;
 
-            hr = SafeArrayGetElement(pArray, &i, (void *)&el);
+            hr = SafeArrayGetElement(pArray, &i,
+                                     reinterpret_cast<void *>(&el));
             if (FAILED(hr))
             {
                 CIMPLE_ERR(("%s():   failed to get %d element, "
@@ -509,19 +511,19 @@ namespace solarflare
             }
 
             if (vt == VT_I2)
-                value.append(*((SHORT *)&el));
+                value.append(*(reinterpret_cast<SHORT *>(&el)));
             else if (vt == VT_I4)
-                value.append(*((LONG *)&el));
+                value.append(*(reinterpret_cast<LONG *>(&el)));
             else if (vt == VT_INT)
-                value.append(*((INT *)&el));
+                value.append(*(reinterpret_cast<INT *>(&el)));
             else if (vt == VT_UI2)
-                value.append(*((USHORT *)&el));
+                value.append(*(reinterpret_cast<USHORT *>(&el)));
             else if (vt == VT_UI4)
-                value.append(*((ULONG *)&el));
+                value.append(*(reinterpret_cast<ULONG *>(&el)));
             else if (vt == VT_UINT)
-                value.append(*((UINT *)&el));
+                value.append(*(reinterpret_cast<UINT *>(&el)));
             else if (vt == VT_UI1)
-                value.append(*((BYTE *)&el));
+                value.append(*(reinterpret_cast<BYTE *>(&el)));
             else
             {
                 CIMPLE_ERR(("%s():   failed to get %d element, "
@@ -546,7 +548,8 @@ namespace solarflare
     ///
     /// @return 0 on success or error code
     ///
-    static int wmiGetBoolProp(IWbemClassObject *wbemObj, const char *propName,
+    static int wmiGetBoolProp(IWbemClassObject *wbemObj,
+                              const char *propName,
                               bool *value)
     {
         HRESULT  hr;
@@ -1176,7 +1179,8 @@ cleanup:
         dwRetVal = GetInterfaceInfo(NULL, &outBufLen);
         if (dwRetVal == ERROR_INSUFFICIENT_BUFFER)
         {
-            pInfo = (IP_INTERFACE_INFO *)MALLOC(outBufLen);
+            pInfo = reinterpret_cast<IP_INTERFACE_INFO *>
+                                            (MALLOC(outBufLen));
             if (pInfo == NULL)
             {
                 CIMPLE_ERR(("Failed to allocate memory "
@@ -1214,14 +1218,15 @@ cleanup:
 
             intfInfo.Name = wstr2str(pInfo->Adapter[i].Name);
             intfInfo.Descr = String("");
-            intfInfo.Descr.append((char *)mibIfRow.bDescr,
+            intfInfo.Descr.append(reinterpret_cast<char *>(mibIfRow.bDescr),
                                   mibIfRow.dwDescrLen);
             intfInfo.Index = pInfo->Adapter[i].Index;
             intfInfo.MTU = mibIfRow.dwMtu;
             intfInfo.AdminStatus =  mibIfRow.dwAdminStatus;
             intfInfo.PhysAddr.clear();
             for (j = 0; j < mibIfRow.dwPhysAddrLen; j++)
-                intfInfo.PhysAddr.append((int)mibIfRow.bPhysAddr[j]);
+                intfInfo.PhysAddr.append(
+                            static_cast<int>(mibIfRow.bPhysAddr[j]));
             info.append(intfInfo);
         }
 
@@ -1625,12 +1630,12 @@ cleanup:
 
             // WillBlock='false' means that we do not run tests
             // from provider which "require user assistance".
-            rc = snprintf(query, WMI_QUERY_MAX,
+            rc = snprintf(query, sizeof(query),
                           "SELECT * FROM EFX_DiagnosticTest "
                           "WHERE DummyInstance='false' AND PortId=%d "
                           "AND WillBlock='false'",
                           portInfo.port_id);
-            if (rc < 0 || rc >= WMI_QUERY_MAX)
+            if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
             {
                 CIMPLE_ERR(("%s(): failed to construct a query",
                             __FUNCTION__));
@@ -1736,7 +1741,8 @@ cleanup:
 
             rc = SetIfEntry(&mibIfRow);
             if (rc != NO_ERROR)
-                CIMPLE_ERR(("SetIfEntry() failed with rc=0x%lx", (long int)rc));
+                CIMPLE_ERR(("SetIfEntry() failed with rc=0x%lx",
+                            static_cast<long int>(rc)));
         }
 
         /// @return current MTU
@@ -1774,7 +1780,10 @@ cleanup:
         virtual Port *port() { return boundPort; }
         virtual const Port *port() const { return boundPort; }
 
-        void bindToPort(Port *p) { boundPort = (WindowsPort *)p; }
+        void bindToPort(Port *p)
+        {
+            boundPort = dynamic_cast<WindowsPort *>(p);
+        }
             
         virtual void initialize() {};
 
@@ -1857,19 +1866,23 @@ cleanup:
         V_ARRAY(&macValue) = SafeArrayCreate(VT_BOOL, 1, bound);
         if (V_ARRAY(&macValue) == NULL)
         {
-            CIMPLE_ERR(("%s():   failed to create array for MAC representation",
+            CIMPLE_ERR(("%s():   failed to create "
+                        "array for MAC representation",
                         __FUNCTION__));
             goto cleanup;
         }
 
         for (j = 0; j < MAC_ADDR_BYTES; j++)
         {
-            hr = SafeArrayPutElement(V_ARRAY(&macValue), &j,
-                                     (void *)&mac.address[j]);
+            hr = SafeArrayPutElement(
+                          V_ARRAY(&macValue), &j,
+                          reinterpret_cast<void *>(
+                            const_cast<unsigned char *>(&mac.address[j])));
             if (FAILED(hr))
             {
-                CIMPLE_ERR(("%s():   failed to prepare MAC value for calling "
-                            "SetNetwordAddress(), rc=%lx", __FUNCTION__, hr));
+                CIMPLE_ERR(("%s():   failed to prepare MAC value for "
+                            "calling SetNetwordAddress(), rc=%lx",
+                            __FUNCTION__, hr));
                 VariantClear(&macValue);
                 goto cleanup;
             }
@@ -2016,7 +2029,8 @@ cleanup:
             wmiGetStringProp(drivers[0], "DriverVersion", version);
             wmiGetStringProp(drivers[0], "Description", description);
             wmiGetStringProp(drivers[0], "InfName", sysname);
-            *this = WindowsDriver(description, sysname, VersionInfo(version.c_str()));
+            *this = WindowsDriver(description, sysname,
+                                  VersionInfo(version.c_str()));
         }
 
         for (i = 0; i < drivers.size(); i++)
@@ -2037,14 +2051,14 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)ports.size(); i++)
+            for (i = 0; i < static_cast<int>(ports.size()); i++)
                 ports[i].initialize();
         }
         virtual void setupInterfaces()
         {
             int i = 0;
 
-            for (i = 0; i < (int)ports.size(); i++)
+            for (i = 0; i < static_cast<int>(ports.size()); i++)
             {
                 intfs[i].initialize();
                 intfs[i].bindToPort(&ports[i]);
@@ -2066,7 +2080,7 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)descr.ports.size(); i++)
+            for (i = 0; i < static_cast<int>(descr.ports.size()); i++)
             {
                 ports.append(WindowsPort(this, i, descr.ports[i]));
                 intfs.append(WindowsInterface(this, i));
@@ -2138,7 +2152,7 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)ports.size(); i++)
+            for (i = 0; i < static_cast<int>(ports.size()); i++)
                 if (!en.process(ports[i]))
                     return false;
 
@@ -2149,7 +2163,7 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)ports.size(); i++)
+            for (i = 0; i < static_cast<int>(ports.size()); i++)
                 if (!en.process(ports[i]))
                     return false;
 
@@ -2160,7 +2174,7 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)intfs.size(); i++)
+            for (i = 0; i < static_cast<int>(intfs.size()); i++)
             {
                 if (!en.process(intfs[i]))
                     return false;
@@ -2173,7 +2187,7 @@ cleanup:
         {
             int i = 0;
 
-            for (i = 0; i < (int)intfs.size(); i++)
+            for (i = 0; i < static_cast<int>(intfs.size()); i++)
             {
                 if (!en.process(intfs[i]))
                     return false;
@@ -2223,7 +2237,8 @@ cleanup:
                        const char *descr, const VersionInfo& vi) :
             Library(descr, dllName), owner(pkg), vers(vi) {}
     public:
-        static WindowsLibrary dllLibrary(const Package *pkg, const char *dllName);
+        static WindowsLibrary dllLibrary(const Package *pkg,
+                                         const char *dllName);
         static WindowsLibrary moduleLibrary(const Package *pkg);
         virtual VersionInfo version() const { return vers; };
         virtual void initialize() {};
@@ -2244,11 +2259,18 @@ cleanup:
         unsigned blocklen;
         VersionInfo ver;
 
-        VerQueryValue(data, _T("\\"), (void **)&fixedInfo, &blocklen);
-        VerQueryValue(data, _T("\\StringFileInfo\\040904E4\\FileDescription"),
-                      (void **)&descr, &blocklen);
-        VerQueryValue(data, _T("\\StringFileInfo\\040904E4\\ProductVersion"),
-                      (void **)&vstr, &blocklen);
+        VerQueryValue(data, _T("\\"), reinterpret_cast<void **>(&fixedInfo),
+                      &blocklen);
+        VerQueryValue(
+                  data,
+                  _T("\\StringFileInfo\\040904E4\\FileDescription"),
+                  reinterpret_cast<void **>(const_cast<char **>(&descr)),
+                  &blocklen);
+        VerQueryValue(
+                  data,
+                  _T("\\StringFileInfo\\040904E4\\ProductVersion"),
+                  reinterpret_cast<void **>(const_cast<char **>(&vstr)),
+                  &blocklen);
 
         ver =  VersionInfo(fixedInfo->dwProductVersionMS >> 16,
                            fixedInfo->dwProductVersionMS & 0xFFFFU,
@@ -2257,7 +2279,7 @@ cleanup:
                            vstr,
                            Datetime(((uint64)fixedInfo->dwFileDateMS << 32) |
                                     fixedInfo->dwFileDateLS));
-        delete[] (char *)data;
+        delete[] reinterpret_cast<char *>(data);
         
         return WindowsLibrary(pkg, dllName, descr, ver);
     }
@@ -2269,7 +2291,7 @@ cleanup:
 
         GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT |
                           GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                          (LPCTSTR)&moduleLibrary,
+                          reinterpret_cast<LPCTSTR>(&moduleLibrary),
                           &hmod);
         GetModuleFileNameA(hmod,  path, sizeof(path));
         return dllLibrary(pkg, path);
@@ -2284,13 +2306,14 @@ cleanup:
        {
            static char path[MAX_PATH];
            DWORD len = sizeof(path);
-           RegGetValue(HKEY_LOCAL_MACHINE,
-                       _T("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
-                       _T("UninstallString"),
-                       RRF_RT_REG_SZ,
-                       NULL,
-                       path,
-                       &len);
+           RegGetValue(
+              HKEY_LOCAL_MACHINE,
+              _T("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
+              _T("UninstallString"),
+              RRF_RT_REG_SZ,
+              NULL,
+              path,
+              &len);
            return path;
        }
 
@@ -2301,7 +2324,10 @@ cleanup:
             Package("CIM Provider MSI", getUninstallerPath()),
             providerLibrary(WindowsLibrary::moduleLibrary(this)) {}
         virtual PkgType type() const { return MSI; }
-        virtual VersionInfo version() const { return providerLibrary.version(); }
+        virtual VersionInfo version() const
+        {
+            return providerLibrary.version();
+        }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
@@ -2388,10 +2414,10 @@ cleanup:
 
             Array<IWbemClassObject *> ports;
 
-            rc = snprintf(query, WMI_QUERY_MAX, "SELECT * FROM EFX_Port "
+            rc = snprintf(query, sizeof(query), "SELECT * FROM EFX_Port "
                           "WHERE Id='%d' AND DummyInstance='False'",
                           this->portId);
-            if (rc < 0 || rc >= WMI_QUERY_MAX)
+            if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
                 return -1;
 
             rc = wmiEnumInstancesQuery(NULL, query, ports);
@@ -2530,7 +2556,7 @@ cleanup:
             memset(&verInfo, 0, sizeof(verInfo));
             verInfo.dwOSVersionInfoSize = sizeof(verInfo);
 
-            if (!GetVersionEx((OSVERSIONINFO *)&verInfo))
+            if (!GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&verInfo)))
             {
                 CIMPLE_ERR(("%s():    failed to call GetVersionEx()",
                             __FUNCTION__));
@@ -2597,7 +2623,8 @@ cleanup:
 
     bool WindowsSystem::forAllNICs(ConstElementEnumerator& en) const
     {
-        return const_cast<WindowsSystem *>(this)->forAllNICs((ElementEnumerator&) en); 
+        return const_cast<WindowsSystem *>
+                    (this)->forAllNICs((ElementEnumerator&) en); 
     }
 
     bool WindowsSystem::forAllDrivers(ElementEnumerator &en)
@@ -2618,10 +2645,13 @@ cleanup:
             String version;
             String description;
             String sysname;
+
             wmiGetStringProp(drivers[i], "DriverVersion", version);
             wmiGetStringProp(drivers[i], "Description", description);
             wmiGetStringProp(drivers[i], "InfName", sysname);
-            WindowsDriver drv(description, sysname, VersionInfo(version.c_str()));
+
+            WindowsDriver drv(description, sysname,
+                              VersionInfo(version.c_str()));
 
             if (!en.process(drv))
             {
@@ -2638,7 +2668,8 @@ cleanup:
 
     bool WindowsSystem::forAllDrivers(ConstElementEnumerator& en) const
     {
-        return const_cast<WindowsSystem *>(this)->forAllDrivers((ElementEnumerator&) en); 
+        return const_cast<WindowsSystem *>
+                  (this)->forAllDrivers((ElementEnumerator&) en); 
     }
     
     bool WindowsSystem::forAllPackages(ConstElementEnumerator& en) const
@@ -2671,20 +2702,22 @@ cleanup:
 
     VersionInfo WindowsNICFirmware::version() const
     {
-        if (((WindowsNIC *)owner)->ports.size() == 0)
+        if ((dynamic_cast<const WindowsNIC *>(owner))->ports.size() == 0)
             return VersionInfo("0.0.0");
         else
-            return VersionInfo(((WindowsNIC *)owner)->ports[0].
-                                         portInfo.mcfwVersion().c_str());
+            return VersionInfo(
+                        (dynamic_cast<const WindowsNIC *>(owner))->ports[0].
+                                        portInfo.mcfwVersion().c_str());
     }
 
     VersionInfo WindowsBootROM::version() const
     {
-        if (((WindowsNIC *)owner)->ports.size() == 0)
+        if ((dynamic_cast<const WindowsNIC *>(owner))->ports.size() == 0)
             return VersionInfo("0.0.0");
         else
-            return VersionInfo(((WindowsNIC *)owner)->ports[0].
-                                      portInfo.bootROMVersion().c_str());
+            return VersionInfo(
+                  (dynamic_cast<const WindowsNIC *>(owner))->ports[0].
+                                        portInfo.bootROMVersion().c_str());
     }
 
     ///
@@ -2716,7 +2749,8 @@ cleanup:
                                     NULL, &newObj, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to get object '%s', rc = %ld (0x%lx)",
+            CIMPLE_ERR(("%s():   failed to get object '%s',"
+                        " rc = %ld (0x%lx)",
                         __FUNCTION__, objPath.c_str(), hr, hr));
             return -1;
         }
@@ -2828,9 +2862,9 @@ cleanup:
         if (requiresQuiescence)
         {
             rc = EFXPortQuiesce(
-                        ((WindowsPort *)owner)->portInfo.efxPort,
-                        ((WindowsPort *)owner)->name(),
-                        awakePort);
+              (dynamic_cast<const WindowsPort *>(owner))->portInfo.efxPort,
+              (dynamic_cast<const WindowsPort *>(owner))->name(),
+              awakePort);
             if (rc != 0)
                 goto cleanup;
         }
@@ -2845,10 +2879,10 @@ cleanup:
         if (rc != 0)
             goto cleanup;
 
-        rc = snprintf(query, WMI_QUERY_MAX, "Select * From "
+        rc = snprintf(query, sizeof(query), "Select * From "
                       "EFX_DiagnosticJob Where Id=%lu",
                       (long unsigned int)jobId);
-        if (rc < 0 || rc >= WMI_QUERY_MAX)
+        if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
         {
             CIMPLE_ERR(("%s():   failed to create query to search "
                      "for matching EFX_DiagnosticJob",
@@ -2873,10 +2907,10 @@ cleanup:
             goto cleanup;
         job_created = true;
 
-        rc = snprintf(query, WMI_QUERY_MAX, "Select * From "
+        rc = snprintf(query, sizeof(query), "Select * From "
                       "EFX_DiagnosticConfigurationParams Where Id=%lu",
-                      (long unsigned int)jobId);
-        if (rc < 0 || rc >= WMI_QUERY_MAX)
+                      static_cast<long unsigned int>(jobId));
+        if (rc < 0 || rc >= static_cast<int>sizeof(query))
         {
             CIMPLE_ERR(("%s():   failed to create query to search "
                      "for matching EFX_DiagnosticConfigurationParams",
