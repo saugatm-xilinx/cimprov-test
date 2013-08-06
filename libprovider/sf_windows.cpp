@@ -40,6 +40,10 @@
 
 #define WMI_QUERY_MAX 1000
 
+#define MAC_ADDR_BYTES 6
+
+#define EFX_MAX_MTU 9216
+
 /// Job states in EFX_DiagnosticJob
 enum {
   JobCreated = 0,
@@ -518,6 +522,15 @@ namespace solarflare
                 value.append(*((UINT *)&el));
             else if (vt == VT_UI1)
                 value.append(*((BYTE *)&el));
+            else
+            {
+                CIMPLE_ERR(("%s():   failed to get %d element, "
+                            "incorrect variant type 0x%hx",
+                            __FUNCTION__, i, vt));
+                VariantClear(&wbemObjProp);
+                value.clear();
+                return -1;
+            }
         }
 
         VariantClear(&wbemObjProp);
@@ -610,35 +623,27 @@ namespace solarflare
     /// @return 0 on success or error code
     ///
     static int wmiEnumInstances(IWbemServices *wbemSvc,
-                                const char *query,
-                                bool useInstanceEnum,
+                                const char *className,
                                 Array<IWbemClassObject *> &instances)
     {
         HRESULT               hr;
         IEnumWbemClassObject *enumWbemObj = NULL;
         int                   rc = 0;
         unsigned int          i;
-        BString               bstrQuery(query);
+        BString               bstrQuery(className);
 
         if (wbemSvc == NULL && wmiEstablishConn() != 0)
             return -1;
         else if (wbemSvc == NULL)
             wbemSvc = rootWMIConn;
 
-        if (useInstanceEnum)
-            hr = wbemSvc->CreateInstanceEnum(bstrQuery.rep(),
-                                             WBEM_FLAG_SHALLOW, NULL,
-                                             &enumWbemObj);
-        else
-            hr = wbemSvc->ExecQuery(BString("WQL").rep(),
-                                    bstrQuery.rep(), 0,
-                                    NULL, &enumWbemObj);
+        hr = wbemSvc->CreateInstanceEnum(bstrQuery.rep(),
+                                         WBEM_FLAG_SHALLOW, NULL,
+                                         &enumWbemObj);
 
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s() failed, rc = %lx",
-                        useInstanceEnum ?
-                        "CreateInstanceEnum" : "ExecQuery",
+            CIMPLE_ERR(("CreateInstancesEnum() failed, rc = %lx",
                         hr));
             return -1;
         }
@@ -659,9 +664,9 @@ namespace solarflare
     ///
     /// @return 0 on success or error code
     ///
-    static int wmiExecQuery(IWbemServices *wbemSvc,
-                            const char *search,
-                            Array<IWbemClassObject *> &instances)
+    static int wmiEnumInstancesQuery(IWbemServices *wbemSvc,
+                                     const char *search,
+                                     Array<IWbemClassObject *> &instances)
     {
         HRESULT               hr;
         IEnumWbemClassObject *enumWbemObj = NULL;
@@ -670,7 +675,7 @@ namespace solarflare
         unsigned int          i;
 
         static BString wqlName("WQL");
-        static BString searchBstr(search);
+        BString        searchBstr(search);
 
         if (wbemSvc == NULL && wmiEstablishConn() != 0)
             return -1;
@@ -749,11 +754,10 @@ namespace solarflare
         IWbemClassObject *classObj = NULL;
         IWbemClassObject *pInDef = NULL;
 
-        bool className_got = false;
-        bool path_got = false;
-        bool classObj_got = false;
-        bool pInDef_got = false;
         int  rc = 0;
+
+        className.vt = VT_NULL;
+        path.vt = VT_NULL;
 
         if (wmiEstablishConn() != 0)
             return -1;
@@ -769,7 +773,6 @@ namespace solarflare
                         "rc=%lx", __FUNCTION__, hr));
             return -1;
         }
-        className_got = true;
 
         hr = instance->Get(BString("__Path").rep(), 0,
                            &path, NULL, NULL);
@@ -780,7 +783,6 @@ namespace solarflare
             rc = -1;
             goto cleanup;
         }
-        path_got = true;
 
         hr = rootWMIConn->GetObject(className.bstrVal, 0, NULL,
                                     &classObj, NULL);
@@ -791,7 +793,6 @@ namespace solarflare
             rc = -1;
             goto cleanup;
         }
-        classObj_got = true;
 
         if (pIn != NULL)
         {
@@ -804,7 +805,6 @@ namespace solarflare
                 rc = -1;
                 goto cleanup;
             }
-            pInDef_got = true;
 
             hr = pInDef->SpawnInstance(0, pIn);
             if (FAILED(hr))
@@ -822,13 +822,11 @@ namespace solarflare
         delete[] value;
 
 cleanup:
-        if (className_got)
-            VariantClear(&className);
-        if (path_got)
-            VariantClear(&path);
-        if (classObj_got)
+        VariantClear(&className);
+        VariantClear(&path);
+        if (classObj != NULL)
             classObj->Release();
-        if (pInDef_got)
+        if (pInDef != NULL)
             pInDef->Release();
 
         return rc;
@@ -935,24 +933,10 @@ cleanup:
             return -1;
         }
 
-        CoImpersonateClient();
-        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
-                                     BString(methodName).rep(),
-                                     0, NULL, pIn, &pOut, NULL);
-        CoRevertToSelf();
-        if (FAILED(hr))
-        {
-            CIMPLE_ERR(("%s():   failed to call firmware version reading "
-                        "method, rc=%lx", __FUNCTION__, hr));
-            pIn->Release();
-            return -1;
-        }
-
-        rc = wmiGetIntProp<int>(pOut, "CompletionCode", &CompletionCode);
+        rc = wmiExecMethod(objPath, methodName, pIn, &pOut);
         if (rc < 0)
         {
             pIn->Release();
-            pOut->Release();
             return rc;
         }
 
@@ -1033,24 +1017,10 @@ cleanup:
             return -1;
         }
 
-        CoImpersonateClient();
-        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
-                                     BString(methodName).rep(),
-                                     0, NULL, pIn, &pOut, NULL);
-        CoRevertToSelf();
-        if (FAILED(hr))
-        {
-            CIMPLE_ERR(("%s():   failed to call VPD keyword reading "
-                        "method, rc=%lx", __FUNCTION__, hr));
-            pIn->Release();
-            return -1;
-        }
-
-        rc = wmiGetIntProp<int>(pOut, "CompletionCode", &CompletionCode);
+        rc = wmiExecMethod(objPath, methodName, pIn, &pOut);
         if (rc < 0)
         {
             pIn->Release();
-            pOut->Release();
             return rc;
         }
 
@@ -1101,11 +1071,9 @@ cleanup:
     {
         bool result = false;
     
-        if (wmiGetBoolProp(efxPort, "LinkUp",
-                           &result) != 0)
-            return false;
-        else
-            return result;
+        wmiGetBoolProp(efxPort, "LinkUp",
+                       &result);
+        return result;
     }
 
     /// Get link speed
@@ -1113,12 +1081,10 @@ cleanup:
     {
         uint64 speed = 0;
     
-        if (wmiGetIntProp<uint64>(efxPort,
-                                  "LinkCurrentSpeed",
-                                  &speed) != 0)
-            return 0;
-        else
-            return speed;
+        wmiGetIntProp<uint64>(efxPort,
+                              "LinkCurrentSpeed",
+                              &speed);
+        return speed;
     }
 
     /// Get link duplex mode
@@ -1126,11 +1092,9 @@ cleanup:
     {
         int duplex = 0;
     
-        if (wmiGetIntProp<int>(efxPort, "LinkDuplex",
-                               &duplex) != 0)
-            return 0;
-        else
-            return duplex;
+        wmiGetIntProp<int>(efxPort, "LinkDuplex",
+                           &duplex);
+        return duplex;
     }
 
     /// Check whether autonegotiation is available
@@ -1138,12 +1102,10 @@ cleanup:
     {
         bool result = false;
     
-        if (wmiGetBoolProp(efxPort,
-                           "FlowControlAutonegotiation",
-                           &result) != 0)
-            return false;
-        else
-            return result;
+        wmiGetBoolProp(efxPort,
+                       "FlowControlAutonegotiation",
+                       &result);
+        return result;
     }
 
     /// Get MC firmware version
@@ -1151,11 +1113,9 @@ cleanup:
     {
         String vers;
     
-        if (wmiGetStringProp(efxPort, "McfwVersion",
-                             vers) != 0)
-            return String("");
-        else
-            return vers;
+        wmiGetStringProp(efxPort, "McfwVersion",
+                         vers);
+        return vers;
     }
 
     /// Get BootROM version
@@ -1163,10 +1123,8 @@ cleanup:
     {
         String vers;
     
-        if (getPortBootROMVersion(efxPort, vers) != 0)
-            return String("");
-        else
-            return vers;
+        getPortBootROMVersion(efxPort, vers);
+        return vers;
     }
 
     /// Get product name from VPD for SF Ethernet port
@@ -1174,11 +1132,9 @@ cleanup:
     {
         String pname; 
 
-        if (getPortVPDField(efxPort, VPD_TAG_ID, 0,
-                            pname) != 0)
-            return String("");
-        else
-            return pname;
+        getPortVPDField(efxPort, VPD_TAG_ID, 0,
+                        pname);
+        return pname;
     }
 
     /// Get product number from VPD for SF Ethernet port
@@ -1186,11 +1142,9 @@ cleanup:
     {
         String pnum; 
 
-        if (getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('P', 'N'),
-                            pnum) != 0)
-            return String("");
-        else
-            return pnum;
+        getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('P', 'N'),
+                        pnum);
+        return pnum;
     }
 
     /// Get serial number from VPD for SF Ethernet port
@@ -1198,11 +1152,9 @@ cleanup:
     {
         String snum; 
 
-        if (getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('S', 'N'),
-                            snum) != 0)
-            return String("");
-        else
-            return snum;
+        getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('S', 'N'),
+                        snum);
+        return snum;
     }
 
     ///
@@ -1262,8 +1214,8 @@ cleanup:
 
             intfInfo.Name = wstr2str(pInfo->Adapter[i].Name);
             intfInfo.Descr = String("");
-            for (j = 0; j < mibIfRow.dwDescrLen; j++)
-                intfInfo.Descr.append(mibIfRow.bDescr[j]);
+            intfInfo.Descr.append((char *)mibIfRow.bDescr,
+                                  mibIfRow.dwDescrLen);
             intfInfo.Index = pInfo->Adapter[i].Index;
             intfInfo.MTU = mibIfRow.dwMtu;
             intfInfo.AdminStatus =  mibIfRow.dwAdminStatus;
@@ -1294,11 +1246,13 @@ cleanup:
         PortDescr                 portDescr;
         unsigned int              i;
         unsigned int              j;
-        bool                      dummy;
         bool                      clearPciInfos = false;
         int                       pci_cmp_rc;
 
-        rc = wmiEnumInstances(NULL, "EFX_Port", true, ports);
+        rc = wmiEnumInstancesQuery(NULL,
+                                   "SELECT * FROM EFX_Port "
+                                   "WHERE DummyInstance='false'",
+                                   ports);
         if (rc < 0)
             return rc;
 
@@ -1308,16 +1262,12 @@ cleanup:
 
         for (i = 0; i < ports.size(); i++)
         {
-            if (wmiGetBoolProp(ports[i], "DummyInstance", &dummy) != 0 ||
-                wmiGetIntProp<int>(ports[i], "Id",
+            if (wmiGetIntProp<int>(ports[i], "Id",
                                    &portDescr.port_id) != 0)
             {
                 rc = -1;
                 goto cleanup;
             }
-
-            if (dummy)
-                continue;
 
             if (wmiGetStringProp(ports[i], "InstanceName",
                                  portDescr.deviceInstanceName) != 0)
@@ -1352,7 +1302,7 @@ cleanup:
             portDescr.ifInfo = intfsInfo[j];
 
             if (wmiEnumInstances(NULL, "EFX_PciInformation",
-                                 true, pciInfos) != 0)
+                                 pciInfos) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -1669,14 +1619,25 @@ cleanup:
             int                       rc = 0;
             Array<IWbemClassObject *> efxDiagTests;
             unsigned int              i;
-            bool                      dummy;
-            bool                      willBlock;
-            int                       Id;
+            char                      query[WMI_QUERY_MAX];
  
             WindowsDiagnostic *diag = NULL;
 
-            rc = wmiEnumInstances(NULL, "EFX_DiagnosticTest",
-                                  true, efxDiagTests);
+            // WillBlock='false' means that we do not run tests
+            // from provider which "require user assistance".
+            rc = snprintf(query, WMI_QUERY_MAX,
+                          "SELECT * FROM EFX_DiagnosticTest "
+                          "WHERE DummyInstance='false' AND PortId=%d "
+                          "AND WillBlock='false'",
+                          portInfo.port_id);
+            if (rc < 0 || rc >= WMI_QUERY_MAX)
+            {
+                CIMPLE_ERR(("%s(): failed to construct a query",
+                            __FUNCTION__));
+                return;
+            }
+            CIMPLE_ERR(("Query '%s'", query));
+            rc = wmiEnumInstancesQuery(NULL, query, efxDiagTests);
             if (rc != 0)
                 return;
 
@@ -1684,28 +1645,7 @@ cleanup:
             {
                 if (diag != NULL)
                     delete diag;
-                diag = new WindowsDiagnostic((Port *)this);
-
-                if ((rc = wmiGetIntProp<int>(efxDiagTests[i], "PortId",
-                                             &Id)) != 0)
-                    goto cleanup;
-                if (Id != portInfo.port_id)
-                    continue;
-
-                if ((rc = wmiGetBoolProp(efxDiagTests[i], "DummyInstance",
-                                         &dummy)) != 0)
-                    goto cleanup;
-                if (dummy)
-                    continue;
-
-                // Do not run tests from provider which "require user
-                // assistance".
-                if ((rc = wmiGetBoolProp(efxDiagTests[i], "WillBlock",
-                                         &willBlock)) != 0)
-                    goto cleanup;
-                if (willBlock)
-                    continue;
-
+                diag = new WindowsDiagnostic(this);
                 diag->setEfxDiagTest(efxDiagTests[i]);
                 efxDiagTests[i] = NULL;
                 diag->initialize();
@@ -1736,23 +1676,23 @@ cleanup:
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             unsigned int i;
-            bool         ret = true;
 
             for (i = 0; i < diags.size(); i++)
-                ret = ret && en.process(*(diags[i]));
+                if (!en.process(*(diags[i])))
+                    return false;
 
-            return ret;
+            return true;
         }
         
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             unsigned int i;
-            bool         ret = true;
 
             for (i = 0; i < diags.size(); i++)
-                ret = ret && en.process(*(diags[i]));
+                if (!en.process(*(diags[i])))
+                    return false;
 
-            return ret;
+            return true;
         }
 
         // Dummy operator to make possible using of cimple::Array
@@ -1765,7 +1705,7 @@ cleanup:
 
     class WindowsInterface : public Interface {
         const NIC *owner;
-        Port *boundPort;
+        WindowsPort *boundPort;
     public:
         WindowsInterface(const NIC *up, unsigned i) : 
             Interface(i), 
@@ -1774,7 +1714,7 @@ cleanup:
         { }
         virtual bool ifStatus() const
         {
-            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+            PortDescr *portInfo = &boundPort->portInfo;
 
             return
               (portInfo->ifInfo.AdminStatus == MIB_IF_ADMIN_STATUS_UP ? 
@@ -1785,7 +1725,7 @@ cleanup:
         {
             DWORD      rc;
             MIB_IFROW  mibIfRow;
-            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+            PortDescr *portInfo = &boundPort->portInfo;
         
             memset(&mibIfRow, 0, sizeof(mibIfRow));
             mibIfRow.dwIndex = portInfo->ifInfo.Index;
@@ -1802,7 +1742,7 @@ cleanup:
         /// @return current MTU
         virtual uint64 mtu() const
         {
-            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+            PortDescr *portInfo = &boundPort->portInfo;
 
             return portInfo->ifInfo.MTU;
         }            
@@ -1813,7 +1753,7 @@ cleanup:
         /// @return MAC address actually in use
         virtual MACAddress currentMAC() const
         {
-            PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+            PortDescr *portInfo = &boundPort->portInfo;
 
             return MACAddress(portInfo->currentMAC[0],
                               portInfo->currentMAC[1],
@@ -1834,7 +1774,7 @@ cleanup:
         virtual Port *port() { return boundPort; }
         virtual const Port *port() const { return boundPort; }
 
-        void bindToPort(Port *p) { boundPort = p; }
+        void bindToPort(Port *p) { boundPort = (WindowsPort *)p; }
             
         virtual void initialize() {};
 
@@ -1848,19 +1788,20 @@ cleanup:
 
     String WindowsInterface::ifName() const
     {
-        PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+        PortDescr *portInfo = &boundPort->portInfo;
 
         return portInfo->ifInfo.Name;
     }
     
     void WindowsInterface::currentMAC(const MACAddress& mac)
     {
-        PortDescr *portInfo = &((WindowsPort *)boundPort)->portInfo;
+        PortDescr *portInfo = &boundPort->portInfo;
 
         Array<IWbemClassObject *>   efxNetAdapters;
 
         unsigned int              i;
         LONG                      j;
+        int                       rc;
         String                    objPath;
         long int                  CompletionCode;
         IWbemClassObject         *pIn = NULL;
@@ -1873,26 +1814,15 @@ cleanup:
 
         String methodName("EFX_NetworkAdapter_SetNetworkAddress");
 
-        if (wmiEnumInstances(NULL, "EFX_NetworkAdapter",
-                             true, efxNetAdapters) != 0)
+        if (wmiEnumInstancesQuery(NULL,
+                                  "SELECT * FROM EFX_NetworkAdapter "
+                                  "WHERE DummyInstance='false'",
+                                  efxNetAdapters) != 0)
             return;
 
         for (i = 0; i < efxNetAdapters.size(); i++)
         {
-            bool       dummy;
             Array<int> netAddr;
-
-            if (wmiGetBoolProp(efxNetAdapters[i], "DummyInstance",
-                               &dummy) != 0)
-            {
-                CIMPLE_ERR(("%s():   failed to get DummyInstance property "
-                            "value for EFX_NetworkAdapter class",
-                            __FUNCTION__));
-                goto cleanup;
-            }
-
-            if (dummy)
-                continue;
 
             if (wmiGetIntArrProp<int>(efxNetAdapters[i], "NetworkAddress",
                                       netAddr) != 0)
@@ -1923,7 +1853,7 @@ cleanup:
 
         macValue.vt = (VT_BOOL | VT_ARRAY);
         bound[0].lLbound = 0;
-        bound[0].cElements = 6;
+        bound[0].cElements = MAC_ADDR_BYTES;
         V_ARRAY(&macValue) = SafeArrayCreate(VT_BOOL, 1, bound);
         if (V_ARRAY(&macValue) == NULL)
         {
@@ -1932,7 +1862,7 @@ cleanup:
             goto cleanup;
         }
 
-        for (j = 0; j < 6; j++)
+        for (j = 0; j < MAC_ADDR_BYTES; j++)
         {
             hr = SafeArrayPutElement(V_ARRAY(&macValue), &j,
                                      (void *)&mac.address[j]);
@@ -1990,29 +1920,13 @@ cleanup:
                 pOut->Release();
             pOut = NULL;
 
-            CoImpersonateClient();
-            hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
-                                         BString(methodApplyName).rep(),
-                                         0, NULL, NULL, &pOut, NULL);
-            CoRevertToSelf();
-            if (FAILED(hr))
+            rc = wmiExecMethod(objPath, methodApplyName,
+                               NULL, &pOut);
+            if (rc < 0)
             {
                 CIMPLE_ERR(("%s():   failed to call "
                             "EFX_NetworkAdapter_ApplyChanges() "
                             "method, rc=%lx", __FUNCTION__, hr));
-                goto cleanup;
-            }
-
-            if (wmiGetIntProp<long int>(pOut, "CompletionCode",
-                                        &CompletionCode) != 0)
-                goto cleanup;
-
-            if (CompletionCode != 0)
-            {
-                CIMPLE_ERR(("%s():   wrong completion code %ld (0x%lx) "
-                            "returned by method "
-                            "EFX_NetworkAdapter_ApplyChanges()",
-                            __FUNCTION__, CompletionCode, CompletionCode));
                 goto cleanup;
             }
         }
@@ -2091,7 +2005,7 @@ cleanup:
             return;
 
         Array<IWbemClassObject *> drivers;
-        if (wmiExecQuery(cimWMIConn, path.c_str(), drivers) < 0)
+        if (wmiEnumInstancesQuery(cimWMIConn, path.c_str(), drivers) < 0)
             return;
 
         if (drivers.size() > 0)
@@ -2113,6 +2027,7 @@ cleanup:
         WindowsNICFirmware nicFw;
         WindowsBootROM rom;
         mutable WindowsDriver nicDriver;
+        PCIAddress pciAddr;
     public:
         Array<WindowsPort> ports;
         Array<WindowsInterface> intfs;
@@ -2146,7 +2061,8 @@ cleanup:
             NIC(idx),
             nicFw(this),
             rom(this),
-            nicDriver(descr)
+            nicDriver(descr),
+            pciAddr(0, descr.pci_bus, descr.pci_device)
         {
             int i = 0;
 
@@ -2204,7 +2120,7 @@ cleanup:
         uint64 supportedMTU() const
         {
             // This one defined in the driver (EFX_MAX_MTU)
-            return 9216;
+            return EFX_MAX_MTU;
         }
         virtual bool forAllFw(ElementEnumerator& en)
         {
@@ -2292,7 +2208,10 @@ cleanup:
         // separate bus, device and function numbers for PCI bridge.
         // Anyway, we do not use PCI data for any other purpose that for
         // distinguishing ports belonging to different NICs.
-        virtual PCIAddress pciAddress() const { return PCIAddress(0, 0, 0); }
+        virtual PCIAddress pciAddress() const
+        {
+            return pciAddr;
+        }
 
         virtual Driver *driver() const { return &nicDriver; }
     };
@@ -2475,7 +2394,7 @@ cleanup:
             if (rc < 0 || rc >= WMI_QUERY_MAX)
                 return -1;
 
-            rc = wmiEnumInstances(NULL, query, false, ports);
+            rc = wmiEnumInstancesQuery(NULL, query, ports);
             if (rc < 0)
                 return false;
 
@@ -2667,7 +2586,8 @@ cleanup:
             WindowsNIC  nic(i, nics[i]);
 
             nic.initialize();
-            res = en.process(nic);
+            if (ret)
+                res = en.process(nic);
             ret = ret && res;
             nic.clear();
         }
@@ -2686,9 +2606,10 @@ cleanup:
         bool result = true;
         Array<IWbemClassObject *> drivers;
 
-        rc = wmiExecQuery(cimWMIConn, 
-                          "SELECT * FROM Win32_PnPSignedDriver WHERE "
-                          "Manufacturer='Solarflare'", drivers);
+        rc = wmiEnumInstancesQuery(cimWMIConn, 
+                                   "SELECT * FROM Win32_PnPSignedDriver "
+                                   "WHERE Manufacturer='Solarflare'",
+                                   drivers);
         if (rc < 0)
             return false;
 
@@ -2806,9 +2727,51 @@ cleanup:
         return 0;
     }
 
+    static int EFXPortQuiesce(IWbemClassObject *efxPort,
+                              const String &portName,
+                              bool &awakePort)
+    {
+        bool    quiescenceSupported = false;
+        bool    quiescent = false;
+        String  quiescingMethod("EFX_Port_Quiesce");
+        String  portPath;
+        int     rc;
+
+        rc = wmiGetBoolProp(efxPort, "QuiescenceSupported",
+                            &quiescenceSupported);
+        if (rc != 0)
+            return rc;
+        if (!quiescenceSupported)
+        {
+            CIMPLE_ERR(("%s():   ethernet port %s cannot be quiesced",
+                        __FUNCTION__, portName.c_str()));
+            return -1;
+        }
+
+        rc = wmiGetBoolProp(efxPort, "Quiescent", &quiescent);
+        if (rc != 0)
+            return rc;
+
+        if (!quiescent)
+        {
+            rc = wmiPrepareMethodCall(efxPort, quiescingMethod,
+                                      portPath, NULL);
+            if (rc != 0)
+                return rc;
+
+            rc = wmiExecMethod(portPath, quiescingMethod,
+                               NULL, NULL);
+            if (rc != 0)
+                return rc;
+
+            awakePort = true;
+        }
+
+        return 0;
+    }
+
     Diagnostic::Result WindowsDiagnostic::syncTest() 
     {
-#define QUERY_LEN 1000
         static Mutex  lock(false);
         Auto_Mutex    guard(lock);
 
@@ -2824,7 +2787,7 @@ cleanup:
         int       rc;
         long int  completionCode;
         uint64    jobId;
-        char      query[QUERY_LEN];
+        char      query[WMI_QUERY_MAX];
 
         Array<IWbemClassObject *> jobs;
         Array<IWbemClassObject *> jobConfs;
@@ -2864,46 +2827,12 @@ cleanup:
 
         if (requiresQuiescence)
         {
-            bool    quiescenceSupported = false;
-            bool    quiescent = false;
-            String  quiescingMethod("EFX_Port_Quiesce");
-
-            rc = wmiGetBoolProp(
-                          ((WindowsPort *)owner)->portInfo.efxPort,
-                          "QuiescenceSupported", &quiescenceSupported);
+            rc = EFXPortQuiesce(
+                        ((WindowsPort *)owner)->portInfo.efxPort,
+                        ((WindowsPort *)owner)->name(),
+                        awakePort);
             if (rc != 0)
                 goto cleanup;
-            if (!quiescenceSupported)
-            {
-                CIMPLE_ERR(("%s():   ethernet port %s cannot be quiesced",
-                            __FUNCTION__,
-                            ((WindowsPort *)owner)->name().c_str()));
-                rc = -1;
-                goto cleanup;
-            }
-
-            rc = wmiGetBoolProp(
-                          ((WindowsPort *)owner)->portInfo.efxPort,
-                          "Quiescent", &quiescent);
-            if (rc != 0)
-                goto cleanup;
-
-            if (!quiescent)
-            {
-                rc = wmiPrepareMethodCall(
-                                 ((WindowsPort *)owner)->portInfo.efxPort,
-                                 quiescingMethod,
-                                 portPath, NULL);
-                if (rc != 0)
-                    goto cleanup;
-
-                rc = wmiExecMethod(portPath, quiescingMethod,
-                                   NULL, NULL);
-                if (rc != 0)
-                    goto cleanup;
-
-                awakePort = true;
-            }
         }
 
         rc = wmiExecMethod(diagTestPath, createJobMethod,
@@ -2916,10 +2845,10 @@ cleanup:
         if (rc != 0)
             goto cleanup;
 
-        rc = snprintf(query, QUERY_LEN, "Select * From "
+        rc = snprintf(query, WMI_QUERY_MAX, "Select * From "
                       "EFX_DiagnosticJob Where Id=%lu",
                       (long unsigned int)jobId);
-        if (rc < 0 || rc >= QUERY_LEN)
+        if (rc < 0 || rc >= WMI_QUERY_MAX)
         {
             CIMPLE_ERR(("%s():   failed to create query to search "
                      "for matching EFX_DiagnosticJob",
@@ -2927,8 +2856,7 @@ cleanup:
             goto cleanup;
         }
 
-        rc = wmiEnumInstances(NULL, query,
-                              false, jobs);
+        rc = wmiEnumInstancesQuery(NULL, query, jobs);
         if (rc != 0)
             goto cleanup;
         if (jobs.size() != 1)
@@ -2945,10 +2873,10 @@ cleanup:
             goto cleanup;
         job_created = true;
 
-        rc = snprintf(query, QUERY_LEN, "Select * From "
+        rc = snprintf(query, WMI_QUERY_MAX, "Select * From "
                       "EFX_DiagnosticConfigurationParams Where Id=%lu",
                       (long unsigned int)jobId);
-        if (rc < 0 || rc >= QUERY_LEN)
+        if (rc < 0 || rc >= WMI_QUERY_MAX)
         {
             CIMPLE_ERR(("%s():   failed to create query to search "
                      "for matching EFX_DiagnosticConfigurationParams",
@@ -2957,8 +2885,7 @@ cleanup:
             goto cleanup;
         }
 
-        rc = wmiEnumInstances(NULL, query,
-                              false, jobConfs);
+        rc = wmiEnumInstancesQuery(NULL, query, jobConfs);
         if (jobConfs.size() != 1)
         {
             CIMPLE_ERR(("%s():   incorrect number %u of matching "
@@ -3079,6 +3006,5 @@ cleanup:
         log().logStatus(testPassed == Passed ? "passed" : "failed");
 
         return testPassed;
-#undef QUERY_LEN
     }
 }
