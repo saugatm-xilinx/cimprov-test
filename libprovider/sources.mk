@@ -72,6 +72,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 libprovider_GENERATED = module.cpp
 
 ifeq ($(CIM_INTERFACE),wmi)
+libprovider_SOURCES += sf_wmi.cpp
 libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof $(MSI_NAME)
 endif
 
