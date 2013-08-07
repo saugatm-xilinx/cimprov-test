@@ -428,4 +428,38 @@ cleanup:
 
         return 0;
     }
+
+    /// Described in sf_wmi.h.
+    int updateWbemClassObject(IWbemClassObject **obj)
+    {
+        String            objPath;
+        IWbemClassObject *newObj = NULL;
+        int               rc = 0;
+        HRESULT           hr;
+
+        if ((rc = wmiEstablishConn()) != 0)
+            return rc;
+        if (obj == NULL)
+            return -1;
+
+        rc = wmiGetStringProp(*obj, "__Path", objPath);
+        if (rc != 0)
+            return rc;
+
+        hr = rootWMIConn->GetObject(BString(objPath).rep(),
+                                    WBEM_FLAG_RETURN_WBEM_COMPLETE,
+                                    NULL, &newObj, NULL);
+        if (FAILED(hr))
+        {
+            CIMPLE_ERR(("%s():   failed to get object '%s',"
+                        " rc = %ld (0x%lx)",
+                        __FUNCTION__, objPath.c_str(), hr, hr));
+            return -1;
+        }
+
+        (*obj)->Release();
+        *obj = newObj;
+
+        return 0;
+    }
 }

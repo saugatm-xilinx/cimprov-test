@@ -69,6 +69,8 @@ namespace solarflare
     using cimple::Ref;
     using cimple::SF_EthernetPort;
     using cimple::cast;
+    using cimple::Enum_Instances_Handler;
+    using cimple::Enum_Instances_Status;
 
     ///
     /// Information about network interface
@@ -195,6 +197,14 @@ namespace solarflare
             UNUSED(rhs);
             return false;
         }
+
+        inline void clear()
+        {
+            unsigned int i;
+
+            for (i = 0; i < ports.size(); i++)
+                ports[i].clear();
+        }
     };
 
     ///
@@ -244,7 +254,8 @@ namespace solarflare
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to set TargetType for firmrmware "
-                        "version reading method, rc=%lx", __FUNCTION__, hr));
+                        "version reading method, rc=%lx",
+                        __FUNCTION__, hr));
             pIn->Release();
             return -1;
         }
@@ -954,7 +965,6 @@ cleanup:
                             __FUNCTION__));
                 return;
             }
-            CIMPLE_ERR(("Query '%s'", query));
             rc = wmiEnumInstancesQuery(NULL, query, efxDiagTests);
             if (rc != 0)
                 return;
@@ -1655,188 +1665,6 @@ cleanup:
 
     /// Predeclaration
     static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info);
-
-    ///
-    /// Class defining alert indication to be checked on Windows
-    ///
-    class WindowsAlertInstInfo : public AlertInstInfo {
-        int  portId;                ///< Id of EFX_Port instance
-                                    ///  to be checked for alert
-                                    ///  conditions.
-
-        bool prevLinkState;         ///< Previously determined link state
-        bool linkStateFirstTime;    ///< Whether link state is checked
-                                    ///  first time (in this case
-                                    ///  prevLinkState is not defined yet)
-
-        ///
-        /// Check state of the link.
-        ///
-        /// @param port         Pointer to IWbemClassObject allowing
-        ///                     to access related EFX_Port instance
-        /// @param alert  [out] Where to save alert indication properties
-        ///                     to be set
-        /// @return true if alert indication should be generated,
-        //          false otherwise
-        bool checkLinkState(IWbemClassObject *port, AlertProps &alert)
-        {
-            bool         linkUp = false;
-            bool         result = false;
-
-            if (wmiGetBoolProp(port, "LinkUp", &linkUp) < 0)
-                return false;
-
-            if (!linkUp && prevLinkState && !linkStateFirstTime)
-            {
-                alert.alertType = cimple::CIM_AlertIndication::
-                                         _AlertType::enum_Device_Alert;
-                alert.perceivedSeverity = cimple::CIM_AlertIndication::
-                                         _PerceivedSeverity::enum_Major;
-                alert.description = "Link went down";
-
-                result = true;
-            }
-            linkStateFirstTime = false;
-            prevLinkState = linkUp;
-            return result;
-        }
-
-    public:
-        WindowsAlertInstInfo() : linkStateFirstTime(true) {};
-
-        ///
-        /// Check for alert conditions, fill alertsProps with
-        /// alert indication descriptions if alert indications
-        /// should be generated.
-        ///
-        /// @param alertsProps  Where to save descriptions of
-        ///                     alert indications to be generated
-        ///
-        /// @return true if some alert indications should be generated,
-        ///         false otherwise.
-        ///
-        virtual bool check(Array<AlertProps> &alertsProps)
-        {
-            char query[WMI_QUERY_MAX]; 
-            int  rc;
-
-            unsigned int i;
-            bool         linkUp = false;
-            bool         result = false;
-            AlertProps   alert;
-
-            Array<IWbemClassObject *> ports;
-
-            rc = snprintf(query, sizeof(query), "SELECT * FROM EFX_Port "
-                          "WHERE Id='%d' AND DummyInstance='False'",
-                          this->portId);
-            if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
-                return -1;
-
-            rc = wmiEnumInstancesQuery(NULL, query, ports);
-            if (rc < 0)
-                return false;
-
-            if (ports.size() != 1)
-            {
-                CIMPLE_ERR(("%s(): for id=%d wrong number "
-                            "%u of matching ports obtained",
-                            __FUNCTION__, this->portId,
-                            ports.size()));
-                goto cleanup;
-            }
-
-            if (checkLinkState(ports[0], alert))
-            {
-                alertsProps.append(alert);
-                result = true;
-            }
-cleanup:
-            for (i = 0; i < ports.size(); i++)
-                ports[i]->Release();
-            return result;
-        }
-
-        friend int windowsFillInstancesInfo(
-                                        Array<AlertInstInfo *> &info);
-    };
-
-    ///
-    /// Fill array of alert indication descriptions.
-    ///
-    /// @param info   [out] Array to be filled
-    ///
-    /// @return -1 on failure, 0 on success.
-    ///
-    static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info)
-    {
-        Ref<SF_EthernetPort>  cimModel = SF_EthernetPort::create();
-        Ref<Instance>         cimInstance;
-        Ref<SF_EthernetPort>  sfEthPort;
-
-        cimple::Instance_Enumerator ie;
-
-        NICDescrs nics;
-
-        unsigned int i;
-        unsigned int j;
-        String       path;
-
-        if (getNICs(nics) < 0)
-            return -1;
-
-        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
-                                          cimModel.ptr(), ie) != 0)
-            return -1;
-
-        for (cimInstance = ie(); !!cimInstance; ie++, cimInstance = ie())
-        {
-            WindowsAlertInstInfo *instInfo = NULL;
-
-            if (cimple::instance_to_model_path(cimInstance.ptr(),
-                                               path) < 0)
-            {
-                for (i = 0; i < info.size(); i++)
-                    delete info[i];
-                info.clear();
-                return -1;
-            }
-
-            sfEthPort.reset(cast<SF_EthernetPort *>(cimInstance.ptr()));
-            if (sfEthPort->DeviceID.null)
-            {
-                for (i = 0; i < info.size(); i++)
-                    delete info[i];
-                info.clear();
-                return -1;
-            }
-
-            for (i = 0; i < nics.size(); i++)
-            {
-                for (j = 0; j < nics[i].ports.size(); j++)
-                    if (nics[i].ports[j].ifInfo.Name ==
-                                              sfEthPort->DeviceID.value)
-                        break;
-                if (j < nics[i].ports.size())
-                    break;
-            }
-            if (i >= nics.size())
-            {
-                for (i = 0; i < info.size(); i++)
-                    delete info[i];
-                info.clear();
-                return -1;
-            }
-
-            instInfo = new WindowsAlertInstInfo();
-            instInfo->portId = nics[i].ports[j].port_id;
-            instInfo->instPath = path;
-            info.append(instInfo);
-        }
-
-        return 0;
-    }
-
     /// @brief stub-only System implementation
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
@@ -2034,44 +1862,199 @@ cleanup:
     }
 
     ///
-    /// Update WMI object pointer by replacing with got more
-    /// recently by the same path.
+    /// Class defining alert indication to be checked on Windows
     ///
-    /// @param obj    WMI object pointer to be updated
-    ///
-    /// @return 0 on success or -1 on failure
-    ///
-    static int updateWbemClassObject(IWbemClassObject **obj)
-    {
-        String            objPath;
-        IWbemClassObject *newObj = NULL;
-        int               rc = 0;
-        HRESULT           hr;
+    class WindowsAlertInstInfo : public AlertInstInfo {
+        int  portId;                ///< Id of EFX_Port instance
+                                    ///  to be checked for alert
+                                    ///  conditions.
 
-        if ((rc = wmiEstablishConn()) != 0)
-            return rc;
-        if (obj == NULL)
-            return -1;
+        bool prevLinkState;         ///< Previously determined link state
+        bool linkStateFirstTime;    ///< Whether link state is checked
+                                    ///  first time (in this case
+                                    ///  prevLinkState is not defined yet)
 
-        rc = wmiGetStringProp(*obj, "__Path", objPath);
-        if (rc != 0)
-            return rc;
-
-        hr = rootWMIConn->GetObject(BString(objPath).rep(),
-                                    WBEM_FLAG_RETURN_WBEM_COMPLETE,
-                                    NULL, &newObj, NULL);
-        if (FAILED(hr))
+        ///
+        /// Check state of the link.
+        ///
+        /// @param port         Pointer to IWbemClassObject allowing
+        ///                     to access related EFX_Port instance
+        /// @param alert  [out] Where to save alert indication properties
+        ///                     to be set
+        /// @return true if alert indication should be generated,
+        //          false otherwise
+        bool checkLinkState(IWbemClassObject *port, AlertProps &alert)
         {
-            CIMPLE_ERR(("%s():   failed to get object '%s',"
-                        " rc = %ld (0x%lx)",
-                        __FUNCTION__, objPath.c_str(), hr, hr));
-            return -1;
+            bool         linkUp = false;
+            bool         result = false;
+
+            if (wmiGetBoolProp(port, "LinkUp", &linkUp) < 0)
+                return false;
+
+            if (!linkUp && prevLinkState && !linkStateFirstTime)
+            {
+                alert.alertType = cimple::CIM_AlertIndication::
+                                         _AlertType::enum_Device_Alert;
+                alert.perceivedSeverity = cimple::CIM_AlertIndication::
+                                         _PerceivedSeverity::enum_Major;
+                alert.description = "Link went down";
+
+                result = true;
+            }
+            linkStateFirstTime = false;
+            prevLinkState = linkUp;
+            return result;
         }
 
-        (*obj)->Release();
-        *obj = newObj;
+    public:
+        WindowsAlertInstInfo() : linkStateFirstTime(true) {};
 
-        return 0;
+        ///
+        /// Check for alert conditions, fill alertsProps with
+        /// alert indication descriptions if alert indications
+        /// should be generated.
+        ///
+        /// @param alertsProps  Where to save descriptions of
+        ///                     alert indications to be generated
+        ///
+        /// @return true if some alert indications should be generated,
+        ///         false otherwise.
+        ///
+        virtual bool check(Array<AlertProps> &alertsProps)
+        {
+            char query[WMI_QUERY_MAX]; 
+            int  rc;
+
+            unsigned int i;
+            bool         linkUp = false;
+            bool         result = false;
+            AlertProps   alert;
+
+            Array<IWbemClassObject *> ports;
+
+            rc = snprintf(query, sizeof(query), "SELECT * FROM EFX_Port "
+                          "WHERE Id='%d' AND DummyInstance='False'",
+                          this->portId);
+            if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
+                return -1;
+
+            rc = wmiEnumInstancesQuery(NULL, query, ports);
+            if (rc < 0)
+                return false;
+
+            if (ports.size() != 1)
+            {
+                CIMPLE_ERR(("%s(): for id=%d wrong number "
+                            "%u of matching ports obtained",
+                            __FUNCTION__, this->portId,
+                            ports.size()));
+                goto cleanup;
+            }
+
+            if (checkLinkState(ports[0], alert))
+            {
+                alertsProps.append(alert);
+                result = true;
+            }
+cleanup:
+            for (i = 0; i < ports.size(); i++)
+                ports[i]->Release();
+            return result;
+        }
+
+        friend int windowsFillInstancesInfo(
+                                        Array<AlertInstInfo *> &info);
+    };
+
+    static bool collectPorts(Instance *instance,
+                             Enum_Instances_Status status,
+                             void *clientData)
+    {
+        SF_EthernetPort *port = static_cast<SF_EthernetPort *>(instance);
+        Array<SF_EthernetPort *> *array =
+                reinterpret_cast<Array<SF_EthernetPort *> *>(clientData);
+
+        array->append(port);
+        return true;
+    }
+
+    ///
+    /// Fill array of alert indication descriptions.
+    ///
+    /// @param info   [out] Array to be filled
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
+    static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info)
+    {
+        Array<SF_EthernetPort *> ports;
+
+        Enum_Instances_Handler<SF_EthernetPort>
+                              handler(collectPorts, &ports);
+
+        unsigned int i;
+        unsigned int j;
+        unsigned int k;
+        String       path;
+        int          rc = 0;
+
+        EnumInstances<SF_EthernetPort>::allInterfaces(&handler);
+
+        NICDescrs nics;
+
+        if (getNICs(nics) < 0)
+            return -1;
+
+        for (i = 0; i < ports.size(); i++)
+        {
+            WindowsAlertInstInfo *instInfo = NULL;
+
+            if ((rc = cimple::instance_to_model_path(ports[i],
+                                                     path)) < 0)
+                goto cleanup;
+
+            if (ports[i]->DeviceID.null)
+            {
+                rc = -1;
+                goto cleanup;
+            }
+
+            for (j = 0; j < nics.size(); j++)
+            {
+                for (k = 0; k < nics[i].ports.size(); k++)
+                    if (nics[j].ports[k].ifInfo.Name ==
+                                              ports[i]->DeviceID.value)
+                        break;
+                if (k < nics[j].ports.size())
+                    break;
+            }
+            if (j >= nics.size())
+            {
+                rc = -1;
+                goto cleanup;
+            }
+
+            instInfo = new WindowsAlertInstInfo();
+            instInfo->portId = nics[j].ports[k].port_id;
+            instInfo->instPath = path;
+            info.append(instInfo);
+        }
+
+cleanup:
+        for (i = 0; i < ports.size(); i++)
+            SF_EthernetPort::destroy(ports[i]);
+        ports.clear();
+
+        nics.clear();
+
+        if (rc != 0)
+        {
+            for (i = 0; i < info.size(); i++)
+                delete info[i];
+            info.clear();
+        }
+
+        return rc;
     }
 
     static int EFXPortQuiesce(IWbemClassObject *efxPort,

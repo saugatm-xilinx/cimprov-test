@@ -472,8 +472,8 @@ namespace solarflare
         /// Disable alerts checking and reporting
         virtual void disable()
         {
-            instsInfoClear();
             CIMNotify<CIMClass>::disable();
+            instsInfoClear();
         }
 
         /// Set function to obtain information about alerts to

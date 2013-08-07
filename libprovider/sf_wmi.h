@@ -5,6 +5,8 @@
 #include <cimple/wmi/BString.h>
 #include <cimple/wmi/utils.h>
 
+/// Auxiliary functions to access WMI objects
+
 namespace solarflare
 {
     using cimple::String;
@@ -355,6 +357,16 @@ namespace solarflare
                       const String &methodName,
                       IWbemClassObject *pIn,
                       IWbemClassObject **pOut);
+
+    ///
+    /// Update WMI object pointer by replacing with got more
+    /// recently by the same path.
+    ///
+    /// @param obj    WMI object pointer to be updated
+    ///
+    /// @return 0 on success or -1 on failure
+    ///
+    int updateWbemClassObject(IWbemClassObject **obj);
 }
 
 #endif // SOLARFLARE_SF_PROVIDER_H
