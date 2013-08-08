@@ -2336,7 +2336,7 @@ curl_fail:
 
     ///
     /// Class defining link state alert indication to be
-    /// generated on Windows
+    /// generated on VMware
     ///
     class VMwareLinkStateAlertInfo : public LinkStateAlertInfo {
         String devFile;     ///< Port device file

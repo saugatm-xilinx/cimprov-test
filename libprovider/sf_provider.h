@@ -321,6 +321,7 @@ namespace solarflare
     class AlertInfo {
     public:
         AlertInfo() {};
+        virtual ~AlertInfo() {}
 
         /// Function to check for alerts
         ///
@@ -359,6 +360,7 @@ namespace solarflare
     public:
         LinkStateAlertInfo() : prevLinkState(false), curLinkState(false),
                                linkStateFirstTime(true) {};
+        virtual ~LinkStateAlertInfo() {};
 
         virtual bool check(AlertProps &alert)
         {

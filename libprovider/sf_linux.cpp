@@ -1,4 +1,5 @@
 #include "sf_platform.h"
+#include "sf_provider.h"
 #include "sf_logging.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
@@ -205,9 +206,35 @@ namespace solarflare
         return 0;
     }
 
+    ///
+    /// Get link status.
+    ///
+    /// @param devFile    Device file name
+    /// @param devName    Device name
+    ///
+    /// @return link status (true if it is up, false otherwise)
+    ///
+    static bool getLinkStatus(const String &ifName)
+    {
+        struct ethtool_value edata;
+
+        memset(&edata, 0, sizeof(edata));
+        if (linuxEthtoolCmd(ifName.c_str(),
+                            ETHTOOL_GLINK, &edata) < 0)
+            return false;
+
+        return edata.data == 1 ? true : false;
+    }
+
+    /// Forward declaration
+    static int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                       const Port *port);
+
     class LinuxPort : public Port {
         const NIC *owner;
         Interface *boundIface;
+        friend int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                           const Port *port);
     public:
         LinuxPort(const NIC *up, unsigned i) : Port(i), owner(up) {}
 
@@ -242,12 +269,7 @@ namespace solarflare
         if (!boundIface)
             return false;
 
-        memset(&edata, 0, sizeof(edata));
-        if (linuxEthtoolCmd(boundIface->ifName().c_str(),
-                            ETHTOOL_GLINK, &edata) < 0)
-            return false;
-
-        return edata.data == 1 ? true : false;
+        return getLinkStatus(boundIface->ifName());
     }
 
     Port::Speed LinuxPort::linkSpeed() const
@@ -1247,7 +1269,10 @@ namespace solarflare
     class LinuxSystem : public System {
         LinuxKernelPackage kernelPackage;
         LinuxManagementPackage mgmtPackage;
-        LinuxSystem() {};
+        LinuxSystem()
+        {
+            onAlert.setFillPortAlertsInfo(linuxFillPortAlertsInfo);
+        };
     protected:
         void setupNICs()
         {
@@ -1453,4 +1478,48 @@ namespace solarflare
     LinuxSystem LinuxSystem::target;
 
     System& System::target = LinuxSystem::target;
+
+    ///
+    /// Class defining link state alert indication to be
+    /// generated on Linux
+    ///
+    class LinuxLinkStateAlertInfo : public LinkStateAlertInfo {
+        String ifName;     ///< Interface name
+
+    protected:
+
+        virtual int updateLinkState()
+        {
+            curLinkState = getLinkStatus(ifName);
+            return 0;
+        }
+
+    public:
+
+        friend int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                           const Port *port);
+    };
+
+    ///
+    /// Fill array of alert indication descriptions.
+    ///
+    /// @param info   [out] Array to be filled
+    /// @param port         Reference to port class instance
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
+    static int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                       const Port *port)
+    {
+        LinuxLinkStateAlertInfo *instInfo = NULL;
+
+        const LinuxPort *linuxPort =
+                      dynamic_cast<const LinuxPort *>(port);
+
+        instInfo = new LinuxLinkStateAlertInfo();
+        instInfo->ifName = linuxPort->boundIface->ifName();
+        info.append(instInfo);
+
+        return 0;
+    }
 }
