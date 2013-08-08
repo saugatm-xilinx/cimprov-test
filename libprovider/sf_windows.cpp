@@ -1664,7 +1664,7 @@ cleanup:
     };
 
     /// Predeclaration
-    static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info);
+    static int windowsFillAlertsInfo(Array<AlertInfo *> &info);
     /// @brief stub-only System implementation
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
@@ -1672,7 +1672,7 @@ cleanup:
         WindowsManagementPackage mgmtPackage;
         WindowsSystem()
         {
-            onAlert.setFillInstancesInfo(windowsFillInstancesInfo);
+            onAlert.setFillAlertsInfo(windowsFillAlertsInfo);
         };
         ~WindowsSystem();
     protected:
@@ -1862,73 +1862,24 @@ cleanup:
     }
 
     ///
-    /// Class defining alert indication to be checked on Windows
+    /// Class defining link state alert indication to be
+    /// generated on Windows
     ///
-    class WindowsAlertInstInfo : public AlertInstInfo {
+    class WindowsLinkStateAlertInfo : public LinkStateAlertInfo {
         int  portId;                ///< Id of EFX_Port instance
                                     ///  to be checked for alert
                                     ///  conditions.
 
-        bool prevLinkState;         ///< Previously determined link state
-        bool linkStateFirstTime;    ///< Whether link state is checked
-                                    ///  first time (in this case
-                                    ///  prevLinkState is not defined yet)
-
-        ///
-        /// Check state of the link.
-        ///
-        /// @param port         Pointer to IWbemClassObject allowing
-        ///                     to access related EFX_Port instance
-        /// @param alert  [out] Where to save alert indication properties
-        ///                     to be set
-        /// @return true if alert indication should be generated,
-        //          false otherwise
-        bool checkLinkState(IWbemClassObject *port, AlertProps &alert)
-        {
-            bool         linkUp = false;
-            bool         result = false;
-
-            if (wmiGetBoolProp(port, "LinkUp", &linkUp) < 0)
-                return false;
-
-            if (!linkUp && prevLinkState && !linkStateFirstTime)
-            {
-                alert.alertType = cimple::CIM_AlertIndication::
-                                         _AlertType::enum_Device_Alert;
-                alert.perceivedSeverity = cimple::CIM_AlertIndication::
-                                         _PerceivedSeverity::enum_Major;
-                alert.description = "Link went down";
-
-                result = true;
-            }
-            linkStateFirstTime = false;
-            prevLinkState = linkUp;
-            return result;
-        }
-
-    public:
-        WindowsAlertInstInfo() : linkStateFirstTime(true) {};
-
-        ///
-        /// Check for alert conditions, fill alertsProps with
-        /// alert indication descriptions if alert indications
-        /// should be generated.
-        ///
-        /// @param alertsProps  Where to save descriptions of
-        ///                     alert indications to be generated
-        ///
-        /// @return true if some alert indications should be generated,
-        ///         false otherwise.
-        ///
-        virtual bool check(Array<AlertProps> &alertsProps)
+    protected:
+        
+        virtual int updateLinkState()
         {
             char query[WMI_QUERY_MAX]; 
             int  rc;
 
             unsigned int i;
             bool         linkUp = false;
-            bool         result = false;
-            AlertProps   alert;
+            int          result = 0;
 
             Array<IWbemClassObject *> ports;
 
@@ -1940,7 +1891,7 @@ cleanup:
 
             rc = wmiEnumInstancesQuery(NULL, query, ports);
             if (rc < 0)
-                return false;
+                return rc;
 
             if (ports.size() != 1)
             {
@@ -1948,24 +1899,39 @@ cleanup:
                             "%u of matching ports obtained",
                             __FUNCTION__, this->portId,
                             ports.size()));
+                result = -1;
                 goto cleanup;
             }
 
-            if (checkLinkState(ports[0], alert))
+            if ((rc = wmiGetBoolProp(ports[0], "LinkUp", &linkUp)) < 0)
             {
-                alertsProps.append(alert);
-                result = true;
+                result = rc;
+                goto cleanup;
             }
+            curLinkState = linkUp;
 cleanup:
             for (i = 0; i < ports.size(); i++)
                 ports[i]->Release();
             return result;
         }
 
-        friend int windowsFillInstancesInfo(
-                                        Array<AlertInstInfo *> &info);
+    public:
+        WindowsLinkStateAlertInfo() : portId(-1) {};
+
+        friend int windowsFillAlertsInfo(
+                                        Array<AlertInfo *> &info);
     };
 
+    ///
+    /// Fill array of SF_EthernetPort instances when enumerating them
+    ///
+    ///
+    /// @param instance     SF_EthernetPort instance
+    /// @param status       Unused
+    /// @param clientData   Pointer to array to be filled
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
     static bool collectPorts(Instance *instance,
                              Enum_Instances_Status status,
                              void *clientData)
@@ -1985,7 +1951,7 @@ cleanup:
     ///
     /// @return -1 on failure, 0 on success.
     ///
-    static int windowsFillInstancesInfo(Array<AlertInstInfo *> &info)
+    static int windowsFillAlertsInfo(Array<AlertInfo *> &info)
     {
         Array<SF_EthernetPort *> ports;
 
@@ -2007,7 +1973,7 @@ cleanup:
 
         for (i = 0; i < ports.size(); i++)
         {
-            WindowsAlertInstInfo *instInfo = NULL;
+            WindowsLinkStateAlertInfo *instInfo = NULL;
 
             if ((rc = cimple::instance_to_model_path(ports[i],
                                                      path)) < 0)
@@ -2034,7 +2000,7 @@ cleanup:
                 goto cleanup;
             }
 
-            instInfo = new WindowsAlertInstInfo();
+            instInfo = new WindowsLinkStateAlertInfo();
             instInfo->portId = nics[j].ports[k].port_id;
             instInfo->instPath = path;
             info.append(instInfo);

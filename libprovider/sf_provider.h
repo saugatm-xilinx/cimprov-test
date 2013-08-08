@@ -316,22 +316,21 @@ namespace solarflare
     /// auxiliary data as well. It should be subclassed in platform
     /// specific implementation.
     ///
-    class AlertInstInfo {
+    class AlertInfo {
     public:
-        AlertInstInfo() {};
+        AlertInfo() {};
 
         /// Function to check for alerts
         ///
-        /// @param alertsProps  Array with descriptions of alerts
-        ///                     to be generated
+        /// @param alert        Descriptions of alert to be generated
         ///
         /// @return true is some alerts were detected, false otherwise
-        virtual bool check(Array<AlertProps> &alertsProps) = 0;
+        virtual bool check(AlertProps &alert) = 0;
 
         String instPath; ///< Path to instance for which alerts are checked
 
         /// Comparison operator is required by cimple::Array
-        inline bool operator== (const AlertInstInfo &rhs)
+        inline bool operator== (const AlertInfo &rhs)
         {
             if (instPath == rhs.instPath)
                 return true;
@@ -340,11 +339,53 @@ namespace solarflare
         }
     };
 
+    /// Abstract class for link state alert
+    class LinkStateAlertInfo : public AlertInfo {
+    protected:
+        bool prevLinkState;         ///< Previously determined link state
+        bool curLinkState;          ///< Current link state
+        bool linkStateFirstTime;    ///< Whether link state is checked
+                                    ///  first time (in this case
+                                    ///  prevLinkState is not defined yet)
+
+        ///
+        /// Function used to obtain current link state
+        ///
+        /// @return 0 on success, error code otherwise
+        ///
+        virtual int updateLinkState() = 0;
+    public:
+        LinkStateAlertInfo() : prevLinkState(false), curLinkState(false),
+                               linkStateFirstTime(true) {};
+
+        virtual bool check(AlertProps &alert)
+        {
+            bool         result = false;
+
+            if (updateLinkState() != 0)
+                return false;
+
+            if (!curLinkState && prevLinkState && !linkStateFirstTime)
+            {
+                alert.alertType = cimple::CIM_AlertIndication::
+                                         _AlertType::enum_Device_Alert;
+                alert.perceivedSeverity = cimple::CIM_AlertIndication::
+                                         _PerceivedSeverity::enum_Major;
+                alert.description = "Link went down";
+
+                result = true;
+            }
+            linkStateFirstTime = false;
+            prevLinkState = curLinkState;
+            return result;
+        }
+    };
+
     ///
     /// Type of function used to register all the alerts to be checked by
-    /// adding corresponding AlertInstInfo instances in the array.
+    /// adding corresponding AlertInfo instances in the array.
     ///
-    typedef int (*FillInstsInfoFunc)(Array<AlertInstInfo *> &info);
+    typedef int (*FillAlertsInfoFunc)(Array<AlertInfo *> &info);
 
     ///
     /// Class template for provider specific alert indications.
@@ -352,10 +393,10 @@ namespace solarflare
     template <class CIMClass>
     class CIMAlertNotify : public CIMNotify<CIMClass> {
 
-        Array<AlertInstInfo *> instancesInfo; ///< Registered alerts to be
+        Array<AlertInfo *> instancesInfo;     ///< Registered alerts to be
                                               ///  checked and reported
 
-        FillInstsInfoFunc fillInstancesInfo;  ///< Pointer to the platform
+        FillAlertsInfoFunc fillAlertsInfo;  ///< Pointer to the platform
                                               ///  specific function used
                                               ///  to fill instancesInfo
     protected:
@@ -417,17 +458,16 @@ namespace solarflare
 
                 for (i = 0; i < owner->instancesInfo.size(); i++)
                 {
-                    Array<AlertProps> alertsProps;
+                    AlertProps alertProps;
                     if (owner->handler != NULL &&
-                        owner->instancesInfo[i]->check(alertsProps))
+                        owner->instancesInfo[i]->check(alertProps))
                     {
-                        for (j = 0; j < alertsProps.size(); j++)
-                            owner->handler->handle(
-                                owner->makeIndication(
-                                        alertsProps[j].alertType,
-                                        alertsProps[j].perceivedSeverity,
-                                        alertsProps[j].description,
-                                        owner->instancesInfo[i]->instPath));
+                        owner->handler->handle(
+                            owner->makeIndication(
+                                    alertProps.alertType,
+                                    alertProps.perceivedSeverity,
+                                    alertProps.description,
+                                    owner->instancesInfo[i]->instPath));
                     }
                 }
 
@@ -440,7 +480,7 @@ namespace solarflare
     public:
         CIMAlertNotify() :
           CIMNotify<CIMClass>(),
-          fillInstancesInfo(NULL)
+          fillAlertsInfo(NULL)
         {
             this->threadProc = alertThreadFunc;
         }
@@ -461,10 +501,10 @@ namespace solarflare
         /// Enable alerts checking and reporting
         virtual void enable(cimple::Indication_Handler<CIMClass> *hnd)
         {
-            if (fillInstancesInfo == NULL)
+            if (fillAlertsInfo == NULL)
                 return;
             instsInfoClear();
-            if (fillInstancesInfo(instancesInfo) < 0)
+            if (fillAlertsInfo(instancesInfo) < 0)
                 return;
             CIMNotify<CIMClass>::enable(hnd);
         }
@@ -478,9 +518,9 @@ namespace solarflare
 
         /// Set function to obtain information about alerts to
         /// be checked on current platform
-        virtual void setFillInstancesInfo(FillInstsInfoFunc f)
+        virtual void setFillAlertsInfo(FillAlertsInfoFunc f)
         {
-            fillInstancesInfo = f;
+            fillAlertsInfo = f;
         }
     };
 
