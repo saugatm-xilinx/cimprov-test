@@ -1199,6 +1199,27 @@ fail:
         return 0;
     }
 
+    ///
+    /// Get link status.
+    ///
+    /// @param devFile    Device file name
+    /// @param devName    Device name
+    ///
+    /// @return link status (true if it is up, false otherwise)
+    ///
+    static bool getLinkStatus(const String &devFile,
+                              const String &devName)
+    {
+        struct ethtool_value edata;
+
+        memset(&edata, 0, sizeof(edata));
+        if (vmwareEthtoolCmd(devFile.c_str(), devName.c_str(),
+                             ETHTOOL_GLINK, &edata) < 0)
+            return true;
+
+        return edata.data == 1 ? true : false;
+    }
+
     class VMwarePort : public Port {
         NIC *owner;
         unsigned pci_fn;
@@ -1250,14 +1271,7 @@ fail:
 
     bool VMwarePort::linkStatus() const
     {
-        struct ethtool_value edata;
-
-        memset(&edata, 0, sizeof(edata));
-        if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
-                             ETHTOOL_GLINK, &edata) < 0)
-            return true;
-
-        return edata.data == 1 ? true : false;
+        return getLinkStatus(dev_file, dev_name);
     }
 
     Port::Speed VMwarePort::linkSpeed() const
@@ -2097,6 +2111,10 @@ curl_fail:
         virtual const String& genericName() const { return description(); }
     };
 
+    /// Forward declaration
+    static int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                        const Port *port);
+
     /// @brief stub-only System implementation
     class VMwareSystem : public System {
         VMwareKernelPackage kernelPackage;
@@ -2105,6 +2123,7 @@ curl_fail:
         VMwareSystem()
         {
             curl_global_init(CURL_GLOBAL_ALL);
+            onAlert.setFillPortAlertsInfo(vmwareFillPortAlertsInfo);
         };
 
         ~VMwareSystem()
@@ -2313,5 +2332,51 @@ curl_fail:
         }
         else
             return VersionInfo(DEFAULT_VERSION_STR);
+    }
+
+    ///
+    /// Class defining link state alert indication to be
+    /// generated on Windows
+    ///
+    class VMwareLinkStateAlertInfo : public LinkStateAlertInfo {
+        String devFile;     ///< Port device file
+        String devName;     ///< Port device name
+
+    protected:
+
+        virtual int updateLinkState()
+        {
+            curLinkState = getLinkStatus(devFile, devName);
+            return 0;
+        }
+
+    public:
+
+        friend int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                            const Port *port);
+    };
+
+    ///
+    /// Fill array of alert indication descriptions.
+    ///
+    /// @param info   [out] Array to be filled
+    /// @param port         Reference to port class instance
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
+    static int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                        const Port *port)
+    {
+        VMwareLinkStateAlertInfo *instInfo = NULL;
+
+        const VMwarePort *vmwarePort =
+                      dynamic_cast<const VMwarePort *>(port);
+
+        instInfo = new VMwareLinkStateAlertInfo();
+        instInfo->devFile = vmwarePort->dev_file;
+        instInfo->devName = vmwarePort->dev_name;
+        info.append(instInfo);
+
+        return 0;
     }
 }

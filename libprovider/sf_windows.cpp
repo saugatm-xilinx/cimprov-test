@@ -1875,7 +1875,7 @@ cleanup:
                                     ///  conditions.
 
     protected:
-        
+
         virtual int updateLinkState()
         {
             char query[WMI_QUERY_MAX]; 

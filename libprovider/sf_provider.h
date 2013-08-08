@@ -467,7 +467,10 @@ namespace solarflare
 
             if (owner->fillPortAlertsInfo(
                         alerts,
-                        dynamic_cast<const Interface&>(obj).port()) != 0)
+                        // For some strange reason just using reference
+                        // directly breaks the build on VMware Workbench,
+                        // so I use pointer here.
+                        dynamic_cast<const Interface *>(&obj)->port()) != 0)
                 return;
 
             for (i = 0; i < alerts.size(); i++)
