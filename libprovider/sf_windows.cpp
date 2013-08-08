@@ -872,9 +872,15 @@ cleanup:
 
     const String WindowsDiagnostic::diagGenName = "Diagnostic";
 
+    /// Forward declaration
+    static int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                         const Port *port);
+
     class WindowsPort : public Port {
         const NIC *owner;
         Array<WindowsDiagnostic *> diags;
+        friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                             const Port *port);
     public:
         PortDescr portInfo;
 
@@ -1663,8 +1669,6 @@ cleanup:
         virtual const String& genericName() const { return description(); }
     };
 
-    /// Predeclaration
-    static int windowsFillAlertsInfo(Array<AlertInfo *> &info);
     /// @brief stub-only System implementation
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
@@ -1672,7 +1676,7 @@ cleanup:
         WindowsManagementPackage mgmtPackage;
         WindowsSystem()
         {
-            onAlert.setFillAlertsInfo(windowsFillAlertsInfo);
+            onAlert.setFillPortAlertsInfo(windowsFillPortAlertsInfo);
         };
         ~WindowsSystem();
     protected:
@@ -1918,109 +1922,31 @@ cleanup:
     public:
         WindowsLinkStateAlertInfo() : portId(-1) {};
 
-        friend int windowsFillAlertsInfo(
-                                        Array<AlertInfo *> &info);
+        friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                             const Port *port);
     };
-
-    ///
-    /// Fill array of SF_EthernetPort instances when enumerating them
-    ///
-    ///
-    /// @param instance     SF_EthernetPort instance
-    /// @param status       Unused
-    /// @param clientData   Pointer to array to be filled
-    ///
-    /// @return -1 on failure, 0 on success.
-    ///
-    static bool collectPorts(Instance *instance,
-                             Enum_Instances_Status status,
-                             void *clientData)
-    {
-        SF_EthernetPort *port = static_cast<SF_EthernetPort *>(instance);
-        Array<SF_EthernetPort *> *array =
-                reinterpret_cast<Array<SF_EthernetPort *> *>(clientData);
-
-        array->append(port);
-        return true;
-    }
 
     ///
     /// Fill array of alert indication descriptions.
     ///
     /// @param info   [out] Array to be filled
+    /// @param port         Reference to port class instance
     ///
     /// @return -1 on failure, 0 on success.
     ///
-    static int windowsFillAlertsInfo(Array<AlertInfo *> &info)
+    static int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                         const Port *port)
     {
-        Array<SF_EthernetPort *> ports;
+        WindowsLinkStateAlertInfo *instInfo = NULL;
 
-        Enum_Instances_Handler<SF_EthernetPort>
-                              handler(collectPorts, &ports);
+        const WindowsPort *windowsPort =
+                      dynamic_cast<const WindowsPort *>(port);
 
-        unsigned int i;
-        unsigned int j;
-        unsigned int k;
-        String       path;
-        int          rc = 0;
+        instInfo = new WindowsLinkStateAlertInfo();
+        instInfo->portId = windowsPort->portInfo.port_id;
+        info.append(instInfo);
 
-        EnumInstances<SF_EthernetPort>::allInterfaces(&handler);
-
-        NICDescrs nics;
-
-        if (getNICs(nics) < 0)
-            return -1;
-
-        for (i = 0; i < ports.size(); i++)
-        {
-            WindowsLinkStateAlertInfo *instInfo = NULL;
-
-            if ((rc = cimple::instance_to_model_path(ports[i],
-                                                     path)) < 0)
-                goto cleanup;
-
-            if (ports[i]->DeviceID.null)
-            {
-                rc = -1;
-                goto cleanup;
-            }
-
-            for (j = 0; j < nics.size(); j++)
-            {
-                for (k = 0; k < nics[i].ports.size(); k++)
-                    if (nics[j].ports[k].ifInfo.Name ==
-                                              ports[i]->DeviceID.value)
-                        break;
-                if (k < nics[j].ports.size())
-                    break;
-            }
-            if (j >= nics.size())
-            {
-                rc = -1;
-                goto cleanup;
-            }
-
-            instInfo = new WindowsLinkStateAlertInfo();
-            instInfo->portId = nics[j].ports[k].port_id;
-            instInfo->instPath = path;
-            info.append(instInfo);
-        }
-
-cleanup:
-        for (i = 0; i < ports.size(); i++)
-            SF_EthernetPort::destroy(ports[i]);
-        ports.clear();
-
-        nics.clear();
-
-        if (rc != 0)
-        {
-            for (i = 0; i < info.size(); i++)
-                delete info[i];
-            info.clear();
-        }
-
-        return rc;
+        return 0;
     }
 
     static int EFXPortQuiesce(IWbemClassObject *efxPort,

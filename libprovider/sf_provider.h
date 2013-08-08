@@ -15,6 +15,7 @@
 #include "SF_JobError.h"
 #include "SF_JobSuccess.h"
 #include "SF_Alert.h"
+#include "SF_EthernetPort.h"
 
 #if CIM_SCHEMA_VERSION_MINOR == 0
 namespace cimple
@@ -33,6 +34,7 @@ namespace solarflare
     using cimple::uint16;
     using cimple::Array;
     using cimple::String;
+    using cimple::SF_EthernetPort;
 
     /// @brief Abstract class for ties between CIM classes and #SystemElement.
     /// This class is subclassed internally for descendants of #SystemElement.
@@ -382,10 +384,30 @@ namespace solarflare
     };
 
     ///
-    /// Type of function used to register all the alerts to be checked by
-    /// adding corresponding AlertInfo instances in the array.
+    /// Type of function used to register all the Ethernet port alerts
+    /// to be checked by adding corresponding AlertInfo instances in
+    /// the array.
     ///
-    typedef int (*FillAlertsInfoFunc)(Array<AlertInfo *> &info);
+    typedef int (*FillPortAlertsInfoFunc)(Array<AlertInfo *> &info,
+                                          const Port *port);
+
+    typedef void (*constProcessProvClsInst)(const SystemElement& obj,
+                                            void *data);
+
+    class ConstEnumProvClsInsts : public ConstElementEnumerator {
+        constProcessProvClsInst    handler;
+        void                      *handlerData;
+    public:
+        ConstEnumProvClsInsts(constProcessProvClsInst f,
+                              void *data) :
+            handler(f), handlerData(data) {};
+ 
+        virtual bool process(const SystemElement& obj)
+        {
+            handler(obj, handlerData);
+            return true;
+        }
+    };
 
     ///
     /// Class template for provider specific alert indications.
@@ -393,12 +415,70 @@ namespace solarflare
     template <class CIMClass>
     class CIMAlertNotify : public CIMNotify<CIMClass> {
 
-        Array<AlertInfo *> instancesInfo;     ///< Registered alerts to be
-                                              ///  checked and reported
+        Array<AlertInfo *> instancesInfo;       ///< Registered alerts to be
+                                                ///  checked and reported
 
-        FillAlertsInfoFunc fillAlertsInfo;  ///< Pointer to the platform
-                                              ///  specific function used
-                                              ///  to fill instancesInfo
+        FillPortAlertsInfoFunc
+                           fillPortAlertsInfo;  ///< Pointer to the platform
+                                                ///  specific function used
+                                                ///  to fill instancesInfo
+
+        static inline void collectPortAlerts(const SystemElement& obj,
+                                             void *data)
+        {
+            Array<AlertInfo *> alerts;
+            String             portPath;
+            SF_EthernetPort   *port;
+            unsigned int       i;
+
+            CIMAlertNotify *owner =
+                        reinterpret_cast<CIMAlertNotify *>(data);
+
+            const CIMHelper *helper =
+                  obj.cimDispatch(SF_EthernetPort::static_meta_class);
+
+            if (owner->fillPortAlertsInfo == NULL)
+                return;
+
+            if (helper == NULL)
+            {
+                CIMPLE_ERR(("%s(): failed to find helper "
+                            "for SF_EthernetPort", __FUNCTION__));
+                return;
+            }
+
+            port = static_cast<SF_EthernetPort *>(helper->instance(obj, 0));
+            if (port == NULL)
+            {
+                CIMPLE_ERR(("%s(): failed to find SF_EthernetPort instance",
+                            __FUNCTION__));
+                return;
+            }
+
+            if (cimple::instance_to_model_path(port, portPath) != 0)
+            {
+                CIMPLE_ERR(("%s(): failed to determine path to "
+                            "SF_EthernetPort instance",
+                            __FUNCTION__));
+                SF_EthernetPort::destroy(port);
+                return;
+            }
+            SF_EthernetPort::destroy(port);
+
+            if (owner->fillPortAlertsInfo(
+                        alerts,
+                        dynamic_cast<const Interface&>(obj).port()) != 0)
+                return;
+
+            for (i = 0; i < alerts.size(); i++)
+            {
+                alerts[i]->instPath = portPath;
+                owner->instancesInfo.append(alerts[i]);
+            }
+
+            return;
+        }
+
     protected:
         ///
         /// Create an indication object according to given properties
@@ -480,7 +560,7 @@ namespace solarflare
     public:
         CIMAlertNotify() :
           CIMNotify<CIMClass>(),
-          fillAlertsInfo(NULL)
+          fillPortAlertsInfo(NULL)
         {
             this->threadProc = alertThreadFunc;
         }
@@ -501,11 +581,15 @@ namespace solarflare
         /// Enable alerts checking and reporting
         virtual void enable(cimple::Indication_Handler<CIMClass> *hnd)
         {
-            if (fillAlertsInfo == NULL)
+            ConstEnumProvClsInsts en(collectPortAlerts,
+                                     this);
+
+            if (fillPortAlertsInfo == NULL)
                 return;
             instsInfoClear();
-            if (fillAlertsInfo(instancesInfo) < 0)
-                return;
+
+            System::target.forAllInterfaces(en);
+            
             CIMNotify<CIMClass>::enable(hnd);
         }
 
@@ -518,9 +602,9 @@ namespace solarflare
 
         /// Set function to obtain information about alerts to
         /// be checked on current platform
-        virtual void setFillAlertsInfo(FillAlertsInfoFunc f)
+        virtual void setFillPortAlertsInfo(FillPortAlertsInfoFunc f)
         {
-            fillAlertsInfo = f;
+            fillPortAlertsInfo = f;
         }
     };
 
