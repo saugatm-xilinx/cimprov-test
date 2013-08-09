@@ -331,7 +331,10 @@ namespace solarflare
         /// @return true is some alerts were detected, false otherwise
         virtual bool check(AlertProps &alert) = 0;
 
-        String instPath; ///< Path to instance for which alerts are checked
+        String instPath;              ///< Path to instance for which
+                                      ///  alerts are checked
+        String sysName;               ///< System name
+        String sysCreationClassName;  ///< System creation class name
 
         /// Comparison operator is required by cimple::Array
         inline bool operator== (const AlertInfo &rhs)
@@ -446,6 +449,8 @@ namespace solarflare
         {
             Array<AlertInfo *> alerts;
             String             portPath;
+            String             portSysName;
+            String             portSysCreationClassName;
             SF_EthernetPort   *port;
             unsigned int       i;
 
@@ -481,6 +486,11 @@ namespace solarflare
                 SF_EthernetPort::destroy(port);
                 return;
             }
+            if (!port->SystemName.null)
+                portSysName = port->SystemName.value;
+            if (!port->SystemCreationClassName.null)
+                portSysCreationClassName =
+                          port->SystemCreationClassName.value;
             SF_EthernetPort::destroy(port);
 
             if (owner->fillPortAlertsInfo(
@@ -494,6 +504,8 @@ namespace solarflare
             for (i = 0; i < alerts.size(); i++)
             {
                 alerts[i]->instPath = portPath;
+                alerts[i]->sysName = portSysName;
+                alerts[i]->sysCreationClassName = portSysCreationClassName;
                 owner->instancesInfo.append(alerts[i]);
             }
 
@@ -504,19 +516,25 @@ namespace solarflare
         ///
         /// Create an indication object according to given properties
         /// 
-        /// @param alertType          Type of alert indication
-        /// @param perceivedSeverity  Perceived severity
-        /// @param description        Description of alert indication
-        /// @param instPath           Path to port instance to which
-        ///                           generated alert indication is
-        ///                           related
+        /// @param alertType            Type of alert indication
+        /// @param perceivedSeverity    Perceived severity
+        /// @param description          Description of alert indication
+        /// @param instPath             Path to port instance to which
+        ///                             generated alert indication is
+        ///                             related
+        /// @param sysName              Name of the scoping system of
+        ///                             AlertingManagedElement
+        /// @param sysCreationClassName The scoping system's
+        ///                             CreationClassName
         ///
         /// @return Indication object pointer
         ///
         virtual CIMClass *makeIndication(uint16 alertType,
                                          uint16 perceivedSeverity,
                                          String description,
-                                         String instPath)
+                                         String instPath,
+                                         String sysName,
+                                         String sysCreationClassName)
         {
             CIMClass *indication = CIMClass::create(true);
             Instance *instance = NULL;
@@ -535,6 +553,14 @@ namespace solarflare
             indication->AlertType.value = alertType;
             indication->PerceivedSeverity.null = false;
             indication->PerceivedSeverity.value = perceivedSeverity;
+            indication->ProbableCause.null = false;
+            indication->ProbableCause.value =
+                  cimple::CIM_AlertIndication::_ProbableCause::enum_Unknown;
+            indication->SystemName.null = false;
+            indication->SystemName.value = sysName;
+            indication->SystemCreationClassName.null = false;
+            indication->SystemCreationClassName.value =
+                                              sysCreationClassName;
 
             return indication;
         }
@@ -573,11 +599,14 @@ namespace solarflare
                         owner->instancesInfo[i]->check(alertProps))
                     {
                         owner->handler->handle(
-                            owner->makeIndication(
-                                    alertProps.alertType,
-                                    alertProps.perceivedSeverity,
-                                    alertProps.description,
-                                    owner->instancesInfo[i]->instPath));
+                          owner->makeIndication(
+                            alertProps.alertType,
+                            alertProps.perceivedSeverity,
+                            alertProps.description,
+                            owner->instancesInfo[i]->instPath,
+                            owner->instancesInfo[i]->sysName,
+                            owner->instancesInfo[i]->
+                                        sysCreationClassName));
                     }
                 }
 
