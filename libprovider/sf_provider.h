@@ -373,13 +373,16 @@ namespace solarflare
             if (updateLinkState() != 0)
                 return false;
 
-            if (!curLinkState && prevLinkState && !linkStateFirstTime)
+            if (curLinkState != prevLinkState && !linkStateFirstTime)
             {
                 alert.alertType = cimple::CIM_AlertIndication::
                                          _AlertType::enum_Device_Alert;
                 alert.perceivedSeverity = cimple::CIM_AlertIndication::
                                          _PerceivedSeverity::enum_Major;
-                alert.description = "Link went down";
+                if (curLinkState)
+                    alert.description = "Link went up";
+                else
+                    alert.description = "Link went down";
 
                 result = true;
             }
