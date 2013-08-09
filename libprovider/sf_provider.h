@@ -393,9 +393,16 @@ namespace solarflare
     typedef int (*FillPortAlertsInfoFunc)(Array<AlertInfo *> &info,
                                           const Port *port);
 
+    ///
+    /// Handler type to be used in provider classes instances enumeration
+    ///
     typedef void (*constProcessProvClsInst)(const SystemElement& obj,
                                             void *data);
 
+    ///
+    /// Enumerator for provider classes instances enumeration
+    /// (i.e. classes like Port - descendants of SystemElement)
+    ///
     class ConstEnumProvClsInsts : public ConstElementEnumerator {
         constProcessProvClsInst    handler;
         void                      *handlerData;
@@ -425,6 +432,14 @@ namespace solarflare
                                                 ///  specific function used
                                                 ///  to fill instancesInfo
 
+        ///
+        /// For each given Port instance, obtain alert
+        /// description instances.
+        ///
+        /// @param obj    Reference to SF_EthernetPort instance
+        /// @param data   Pointer to CIMAlertNotify instance for which
+        ///               list of alert descriptions is filled
+        ///
         static inline void collectPortAlerts(const SystemElement& obj,
                                              void *data)
         {
@@ -488,6 +503,13 @@ namespace solarflare
         ///
         /// Create an indication object according to given properties
         /// 
+        /// @param alertType          Type of alert indication
+        /// @param perceivedSeverity  Perceived severity
+        /// @param description        Description of alert indication
+        /// @param instPath           Path to port instance to which
+        ///                           generated alert indication is
+        ///                           related
+        ///
         /// @return Indication object pointer
         ///
         virtual CIMClass *makeIndication(uint16 alertType,
