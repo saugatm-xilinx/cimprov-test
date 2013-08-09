@@ -35,6 +35,7 @@ namespace solarflare
     using cimple::Array;
     using cimple::String;
     using cimple::SF_EthernetPort;
+    using cimple::Datetime;
 
     /// @brief Abstract class for ties between CIM classes and #SystemElement.
     /// This class is subclassed internally for descendants of #SystemElement.
@@ -520,6 +521,8 @@ namespace solarflare
             CIMClass *indication = CIMClass::create(true);
             Instance *instance = NULL;
 
+            indication->IndicationTime.null = false;
+            indication->IndicationTime.value = Datetime::now();
             indication->Description.null = false;
             indication->Description.value = description;
             indication->AlertingManagedElement.null = false;
