@@ -94,7 +94,7 @@ char* str_printf(const char* format, ...)
 char* str_vprintf(const char* format, va_list ap)
 {
     int n;
-    int size = 128;
+    int size = 1024;
     char *p;
 
     if ((p = (char*)malloc(size)) == NULL)
