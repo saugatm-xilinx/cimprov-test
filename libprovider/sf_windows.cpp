@@ -615,17 +615,15 @@ namespace solarflare
             }
 
             for (j = 0; j < intfsInfo.size(); j++)
-            {
                 if (intfsInfo[j].PhysAddr == portDescr.currentMAC)
                     break;
-            }
 
             if (j == intfsInfo.size())
             {
                 CIMPLE_ERR(("Failed to find network interface information "
                             "for portId=%d", portDescr.port_id));
-                rc = -1;
-                goto cleanup;
+                /// We skip ports not visible by system - see bug 8017
+                continue;
             }
 
             portDescr.ifInfo = intfsInfo[j];
