@@ -539,8 +539,10 @@ namespace solarflare
             CIMClass *indication = CIMClass::create(true);
             Instance *instance = NULL;
 
+#if !defined(TARGET_CIM_SERVER_wmi)
             indication->IndicationTime.null = false;
             indication->IndicationTime.value = Datetime::now();
+#endif
             indication->Description.null = false;
             indication->Description.value = description;
             indication->AlertingManagedElement.null = false;
