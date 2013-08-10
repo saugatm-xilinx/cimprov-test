@@ -485,7 +485,8 @@ namespace solarflare
     }
 
     ///
-    /// Get information about available network interfaces.
+    /// Get information about available network interfaces,
+    /// using WinAPI function GetInterfaceInfo().
     ///
     /// @param info          [out] Where to save interfaces information
     ///
@@ -559,6 +560,117 @@ namespace solarflare
     }
 
     ///
+    /// Get information about available network interfaces,
+    /// using WinAPI function GetIfTable().
+    ///
+    /// @param info          [out] Where to save interfaces information
+    ///
+    /// @return 0 on success or -1 on failure
+    ///
+    static int getInterfacesInfo2(Array<InterfaceInfo> &info)
+    {
+        unsigned int       i;
+        unsigned int       j;
+
+        MIB_IFTABLE *ifTable;
+        MIB_IFROW   *ifRow;
+        DWORD        argSize;
+        DWORD        apiRetVal;
+
+        ifTable = reinterpret_cast<MIB_IFTABLE *>
+                                (MALLOC(sizeof(MIB_IFTABLE)));
+        if (ifTable == NULL)
+        {
+            CIMPLE_ERR(("Failed to allocate memory "
+                        "for GetIfTable()"));
+            return -1;
+        }
+
+        argSize = sizeof(MIB_IFTABLE);
+        
+        if (GetIfTable(ifTable, &argSize, FALSE) ==
+                                    ERROR_INSUFFICIENT_BUFFER)
+        {
+            FREE(ifTable);
+            ifTable = reinterpret_cast<MIB_IFTABLE *>(MALLOC(argSize));
+            if (ifTable == NULL)
+            {
+                CIMPLE_ERR(("Failed to allocate more memory "
+                            "for GetIfTable()"));
+                return -1;
+            }
+        }
+
+        if ((apiRetVal = GetIfTable(ifTable, &argSize, FALSE)) == NO_ERROR)
+        {
+            for (i = 0; i < ifTable->dwNumEntries; i++)
+            {
+                InterfaceInfo intfInfo;
+                ifRow = reinterpret_cast<MIB_IFROW *>(&ifTable->table[i]);
+
+                intfInfo.Name = wstr2str(ifRow->wszName);
+                intfInfo.Descr = String("");
+                intfInfo.Descr.append(
+                                reinterpret_cast<char *>(ifRow->bDescr),
+                                ifRow->dwDescrLen);
+                intfInfo.Index = ifRow->dwIndex;
+                intfInfo.MTU = ifRow->dwMtu;
+                intfInfo.AdminStatus =  ifRow->dwAdminStatus;
+                intfInfo.PhysAddr.clear();
+                for (j = 0; j < ifRow->dwPhysAddrLen; j++)
+                    intfInfo.PhysAddr.append(
+                                static_cast<int>(ifRow->bPhysAddr[j]));
+                info.append(intfInfo);
+            }
+        }
+        else
+            CIMPLE_ERR(("GetIfTable() failed with errno %ld (0x%lx)",
+                        static_cast<long int>(apiRetVal),
+                        static_cast<long int>(apiRetVal)));
+
+        FREE(ifTable);
+        if (apiRetVal != NO_ERROR)
+            return -1;
+        return 0;
+    }
+
+    ///
+    /// Function to convert integer array to string for
+    /// debugging purposes
+    /// 
+    /// @param arr    Array to be converted
+    ///
+    /// @return String representation
+    ///
+    template <class IntType>
+    static String intArrayToString(Array<IntType> &arr)
+    {
+        unsigned int i;
+        Buffer       buf;
+
+        buf.append('[');
+
+        for (i = 0; i < arr.size(); i++)
+        {
+            uint64 val;
+            if (arr[i] < 0)
+            {
+                val = static_cast<uint64>(-arr[i]);
+                buf.append('-');
+            }
+            else
+                val = static_cast<uint64>(arr[i]);
+            buf.append_uint64(val);
+
+            if (i < arr.size() - 1)
+                buf.append(',');
+        }
+        buf.append(']');
+
+        return buf.data();
+    }
+
+    ///
     /// Get descriptions for all Solarflare NICs on the machine.
     ///
     /// @param nics          [out] Where to save NIC descriptions
@@ -573,6 +685,7 @@ namespace solarflare
         Array<PortDescr>          portDescrs;
         Array<InterfaceInfo>      intfsInfo;
         PortDescr                 portDescr;
+        String                    portName;
         unsigned int              i;
         unsigned int              j;
         bool                      clearPciInfos = false;
@@ -585,7 +698,7 @@ namespace solarflare
         if (rc < 0)
             return rc;
 
-        rc = getInterfacesInfo(intfsInfo);
+        rc = getInterfacesInfo2(intfsInfo);
         if (rc < 0)
             goto cleanup;
 
@@ -593,6 +706,12 @@ namespace solarflare
         {
             if (wmiGetIntProp<int>(ports[i], "Id",
                                    &portDescr.port_id) != 0)
+            {
+                rc = -1;
+                goto cleanup;
+            }
+            if (wmiGetStringProp(ports[i], "Name",
+                                 portName) != 0)
             {
                 rc = -1;
                 goto cleanup;
@@ -615,8 +734,16 @@ namespace solarflare
             }
 
             for (j = 0; j < intfsInfo.size(); j++)
-                if (intfsInfo[j].PhysAddr == portDescr.currentMAC)
+            {
+                // Here I use strcmp() because cimple::String
+                // takes into account its inner buffer size which
+                // may be more that length of C-style string + 1
+                // stored in it.
+                if (intfsInfo[j].PhysAddr == portDescr.currentMAC &&
+                    strcmp(intfsInfo[j].Descr.c_str(),
+                           portName.c_str()) == 0)
                     break;
+            }
 
             if (j == intfsInfo.size())
             {
