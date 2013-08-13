@@ -44,6 +44,9 @@
 
 #include <cimple/Mutex.h>
 #include <cimple/Auto_Mutex.h>
+#include <cimple/CimpleConfig.h>
+
+#include "sf_mcdi_sensors.h"
 
 // Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80
@@ -2115,6 +2118,17 @@ curl_fail:
     static int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
                                         const Port *port);
 
+    /// Enable CIMPLE logging for debug
+    void debugLogEnable()
+    {
+        FILE *f = fopen("/.cimplerc", "w");
+
+        fprintf(f, "LOG_LEVEL=DBG\n");
+        fclose(f);
+
+        setenv("CIMPLE_HOME", "/", 1);
+    }
+
     /// @brief stub-only System implementation
     class VMwareSystem : public System {
         VMwareKernelPackage kernelPackage;
@@ -2124,6 +2138,10 @@ curl_fail:
         {
             curl_global_init(CURL_GLOBAL_ALL);
             onAlert.setFillPortAlertsInfo(vmwareFillPortAlertsInfo);
+
+#if 0
+            debugLogEnable();
+#endif
         };
 
         ~VMwareSystem()
@@ -2357,6 +2375,47 @@ curl_fail:
     };
 
     ///
+    /// Class defining sensors alert indications to be
+    /// generated on VMware
+    ///
+    class VMwareSensorsAlertInfo : public SensorsAlertInfo {
+        String devName;    ///< Port device name
+        int    fd;         ///< /dev/sfc_control fd
+
+    protected:
+
+        virtual int updateSensors()
+        {
+            if (fd < 0)
+                return -1;
+            if (getSensors(sensorsCur, fd, false, devName) != 0)
+                return -1;
+#if 1
+            // For debug only
+            debugLogSensors(sensorsCur);
+#endif
+            return 0;
+        }
+
+    public:
+        VMwareSensorsAlertInfo()
+        {
+            fd = open(DEV_SFC_CONTROL, O_RDWR);
+            if (fd < 0)
+                CIMPLE_ERR(("Failed to open %s device for checking NIC "
+                            "sensors", DEV_SFC_CONTROL));
+        }
+        virtual ~VMwareSensorsAlertInfo()
+        {
+            if (fd >= 0)
+                close(fd);
+        }
+
+        friend int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                            const Port *port);
+    };
+
+    ///
     /// Fill array of alert indication descriptions.
     ///
     /// @param info   [out] Array to be filled
@@ -2367,15 +2426,20 @@ curl_fail:
     static int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
                                         const Port *port)
     {
-        VMwareLinkStateAlertInfo *instInfo = NULL;
+        VMwareLinkStateAlertInfo *linkStateInstInfo = NULL;
+        VMwareSensorsAlertInfo   *sensorsInstInfo = NULL;
 
         const VMwarePort *vmwarePort =
                       dynamic_cast<const VMwarePort *>(port);
 
-        instInfo = new VMwareLinkStateAlertInfo();
-        instInfo->devFile = vmwarePort->dev_file;
-        instInfo->devName = vmwarePort->dev_name;
-        info.append(instInfo);
+        linkStateInstInfo = new VMwareLinkStateAlertInfo();
+        linkStateInstInfo->devFile = vmwarePort->dev_file;
+        linkStateInstInfo->devName = vmwarePort->dev_name;
+        info.append(linkStateInstInfo);
+
+        sensorsInstInfo = new VMwareSensorsAlertInfo();
+        sensorsInstInfo->devName = vmwarePort->dev_name;
+        info.append(sensorsInstInfo);
 
         return 0;
     }
