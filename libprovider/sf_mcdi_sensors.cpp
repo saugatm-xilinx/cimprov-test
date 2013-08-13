@@ -108,7 +108,7 @@ namespace solarflare
     void ioctlPrepare(void **ioc,
                       struct efx_mcdi_request **mcdi_req,
                       bool isSock,
-                      String ifName = String(""))
+                      String ifName)
     {
         efx_ioctl_data *data;
 
@@ -170,8 +170,17 @@ namespace solarflare
         uint16_t                  *lims;
         int                        i;
         unsigned int               info_count;
+        struct ifreq               ifreq;
+
+        sensors.clear();
 
         ioctlPrepare(&ioc, &mcdi_req, isSocket, ifName);
+
+        if (isSocket)
+        {
+            memcpy(ifreq.ifr_name, ifName.c_str(), sizeof(ifreq.ifr_name));
+            ifreq.ifr_data = reinterpret_cast<char *>(ioc);
+        }
 
         mcdi_req->cmd = MC_CMD_READ_SENSORS;
         mcdi_req->len = MC_CMD_READ_SENSORS_EXT_IN_LEN;
@@ -194,7 +203,10 @@ namespace solarflare
 
         memcpy(mcdi_req->payload, payload_readings.u8, mcdi_req->len);
 
-        rc = ioctl(fd, SIOCEFX, ioc);
+        if (!isSocket)
+            rc = ioctl(fd, SIOCEFX, ioc);
+        else
+            rc = ioctl(fd, SIOCEFX, &ifreq);
         if (rc != 0)
         {
             CIMPLE_ERR(("ioctl(SIOCEFX/MC_CMD_READ_SENSORS) returned %d "
@@ -223,7 +235,10 @@ namespace solarflare
                     page);
             memcpy(mcdi_req->payload, payload_info.u8, mcdi_req->len);
 
-            rc = ioctl(fd, SIOCEFX, ioc);
+            if (!isSocket)
+                rc = ioctl(fd, SIOCEFX, ioc);
+            else
+                rc = ioctl(fd, SIOCEFX, &ifreq);
             if (rc != 0)
             {
                 CIMPLE_ERR(("ioctl(SIOCEFX/MC_CMD_SENSOR_INFO) "
@@ -261,12 +276,23 @@ namespace solarflare
                     sensor.limit2_high = lims[3];
                     sensor.value = readings[0];
 
+#if 0
+                    // Temporary; for debug only
+
+                    static unsigned int t = 0;
+                    t++;
+                    if ((t / 5) % 2 == 1)
+                        sensor.state = SENSOR_STATE_BROKEN;
+#endif
+
                     if (sensor.type == SENSOR_UNKNOWN)
                         CIMPLE_ERR(("Unknown sensor id %d encountered",
                                     sensorId));
                     if (sensor.state == SENSOR_STATE_UNKNOWN)
-                        CIMPLE_ERR(("Unknown sensor state %d encountered",
-                                    static_cast<int>(state)));
+                        CIMPLE_ERR(("Unknown sensor state %d encountered "
+                                    "for sensor %d",
+                                    static_cast<int>(state),
+                                    sensorId));
 
                     if (sensor.type != SENSOR_UNKNOWN)
                         sensors.append(sensor);
@@ -276,6 +302,10 @@ namespace solarflare
                     info_count++;
                 }
             }
+
+            /* Check for another page of sensor info */
+            if ((mask & (1 << 31)) == 0)
+              break;
         }
 
         unsigned int info_len = info_count * sizeof(uint16_t) * 2;
@@ -285,5 +315,31 @@ namespace solarflare
                         readings_len, info_len));
         delete[] reinterpret_cast<uint8_t *>(ioc);
         return 0;
+    }
+
+    void debugLogSensors(Array<Sensor> &sensors)
+    {
+        unsigned int i;
+
+        CIMPLE_ERR(("    Sensor name             min1   max1   "
+                    "min2   max2   value state"));
+
+        for (i = 0; i < sensors.size(); i++)
+        {
+            if (sensors[i].limit1_low == sensors[i].limit1_high &&
+                sensors[i].limit2_low == sensors[i].limit2_high)
+                CIMPLE_ERR(("%27s     --     --     --     --     --  %s",
+                            sensorType2Str(sensors[i].type).c_str(),
+                            sensorState2Str(sensors[i].state).c_str()));
+            else
+                CIMPLE_ERR(("%27s  %5d  %5d  %5d  %5d  %5d  %s",
+                            sensorType2Str(sensors[i].type).c_str(),
+                            sensors[i].limit1_low,
+                            sensors[i].limit1_high,
+                            sensors[i].limit2_low,
+                            sensors[i].limit2_high,
+                            sensors[i].value,
+                            sensorState2Str(sensors[i].state).c_str()));
+        }
     }
 }

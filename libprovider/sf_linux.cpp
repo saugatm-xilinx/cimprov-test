@@ -43,6 +43,8 @@
 
 #include <linux/sockios.h>
 
+#include "sf_mcdi_sensors.h"
+
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"
 #define SYS_SF_DRV_PATH                 SYS_SF_MOD_PATH "/drivers/pci:sfc"
@@ -1501,6 +1503,48 @@ namespace solarflare
     };
 
     ///
+    /// Class defining sensors alert indications to be
+    /// generated on Linux
+    ///
+    class LinuxSensorsAlertInfo : public SensorsAlertInfo {
+        String ifName;     ///< Interface name
+        int    fd;         ///< Socket fd
+
+    protected:
+
+        virtual int updateSensors()
+        {
+            if (fd < 0)
+                return -1;
+            if (getSensors(sensorsCur, fd, true, ifName) != 0)
+                return -1;
+#if 0
+            // For debug only
+            debugLogSensors(sensorsCur);
+#endif
+            return 0;
+        }
+
+    public:
+        LinuxSensorsAlertInfo()
+        {
+            // Arbitrary socket
+            fd = socket(PF_INET, SOCK_STREAM, 0);
+            if (fd < 0)
+                CIMPLE_ERR(("Failed to open a socket for checking NIC "
+                            "sensors"));
+        }
+        virtual ~LinuxSensorsAlertInfo()
+        {
+            if (fd >= 0)
+                close(fd);
+        }
+
+        friend int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                           const Port *port);
+    };
+
+    ///
     /// Fill array of alert indication descriptions.
     ///
     /// @param info   [out] Array to be filled
@@ -1511,14 +1555,19 @@ namespace solarflare
     static int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
                                        const Port *port)
     {
-        LinuxLinkStateAlertInfo *instInfo = NULL;
+        LinuxLinkStateAlertInfo *linkStateInstInfo = NULL;
+        LinuxSensorsAlertInfo   *sensorsInstInfo = NULL;
 
         const LinuxPort *linuxPort =
                       dynamic_cast<const LinuxPort *>(port);
 
-        instInfo = new LinuxLinkStateAlertInfo();
-        instInfo->ifName = linuxPort->boundIface->ifName();
-        info.append(instInfo);
+        linkStateInstInfo = new LinuxLinkStateAlertInfo();
+        linkStateInstInfo->ifName = linuxPort->boundIface->ifName();
+        info.append(linkStateInstInfo);
+
+        sensorsInstInfo = new LinuxSensorsAlertInfo();
+        sensorsInstInfo->ifName = linuxPort->boundIface->ifName();
+        info.append(sensorsInstInfo);
 
         return 0;
     }
