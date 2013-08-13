@@ -58,7 +58,7 @@
 
 #ifndef EFHW_IS_LITTLE_ENDIAN
 
-#warning "Not defining Falcon event macros; they need lots of cpu_to_le64s()"
+#pragma message "Not defining Falcon event macros; they need lots of cpu_to_le64s()"
 
 #else
 

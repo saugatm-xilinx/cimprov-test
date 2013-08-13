@@ -16,6 +16,7 @@
 #include "SF_JobSuccess.h"
 #include "SF_Alert.h"
 #include "SF_EthernetPort.h"
+#include "sf_sensors.h"
 
 #if CIM_SCHEMA_VERSION_MINOR == 0
 namespace cimple
@@ -326,10 +327,10 @@ namespace solarflare
 
         /// Function to check for alerts
         ///
-        /// @param alert        Descriptions of alert to be generated
+        /// @param alerts       Descriptions of alert to be generated
         ///
         /// @return true is some alerts were detected, false otherwise
-        virtual bool check(AlertProps &alert) = 0;
+        virtual bool check(Array<AlertProps> &alerts) = 0;
 
         String instPath;              ///< Path to instance for which
                                       ///  alerts are checked
@@ -366,7 +367,7 @@ namespace solarflare
                                linkStateFirstTime(true) {};
         virtual ~LinkStateAlertInfo() {};
 
-        virtual bool check(AlertProps &alert)
+        virtual bool check(Array<AlertProps> &alerts)
         {
             bool         result = false;
 
@@ -375,6 +376,8 @@ namespace solarflare
 
             if (curLinkState != prevLinkState && !linkStateFirstTime)
             {
+                AlertProps alert;
+
                 alert.alertType = cimple::CIM_AlertIndication::
                                          _AlertType::enum_Device_Alert;
                 alert.perceivedSeverity = cimple::CIM_AlertIndication::
@@ -384,11 +387,103 @@ namespace solarflare
                 else
                     alert.description = "Link went down";
 
+                alerts.append(alert);
                 result = true;
             }
             linkStateFirstTime = false;
             prevLinkState = curLinkState;
             return result;
+        }
+    };
+
+    /// Abstract class for sensors alert
+    class SensorsAlertInfo : public AlertInfo {
+    protected:
+        Array<Sensor> sensorsPrev;
+        Array<Sensor> sensorsCur;
+        bool          sensorsStateFirstTime;
+
+        virtual int updateSensors() = 0;
+
+    public:
+        SensorsAlertInfo() : sensorsStateFirstTime(true) {};
+        virtual ~SensorsAlertInfo() {};
+
+        virtual bool check(Array<AlertProps> &alerts)
+        {
+            unsigned int i;
+            unsigned int j;
+
+            bool result = false;
+
+            if (updateSensors() != 0)
+                return false;
+
+            if (!sensorsStateFirstTime)
+            {
+                AlertProps alert;
+
+                alert.alertType = cimple::CIM_AlertIndication::
+                                     _AlertType::enum_Device_Alert;
+                alert.perceivedSeverity =
+                                  cimple::CIM_AlertIndication::
+                                     _PerceivedSeverity::enum_Major;
+
+                for (i = 0; i < sensorsCur.size(); i++)
+                {
+                    Buffer     buffer;
+
+                    for (j = 0; j < sensorsPrev.size(); j++)
+                        if (sensorsPrev[j].type == sensorsCur[i].type)
+                            break;
+                    if (j == sensorsPrev.size())
+                    {
+                        buffer.format(
+                            "Sensor '%s' not seen previously "
+                            "appeared in the state '%s'",
+                            sensorType2Str(sensorsCur[i].type).c_str(),
+                            sensorState2Str(sensorsCur[i].state).c_str());
+                        alert.description = String(buffer.data());
+
+                        alerts.append(alert);
+                        result = true;
+                    }
+                    else if (sensorsCur[i].state != sensorsPrev[j].state)
+                    {
+                        buffer.format(
+                            "Sensor '%s' changed state from '%s' to '%s'",
+                            sensorType2Str(sensorsCur[i].type).c_str(),
+                            sensorState2Str(sensorsPrev[j].state).c_str(),
+                            sensorState2Str(sensorsCur[i].state).c_str());
+
+                        alert.description = String(buffer.data());
+                        alerts.append(alert);
+                        result = true;
+                    }
+                }
+
+                for (j = 0; j < sensorsPrev.size(); j++)
+                {
+                    Buffer     buffer;
+                
+                    for (i = 0; i < sensorsCur.size(); i++)
+                        if (sensorsPrev[j].type == sensorsCur[i].type)
+                            break;
+                    if (i == sensorsCur.size())
+                    {
+                        buffer.format(
+                            "Sensor '%s' disappeared",
+                            sensorType2Str(sensorsPrev[j].type).c_str());
+                        alert.description = String(buffer.data());
+
+                        alerts.append(alert);
+                        result = true;
+                    }
+                }
+            }
+
+            sensorsStateFirstTime = false;
+            sensorsPrev = sensorsCur;
         }
     };
 
@@ -599,19 +694,20 @@ namespace solarflare
 
                 for (i = 0; i < owner->instancesInfo.size(); i++)
                 {
-                    AlertProps alertProps;
+                    Array<AlertProps> alertsProps;
                     if (owner->handler != NULL &&
-                        owner->instancesInfo[i]->check(alertProps))
+                        owner->instancesInfo[i]->check(alertsProps))
                     {
-                        owner->handler->handle(
-                          owner->makeIndication(
-                            alertProps.alertType,
-                            alertProps.perceivedSeverity,
-                            alertProps.description,
-                            owner->instancesInfo[i]->instPath,
-                            owner->instancesInfo[i]->sysName,
-                            owner->instancesInfo[i]->
-                                        sysCreationClassName));
+                        for (j = 0; j < alertsProps.size(); j++)
+                            owner->handler->handle(
+                              owner->makeIndication(
+                                alertsProps[j].alertType,
+                                alertsProps[j].perceivedSeverity,
+                                alertsProps[j].description,
+                                owner->instancesInfo[i]->instPath,
+                                owner->instancesInfo[i]->sysName,
+                                owner->instancesInfo[i]->
+                                            sysCreationClassName));
                     }
                 }
 

@@ -208,7 +208,7 @@
 #define EFHW_BUFFER_OFF			FALCON_BUFFER_4K_OFF
 
 #ifdef __powerpc__
-#warning "page size is unknown at compile time; EFHW_NIC_PAGE_{SIZE,MASK} not defined"
+#pragma message "page size is unknown at compile time; EFHW_NIC_PAGE_{SIZE,MASK} not defined"
 #else
 #if PAGE_SIZE <= EFHW_MAX_PAGE_SIZE
 #define EFHW_NIC_PAGE_SIZE PAGE_SIZE

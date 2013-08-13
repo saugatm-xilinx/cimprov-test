@@ -114,6 +114,23 @@ struct tlv_partition_trailer {
 };
 
 
+/* Appendable TLV partition header.
+ *
+ * In an appendable TLV partition, this must be the first item in the sequence,
+ * at offset 0.  (Note that, unlike the configuration partitions, there is no
+ * trailer before the TLV_TAG_END word.)
+ */
+
+#define TLV_TAG_APPENDABLE_PARTITION_HEADER (0xEF10ADA7)
+
+struct tlv_appendable_partition_header {
+  uint32_t tag;
+  uint32_t length;
+  uint16_t type_id;
+  uint16_t reserved;
+};
+
+
 /* ----------------------------------------------------------------------------
  *  Configuration items
  * ----------------------------------------------------------------------------
@@ -132,10 +149,13 @@ struct tlv_global_capabilities {
 };
 
 
-/* Per-port MAC address allocation.
+/* Siena-style per-port MAC address allocation.
  *
  * There are <count> addresses, starting at <base_address> and incrementing
  * by adding <stride> to the low-order byte(s).
+ *
+ * (See also TLV_TAG_GLOBAL_MAC for an alternative, specifying a global pool
+ * of contiguous MAC addresses for the firmware to allocate as it sees fit.)
  */
 
 #define TLV_TAG_PORT_MAC(port)          (0x00020000 + (port))
@@ -330,8 +350,15 @@ struct tlv_firmware_options {
   uint32_t tag;
   uint32_t length;
   uint32_t firmware_variant;
-#define TLV_FIRMARE_VARIANT_DEFAULT      (0)
-#define TLV_FIRMARE_VARIANT_LOW_LATENCY  (1)
+#define TLV_FIRMWARE_VARIANT_DRIVER_SELECTED (0xffffffff)
+
+/* These are the values for overriding the driver's choice; the definitions
+ * are taken from MCDI so that they don't get out of step.  Include
+ * <ci/mgmt/mc_driver_pcol.h> or the equivalent from your driver's tree if
+ * you need to use these constants.
+ */
+#define TLV_FIRMWARE_VARIANT_FULL_FEATURED   MC_CMD_FW_FULL_FEATURED
+#define TLV_FIRMWARE_VARIANT_LOW_LATENCY     MC_CMD_FW_LOW_LATENCY
 };
 
 /* Voltage settings
@@ -368,6 +395,36 @@ struct tlv_clock_config {
   uint16_t clk_dpcpu;      /* MHz */
   uint16_t clk_icore;      /* MHz */
   uint16_t clk_pcs;        /* MHz */
+};
+
+
+/* EF10-style global pool of MAC addresses.
+ *
+ * There are <count> addresses, starting at <base_address>, which are
+ * contiguous.  Firmware is responsible for allocating addresses from this
+ * pool to ports / PFs as appropriate.
+ */
+
+#define TLV_TAG_GLOBAL_MAC              (0x000e0000)
+
+struct tlv_global_mac {
+  uint32_t tag;
+  uint32_t length;
+  uint8_t  base_address[6];
+  uint16_t reserved1;
+  uint16_t count;
+  uint16_t reserved2;
+};
+
+#define TLV_TAG_ATB_0V9_TARGET           (0x000f0000)
+
+/* The target value for the 0v9 power rail measured on-chip at the
+ * analogue test bus */
+struct tlv_0v9_atb_target {
+  uint32_t tag;
+  uint32_t length;
+  uint16_t millivolts;
+  uint16_t reserved;
 };
 
 

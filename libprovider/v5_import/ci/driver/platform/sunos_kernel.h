@@ -501,8 +501,6 @@ typedef struct as* ci_addr_spc_t;
 
 /* Pinbuf pages */
 extern struct page* ci_follow_page(ci_addr_spc_t addr_spc, caddr_t address);
-extern void *ci_kmap_in_atomic(struct page *page);
-extern void ci_kunmap_in_atomic(struct page *page, void* kaddr);
 
 #define put_page(p)  /*empty*/	/*XXX stub */
 

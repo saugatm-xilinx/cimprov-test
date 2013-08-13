@@ -39,7 +39,9 @@ enum {
   BOARD_TYPE_SFN6822F = 0x10,
 
   /* Huntington-based */
-  BOARD_TYPE_SFN7122F = 0x11
+  BOARD_TYPE_SFN7122F = 0x11,
+  BOARD_TYPE_EVT_HUNTINGTON = 0x12,
+  BOARD_TYPE_EVT_GREENPORT  = 0x13,
 };
 
 enum {

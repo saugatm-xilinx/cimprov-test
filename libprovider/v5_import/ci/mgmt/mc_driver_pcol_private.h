@@ -125,10 +125,18 @@
 #define MC_CMD_DEVEL 0x1e
 
 /* MC_CMD_DEVEL_IN msgrequest */
-#define    MC_CMD_DEVEL_IN_LEN 0
+#define    MC_CMD_DEVEL_IN_LEN 16
+#define       MC_CMD_DEVEL_IN_ARG0_OFST 0
+#define       MC_CMD_DEVEL_IN_ARG1_OFST 4
+#define       MC_CMD_DEVEL_IN_ARG2_OFST 8
+#define       MC_CMD_DEVEL_IN_ARG3_OFST 12
 
 /* MC_CMD_DEVEL_OUT msgresponse */
-#define    MC_CMD_DEVEL_OUT_LEN 0
+#define    MC_CMD_DEVEL_OUT_LEN 16
+#define       MC_CMD_DEVEL_OUT_RET0_OFST 0
+#define       MC_CMD_DEVEL_OUT_RET1_OFST 4
+#define       MC_CMD_DEVEL_OUT_RET2_OFST 8
+#define       MC_CMD_DEVEL_OUT_RET3_OFST 12
 
 
 /***********************************/
@@ -279,8 +287,8 @@
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_PDMA_TEST  0x5
 /* enum: MC EXPROM tests */
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_EXPROM  0x6
-/* enum: MC MACSEC tests */
-#define          MC_CMD_EFTEST_OP_IN_EFTEST_MACSEC  0x7
+/* enum: Get the eftest-specific features of the DUT */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_DUT_FEATURES  0x7
 /* enum: MC filter tests */
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_FILTER  0x8
 /* enum: MC MC2MC communications tests */
@@ -325,6 +333,10 @@
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_RMON  0x1c
 /* enum: TX DPCPU test settings */
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_TXDPCPU  0x1d
+/* enum: ECC test settings */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_ECC_TEST  0x1e
+/* enum: RX DPCPU test settings */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_RXDPCPU  0x1f
 /* the operation requested (interpretation is test-specific) */
 #define       MC_CMD_EFTEST_OP_IN_EFTEST_OP_OFST 1
 #define       MC_CMD_EFTEST_OP_IN_EFTEST_OP_LEN 1
@@ -2128,6 +2140,8 @@
 #define          MC_CMD_TLP_STRESS_IN_WRITE  0x1 /* enum */
 #define          MC_CMD_TLP_STRESS_IN_READ_WRITE  0x2 /* enum */
 #define          MC_CMD_TLP_STRESS_IN_READ_WRITE_HOG  0x4 /* enum */
+#define          MC_CMD_TLP_STRESS_IN_READ_VERIFY  0x5 /* enum */
+#define          MC_CMD_TLP_STRESS_IN_READ_HOG_VERIFY  0x6 /* enum */
 /* Align next field to 32bits */
 #define       MC_CMD_TLP_STRESS_IN_PAD_OFST 2
 #define       MC_CMD_TLP_STRESS_IN_PAD_LEN 2
@@ -2457,6 +2471,131 @@
 #define          MC_CMD_EFTEST_TXDPCPU_IN_SET_MIN_FILL  0x0 /* enum */
 /* The min_fill value to use, or 0 to use the default. */
 #define       MC_CMD_EFTEST_TXDPCPU_IN_MIN_FILL_OFST 4
+
+/* MC_CMD_EFTEST_ECC_TEST_IN msgrequest */
+#define    MC_CMD_EFTEST_ECC_TEST_IN_LEN 16
+/* identifies the test */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_ECC_TEST_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_ECC_TEST_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_ECC_TEST_IN_SET_ERROR_LIMIT  0x0 /* enum */
+#define          MC_CMD_EFTEST_ECC_TEST_IN_SET_ERR_THRESH_REG  0x1 /* enum */
+#define          MC_CMD_EFTEST_ECC_TEST_IN_SET_ERR_FORCE_BITS  0x2 /* enum */
+#define          MC_CMD_EFTEST_ECC_TEST_IN_DISABLE_FORCE_ERR  0x3 /* enum */
+#define          MC_CMD_EFTEST_ECC_TEST_IN_GET_STATUS  0x4 /* enum */
+#define          MC_CMD_EFTEST_ECC_TEST_IN_GET_ERROR_STAT  0x5 /* enum */
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_ECC_TEST_IN_EFTEST_OP_RSVD_LEN 2
+/* Limit of ECC error (use for ECC_TEST_SET_ERROR_LIMIT) */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_ERROR_LIMIT_OFST 4
+/* New value of ERR_THRESH_REH (use for ECC_TEST_SET_ERR_THRESH_REG) */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_ERR_THRESH_REG_OFST 4
+/* Cleanup statistic or regisetr after read value */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_CLEAN_OFST 4
+/* New value of ECC_ERROR_FORCE */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_ECC_FORCE_OFST 4
+/* New value of PAR_FORCE */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_PAR_FORCE_OFST 8
+/* New value of PAR_FORCE2 */
+#define       MC_CMD_EFTEST_ECC_TEST_IN_PAR_FORCE2_OFST 12
+
+/* MC_CMD_EFTEST_ECC_TEST_OUT msgresponse */
+#define    MC_CMD_EFTEST_ECC_TEST_OUT_LEN 28
+/* Value of register ECC_ERR_SRC_REGi (in stat acculated value) */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_ECC_ERROR_SRC_OFST 0
+/* Value of register ECC_ERR_FATAL_REG (in stat acculated value) */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_ECC_FATAL_SRC_OFST 4
+/* Value of register ECC_PAR_ERR_REG (in stat acculated value) */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_PAR_ERROR_SRC_OFST 8
+/* Value register ALRT_REG of the first reading (no stat). */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_ALRT_VALUE_OFST 12
+/* Value register ALRT_REG of the second reading (no stat). */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_ALRT_CLEAN_OFST 16
+/* Count handling a ECC_ERROR in NIC */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_ECC_ERROR_CNT_OFST 12
+/* Count handling a ECC_FATAL in NIC */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_ECC_FATAL_CNT_OFST 16
+/* Count handling a PAR_ERROR in NIC */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_PAR_ERROR_CNT_OFST 20
+/* Current value of error limit */
+#define       MC_CMD_EFTEST_ECC_TEST_OUT_ERROR_LIMIT_OFST 24
+
+/* MC_CMD_EFTEST_RXDPCPU_IN msgrequest */
+#define    MC_CMD_EFTEST_RXDPCPU_IN_LEN 16
+/* identifies the test */
+#define       MC_CMD_EFTEST_RXDPCPU_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RXDPCPU_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RXDPCPU_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RXDPCPU_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RXDPCPU_IN_ADD_DESCRIPTOR  0x0 /* enum */
+/* Queue ID */
+#define       MC_CMD_EFTEST_RXDPCPU_IN_QID_OFST 4
+/* Descriptor to add to the RX cache */
+#define       MC_CMD_EFTEST_RXDPCPU_IN_DESCRIPTOR_OFST 8
+#define       MC_CMD_EFTEST_RXDPCPU_IN_DESCRIPTOR_LEN 8
+#define       MC_CMD_EFTEST_RXDPCPU_IN_DESCRIPTOR_LO_OFST 8
+#define       MC_CMD_EFTEST_RXDPCPU_IN_DESCRIPTOR_HI_OFST 12
+
+/* MC_CMD_EFTEST_DUT_FEATURES_IN msgrequest */
+#define    MC_CMD_EFTEST_DUT_FEATURES_IN_LEN 2
+/* identifies the test */
+#define       MC_CMD_EFTEST_DUT_FEATURES_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_DUT_FEATURES_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_DUT_FEATURES_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_DUT_FEATURES_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_DUT_FEATURES_IN_GET_FEATURES  0x0 /* enum */
+
+/* MC_CMD_EFTEST_DUT_FEATURES_OUT msgresponse */
+#define    MC_CMD_EFTEST_DUT_FEATURES_OUT_LEN 4
+/* Compiled-in DUT features */
+#define       MC_CMD_EFTEST_DUT_FEATURES_OUT_DUT_FEATURES_OFST 0
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PM_PRESENT_LBN 0
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PM_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_REALMC_PRESENT_LBN 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_REALMC_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_FIRST_PKT_PM_LBN 2
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_FIRST_PKT_PM_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_LUE_PRESENT_LBN 3
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_LUE_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_PKT_PREFIX_LBN 4
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_PKT_PREFIX_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_CHECKSUMS_LBN 5
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_CHECKSUMS_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PTP_SECOND_TIMER_LBN 6
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PTP_SECOND_TIMER_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_REAL_NETWORK_PORT_LBN 7
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_REAL_NETWORK_PORT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PPP_PRESENT_LBN 8
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PPP_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_RMON_PRESENT_LBN 9
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_RMON_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_REAL_PCIE_CORE_LBN 10
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_REAL_PCIE_CORE_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_DPCPU_PRESENT_LBN 11
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_DPCPU_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_CMODEL_LBN 12
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_CMODEL_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PM_URGENCY_VISIBLE_LBN 13
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PM_URGENCY_VISIBLE_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PD_PRESENT_LBN 14
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PD_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_PKT_PREFIX_VLAN_LBN 15
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_NO_PKT_PREFIX_VLAN_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_INCLUDES_EFTESTS_GROUP_1_LBN 16
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_INCLUDES_EFTESTS_GROUP_1_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_INCLUDES_EFTESTS_GROUP_2_LBN 17
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_INCLUDES_EFTESTS_GROUP_2_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_INCLUDES_EFTESTS_GROUP_3_LBN 18
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_INCLUDES_EFTESTS_GROUP_3_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_40G_SUPPORTED_LBN 19
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_40G_SUPPORTED_WIDTH 1
+/* First word of flags. */
+#define       MC_CMD_EFTEST_DUT_FEATURES_OUT_FLAGS1_OFST 0
 
 #endif /* _SIENA_MC_DRIVER_PCOL_PRIVATE_H */
 /*! \cidoxg_end */

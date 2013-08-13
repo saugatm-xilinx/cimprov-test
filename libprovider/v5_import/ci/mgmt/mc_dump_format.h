@@ -58,11 +58,15 @@ struct section_header {
 #define SH_TYPE_DUMP_REASON_CODE           0
 #define SH_TYPE_DUMP_REASON                1
 
-#define SH_TYPE_VERSION_HARDWARE_REVISION  8 /* TBD: What tuple should be */
-#define SH_TYPE_VERSION_FIRMWARE_VERSION   9 /*      used to identify     */
-#define SH_TYPE_VERSION_BOARD_FAMILY      10 /*      hardware, board,     */
-#define SH_TYPE_VERSION_BOARD_VERSION     11 /*      and firmware?        */
-#define SH_TYPE_VERSION_BOARD_REVISON     12
+#define SH_TYPE_VERSION_HARDWARE_REVISION   8
+#define SH_TYPE_VERSION_HARDWARE_BUILD_ID   9
+#define SH_TYPE_VERSION_PLATFORM_NAME      10
+#define SH_TYPE_VERSION_SERIALNO           11
+#define SH_TYPE_VERSION_FIRMWARE_TIMESTAMP 12
+#define SH_TYPE_VERSION_FIRMWARE_VERSION   13
+#define SH_TYPE_VERSION_FIRMWARE_EXT_INFO  17
+#define SH_TYPE_VERSION_PART_NUMBER        18
+#define SH_TYPE_VERSION_ENGINEERING_CHANGE 19
 
 #define SH_TYPE_MCPU_REGS                 64
 #define SH_TYPE_MCPU_IMEM                 65 /* placeholder, not supported,
@@ -91,6 +95,7 @@ struct section_header {
 #define SH_TYPE_SMC                      226
 #define SH_TYPE_CONFIG                   227
 #define SH_TYPE_I2C                      228
+#define SH_TYPE_PBMX                     240
 
 /* TBD: suitable list of environmental readings */
 #define SH_TYPE_TEMPERATURE_DIE          256
@@ -106,15 +111,21 @@ struct section_header {
 #define SH_FORMAT_DUMP_REASON_CODE     0 /* uint32; values below */
 #define SH_FORMAT_ASCIIZ               1 /* nul terminate ascii; can be
                                             nul padded */
+#define SH_FORMAT_UNIX_TIMESTAMP       2 /* uint32 */
+#define SH_FORMAT_FIRMWARE_VERSION     3 /* uint16 x 4 */
 #define SH_FORMAT_UINT8                8
 #define SH_FORMAT_UINT16               9
 #define SH_FORMAT_UINT32              10
+#define SH_FORMAT_UINT64              11
+#define SH_FORMAT_UINT128             12
 #define SH_FORMAT_UINT256             13
+#define SH_FORMAT_UINT512             14
 #define SH_FORMAT_REG8                16 /* completeness only */
 #define SH_FORMAT_REG16               17
 #define SH_FORMAT_REG32               18
 #define SH_FORMAT_LUE                 32 /* 146-bit (19 byte) values; 1 byte padding */
 #define SH_FORMAT_SMC                 33 /* 72-bit (9 byte) values; 3 bytes padding */
+#define SH_FORMAT_PBMX                48 /* 48-bit (6 byte) signals;8 bit (1 byte) time delta; 1 bytes padding */
 
 /* Thesse formats related to devices on the i2c bus, and there
    are therefore likely to be quite a lot.  As the MC needs to
@@ -143,13 +154,23 @@ struct section_header {
 
 #define SH_FORMAT_DUMP_REASON_CODE_DATA_SIZE (4)
 
+#define SH_FORMAT_UNIX_TIMESTAMP_DATA_SIZE (4)
+
+#define SH_FORMAT_FIRMWARE_VERSION_DATA_SIZE (8)
+
 #define SH_FORMAT_UINT8_DATA_SIZE (1)
 
 #define SH_FORMAT_UINT16_DATA_SIZE (2)
 
 #define SH_FORMAT_UINT32_DATA_SIZE (4)
 
+#define SH_FORMAT_UINT64_DATA_SIZE (8)
+
+#define SH_FORMAT_UINT128_DATA_SIZE (16)
+
 #define SH_FORMAT_UINT256_DATA_SIZE (32)
+
+#define SH_FORMAT_UINT512_DATA_SIZE (64)
 
 #define SH_FORMAT_REGS_MASK_COUNT(n_regs_) \
   (((n_regs_) + 31) / 32)
@@ -170,6 +191,7 @@ struct section_header {
 
 #define SH_FORMAT_SMC_DATA_SIZE (12)
 
+#define SH_FORMAT_PBMX_DATA_SIZE (8)
 
 #define SH_INDEX_FORMAT_LBN 28
 #define SH_INDEX_FORMAT_WIDTH 4
@@ -178,8 +200,9 @@ struct section_header {
 #define SH_INDEX_FORMAT_SATELLITE_CPU 2
 #define SH_INDEX_FORMAT_FUNCTION 3
 #define SH_INDEX_FORMAT_I2C 4
+#define SH_INDEX_FORMAT_PBMX 5
 
-/* Used by CORE, SATELLITE_CPU, I2C */
+/* Used by CORE, SATELLITE_CPU, I2C, PBMX */
 #define SH_INDEX_CORE_NUM_LBN 8
 #define SH_INDEX_CORE_NUM_WIDTH 4
 
@@ -211,5 +234,19 @@ struct section_header {
 #define SH_INDEX_I2C_IS_PMBUS_WIDTH 1
 #define SH_INDEX_I2C_PMBUS_PAGE_LBN 0
 #define SH_INDEX_I2C_PMBUS_PAGE_WIDTH 8
+
+/* Used by PBMX */
+#define SH_INDEX_PBMX_BLOCK_NUM_LBN 24
+#define SH_INDEX_PBMX_BLOCK_NUM_WIDTH 4
+#define SH_INDEX_PBMX_BLOCK_NUM_PCIE 0
+#define SH_INDEX_PBMX_BLOCK_NUM_BIU 1
+#define SH_INDEX_PBMX_BLOCK_NUM_MC 2
+#define SH_INDEX_PBMX_BLOCK_NUM_NWKENG 3
+#define SH_INDEX_PBMX_BLOCK_NUM_NWKROUTER 4
+#define SH_INDEX_PBMX_BLOCK_NUM_SYSSERV 5
+#define SH_INDEX_PBMX_VECTOR_NUM_LBN 16
+#define SH_INDEX_PBMX_VECTOR_NUM_WIDTH 8
+#define SH_INDEX_PBMX_GROUP_MASK_LBN 0
+#define SH_INDEX_PBMX_GROUP_MASK_WIDTH 8
 
 #endif

@@ -142,13 +142,68 @@ struct efx_set_phy_power {
 #endif /* EFX_NOT_EXPORTED */
 
 /* For talking MCDI to siena ************************************************/
+
+/* Deprecated */
 #define EFX_MCDI_REQUEST 0xef0c
+/**
+ * struct efx_mcdi_request - Parameters for %EFX_MCDI_REQUEST sub-command
+ * @payload: On entry, the MCDI command parameters.  On return, if
+ *	@rc == 0, this is the response.
+ * @cmd: MCDI command type number.
+ * @len: On entry, the length of command parameters, in bytes.  On
+ *	return, if @rc == 0, this is the length of the response.
+ * @rc: Linux error code for the request.  This may be based on an
+ *	error code reported by the MC or a communication failure
+ *	detected by the driver.
+ *
+ * If the driver detects invalid parameters, e.g. @len is out of
+ * range, the ioctl() call will return -1, errno will be set
+ * accordingly, and none of the fields will be valid.  All other
+ * errors are reported by setting @rc.
+ *
+ * %EFX_MCDI_REQUEST does not support the larger command type numbers,
+ * error codes and payload lengths of MCDIv2.
+ */
 struct efx_mcdi_request {
 	__u32 payload[63];
 	__u8 cmd;
-	__u8 len; /* In and out */
+	__u8 len;
 	__u8 rc;
 };
+
+#define EFX_MCDI_REQUEST2 0xef21
+/**
+ * struct efx_mcdi_request2 - Parameters for %EFX_MCDI_REQUEST2 sub-command
+ * @cmd: MCDI command type number.
+ * @inlen: The length of command parameters, in bytes.
+ * @outlen: On entry, the length available for the response, in bytes.
+ *	On return, the length used for the response, in bytes.
+ * @flags: Flags for the command or response.  The only flag defined
+ *	at present is %EFX_MCDI_REQUEST_ERROR.  If this is set on return,
+ *	the MC reported an error.
+ * @host_errno: On return, if %EFX_MCDI_REQUEST_ERROR is included in @flags,
+ *	the suggested Linux error code for the error.
+ * @payload: On entry, the MCDI command parameters.  On return, the response.
+ *
+ * If the driver detects invalid parameters or a communication failure
+ * with the MC, the ioctl() call will return -1, errno will be set
+ * accordingly, and none of the fields will be valid.  If the MC reports
+ * an error, the ioctl() call will return 0 but @flags will include the
+ * %EFX_MCDI_REQUEST_ERROR flag.  The MC error code can then be found in
+ * @payload (if @outlen was sufficiently large) and a suggested Linux
+ * error code can be found in @host_errno.
+ *
+ * %EFX_MCDI_REQUEST2 fully supports both MCDIv1 and v2.
+ */
+struct efx_mcdi_request2 {
+	__u16 cmd;
+	__u16 inlen;
+	__u16 outlen;
+	__u16 flags;
+	__u32 host_errno;
+	__u32 payload[0];
+};
+#define EFX_MCDI_REQUEST_ERROR	0x0001
 
 /* Reset selected components, like ETHTOOL_RESET ****************************/
 #define EFX_RESET_FLAGS 0xef0d
@@ -421,7 +476,23 @@ struct efx_update_license {
 	__u32 blacklisted_keys;
 };
 
-/* Next available cmd number is 0xef20 */
+/* Reset the AOE application and controller *********************************/
+#define EFX_RESET_AOE 0xef20
+struct efx_aoe_reset {
+	__u32 flags;
+};
+
+/* Get device identity ******************************************************/
+#define EFX_GET_DEVICE_IDS 0xef22
+struct efx_device_ids {
+	__u16 vendor_id, device_id;		/* PCI device ID */
+	__u16 subsys_vendor_id, subsys_device_id; /* PCI subsystem ID */
+	__u32 phy_type;				/* PHY type code */
+	__u8 port_num;				/* port number (0-based) */
+	__u8 perm_addr[6];			/* non-volatile MAC address */
+};
+
+/* Next available cmd number is 0xef23 */
 
 /* Efx private ioctl command structures *************************************/
 
@@ -435,6 +506,7 @@ union efx_ioctl_data {
 	struct efx_set_phy_power set_phy_power;
 #endif
 	struct efx_mcdi_request mcdi_request;
+	struct efx_mcdi_request2 mcdi_request2;
 	struct efx_reset_flags reset_flags;
 	struct efx_ethtool_rxnfc rxnfc;
 	struct efx_rxfh_indir rxfh_indir;
@@ -454,6 +526,8 @@ union efx_ioctl_data {
 	struct efx_ts_hw_pps pps_enable;
 	struct efx_update_cpld cpld;
 	struct efx_update_license key_stats;
+	struct efx_aoe_reset aoe_reset;
+	struct efx_device_ids device_ids;
 };
 
 /**

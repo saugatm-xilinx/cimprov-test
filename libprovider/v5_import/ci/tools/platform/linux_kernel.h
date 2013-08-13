@@ -59,7 +59,6 @@
 #include <linux/uio.h>
 #include <asm/current.h>
 #include <asm/errno.h>
-#include <asm/kmap_types.h>
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,26)
 #include <asm/semaphore.h>
 #else
@@ -129,50 +128,6 @@ ci_inline void  __ci_vfree(void* p)    { return vfree(p);   }
 #define CI_LOG_FN_DEFAULT  ci_log_syslog
 
 
-/*--------------------------------------------------------------------
- *
- * irqs_disabled - needed for kmap helpers on some kernels 
- *
- *--------------------------------------------------------------------*/
-#ifdef irqs_disabled
-# define ci_irqs_disabled irqs_disabled
-#else
-# if defined(__i386__) | defined(__x86_64__)
-#   define ci_irqs_disabled(x)                  \
-  ({                                            \
-    unsigned long flags;                        \
-    local_save_flags(flags);                    \
-    !(flags & (1<<9));                          \
-  })
-# else
-#  error "Need to implement irqs_disabled() for your architecture"
-# endif
-#endif
-
-
-/**********************************************************************
- * kmap helpers. 
- *
- * Use ci_k(un)map for code paths which are not in an atomic context.
- * For atomic code you need to use ci_k(un)map_in_atomic. This will grab
- * one of the per-CPU kmap slots.
- *
- * NB in_interrupt != in_irq. If you don't know the difference then
- * don't use kmap_in_atomic
- *
- * 2.4 allocates kmap slots by function. We are going to re-use the
- * skb module's slot - we also use the same interlock
- * 
- * 2.6 allocates kmap slots by type as well as by function. We are
- * going to use the currently (2.6.10) unsused SOFTIRQ slot 
- *
- */
-
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,36)
-#define CI_KM_SLOT KM_SOFTIRQ0
-#endif
-
-
 typedef struct semaphore ci_semaphore_t;
 
 ci_inline void
@@ -205,40 +160,6 @@ ci_sem_get_count(ci_semaphore_t *sem) {
 #else
   return sem->count.counter;
 #endif
-}
-
-ci_inline void* ci_kmap_in_atomic(struct page *page) 
-{
-  CI_DEBUG(if( ci_in_irq() )  BUG());
-
-  /* iSCSI can call without in_interrupt() but with irqs_disabled()
-     and in a context that can't sleep, so we need to check that
-     too */
-  if(ci_in_interrupt() || ci_irqs_disabled())
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,36)
-    return kmap_atomic(page);
-#else
-    return kmap_atomic(page, CI_KM_SLOT);
-#endif
-  else
-    return kmap(page);
-}
-
-ci_inline void ci_kunmap_in_atomic(struct page *page, void* kaddr) 
-{
-  CI_DEBUG(if( ci_in_irq() )  BUG());
-
-  /* iSCSI can call without in_interrupt() but with irqs_disabled()
-     and in a context that can't sleep, so we need to check that
-     too */
-  if(ci_in_interrupt() || ci_irqs_disabled())
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,6,36)
-    kunmap_atomic(kaddr);
-#else
-    kunmap_atomic(kaddr, CI_KM_SLOT);
-#endif
-  else
-    kunmap(page);
 }
 
 /**********************************************************************

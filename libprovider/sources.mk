@@ -67,9 +67,14 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	sf_diag_helpers.cpp \
 	sf_sw_helpers.cpp \
 	sf_sys_helpers.cpp \
+	sf_sensors.cpp \
 	$(libprovider_GENERATED)
 
 libprovider_GENERATED = module.cpp
+
+ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
+libprovider_SOURCES += sf_mcdi_sensors.cpp
+endif
 
 ifeq ($(CIM_INTERFACE),wmi)
 libprovider_SOURCES += sf_wmi.cpp

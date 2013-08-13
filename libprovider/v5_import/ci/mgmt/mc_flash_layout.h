@@ -79,6 +79,8 @@ typedef struct blob_hdr_s {
 #define BLOB_CPU_TYPE_TXDI_VTBL1 (15)
 #define BLOB_CPU_TYPE_DUMPSPEC (32)
 
+#define BLOB_CPU_TYPE_INVALID (31)
+
 
 typedef struct siena_mc_boot_hdr_s {
   uint32_t magic;                  /* = SIENA_MC_BOOT_MAGIC */
@@ -89,7 +91,8 @@ typedef struct siena_mc_boot_hdr_s {
   uint8_t  firmware_version_c;
   uint16_t checksum;               /* of whole header area + firmware image */
   uint16_t firmware_version_d;
-  uint16_t reserved_a[1];          /* (set to 0) */
+  uint8_t  mcfw_subtype;
+  uint8_t reserved_a[1];          /* (set to 0) */
   uint32_t firmware_text_offset;   /* offset to firmware .text */
   uint32_t firmware_text_size;     /* length of firmware .text, in bytes */
   uint32_t firmware_data_offset;   /* offset to firmware .data */
