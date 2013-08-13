@@ -484,6 +484,7 @@ namespace solarflare
 
             sensorsStateFirstTime = false;
             sensorsPrev = sensorsCur;
+            return result;
         }
     };
 
