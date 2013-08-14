@@ -17,6 +17,8 @@
 
 #include <sf_wmi.h>
 
+#include "sf_sensors.h"
+
 /// Memory allocation for WinAPI calls
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
 #define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
@@ -2051,6 +2053,220 @@ cleanup:
                                              const Port *port);
     };
 
+    typedef enum {
+        WMI_SENSOR_STATE_OK = 0,
+        WMI_SENSOR_STATE_WARNING = 1,
+        WMI_SENSOR_STATE_FATAL = 2,
+        WMI_SENSOR_STATE_BROKEN = 3,
+    } WMISensorState;
+
+    SensorState sensorStateWMI2Common(WMISensorState state)
+    {
+        switch (state)
+        {
+            case WMI_SENSOR_STATE_OK:
+                return SENSOR_STATE_OK;
+            case WMI_SENSOR_STATE_WARNING:
+                return SENSOR_STATE_WARNING;
+            case WMI_SENSOR_STATE_FATAL:
+                return SENSOR_STATE_FATAL;
+            case WMI_SENSOR_STATE_BROKEN:
+                return SENSOR_STATE_BROKEN;
+            default:
+                return SENSOR_STATE_UNKNOWN;
+        }
+    }
+
+    typedef struct WMISensorDescr {
+        String     name;
+        SensorType type;
+    } WMISensorDescr;
+
+    static const struct WMISensorDescr wmiSensors[] =
+    {
+        { "ControllerTemperature", SENSOR_CONTROLLER_TEMP },
+        { "ControllerCooling", SENSOR_CONTROLLER_COOLING },
+        { "PhyTemperature", SENSOR_PHY_COMMON_TEMP },
+        { "PhyCooling", SENSOR_PHY_COOLING },
+        { "Voltage1V0", SENSOR_IN_1V0 },
+        { "Voltage1V8", SENSOR_IN_1V8 },
+        { "Voltage2V5", SENSOR_IN_2V5 },
+        { "Voltage3V3", SENSOR_IN_3V3 },
+        { "Voltage12V", SENSOR_IN_12V0 },
+        { "Voltage1V2A", SENSOR_IN_1V2A },
+        { "VoltageVref", SENSOR_IN_VREF },
+        { "VoltageVAOE", SENSOR_OUT_VAOE },
+        { "AOETemperature", SENSOR_AOE_TEMP },
+        { "PSUAOETemperature", SENSOR_PSU_AOE_TEMP },
+        { "PSUTemperature", SENSOR_PSU_TEMP },
+        { "Fan0", SENSOR_FAN_0 }, 
+        { "Fan1", SENSOR_FAN_1 }, 
+        { "Fan2", SENSOR_FAN_2 }, 
+        { "Fan3", SENSOR_FAN_3 }, 
+        { "Fan4", SENSOR_FAN_4 },
+        { "VoltageVAOEIn", SENSOR_IN_VAOE },
+        { "CurrentIAOE", SENSOR_OUT_IAOE },
+        { "CurrentIAOEIn", SENSOR_IN_IAOE },
+        { "", SENSOR_UNKNOWN }
+    };
+
+    ///
+    /// Class defining sensors alert indications to be
+    /// generated on Windows
+    ///
+    class WindowsSensorsAlertInfo : public SensorsAlertInfo {
+        int  portId;                 ///< Id of EFX_Port instance
+                                     ///  to be checked for alert
+                                     ///  conditions.
+        Array<String> unseenSensors; ///< Array of Senors not found
+                                     ///  in EFX_Monitor subclass
+                                     ///  (used to reduce number
+                                     ///   of error messages in log)
+
+    protected:
+
+        virtual int updateSensors()
+        {
+            char          query[WMI_QUERY_MAX]; 
+            int           rc;
+            int           result = 0;
+            String        className;
+            unsigned int  i;
+            unsigned int  j;
+
+            Array<IWbemClassObject *> monitors;
+
+#if 0
+            // For debug only
+            static unsigned int t = 0;
+            t++;
+#endif
+
+            rc = snprintf(query, sizeof(query), "SELECT * FROM EFX_Monitor "
+                          "WHERE PortId='%d' AND DummyInstance='False'",
+                          this->portId);
+            if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
+                return -1;
+
+            rc = wmiEnumInstancesQuery(NULL, query, monitors);
+            if (rc < 0)
+                return rc;
+
+            if (monitors.size() != 1)
+            {
+                CIMPLE_ERR(("%s(): for id=%d wrong number "
+                            "%u of matching monitors obtained",
+                            __FUNCTION__, this->portId,
+                            monitors.size()));
+                result = -1;
+                goto cleanup;
+            }
+
+            rc = wmiGetStringProp(monitors[0], "__Class", className);
+            if (rc < 0)
+            {
+                result = -1;
+                goto cleanup;
+            }
+
+            if (className != "EFX_MonitorSfc90x0")
+            {
+                CIMPLE_ERR(("PortId=%d: monitor class '%s' "
+                            "is not supported",
+                            portId, className.c_str()));
+
+                result = -1;
+                goto cleanup;
+            }
+
+            sensorsCur.clear();
+
+            for (i = 0; wmiSensors[i].type != SENSOR_UNKNOWN; i++)
+            {
+                Buffer          buf;
+                bool            supported;
+                unsigned int    state;
+                unsigned int    value;
+                Sensor          sensor;
+
+                buf.format("%sSupported", wmiSensors[i].name.c_str());
+                if (wmiGetBoolProp(monitors[0],
+                                   buf.data(), &supported, true) != 0)
+                {
+                    for (j = 0; j < unseenSensors.size(); j++)
+                        if (strcmp(unseenSensors[j].c_str(),
+                                   wmiSensors[i].name.c_str()) == 0)
+                            break;
+                    if (j == unseenSensors.size())
+                    {
+                        CIMPLE_WARN(("PortId %d: failed to find "
+                                     "'%s' sensor",
+                                     portId, wmiSensors[i].name.c_str()));
+                        unseenSensors.append(wmiSensors[i].name);
+                    }
+                    continue;
+                }
+                for (j = 0; j < unseenSensors.size(); j++)
+                    if (strcmp(unseenSensors[j].c_str(),
+                               wmiSensors[i].name.c_str()) == 0)
+                        break;
+                if (j < unseenSensors.size())
+                    unseenSensors.remove(j);
+                if (!supported)
+                    continue;
+
+                buf.clear();
+                buf.format("%sState", wmiSensors[i].name.c_str());
+                if (wmiGetIntProp<unsigned int>
+                                  (monitors[0],
+                                   buf.data(), &state) != 0)
+                {
+                    CIMPLE_ERR(("PortId %d: failed to determine state for "
+                                "'%s' sensor",
+                                portId, wmiSensors[i].name.c_str()));
+                    continue;
+                }
+
+                if (wmiGetIntProp<unsigned int>
+                                  (monitors[0],
+                                   wmiSensors[i].name.c_str(),
+                                   &value) != 0)
+                {
+                    CIMPLE_ERR(("PortId %d: failed to determine value for "
+                                "'%s' sensor",
+                                portId, wmiSensors[i].name.c_str()));
+                    continue;
+                }
+
+                sensor.type = wmiSensors[i].type;
+                sensor.state = sensorStateWMI2Common(
+                                      static_cast<WMISensorState>(state));
+                sensor.value = value;
+                if (sensor.state == SENSOR_STATE_UNKNOWN)
+                    CIMPLE_ERR(("PortId %d: '%s' sensor is in "
+                                "unknown state (%d)",
+                                portId, wmiSensors[i].name.c_str(),
+                                state));
+#if 0
+                // For debug only
+                if ((t / 10) % 2 == 1)
+                    sensor.state = SENSOR_STATE_BROKEN;
+#endif
+                sensorsCur.append(sensor);
+            }
+cleanup:
+            for (i = 0; i < monitors.size(); i++)
+                monitors[i]->Release();
+            return result;
+        }
+
+    public:
+        WindowsSensorsAlertInfo() : portId(-1) {};
+
+        friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
+                                             const Port *port);
+    };
+
     ///
     /// Fill array of alert indication descriptions.
     ///
@@ -2062,14 +2278,19 @@ cleanup:
     static int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
                                          const Port *port)
     {
-        WindowsLinkStateAlertInfo *instInfo = NULL;
+        WindowsLinkStateAlertInfo *linkStateInstInfo = NULL;
+        WindowsSensorsAlertInfo   *sensorsInstInfo = NULL;
 
         const WindowsPort *windowsPort =
                       dynamic_cast<const WindowsPort *>(port);
 
-        instInfo = new WindowsLinkStateAlertInfo();
-        instInfo->portId = windowsPort->portInfo.port_id;
-        info.append(instInfo);
+        linkStateInstInfo = new WindowsLinkStateAlertInfo();
+        linkStateInstInfo->portId = windowsPort->portInfo.port_id;
+        info.append(linkStateInstInfo);
+
+        sensorsInstInfo = new WindowsSensorsAlertInfo();
+        sensorsInstInfo->portId = windowsPort->portInfo.port_id;
+        info.append(sensorsInstInfo);
 
         return 0;
     }

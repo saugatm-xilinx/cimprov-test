@@ -419,6 +419,11 @@ namespace solarflare
             if (updateSensors() != 0)
                 return false;
 
+#if 0
+            // For debug only
+            debugLogSensors(sensorsCur);
+#endif
+
             if (!sensorsStateFirstTime)
             {
                 AlertProps alert;

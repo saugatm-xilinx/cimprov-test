@@ -1,5 +1,7 @@
 #include "sf_sensors.h"
 
+#include <cimple/log.h>
+
 namespace solarflare
 {
     struct value_name_enum {
@@ -43,6 +45,7 @@ namespace solarflare
       { "Controller temp.",         SENSOR_CONTROLLER_TEMP },
       { "Phy temp.",                SENSOR_PHY_COMMON_TEMP },
       { "Controller cooling",       SENSOR_CONTROLLER_COOLING },
+      { "Phy cooling",              SENSOR_PHY_COOLING },
       { "Phy0 temp.",               SENSOR_PHY0_TEMP },
       { "Phy0 cooling",             SENSOR_PHY0_COOLING },
       { "Phy1 temp.",               SENSOR_PHY1_TEMP },
@@ -90,5 +93,23 @@ namespace solarflare
     String sensorState2Str(SensorState state)
     {
         return enum2Str(sensor_states, state);
+    }
+
+    void debugLogSensors(Array<Sensor> &sensors)
+    {
+        unsigned int i;
+
+        CIMPLE_ERR(("    Sensor name             min1   max1   "
+                    "min2   max2   value state"));
+
+        for (i = 0; i < sensors.size(); i++)
+            CIMPLE_ERR(("%27s  %5d  %5d  %5d  %5d  %5d  %s",
+                        sensorType2Str(sensors[i].type).c_str(),
+                        sensors[i].limit1_low,
+                        sensors[i].limit1_high,
+                        sensors[i].limit2_low,
+                        sensors[i].limit2_high,
+                        sensors[i].value,
+                        sensorState2Str(sensors[i].state).c_str()));
     }
 }

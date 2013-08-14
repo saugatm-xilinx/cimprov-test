@@ -7,6 +7,7 @@
 namespace solarflare
 {
     using cimple::String;
+    using cimple::Array;
 
     typedef enum {
         SENSOR_STATE_OK,
@@ -21,6 +22,7 @@ namespace solarflare
         SENSOR_CONTROLLER_TEMP,
         SENSOR_PHY_COMMON_TEMP,
         SENSOR_CONTROLLER_COOLING,
+        SENSOR_PHY_COOLING,
         SENSOR_PHY0_TEMP,
         SENSOR_PHY0_COOLING,
         SENSOR_PHY1_TEMP,
@@ -77,6 +79,10 @@ namespace solarflare
 
         unsigned int value;
 
+        Sensor() : type(SENSOR_UNKNOWN), state(SENSOR_STATE_UNKNOWN),
+                   limit1_low(0), limit1_high(0), limit2_low(0),
+                   limit2_high(0), value(0) {};
+
         bool operator== (const Sensor &rhs)
         {
             if (type == rhs.type &&
@@ -91,6 +97,8 @@ namespace solarflare
             return false;
         }
     };
+
+    void debugLogSensors(Array<Sensor> &sensors);
 }
 
 #endif // SOLARFLARE_SF_SENSORS_H

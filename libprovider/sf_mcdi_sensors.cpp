@@ -316,30 +316,4 @@ namespace solarflare
         delete[] reinterpret_cast<uint8_t *>(ioc);
         return 0;
     }
-
-    void debugLogSensors(Array<Sensor> &sensors)
-    {
-        unsigned int i;
-
-        CIMPLE_ERR(("    Sensor name             min1   max1   "
-                    "min2   max2   value state"));
-
-        for (i = 0; i < sensors.size(); i++)
-        {
-            if (sensors[i].limit1_low == sensors[i].limit1_high &&
-                sensors[i].limit2_low == sensors[i].limit2_high)
-                CIMPLE_ERR(("%27s     --     --     --     --     --  %s",
-                            sensorType2Str(sensors[i].type).c_str(),
-                            sensorState2Str(sensors[i].state).c_str()));
-            else
-                CIMPLE_ERR(("%27s  %5d  %5d  %5d  %5d  %5d  %s",
-                            sensorType2Str(sensors[i].type).c_str(),
-                            sensors[i].limit1_low,
-                            sensors[i].limit1_high,
-                            sensors[i].limit2_low,
-                            sensors[i].limit2_high,
-                            sensors[i].value,
-                            sensorState2Str(sensors[i].state).c_str()));
-        }
-    }
 }

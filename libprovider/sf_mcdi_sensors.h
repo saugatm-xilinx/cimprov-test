@@ -15,8 +15,6 @@ namespace solarflare
                    int fd,
                    bool isSocket,
                    String ifName);
-
-    void debugLogSensors(Array<Sensor> &sensors);
 }
 
 #endif // SOLARFLARE_SF_MCDI_SENSORS_H

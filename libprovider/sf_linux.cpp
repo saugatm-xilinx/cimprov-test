@@ -1518,10 +1518,6 @@ namespace solarflare
                 return -1;
             if (getSensors(sensorsCur, fd, true, ifName) != 0)
                 return -1;
-#if 0
-            // For debug only
-            debugLogSensors(sensorsCur);
-#endif
             return 0;
         }
 

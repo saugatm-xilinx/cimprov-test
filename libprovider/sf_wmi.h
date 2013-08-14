@@ -271,12 +271,15 @@ namespace solarflare
     /// @param wbemObj            WMI object pointer
     /// @param propName           Property name
     /// @param value        [out] Where to save obtained value
+    /// @param quiet              If true, do not print error
+    ///                           messages to log
     ///
     /// @return 0 on success or error code
     ///
     int wmiGetBoolProp(IWbemClassObject *wbemObj,
                        const char *propName,
-                       bool *value);
+                       bool *value,
+                       bool quiet = false);
 
     /// Iterate over all WMI objects in enumWbemObj and add them into
     /// instances array

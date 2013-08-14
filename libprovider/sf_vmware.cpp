@@ -2390,10 +2390,6 @@ curl_fail:
                 return -1;
             if (getSensors(sensorsCur, fd, false, devName) != 0)
                 return -1;
-#if 1
-            // For debug only
-            debugLogSensors(sensorsCur);
-#endif
             return 0;
         }
 

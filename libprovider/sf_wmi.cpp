@@ -129,7 +129,8 @@ namespace solarflare
     /// Described in sf_wmi.h.
     int wmiGetBoolProp(IWbemClassObject *wbemObj,
                        const char *propName,
-                       bool *value)
+                       bool *value,
+                       bool quiet)
     {
         HRESULT  hr;
         VARIANT  wbemObjProp;
@@ -141,7 +142,9 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
+            if (!quiet)
+                CIMPLE_ERR(("Failed to obtain value of '%s'",
+                            propName));
             return -1;
         }
 
@@ -149,7 +152,9 @@ namespace solarflare
             *value = (wbemObjProp.boolVal ? true : false);
         else
         {
-            CIMPLE_ERR(("Wrong variant type 0x%hx", wbemObjProp.vt));
+            if (!quiet)
+                CIMPLE_ERR(("Wrong variant type 0x%hx",
+                            wbemObjProp.vt));
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -246,7 +251,8 @@ namespace solarflare
                                 &enumWbemObj);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("ExecQuery() failed, rc = %lx", hr));
+            CIMPLE_ERR(("ExecQuery('%s') failed, rc = %lx",
+                        search, hr));
             return -1;
         }
 
