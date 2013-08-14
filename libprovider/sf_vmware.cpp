@@ -2435,6 +2435,7 @@ curl_fail:
 
         sensorsInstInfo = new VMwareSensorsAlertInfo();
         sensorsInstInfo->devName = vmwarePort->dev_name;
+        sensorsInstInfo->portFn = vmwarePort->pciAddress().fn();
         info.append(sensorsInstInfo);
 
         return 0;

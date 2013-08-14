@@ -1564,6 +1564,7 @@ namespace solarflare
 
         sensorsInstInfo = new LinuxSensorsAlertInfo();
         sensorsInstInfo->ifName = linuxPort->boundIface->ifName();
+        sensorsInstInfo->portFn = linuxPort->pciAddress().fn();
         info.append(sensorsInstInfo);
 
         return 0;

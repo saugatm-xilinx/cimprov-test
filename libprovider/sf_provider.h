@@ -407,11 +407,15 @@ namespace solarflare
                                               ///  not checket before or
                                               ///  not
 
+        int portFn;                           ///< PCI function in PCI
+                                              ///  address of this port
+
         /// Update sensors states
         virtual int updateSensors() = 0;
 
     public:
-        SensorsAlertInfo() : sensorsStateFirstTime(true) {};
+        SensorsAlertInfo() : sensorsStateFirstTime(true),
+                             portFn(0) {};
         virtual ~SensorsAlertInfo() {};
 
         virtual bool check(Array<AlertProps> &alerts)
@@ -424,6 +428,20 @@ namespace solarflare
             if (updateSensors() != 0)
                 return false;
 
+            for (i = 0; i < sensorsCur.size(); i++)
+            {
+                // Do not report sensors of other port's Phy
+                if (((sensorsCur[i].type == SENSOR_PHY0_COOLING ||
+                      sensorsCur[i].type == SENSOR_PHY0_TEMP) &&
+                     portFn == 1) ||
+                    ((sensorsCur[i].type == SENSOR_PHY1_COOLING ||
+                      sensorsCur[i].type == SENSOR_PHY1_TEMP) &&
+                     portFn == 0))
+                {
+                    sensorsCur.remove(i);
+                    i--;
+                }
+            }
 #if 0
             // For debug only
             debugLogSensors(sensorsCur);

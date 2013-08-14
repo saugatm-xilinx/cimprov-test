@@ -1073,7 +1073,7 @@ cleanup:
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
         {
-            return owner->pciAddress().fn(0);
+            return owner->pciAddress().fn(portInfo.pci_fn);
         }
 
         virtual void initialize()
@@ -2251,6 +2251,17 @@ cleanup:
                                 "unknown state (%d)",
                                 portId, wmiSensors[i].name.c_str(),
                                 state));
+                if (sensor.type == SENSOR_PHY_COOLING)
+                {
+                    /// On Windows, actually each port's monitor
+                    /// reports cooling state of corresponding
+                    /// Phy only - see comments in
+                    /// v5_incoming/src/driver/common/siena_mon.c
+                    if (portFn == 0)
+                        sensor.type == SENSOR_PHY0_COOLING;
+                    else
+                        sensor.type == SENSOR_PHY1_COOLING;
+                }
 #if 0
                 // For debug only
                 if ((t / 10) % 2 == 1)
@@ -2294,6 +2305,7 @@ cleanup:
 
         sensorsInstInfo = new WindowsSensorsAlertInfo();
         sensorsInstInfo->portId = windowsPort->portInfo.port_id;
+        sensorsInstInfo->portFn = windowsPort->pciAddress().fn();
         info.append(sensorsInstInfo);
 
         return 0;
