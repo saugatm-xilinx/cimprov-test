@@ -40,6 +40,13 @@ namespace solarflare
 #define MCDI_SENSOR_TYPE_CHECK(_name) \
     case MC_CMD_ ## _name: return _name
 
+    ///
+    /// Get sensor type from MCDI id.
+    ///
+    /// @param type   MCDI sensor id
+    ///
+    /// @return Sensor type
+    ///
     SensorType sensorTypeMCDI2Common(unsigned int type)
     {
         switch(type)
@@ -91,6 +98,13 @@ namespace solarflare
 #define MCDI_SENSOR_STATE_CHECK(_name) \
     case MC_CMD_ ## _name: return _name
 
+    ///
+    /// Get sensor state from MCDI id
+    ///
+    /// @param state  MCDI state id
+    ///
+    /// @return Sensor state
+    ///
     SensorState sensorStateMCDI2Common(unsigned int state)
     {
         switch(state)
@@ -105,6 +119,16 @@ namespace solarflare
         }
     }
 
+    ///
+    /// Allocate memory for ioctl(SIOCEFX) call.
+    ///
+    /// @param ioc      [out] Pointer to allocated memory
+    /// @param mcdi_req [out] Pointer to efx_mcdi_request structure
+    ///                       to be filled
+    /// @param isSock         Whether we will call ioctl() on socket
+    ///                       or char device fd
+    /// @param ifName         Interface name
+    ///
     void ioctlPrepare(void **ioc,
                       struct efx_mcdi_request **mcdi_req,
                       bool isSock,
@@ -152,10 +176,11 @@ namespace solarflare
         *mcdi_req = reinterpret_cast<struct efx_mcdi_request *>(data);
     }
 
-    int getSensors(Array<Sensor> &sensors,
-                   int fd,
-                   bool isSocket,
-                   String ifName)
+    /// Described in sf_mcdi_sensors.h
+    int mcdiGetSensors(Array<Sensor> &sensors,
+                       int fd,
+                       bool isSocket,
+                       String ifName)
     {
         void   *ioc;
 

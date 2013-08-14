@@ -2077,11 +2077,15 @@ cleanup:
         }
     }
 
+    /// Structure to store correspondence between EFX_MonitorSfc90x0
+    /// property and sensor types
     typedef struct WMISensorDescr {
         String     name;
         SensorType type;
     } WMISensorDescr;
 
+    /// Correspondence between EFX_MonitorSfc90x0 properties and
+    /// sensor types
     static const struct WMISensorDescr wmiSensors[] =
     {
         { "ControllerTemperature", SENSOR_CONTROLLER_TEMP },

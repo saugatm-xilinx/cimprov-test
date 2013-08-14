@@ -2388,7 +2388,7 @@ curl_fail:
         {
             if (fd < 0)
                 return -1;
-            if (getSensors(sensorsCur, fd, false, devName) != 0)
+            if (mcdiGetSensors(sensorsCur, fd, false, devName) != 0)
                 return -1;
             return 0;
         }

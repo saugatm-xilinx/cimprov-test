@@ -4,6 +4,8 @@
 
 namespace solarflare
 {
+    /// Structure for storing correspondence between
+    /// an enumeration value and its string representation
     struct value_name_enum {
       const char *name;
       unsigned value;
@@ -13,9 +15,20 @@ namespace solarflare
 
 #define MAX_NAME_LEN 1024
 
+    ///
+    /// Get string representation of some enumeration value.
+    ///
+    /// @param values   Pointer to array storing correspondence
+    ///                 between enum values and their string
+    ///                 representations
+    ///
+    /// @param value    Enumeration value
+    ///
+    /// @return String representation
+    ///
     static String enum2Str(
                         const struct value_name_enum *values,
-                        unsigned value)
+                        unsigned int value)
     {
         int i;
         char buffer[MAX_NAME_LEN];
@@ -30,6 +43,7 @@ namespace solarflare
         return String(buffer);
     }
 
+    /// String representations of sensor states
     static const struct value_name_enum sensor_states[] =
     {
       { "OK",       SENSOR_STATE_OK },
@@ -40,7 +54,8 @@ namespace solarflare
       LAST_ENUM
     };
 
-    static const struct value_name_enum sensor_names[] =
+    /// String representations of sensor types
+    static const struct value_name_enum sensor_types[] =
     {
       { "Controller temp.",         SENSOR_CONTROLLER_TEMP },
       { "Phy temp.",                SENSOR_PHY_COMMON_TEMP },
@@ -85,16 +100,31 @@ namespace solarflare
       LAST_ENUM
     };
 
+    ///
+    /// Get sensor type string representation
+    ///
+    /// @param type   Sensor type
+    ///
+    /// @return String representation
+    ///
     String sensorType2Str(SensorType type)
     {
-        return enum2Str(sensor_names, type);
+        return enum2Str(sensor_types, type);
     }
 
+    ///
+    /// Get sensor state string representation
+    ///
+    /// @param type   Sensor state
+    ///
+    /// @return String representation
+    ///
     String sensorState2Str(SensorState state)
     {
         return enum2Str(sensor_states, state);
     }
 
+    /// Desribed in sf_sensors.h
     void debugLogSensors(Array<Sensor> &sensors)
     {
         unsigned int i;

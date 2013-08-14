@@ -399,10 +399,15 @@ namespace solarflare
     /// Abstract class for sensors alert
     class SensorsAlertInfo : public AlertInfo {
     protected:
-        Array<Sensor> sensorsPrev;
-        Array<Sensor> sensorsCur;
-        bool          sensorsStateFirstTime;
+        Array<Sensor> sensorsPrev;            ///< Previous states of
+                                              ///  sensors
+        Array<Sensor> sensorsCur;             ///< Current states of
+                                              ///  sensors
+        bool          sensorsStateFirstTime;  ///< Whether sensors were
+                                              ///  not checket before or
+                                              ///  not
 
+        /// Update sensors states
         virtual int updateSensors() = 0;
 
     public:

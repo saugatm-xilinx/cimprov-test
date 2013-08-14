@@ -9,6 +9,7 @@ namespace solarflare
     using cimple::String;
     using cimple::Array;
 
+    /// Sensor states
     typedef enum {
         SENSOR_STATE_OK,
         SENSOR_STATE_WARNING,
@@ -18,6 +19,7 @@ namespace solarflare
         SENSOR_STATE_UNKNOWN,
     } SensorState;
 
+    /// Sensor types
     typedef enum {
         SENSOR_CONTROLLER_TEMP,
         SENSOR_PHY_COMMON_TEMP,
@@ -62,22 +64,39 @@ namespace solarflare
         SENSOR_UNKNOWN,
     } SensorType;
 
+    /// Get string representation of sensor type
+    ///
+    /// @param type   Sensor type
+    ///
+    /// @return String representation
+    ///
     String sensorType2Str(SensorType type);
 
+    ///
+    /// Get string representation of sensor state
+    ///
+    /// @param state    Sensor state
+    ///
+    /// @return String representation
+    ///
     String sensorState2Str(SensorState state);
 
+    /// Sensor readings class
     class Sensor
     {
     public:
-        SensorType type;
-        SensorState state;
+        SensorType type;            ///< Sensor type
+        SensorState state;          ///< Sensor state
 
-        unsigned int limit1_low;
-        unsigned int limit1_high;
-        unsigned int limit2_low;
-        unsigned int limit2_high;
+        /// Usually value exceeding the first bound results
+        /// in warning, and value exceeding the second
+        /// bound means error.
+        unsigned int limit1_low;    ///< First lower bound
+        unsigned int limit1_high;   ///< First upper bound
+        unsigned int limit2_low;    ///< Second lower bound
+        unsigned int limit2_high;   ///< Second lower bound
 
-        unsigned int value;
+        unsigned int value;         ///< Sensor value
 
         Sensor() : type(SENSOR_UNKNOWN), state(SENSOR_STATE_UNKNOWN),
                    limit1_low(0), limit1_high(0), limit2_low(0),
@@ -98,6 +117,11 @@ namespace solarflare
         }
     };
 
+    ///
+    /// Print sensors reading to CIMPLE log for debug.
+    ///
+    /// @param sensors    Sensors readings
+    ///
     void debugLogSensors(Array<Sensor> &sensors);
 }
 

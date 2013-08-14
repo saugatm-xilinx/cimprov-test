@@ -1516,7 +1516,8 @@ namespace solarflare
         {
             if (fd < 0)
                 return -1;
-            if (getSensors(sensorsCur, fd, true, ifName) != 0)
+            if (mcdiGetSensors(sensorsCur, fd,
+                               true, ifName) != 0)
                 return -1;
             return 0;
         }
