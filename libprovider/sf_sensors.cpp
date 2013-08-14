@@ -124,16 +124,20 @@ namespace solarflare
         return enum2Str(sensor_states, state);
     }
 
+
     /// Desribed in sf_sensors.h
-    void debugLogSensors(Array<Sensor> &sensors)
+    void debugLogSensors(Array<Sensor> &sensors,
+                         const String &caption)
     {
         unsigned int i;
 
-        CIMPLE_ERR(("    Sensor name             min1   max1   "
+        if (strlen(caption.c_str()) > 0)
+            CIMPLE_DBG((caption.c_str()));
+        CIMPLE_DBG(("    Sensor name             min1   max1   "
                     "min2   max2   value state"));
 
         for (i = 0; i < sensors.size(); i++)
-            CIMPLE_ERR(("%27s  %5d  %5d  %5d  %5d  %5d  %s",
+            CIMPLE_DBG(("%27s  %5d  %5d  %5d  %5d  %5d  %s",
                         sensorType2Str(sensors[i].type).c_str(),
                         sensors[i].limit1_low,
                         sensors[i].limit1_high,

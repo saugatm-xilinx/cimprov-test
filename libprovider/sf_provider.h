@@ -444,7 +444,12 @@ namespace solarflare
             }
 #if 0
             // For debug only
-            debugLogSensors(sensorsCur);
+            Buffer bufCaption;
+
+            bufCaption.format("Port %d sensors reading",
+                              portFn);
+            debugLogSensors(sensorsCur,
+                            String(bufCaption.data()));
 #endif
 
             if (!sensorsStateFirstTime)

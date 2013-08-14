@@ -121,8 +121,10 @@ namespace solarflare
     /// Print sensors reading to CIMPLE log for debug.
     ///
     /// @param sensors    Sensors readings
+    /// @param caption    Readings table caption
     ///
-    void debugLogSensors(Array<Sensor> &sensors);
+    void debugLogSensors(Array<Sensor> &sensors,
+                         const String &caption = "");
 }
 
 #endif // SOLARFLARE_SF_SENSORS_H
