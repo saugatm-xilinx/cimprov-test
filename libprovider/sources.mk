@@ -68,6 +68,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	sf_sw_helpers.cpp \
 	sf_sys_helpers.cpp \
 	sf_sensors.cpp \
+	sf_alerts.cpp \
 	$(libprovider_GENERATED)
 
 libprovider_GENERATED = module.cpp

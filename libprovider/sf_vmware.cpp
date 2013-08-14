@@ -47,6 +47,7 @@
 #include <cimple/CimpleConfig.h>
 
 #include "sf_mcdi_sensors.h"
+#include "sf_alerts.h"
 
 // Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80

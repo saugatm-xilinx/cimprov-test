@@ -18,6 +18,7 @@
 #include <sf_wmi.h>
 
 #include "sf_sensors.h"
+#include "sf_alerts.h"
 
 /// Memory allocation for WinAPI calls
 #define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 

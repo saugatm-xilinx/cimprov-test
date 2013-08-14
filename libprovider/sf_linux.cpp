@@ -44,6 +44,7 @@
 #include <linux/sockios.h>
 
 #include "sf_mcdi_sensors.h"
+#include "sf_alerts.h"
 
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
 #define SYS_SF_MOD_PATH                 "/sys/module/sfc"

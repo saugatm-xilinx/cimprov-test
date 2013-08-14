@@ -20,6 +20,8 @@
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 
+#include "sf_alerts.h"
+
 namespace solarflare
 {
     using cimple::Instance;
