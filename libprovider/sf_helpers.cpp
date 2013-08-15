@@ -430,6 +430,7 @@ namespace solarflare
     {&ProfileRegistrationProfile, &SoftwareInventoryProfile, NULL};
     const DMTFProfileInfo DMTFProfileInfo::SoftwareUpdateProfile("Software Update", "1.0.0", softwareUpdateRef);
     const DMTFProfileInfo DMTFProfileInfo::JobControlProfile("Job Control", "1.0.0", genericPrpRef);
+    const DMTFProfileInfo DMTFProfileInfo::IndicationsProfile("Indications", "1.0.0", genericPrpRef);
 
     const DMTFProfileInfo * const DMTFProfileInfo::knownDMTFProfiles[] =
     {
@@ -446,6 +447,7 @@ namespace solarflare
         // Tags Validation test.
         &JobControlProfile,
 #endif
+        &IndicationsProfile,
         NULL
     };
 
