@@ -461,7 +461,6 @@ namespace solarflare
         static const DMTFProfileInfo SoftwareUpdateProfile;
         static const DMTFProfileInfo HostLANNetworkPortProfile;
         static const DMTFProfileInfo JobControlProfile;
-        static const DMTFProfileInfo IndicationsProfile;
         static const DMTFProfileInfo * const knownDMTFProfiles[];
         String profileId() const;
         cimple::SF_RegisteredProfile *reference() const;
