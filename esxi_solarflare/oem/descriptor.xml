@@ -17,7 +17,7 @@
    <!-- A one-line summary of the VIB package contents. 80 chars max. -->
    <summary>Solarflare NIC CIM Provider</summary>
 
-   <description>Sample solarflare provider for ESX Server</description>
+   <description>Solarflare NIC CIM provider for ESXi Server</description>
 
    <!-- Used for specifying KB article URLs.  key is a short friendly -->
    <!-- identifier, no more than 20 characters long, to display instead -->
