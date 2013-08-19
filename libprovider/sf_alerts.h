@@ -271,9 +271,9 @@ namespace solarflare
             String    indicationId("Solarflare:");
 
             indicationId.append(localId);
+#if !defined(TARGET_CIM_SERVER_wmi)
             indication->IndicationIdentifier.null = false;
             indication->IndicationIdentifier.value = indicationId;
-#if !defined(TARGET_CIM_SERVER_wmi)
             indication->IndicationTime.null = false;
             indication->IndicationTime.value = Datetime::now();
 #endif
