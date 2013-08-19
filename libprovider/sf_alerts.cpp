@@ -97,7 +97,9 @@ namespace solarflare
                     alert.description = String(buffer.data());
 
                     alert.localId = sensorType2StrId(sensorsCur[i].type);
-                    alert.localId.append("_APPEARED");
+                    alert.localId.append("_APPEARED_");
+                    alert.localId.append(
+                                sensorState2StrId(sensorsCur[i].state));
 
                     alerts.append(alert);
                     result = true;
