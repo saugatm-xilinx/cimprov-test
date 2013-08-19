@@ -15,18 +15,30 @@ namespace solarflare
 
             alert.alertType = cimple::CIM_AlertIndication::
                                      _AlertType::enum_Device_Alert;
-            alert.perceivedSeverity = cimple::CIM_AlertIndication::
-                                     _PerceivedSeverity::enum_Major;
             if (curLinkState)
             {
+                alert.perceivedSeverity =
+                  cimple::CIM_AlertIndication::
+                             _PerceivedSeverity::enum_Information;
                 alert.description = "Link went up";
                 alert.localId = "LinkUp";
+                alert.messageId = "SOLARFLARE0001";
+                alert.message = "Link went up";
             }
             else
             {
+                alert.perceivedSeverity =
+                  cimple::CIM_AlertIndication::
+                               _PerceivedSeverity::enum_Degraded_Warning;
                 alert.description = "Link went down";
                 alert.localId = "LinkDown";
+                alert.messageId = "SOLARFLARE0002";
+                alert.message = "Link went down";
             }
+
+            alert.instPath = instPath;
+            alert.sysName = sysName;
+            alert.sysCreationClassName = sysCreationClassName;
 
             alerts.append(alert);
             result = true;
@@ -80,6 +92,10 @@ namespace solarflare
                               cimple::CIM_AlertIndication::
                                  _PerceivedSeverity::enum_Major;
 
+            alert.instPath = instPath;
+            alert.sysName = sysName;
+            alert.sysCreationClassName = sysCreationClassName;
+
             for (i = 0; i < sensorsCur.size(); i++)
             {
                 Buffer     buffer;
@@ -101,6 +117,30 @@ namespace solarflare
                     alert.localId.append(
                                 sensorState2StrId(sensorsCur[i].state));
 
+                    alert.messageArguments.clear();
+                    if (sensorsCur[i].state == SENSOR_STATE_OK)
+                    {
+                        alert.perceivedSeverity =
+                                cimple::CIM_AlertIndication::
+                                    _PerceivedSeverity::enum_Information;
+                        alert.messageId = String("SOLARFLARE0003");
+                        alert.messageArguments.append(
+                                      sensorType2Str(sensorsCur[i].type));
+                    }
+                    else
+                    {
+                        alert.perceivedSeverity =
+                            cimple::CIM_AlertIndication::
+                               _PerceivedSeverity::enum_Degraded_Warning;
+                        alert.messageId = String("SOLARFLARE0004");
+                        alert.messageArguments.append(
+                                      sensorType2Str(sensorsCur[i].type));
+                        alert.messageArguments.append(
+                                     sensorState2Str(sensorsCur[i].state));
+                    }
+
+                    alert.message = alert.description;
+
                     alerts.append(alert);
                     result = true;
                 }
@@ -121,6 +161,59 @@ namespace solarflare
                     alert.localId.append(
                                 sensorState2StrId(sensorsCur[i].state));
 
+                    alert.message = alert.description;
+                    alert.messageArguments.clear();
+                    alert.messageArguments.append(
+                                      sensorType2Str(sensorsCur[i].type));
+                    alert.messageArguments.append(
+                                    sensorState2Str(sensorsPrev[j].state));
+                    switch(sensorsCur[i].state)
+                    {
+                        case SENSOR_STATE_OK:
+                            alert.messageId = String("SOLARFLARE0006");
+                            alert.perceivedSeverity =
+                              cimple::CIM_AlertIndication::
+                                 _PerceivedSeverity::enum_Information;
+                            break;
+
+                        case SENSOR_STATE_WARNING:
+                            alert.messageId = String("SOLARFLARE0007");
+                            alert.perceivedSeverity =
+                              cimple::CIM_AlertIndication::
+                                 _PerceivedSeverity::enum_Degraded_Warning;
+                            break;
+
+                        case SENSOR_STATE_NO_READING:
+                            alert.messageId = String("SOLARFLARE0008");
+                            alert.perceivedSeverity =
+                              cimple::CIM_AlertIndication::
+                                 _PerceivedSeverity::enum_Degraded_Warning;
+                            break;
+
+                        case SENSOR_STATE_UNKNOWN:
+                            alert.messageId = String("SOLARFLARE0009");
+                            alert.perceivedSeverity =
+                              cimple::CIM_AlertIndication::
+                                 _PerceivedSeverity::enum_Degraded_Warning;
+                            break;
+
+                        case SENSOR_STATE_FATAL:
+                            alert.messageId = String("SOLARFLARE0010");
+                            alert.perceivedSeverity =
+                              cimple::CIM_AlertIndication::
+                                _PerceivedSeverity::
+                                          enum_Fatal_NonRecoverable;
+                            break;
+
+                        case SENSOR_STATE_BROKEN:
+                            alert.messageId = String("SOLARFLARE0011");
+                            alert.perceivedSeverity =
+                              cimple::CIM_AlertIndication::
+                                _PerceivedSeverity::
+                                          enum_Fatal_NonRecoverable;
+                            break;
+                    }
+
                     alerts.append(alert);
                     result = true;
                 }
@@ -140,9 +233,20 @@ namespace solarflare
                         sensorType2Str(sensorsPrev[j].type).c_str());
                     alert.description = String(buffer.data());
 
-                    alerts.append(alert);
+                    alert.perceivedSeverity =
+                        cimple::CIM_AlertIndication::
+                           _PerceivedSeverity::enum_Degraded_Warning;
+
                     alert.localId = sensorType2StrId(sensorsPrev[j].type);
                     alert.localId.append("_DISAPPEARED");
+
+                    alert.messageId = String("SOLARFLARE0005");
+                    alert.message = alert.description;
+                    alert.messageArguments.clear();
+                    alert.messageArguments.append(
+                                      sensorType2Str(sensorsPrev[j].type));
+
+                    alerts.append(alert);
                     result = true;
                 }
             }

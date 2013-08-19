@@ -12,18 +12,34 @@ namespace solarflare
     using cimple::uint16;
     using cimple::Array;
     using cimple::String;
+    using cimple::Array_String;
     using cimple::SF_EthernetPort;
     using cimple::Datetime;
 
     ///
-    /// Properties of SF_Alert filled by platform-specific code.
+    /// Properties of SF_Alert to be filled in an alert indication.
     ///
     class AlertProps {
     public:
-        uint16 alertType;           ///< Type of alert
-        uint16 perceivedSeverity;   ///< Perceived severity
-        String description;         ///< Description of alert indication
-        String localId;             ///< Our ID of alert indication
+        uint16 alertType;               ///< Type of alert
+        uint16 perceivedSeverity;       ///< Perceived severity
+        String description;             ///< Description of alert indication
+        String localId;                 ///< Our ID of alert indication
+        String messageId;               ///< Value of MessageID property
+        String message;                 ///< Value of Message property
+        Array_String messageArguments;  ///< Value of MessageArguments
+                                        ///  property
+
+        String instPath;                ///< Path to port instance to which
+                                        ///  generated alert indication is
+                                        ///  related
+        String sysName;                 ///< Name of the scoping system of
+                                        ///  AlertingManagedElement
+        String sysCreationClassName;    ///< The scoping system's
+                                        ///  CreationClassName
+
+
+
 
         /// Comparison operator is required by cimple::Array
         inline bool operator== (const AlertProps &rhs)
@@ -245,35 +261,22 @@ namespace solarflare
         ///
         /// Create an indication object according to given properties
         /// 
-        /// @param alertType            Type of alert indication
-        /// @param perceivedSeverity    Perceived severity
-        /// @param description          Description of alert indication
-        /// @param instPath             Path to port instance to which
-        ///                             generated alert indication is
-        ///                             related
-        /// @param sysName              Name of the scoping system of
-        ///                             AlertingManagedElement
-        /// @param sysCreationClassName The scoping system's
-        ///                             CreationClassName
+        /// @param alertProps            Values of SF_Alert properties
+        ///                              to be filled
         ///
         /// @return Indication object pointer
         ///
-        virtual CIMClass *makeIndication(uint16 alertType,
-                                         uint16 perceivedSeverity,
-                                         String description,
-                                         String localId,
-                                         String instPath,
-                                         String sysName,
-                                         String sysCreationClassName)
+        virtual CIMClass *makeIndication(const AlertProps &alertProps)
         {
             CIMClass *indication = CIMClass::create(true);
             Instance *instance = NULL;
             String    indicationId("Solarflare:");
 
-            indicationId.append(localId);
+            indicationId.append(alertProps.localId);
 #if !defined(TARGET_CIM_SERVER_wmi)
             indication->IndicationIdentifier.null = false;
-            indication->IndicationIdentifier.value = indicationId;
+            indication->IndicationIdentifier.value =
+                                      alertProps.indicationId;
             indication->IndicationTime.null = false;
             indication->IndicationTime.value = Datetime::now();
 #endif
@@ -282,25 +285,37 @@ namespace solarflare
             indication->ProviderName.null = false;
             indication->ProviderName.value = String("solarflare");
             indication->Description.null = false;
-            indication->Description.value = description;
+            indication->Description.value = alertProps.description;
             indication->AlertingManagedElement.null = false;
-            indication->AlertingManagedElement.value = instPath;
+            indication->AlertingManagedElement.value =
+                                                  alertProps.instPath;
             indication->AlertingElementFormat.null = false;
             indication->AlertingElementFormat.value =
                     cimple::CIM_AlertIndication::_AlertingElementFormat::
                                                         enum_CIMObjectPath;
             indication->AlertType.null = false;
-            indication->AlertType.value = alertType;
+            indication->AlertType.value = alertProps.alertType;
             indication->PerceivedSeverity.null = false;
-            indication->PerceivedSeverity.value = perceivedSeverity;
+            indication->PerceivedSeverity.value =
+                                            alertProps.perceivedSeverity;
             indication->ProbableCause.null = false;
             indication->ProbableCause.value =
                   cimple::CIM_AlertIndication::_ProbableCause::enum_Unknown;
             indication->SystemName.null = false;
-            indication->SystemName.value = sysName;
+            indication->SystemName.value = alertProps.sysName;
             indication->SystemCreationClassName.null = false;
             indication->SystemCreationClassName.value =
-                                              sysCreationClassName;
+                                          alertProps.sysCreationClassName;
+
+            indication->OwningEntity.null = false;
+            indication->OwningEntity.value = String("SOLARFLARE");
+            indication->MessageID.null = false;
+            indication->MessageID.value = alertProps.messageId;
+            indication->Message.null = false;
+            indication->Message.value = alertProps.message;
+            indication->MessageArguments.null = false;
+            indication->MessageArguments.value =
+                                      alertProps.messageArguments;
 
             return indication;
         }
@@ -340,15 +355,7 @@ namespace solarflare
                     {
                         for (j = 0; j < alertsProps.size(); j++)
                             owner->handler->handle(
-                              owner->makeIndication(
-                                alertsProps[j].alertType,
-                                alertsProps[j].perceivedSeverity,
-                                alertsProps[j].description,
-                                alertsProps[j].localId,
-                                owner->instancesInfo[i]->instPath,
-                                owner->instancesInfo[i]->sysName,
-                                owner->instancesInfo[i]->
-                                            sysCreationClassName));
+                              owner->makeIndication(alertsProps[j]));
                     }
                 }
 

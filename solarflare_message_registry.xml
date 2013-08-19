@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Solarflare - Solarflare Communications, Inc. - http://www.solarflare.com
+
+Title: Solarflare Message Registry
+
+Document type: Technical Note (XML Instance Document)
+Document language: E
+
+Abstract: This document is the Solarflare message registry.
+
+Copyright (C) 2013 Solarflare Communications, Inc. All rights reserved.
+-->
+
+<?xml-stylesheet href="http://schemas.dmtf.org/wbem/messageregistry/1/dsp8000_1.2.xsl" type="text/xsl"?>
+<!--
+Note:  The href attribute above specifies the URL of the official publication location of the XSLT stylesheet.
+When working with a local copy of this file, change the href attribute to reference a local copy of the XSLT stylesheet.
+Background: For security reasons, Web browsers typically require that the XSLT stylesheet is located on the same host
+as the file referencing it (i.e. this file). Using XML Catalog resolution to a local URL cannot be used either, since
+Web browsers typically do not support XML Catalogs.
+-->
+<REGISTRY xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.dmtf.org/wbem/messageregistry/1" xsi:schemaLocation="http://schemas.dmtf.org/wbem/messageregistry/1 http://schemas.dmtf.org/wbem/messageregistry/1/dsp0228_1.2.xsd">
+    <REGISTRY_DECLARATION>
+        <IDENTIFICATION ID="SOLARFLARE0001" NAME="Solarflare Message Registry" LANGUAGE="en" VERSION="1.0.0"/>
+        <CIM_SCHEMA VERSION="2.30"/>
+        <OWNING_ENTITY>SOLARFLARE</OWNING_ENTITY>
+        <DESCRIPTION>This is the Solarflare message registry that includes messages provided by
+          Solarflare NIC CIM provider.</DESCRIPTION>
+    </REGISTRY_DECLARATION>
+    <REGISTRY_ENTRIES>
+        <MESSAGE NAME="Ethernet port link went up">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0001"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when an Ethernet Port link went up</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Link went up</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>2<DESCRIPTION>Information</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Ethernet port link went down">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0002"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when an Ethernet Port link went up</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Link went down</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>3<DESCRIPTION>Degraded/Warning</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor became available in the correct state">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0003"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor becomes available in the correct state</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' not previously seen appeared in the state 'OK'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>2<DESCRIPTION>Information</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor became available in an incorrect state">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0004"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor becomes available in an incorrect state</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' not previously seen appeared in the state '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor state" DATATYPE="string">
+                    <DESCRIPTION>State of the sensor</DESCRIPTION>
+                    <POSSIBLE_VALUE>Warn</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Error</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Broken</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>No reading</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>UNKNOWN</POSSIBLE_VALUE>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>3<DESCRIPTION>Degraded/Warning</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor became unavailable">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0005"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor becomes unavailable</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' disappeared</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>3<DESCRIPTION>Degraded/Warning</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor changed state to OK">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0006"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor changes state to OK</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' changed state from '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="previous sensor state" DATATYPE="string">
+                    <DESCRIPTION>Previous state of the sensor</DESCRIPTION>
+                    <POSSIBLE_VALUE>Warn</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Error</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Broken</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>No reading</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>UNKNOWN</POSSIBLE_VALUE>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' to 'OK'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>2<DESCRIPTION>Information</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor changed state to Warn">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0007"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor changes state to Warn</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' changed state from '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="previous sensor state" DATATYPE="string">
+                    <DESCRIPTION>Previous state of the sensor</DESCRIPTION>
+                    <POSSIBLE_VALUE>OK</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Error</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Broken</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>No reading</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>UNKNOWN</POSSIBLE_VALUE>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' to 'Warn'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>3<DESCRIPTION>Degraded/Warning</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor changed state to No reading">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0008"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor changes state to No reading</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' changed state from '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="previous sensor state" DATATYPE="string">
+                    <DESCRIPTION>Previous state of the sensor</DESCRIPTION>
+                    <POSSIBLE_VALUE>OK</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Warn</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Error</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Broken</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>UNKNOWN</POSSIBLE_VALUE>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' to 'No reading'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>3<DESCRIPTION>Degraded/Warning</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor changed state to UNKNOWN">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0009"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor changes state to UNKNOWN</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' changed state from '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="previous sensor state" DATATYPE="string">
+                    <DESCRIPTION>Previous state of the sensor</DESCRIPTION>
+                    <POSSIBLE_VALUE>OK</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Warn</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Error</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Broken</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>No reading</POSSIBLE_VALUE>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' to 'UNKNOWN'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>3<DESCRIPTION>Degraded/Warning</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor changed state to Error">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0010"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor changes state to Error</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' changed state from '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="previous sensor state" DATATYPE="string">
+                    <DESCRIPTION>Previous state of the sensor</DESCRIPTION>
+                    <POSSIBLE_VALUE>OK</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Warn</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Broken</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>No reading</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>UNKNOWN</POSSIBLE_VALUE>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' to 'Error'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>7<DESCRIPTION>Fatal/NonRecoverable</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+        <MESSAGE NAME="Sensor changed state to Broken">
+            <MESSAGE_ID PREFIX="SOLARFLARE" SEQUENCE_NUMBER="0011"/>
+            <MESSAGE_DESCRIPTION>This message is for the use case when a sensor changes state to Broken</MESSAGE_DESCRIPTION>
+            <MESSAGE_COMPONENTS>
+                <STATIC_ELEMENT>Sensor '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="sensor name" DATATYPE="string">
+                    <DESCRIPTION>Name of the sensor</DESCRIPTION>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' changed state from '</STATIC_ELEMENT>
+                <DYNAMIC_ELEMENT NAME="previous sensor state" DATATYPE="string">
+                    <DESCRIPTION>Previous state of the sensor</DESCRIPTION>
+                    <POSSIBLE_VALUE>OK</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Warn</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>Error</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>No reading</POSSIBLE_VALUE>
+                    <POSSIBLE_VALUE>UNKNOWN</POSSIBLE_VALUE>
+                </DYNAMIC_ELEMENT>
+                <STATIC_ELEMENT>' to 'Broken'</STATIC_ELEMENT>
+            </MESSAGE_COMPONENTS>
+            <FIXED_MESSAGE_INSTANCE_VALUES TYPE="ALERT">
+              <ALERTING_MANAGED_ELEMENT>
+                <DESCRIPTION>Object Path to alerting CIM_EthernetPort instance</DESCRIPTION>
+              </ALERTING_MANAGED_ELEMENT>
+              <ALERT_TYPE>5<DESCRIPTION>Device Alert</DESCRIPTION></ALERT_TYPE>
+              <PERCEIVED_SEVERITY>7<DESCRIPTION>Fatal/NonRecoverable</DESCRIPTION></PERCEIVED_SEVERITY>
+            </FIXED_MESSAGE_INSTANCE_VALUES>
+        </MESSAGE>
+
+    </REGISTRY_ENTRIES>
+</REGISTRY>
