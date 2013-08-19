@@ -275,8 +275,7 @@ namespace solarflare
             indicationId.append(alertProps.localId);
 #if !defined(TARGET_CIM_SERVER_wmi)
             indication->IndicationIdentifier.null = false;
-            indication->IndicationIdentifier.value =
-                                      alertProps.indicationId;
+            indication->IndicationIdentifier.value = indicationId;
             indication->IndicationTime.null = false;
             indication->IndicationTime.value = Datetime::now();
 #endif
