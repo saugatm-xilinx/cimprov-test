@@ -277,6 +277,10 @@ namespace solarflare
             indication->IndicationTime.null = false;
             indication->IndicationTime.value = Datetime::now();
 #endif
+            indication->EventID.null = false;
+            indication->EventID.value = indicationId;
+            indication->ProviderName.null = false;
+            indication->ProviderName.value = String("solarflare");
             indication->Description.null = false;
             indication->Description.value = description;
             indication->AlertingManagedElement.null = false;
