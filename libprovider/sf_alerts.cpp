@@ -18,9 +18,15 @@ namespace solarflare
             alert.perceivedSeverity = cimple::CIM_AlertIndication::
                                      _PerceivedSeverity::enum_Major;
             if (curLinkState)
+            {
                 alert.description = "Link went up";
+                alert.localId = "LinkUp";
+            }
             else
+            {
                 alert.description = "Link went down";
+                alert.localId = "LinkDown";
+            }
 
             alerts.append(alert);
             result = true;
@@ -90,6 +96,9 @@ namespace solarflare
                         sensorState2Str(sensorsCur[i].state).c_str());
                     alert.description = String(buffer.data());
 
+                    alert.localId = sensorType2StrId(sensorsCur[i].type);
+                    alert.localId.append("_APPEARED");
+
                     alerts.append(alert);
                     result = true;
                 }
@@ -100,8 +109,16 @@ namespace solarflare
                         sensorType2Str(sensorsCur[i].type).c_str(),
                         sensorState2Str(sensorsPrev[j].state).c_str(),
                         sensorState2Str(sensorsCur[i].state).c_str());
-
                     alert.description = String(buffer.data());
+
+                    alert.localId = sensorType2StrId(sensorsCur[i].type);
+                    alert.localId.append("_");
+                    alert.localId.append(
+                                sensorState2StrId(sensorsPrev[j].state));
+                    alert.localId.append("2");
+                    alert.localId.append(
+                                sensorState2StrId(sensorsCur[i].state));
+
                     alerts.append(alert);
                     result = true;
                 }
@@ -122,6 +139,8 @@ namespace solarflare
                     alert.description = String(buffer.data());
 
                     alerts.append(alert);
+                    alert.localId = sensorType2StrId(sensorsPrev[j].type);
+                    alert.localId.append("_DISAPPEARED");
                     result = true;
                 }
             }

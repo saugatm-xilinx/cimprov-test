@@ -23,6 +23,7 @@ namespace solarflare
         uint16 alertType;           ///< Type of alert
         uint16 perceivedSeverity;   ///< Perceived severity
         String description;         ///< Description of alert indication
+        String localId;             ///< Our ID of alert indication
 
         /// Comparison operator is required by cimple::Array
         inline bool operator== (const AlertProps &rhs)
@@ -260,13 +261,18 @@ namespace solarflare
         virtual CIMClass *makeIndication(uint16 alertType,
                                          uint16 perceivedSeverity,
                                          String description,
+                                         String localId,
                                          String instPath,
                                          String sysName,
                                          String sysCreationClassName)
         {
             CIMClass *indication = CIMClass::create(true);
             Instance *instance = NULL;
+            String    indicationId("Solarflare:");
 
+            indicationId.append(localId);
+            indication->IndicationIdentifier.null = false;
+            indication->IndicationIdentifier.value = indicationId;
 #if !defined(TARGET_CIM_SERVER_wmi)
             indication->IndicationTime.null = false;
             indication->IndicationTime.value = Datetime::now();
@@ -334,6 +340,7 @@ namespace solarflare
                                 alertsProps[j].alertType,
                                 alertsProps[j].perceivedSeverity,
                                 alertsProps[j].description,
+                                alertsProps[j].localId,
                                 owner->instancesInfo[i]->instPath,
                                 owner->instancesInfo[i]->sysName,
                                 owner->instancesInfo[i]->

@@ -54,6 +54,18 @@ namespace solarflare
       LAST_ENUM
     };
 
+    /// String representations of sensor states
+    /// to be used in IndicationIdentifier
+    static const struct value_name_enum sensor_states_ids[] =
+    {
+      { "OK",         SENSOR_STATE_OK },
+      { "WARNING",    SENSOR_STATE_WARNING },
+      { "ERROR",      SENSOR_STATE_FATAL },
+      { "BROKEN",     SENSOR_STATE_BROKEN },
+      { "NO_READING", SENSOR_STATE_NO_READING },
+      LAST_ENUM
+    };
+
     /// String representations of sensor types
     static const struct value_name_enum sensor_types[] =
     {
@@ -100,30 +112,80 @@ namespace solarflare
       LAST_ENUM
     };
 
-    ///
-    /// Get sensor type string representation
-    ///
-    /// @param type   Sensor type
-    ///
-    /// @return String representation
-    ///
+#define SENSOR_TYPE_ID(type_) \
+    { #type_, type_ }
+
+    /// String representations of sensor types
+    /// to be used in IndicationIdentifier
+    static const struct value_name_enum sensor_types_ids[] =
+    {
+        SENSOR_TYPE_ID(SENSOR_CONTROLLER_TEMP),
+        SENSOR_TYPE_ID(SENSOR_PHY_COMMON_TEMP),
+        SENSOR_TYPE_ID(SENSOR_CONTROLLER_COOLING),
+        SENSOR_TYPE_ID(SENSOR_PHY_COOLING),
+        SENSOR_TYPE_ID(SENSOR_PHY0_TEMP),
+        SENSOR_TYPE_ID(SENSOR_PHY0_COOLING),
+        SENSOR_TYPE_ID(SENSOR_PHY1_TEMP),
+        SENSOR_TYPE_ID(SENSOR_PHY1_COOLING),
+        SENSOR_TYPE_ID(SENSOR_IN_1V0),
+        SENSOR_TYPE_ID(SENSOR_IN_1V2),
+        SENSOR_TYPE_ID(SENSOR_IN_1V8),
+        SENSOR_TYPE_ID(SENSOR_IN_2V5),
+        SENSOR_TYPE_ID(SENSOR_IN_3V3),
+        SENSOR_TYPE_ID(SENSOR_IN_12V0),
+        SENSOR_TYPE_ID(SENSOR_IN_1V2A),
+        SENSOR_TYPE_ID(SENSOR_IN_VREF),
+        SENSOR_TYPE_ID(SENSOR_OUT_VAOE),
+        SENSOR_TYPE_ID(SENSOR_AOE_TEMP),
+        SENSOR_TYPE_ID(SENSOR_PSU_AOE_TEMP),
+        SENSOR_TYPE_ID(SENSOR_PSU_TEMP),
+        SENSOR_TYPE_ID(SENSOR_FAN_0),
+        SENSOR_TYPE_ID(SENSOR_FAN_1),
+        SENSOR_TYPE_ID(SENSOR_FAN_2),
+        SENSOR_TYPE_ID(SENSOR_FAN_3),
+        SENSOR_TYPE_ID(SENSOR_FAN_4),
+        SENSOR_TYPE_ID(SENSOR_IN_VAOE),
+        SENSOR_TYPE_ID(SENSOR_OUT_IAOE),
+        SENSOR_TYPE_ID(SENSOR_IN_IAOE),
+        SENSOR_TYPE_ID(SENSOR_NIC_POWER),
+        SENSOR_TYPE_ID(SENSOR_IN_0V9),
+        SENSOR_TYPE_ID(SENSOR_IN_I0V9),
+        SENSOR_TYPE_ID(SENSOR_IN_I1V2),
+        SENSOR_TYPE_ID(SENSOR_IN_0V9_ADC),
+        SENSOR_TYPE_ID(SENSOR_CONTROLLER_2_TEMP),
+        SENSOR_TYPE_ID(SENSOR_VREG_INTERNAL_TEMP),
+        SENSOR_TYPE_ID(SENSOR_VREG_0V9_TEMP),
+        SENSOR_TYPE_ID(SENSOR_VREG_1V2_TEMP),
+        SENSOR_TYPE_ID(SENSOR_CONTROLLER_INTERNAL_TEMP),
+        SENSOR_TYPE_ID(SENSOR_AMBIENT_TEMP),
+        SENSOR_TYPE_ID(SENSOR_AIRFLOW),
+        SENSOR_TYPE_ID(SENSOR_UNKNOWN),
+        LAST_ENUM
+    };
+
+    /// Desribed in sf_sensors.h
     String sensorType2Str(SensorType type)
     {
         return enum2Str(sensor_types, type);
     }
 
-    ///
-    /// Get sensor state string representation
-    ///
-    /// @param type   Sensor state
-    ///
-    /// @return String representation
-    ///
+    /// Desribed in sf_sensors.h
     String sensorState2Str(SensorState state)
     {
         return enum2Str(sensor_states, state);
     }
 
+    /// Desribed in sf_sensors.h
+    String sensorState2StrId(SensorState state)
+    {
+        return enum2Str(sensor_states_ids, state);
+    }
+
+    /// Desribed in sf_sensors.h
+    String sensorType2StrId(SensorType type)
+    {
+        return enum2Str(sensor_types_ids, type);
+    }
 
     /// Desribed in sf_sensors.h
     void debugLogSensors(Array<Sensor> &sensors,

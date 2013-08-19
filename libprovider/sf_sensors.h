@@ -64,7 +64,7 @@ namespace solarflare
         SENSOR_UNKNOWN,
     } SensorType;
 
-    /// Get string representation of sensor type
+    /// Get string representation of sensor type.
     ///
     /// @param type   Sensor type
     ///
@@ -72,14 +72,33 @@ namespace solarflare
     ///
     String sensorType2Str(SensorType type);
 
+    /// Get string representation of sensor type
+    /// to be used in IndicationIdentifier.
     ///
-    /// Get string representation of sensor state
+    /// @param type   Sensor type
+    ///
+    /// @return String representation
+    ///
+    String sensorType2StrId(SensorType type);
+
+    ///
+    /// Get string representation of sensor state.
     ///
     /// @param state    Sensor state
     ///
     /// @return String representation
     ///
     String sensorState2Str(SensorState state);
+
+    ///
+    /// Get string representation of sensor state
+    /// to be used in IndicationIdentifier.
+    ///
+    /// @param state    Sensor state
+    ///
+    /// @return String representation
+    ///
+    String sensorState2StrId(SensorState state);
 
     /// Sensor readings class
     class Sensor
