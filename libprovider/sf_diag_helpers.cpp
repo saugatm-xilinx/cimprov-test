@@ -75,7 +75,7 @@ namespace solarflare
     };
 
     class DiagnosticCompletionRecordHelper : public CIMHelper {
-        static String recordID(const String&, const String&, unsigned);
+        static String recordID(const String&, unsigned);
     public:
         virtual unsigned nObjects(const SystemElement& obj) const;
         virtual Instance *reference(const SystemElement& obj, unsigned) const;
@@ -388,13 +388,11 @@ namespace solarflare
     }
 
     String
-    DiagnosticCompletionRecordHelper::recordID(const String& d, const String& s, unsigned idx)
+    DiagnosticCompletionRecordHelper::recordID(const String& d, unsigned idx)
     {
         Buffer buf;
         buf.appends(CIMHelper::instanceID(d).c_str());
-        buf.append(' ');
-        buf.appends(s.c_str());
-        buf.append('#');
+        buf.appends(":diagThread:");
         buf.append_uint64(idx);
         return buf.data();
     }
@@ -404,9 +402,8 @@ namespace solarflare
     {
         SF_DiagnosticCompletionRecord *l = SF_DiagnosticCompletionRecord::create(true);
         const Diagnostic& diag = static_cast<const Diagnostic&>(se);
-        const Logger& log = diag.log();
     
-        l->InstanceID.set(recordID(diag.name(), log.description(), idx));
+        l->InstanceID.set(recordID(diag.name(), idx));
         return l;
     }
     
@@ -469,7 +466,6 @@ namespace solarflare
     {
         const cimple::CIM_DiagnosticCompletionRecord *l = cast<const cimple::CIM_DiagnosticCompletionRecord *>(&inst);
         const Diagnostic& diag = static_cast<const Diagnostic &>(se);
-        const Logger& log = diag.log();
 
         if (l == NULL)
             return false;
@@ -477,7 +473,7 @@ namespace solarflare
         if (l->InstanceID.null)
             return false;
         
-        return l->InstanceID.value == recordID(diag.name(), log.description(), idx);
+        return l->InstanceID.value == recordID(diag.name(), idx);
     }
 
     Instance *DiagnosticUseOfLogHelper::instance(const solarflare::SystemElement& se, unsigned) const
