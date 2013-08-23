@@ -304,7 +304,7 @@
 		<col def="S255">Argument</col>
 		<col def="s38">Feature_</col>
 		<col def="I2">Attributes</col>
-		<row><td>{123BC7C5-681E-168C-B6A4-378C37D3C286}</td><td>InprocServer32</td><td>Provider</td><td/><td>Solarflare_Module</td><td/><td/><td/><td/><td/><td/><td>SolarflareCIM_Files</td><td/></row>
+		<row><td>{E0883443-7EC0-1251-84ED-F96921AB5923}</td><td>InprocServer32</td><td>Provider</td><td/><td>Solarflare_Module</td><td/><td/><td/><td/><td/><td/><td>SolarflareCIM_Files</td><td/></row>
 	</table>
 
 	<table name="ComboBox">
@@ -341,7 +341,7 @@
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
 		<row><td>AllOtherFiles</td><td>{84576CBB-C740-4F10-B5E8-C13C8090E785}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Provider</td><td>{5D8194A3-B575-4F59-BEC8-4D5BC3F5E431}</td><td>WBEM</td><td>8</td><td/><td>solarflare.dll</td><td>20</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Provider</td><td>{5D8194A3-B575-4F59-BEC8-4D5BC3F5E431}</td><td>WBEM</td><td>8</td><td/><td>solarflare.dll</td><td>17</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -1017,7 +1017,7 @@
 		<col def="S0">Target</col>
 		<col def="I4">ExtendedType</col>
 		<col def="S255">ISComments</col>
-		<row><td>CleanupCIMNamespace</td><td>34</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]unregister.mof"</td><td/><td/></row>
+		<row><td>CleanupCIMNamespace</td><td>98</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]unregister.mof"</td><td/><td/></row>
 		<row><td>CompileCIMSchema</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]schema.mof"</td><td/><td/></row>
 		<row><td>CompileSFSchema</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]repository.mof"</td><td/><td/></row>
 		<row><td>ISPreventDowngrade</td><td>19</td><td/><td>[IS_PREVENT_DOWNGRADE_EXIT]</td><td/><td>Exits install when a newer version of this product is found</td></row>
@@ -1030,6 +1030,9 @@
 		<row><td>SetARPINSTALLLOCATION</td><td>51</td><td>ARPINSTALLLOCATION</td><td>[INSTALLDIR]</td><td/><td/></row>
 		<row><td>SetAllUsersProfileNT</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%SystemRoot]\Profiles\All Users</td><td/><td/></row>
 		<row><td>ShowMsiLog</td><td>226</td><td>SystemFolder</td><td>[SystemFolder]notepad.exe "[MsiLogFileLocation]"</td><td/><td>Shows Property-driven MSI Log</td></row>
+		<row><td>UnregisterCIMInstanceProvider</td><td>98</td><td>WBEM</td><td>wmic.exe path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete</td><td/><td/></row>
+		<row><td>UnregisterCIMMethodProvider</td><td>98</td><td>WBEM</td><td>wmic.exe path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete</td><td/><td/></row>
+		<row><td>UnregisterCIMProvider</td><td>98</td><td>WBEM</td><td>wmic.exe path __Win32Provider.Name="Solarflare" delete</td><td/><td/></row>
 		<row><td>setAllUsersProfile2K</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%ALLUSERSPROFILE]</td><td/><td/></row>
 		<row><td>setUserProfileNT</td><td>51</td><td>USERPROFILE</td><td>[%USERPROFILE]</td><td/><td/></row>
 	</table>
@@ -3885,7 +3888,7 @@
 		<row><td>AppSearch</td><td/><td>400</td><td>AppSearch</td><td/></row>
 		<row><td>BindImage</td><td/><td>4300</td><td>BindImage</td><td/></row>
 		<row><td>CCPSearch</td><td>CCP_TEST</td><td>500</td><td>CCPSearch</td><td/></row>
-		<row><td>CleanupCIMNamespace</td><td>Installed</td><td>1650</td><td/><td/></row>
+		<row><td>CleanupCIMNamespace</td><td>Installed</td><td>1746</td><td/><td/></row>
 		<row><td>CompileCIMSchema</td><td>NOT Installed</td><td>6050</td><td/><td/></row>
 		<row><td>CompileSFSchema</td><td>NOT REMOVE</td><td>6075</td><td/><td/></row>
 		<row><td>CostFinalize</td><td/><td>1000</td><td>CostFinalize</td><td/></row>
@@ -3950,6 +3953,9 @@
 		<row><td>StopServices</td><td>VersionNT</td><td>1900</td><td>StopServices</td><td/></row>
 		<row><td>UnpublishComponents</td><td/><td>1700</td><td>UnpublishComponents</td><td/></row>
 		<row><td>UnpublishFeatures</td><td/><td>1800</td><td>UnpublishFeatures</td><td/></row>
+		<row><td>UnregisterCIMInstanceProvider</td><td>Installed</td><td>1737</td><td/><td/></row>
+		<row><td>UnregisterCIMMethodProvider</td><td>Installed</td><td>1743</td><td/><td/></row>
+		<row><td>UnregisterCIMProvider</td><td>Installed</td><td>1725</td><td/><td/></row>
 		<row><td>UnregisterClassInfo</td><td/><td>2700</td><td>UnregisterClassInfo</td><td/></row>
 		<row><td>UnregisterComPlus</td><td/><td>2100</td><td>UnregisterComPlus</td><td/></row>
 		<row><td>UnregisterExtensionInfo</td><td/><td>2800</td><td>UnregisterExtensionInfo</td><td/></row>
@@ -4420,7 +4426,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="S0">Value</col>
 		<col def="s72">Component_</col>
 		<col def="I4">ISAttributes</col>
-		<row><td>_0AF2A49DBEF98582D16F128FBF4D6176</td><td>0</td><td>CLSID\{123BC7C5-681E-168C-B6A4-378C37D3C286}\InprocServer32</td><td>ThreadingModel</td><td>Both</td><td>Provider</td><td>0</td></row>
+		<row><td>_AD20AE10EFE1A8766731EAE1AAE4BDCE</td><td>0</td><td>CLSID\{E0883443-7EC0-1251-84ED-F96921AB5923}\InprocServer32</td><td>ThreadingModel</td><td>Both</td><td>Provider</td><td>0</td></row>
 	</table>
 
 	<table name="RemoveFile">
