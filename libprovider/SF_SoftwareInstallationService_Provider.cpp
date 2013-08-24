@@ -37,7 +37,8 @@ Enum_Instances_Status SF_SoftwareInstallationService_Provider::enum_instances(
     const SF_SoftwareInstallationService* model,
     Enum_Instances_Handler<SF_SoftwareInstallationService>* handler)
 {    
-    solarflare::EnumInstances<SF_SoftwareInstallationService>::allSoftware(handler);
+    solarflare::EnumInstances<SF_SoftwareInstallationService>::
+                                              allSoftwareTypes(handler);
     return ENUM_INSTANCES_OK;
 }
 
@@ -112,6 +113,11 @@ void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::Sys
                                                                  unsigned)
 {
     solarflare::SWElement& sw = static_cast<solarflare::SWElement&>(se);
+    if (firstRun)
+    {
+        ok = true;
+        firstRun = false;
+    }
     ok = ok && sw.install(uri);
 }
 
@@ -120,7 +126,8 @@ void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::
 {
     solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
     Installer installer(uri, service);
-    ok = installer.forSoftware(nic) && installer.isOk();
+    installer.forSoftware(nic);
+    ok = installer.isOk();
 }
 
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
@@ -132,6 +139,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     const Property<Array_String>& InstallOptionsValues,
     Property<uint32>& return_value)
 {
+    const CIM_ComputerSystem *sys = NULL;
+
     /// CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
     {
@@ -169,22 +178,18 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         }
     }
 
-
-    if (Target == NULL)
+    if (Target == NULL ||
+        (sys = cast<const CIM_ComputerSystem *>(Target)) != NULL)
     {
-        return_value.set(Error);
-        return INVOKE_METHOD_OK;
-    }
-    else if (const CIM_ComputerSystem *sys = 
-             cast<const CIM_ComputerSystem *>(Target))
-    {
-        if (!solarflare::CIMHelper::isOurSystem(sys))
+        if (Target != NULL &&
+            !solarflare::CIMHelper::isOurSystem(sys))
         {
             return_value.set(Error);
             return INVOKE_METHOD_OK;
         }
         Installer installer(URI.value.c_str(), self);
-        if (installer.forSoftware())
+        installer.forSoftware();
+        if (installer.isOk())
             return_value.set(OK);
         else
             return_value.set(InvalidParameter);
@@ -192,7 +197,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
     {
         NICInstaller installer(URI.value.c_str(), self, card);
-        if (installer.forNIC() && installer.isOk())
+        installer.forNIC();
+        if (installer.isOk())
             return_value.set(OK);
         else
             return_value.set(InvalidParameter);

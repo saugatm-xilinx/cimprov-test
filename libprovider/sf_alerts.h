@@ -143,31 +143,6 @@ namespace solarflare
                                           const Port *port);
 
     ///
-    /// Handler type to be used in provider classes instances enumeration
-    ///
-    typedef void (*constProcessProvClsInst)(const SystemElement& obj,
-                                            void *data);
-
-    ///
-    /// Enumerator for provider classes instances enumeration
-    /// (i.e. classes like Port - descendants of SystemElement)
-    ///
-    class ConstEnumProvClsInsts : public ConstElementEnumerator {
-        constProcessProvClsInst    handler;
-        void                      *handlerData;
-    public:
-        ConstEnumProvClsInsts(constProcessProvClsInst f,
-                              void *data) :
-            handler(f), handlerData(data) {};
- 
-        virtual bool process(const SystemElement& obj)
-        {
-            handler(obj, handlerData);
-            return true;
-        }
-    };
-
-    ///
     /// Class template for provider specific alert indications.
     ///
     template <class CIMClass>
@@ -185,7 +160,7 @@ namespace solarflare
         /// For each given Port instance, obtain alert
         /// description instances.
         ///
-        /// @param obj    Reference to SF_EthernetPort instance
+        /// @param obj    Reference to Port instance
         /// @param data   Pointer to CIMAlertNotify instance for which
         ///               list of alert descriptions is filled
         ///

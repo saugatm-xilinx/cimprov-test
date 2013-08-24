@@ -55,11 +55,20 @@ namespace solarflare
     String Firmware::name() const 
     {
         String n = nic()->name();
-        
+
         n.append(" ");
         n.append(genericName());
         return n;
     }
-    
+
+    SWType *SWElement::getSWType() const
+    {
+        SWType *type = new SWType(this->description(),
+                                  this->sysName(),
+                                  this->genericName(),
+                                  this->classify());
+
+        return type;
+    }
 } // namespace
 

@@ -110,6 +110,8 @@ namespace solarflare
         virtual VersionInfo version() const { return vers; }
         virtual bool syncInstall(const char *)
         {
+            CIMPLE_DBG(("syncInstall() is called for NICFirmware on NIC %d",
+                        owner->elementId()));
             return true;
         }
         virtual void initialize() {};
@@ -123,7 +125,12 @@ namespace solarflare
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const { return vers; }
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *)
+        {
+            CIMPLE_DBG(("syncInstall() is called for NICBootROM on NIC %d",
+                        owner->elementId()));
+            return true;
+        }
         virtual void initialize() {};
     };
 
@@ -191,7 +198,10 @@ namespace solarflare
         {}
         virtual VitalProductData vitalProductData() const 
         {
-            return VitalProductData("12345667",
+            Buffer buf;
+
+            buf.format("12345667%u", elementId());
+            return VitalProductData(buf.data(),
                                     "", "1111111", "2222222",
                                     "SFC00000", "333333");
         }
@@ -333,12 +343,13 @@ namespace solarflare
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
     class SampleSystem : public System {
-        SampleNIC nic;
+        SampleNIC nic1;
+        SampleNIC nic2;
         SampleKernelPackage kernelPackage;
         SampleManagementPackage mgmtPackage;
-        SampleSystem() : nic(0) {};
+        SampleSystem() : nic1(0), nic2(1) {};
     protected:
-        void setupNICs() { nic.initialize(); };
+        void setupNICs() { nic1.initialize(); nic2.initialize(); };
         void setupPackages()
         {
             kernelPackage.initialize();
@@ -356,12 +367,16 @@ namespace solarflare
 
     bool SampleSystem::forAllNICs(ConstElementEnumerator& en) const
     {
-        return en.process(nic);
+        if (!en.process(nic1))
+            return false;
+        return en.process(nic2);
     }
 
     bool SampleSystem::forAllNICs(ElementEnumerator& en)
     {
-        return en.process(nic);
+        if (!en.process(nic1))
+            return false;
+        return en.process(nic2);
     }
     
     bool SampleSystem::forAllPackages(ConstElementEnumerator& en) const

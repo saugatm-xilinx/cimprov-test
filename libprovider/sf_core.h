@@ -83,6 +83,9 @@ namespace solarflare
         virtual bool process(const SystemElement& elem) = 0;
     };
 
+    /// Forward declaration
+    class SWType;
+
     /// @brief Abstract class for software components.
     class SWElement : public SystemElement {
         String sysname;
@@ -155,7 +158,7 @@ namespace solarflare
         /// It should be noted that we don't have diagnostic drivers as
         /// those are forbiden by IBM requirements.
         enum SWClass {
-            SWDriver,      //< Kernel driver
+            SWDriver = 1,  //< Kernel driver
             SWTool,        //< Userspace configuration tool
             SWLibrary,     //< Userspace library
             SWPackage,     //< Collection of other SW entities
@@ -199,6 +202,61 @@ namespace solarflare
         /// @return Thread or (NULL or inactive Thread object)
         Thread *installThread() { return installer.findUpdate(); }
         virtual Thread *embeddedThread() { return installThread(); }
+
+        /// Returns generic type of this software.
+        ///
+        /// @return SWType class instance
+        SWType *getSWType() const;
+    };
+
+    /// @brief Class representing generic software type
+    class SWType : public SWElement {
+        String swGenericName;
+        SWClass swClass;
+    protected:
+        virtual const CIMHelper *cimDispatch(
+                                  const cimple::Meta_Class& mc) const;
+    public:
+        
+        SWType(const String& d, const String& sn,
+               const String& genName, SWClass swClassId) :
+                  SWElement(d, sn), swGenericName(genName),
+                  swClass(swClassId) {}
+
+        virtual VersionInfo version() const
+        {
+            return VersionInfo();
+        }
+
+        virtual bool syncInstall(const char *filename)
+        {
+            return false;
+        }
+
+        virtual SWClass classify() const
+        {
+            return swClass;
+        }
+
+        virtual bool isHostSw() const
+        {
+            return false;
+        }
+
+        virtual void initialize() {}
+
+        virtual const String& genericName() const
+        {
+            return swGenericName;
+        }
+
+        bool operator== (const SWType &rhs)
+        {
+            return (this->description() == rhs.description() &&
+                    this->sysName() == rhs.sysName() &&
+                    this->genericName() == rhs.genericName() &&
+                    this->classify() == rhs.classify());
+        }
     };
 
     /// @brief Abstract class for bus components (currently, NICs and

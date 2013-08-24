@@ -292,6 +292,63 @@ namespace solarflare
     extern CIMJobChangeStateNotify<cimple::SF_JobError> onJobError;
     extern CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess;
 
+    ///
+    /// Handler type to be used in provider classes instances enumeration
+    ///
+    typedef void (*constProcessProvClsInst)(const SystemElement& obj,
+                                            void *data);
+
+    ///
+    /// Enumerator for provider classes instances enumeration
+    /// (i.e. classes like Port - descendants of SystemElement)
+    ///
+    class ConstEnumProvClsInsts : public ConstElementEnumerator {
+        constProcessProvClsInst    handler;
+        void                      *handlerData;
+    public:
+        ConstEnumProvClsInsts(constProcessProvClsInst f,
+                              void *data) :
+            handler(f), handlerData(data) {};
+ 
+        virtual bool process(const SystemElement& obj)
+        {
+            handler(obj, handlerData);
+            return true;
+        }
+    };
+
+    ///
+    /// Process software item and add its type to an array if we
+    /// we have not met this type yet.
+    ///
+    /// @param obj    Reference to SWElement instance
+    /// @param data   Pointer to the array of software types.
+    ///
+    static inline void collectSWTypes(const SystemElement& obj,
+                                      void *data)
+    {
+        Array<SWType *> *types;
+        const SWElement &sw = dynamic_cast<const SWElement&>(obj);
+        SWType          *curType = NULL;
+
+        unsigned int i;
+
+        types = reinterpret_cast<Array<SWType *> *>(data);
+
+        curType = sw.getSWType();
+        if (curType == NULL)
+            return;
+
+        for (i = 0; i < types->size(); i++)
+            if (*((*types)[i]) == *curType)
+                break;
+
+        if (i == types->size())
+            types->append(curType);
+        else
+            delete curType;
+    }
+
     template <class CIMClass>
     class EnumInstances : public ConstElementEnumerator {
         cimple::Enum_Instances_Handler<CIMClass> *handler;
@@ -318,6 +375,23 @@ namespace solarflare
         {
             EnumInstances<CIMClass> iter(handler);
             System::target.forAllSoftware(iter);
+        }
+        static void allSoftwareTypes(
+                          cimple::Enum_Instances_Handler<CIMClass> *handler)
+        {
+            Array<SWType *> types;
+            unsigned int    i;
+
+            EnumInstances<CIMClass> iter(handler);
+            ConstEnumProvClsInsts   en(collectSWTypes, &types);
+
+            System::target.forAllSoftware(en);
+
+            for (i = 0; i < types.size(); i++)
+            {
+                iter.process(*(types[i]));
+                delete types[i];
+            }
         }
         static void allNICs(cimple::Enum_Instances_Handler<CIMClass> *handler)
         {
@@ -358,8 +432,8 @@ namespace solarflare
 
     class Action : public ElementEnumerator
     {
-        const Instance *sample;
     protected:
+        const Instance *sample;
         virtual void handler(SystemElement&, unsigned) = 0;
     public:
         Action(const Instance *s) :
@@ -391,6 +465,15 @@ namespace solarflare
         {
             return !process(System::target);
         }
+    };
+
+    /// The only difference from the Action class - all the matched objects
+    /// would be processed, not only the first one.
+    class ActionForAll : public Action {
+    public: 
+        ActionForAll(const Instance *s) :
+            Action(s) {}
+        virtual bool process(SystemElement& el);
     };
 
     class AsyncRunner : public Action {

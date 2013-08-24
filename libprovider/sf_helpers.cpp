@@ -244,6 +244,21 @@ namespace solarflare
         return true;
     }
 
+    bool ActionForAll::process(SystemElement& se)
+    {
+        const CIMHelper *helper = se.cimDispatch(*sample->meta_class);
+        if (helper == NULL)
+            return true;
+
+        unsigned n = helper->nObjects(se);
+
+        for (unsigned i = 0; i < n; i++)
+            if (helper->match(se, *sample, i))
+                handler(se, i);
+
+        return true;
+    }
+
     bool Action::forThread()
     {
         if (System::target.forAllDiagnostics(*this))

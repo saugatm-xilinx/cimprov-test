@@ -10,19 +10,21 @@ CIMPLE_NAMESPACE_BEGIN
 
 class SF_SoftwareInstallationService_Provider
 {
-    class Installer : public solarflare::Action
+    class Installer : public solarflare::ActionForAll
     {
         const char *uri;
         bool ok;
+        bool firstRun;
     protected:
         virtual void handler(solarflare::SystemElement& se, unsigned);
     public:
         Installer(const char *u, const Instance *inst) :  
-            solarflare::Action(inst), uri(u), ok(true) {}
+            solarflare::ActionForAll(inst), uri(u), ok(false),
+            firstRun(true) {}
         bool isOk() const { return ok; };
     };
 
-    class NICInstaller : public solarflare::Action
+    class NICInstaller : public solarflare::ActionForAll
     {
         const char *uri;
         const SF_SoftwareInstallationService *service;
@@ -33,7 +35,8 @@ class SF_SoftwareInstallationService_Provider
         NICInstaller(const char *u, 
                      const SF_SoftwareInstallationService *svc,
                      const Instance *inst) :  
-            solarflare::Action(inst), uri(u), service(svc), ok(false) {}
+            solarflare::ActionForAll(inst), uri(u), service(svc),
+            ok(false) {}
         bool isOk() const { return ok; };
     };
 public:

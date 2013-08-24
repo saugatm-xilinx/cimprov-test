@@ -35,7 +35,8 @@ Enum_Instances_Status SF_SoftwareInstallationServiceCapabilities_Provider::enum_
     const SF_SoftwareInstallationServiceCapabilities* model,
     Enum_Instances_Handler<SF_SoftwareInstallationServiceCapabilities>* handler)
 {
-    solarflare::EnumInstances<SF_SoftwareInstallationServiceCapabilities>::allSoftware(handler);
+    solarflare::EnumInstances<SF_SoftwareInstallationServiceCapabilities>::
+                                                  allSoftwareTypes(handler);
     
     return ENUM_INSTANCES_OK;
 }

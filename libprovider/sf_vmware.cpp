@@ -1061,6 +1061,28 @@ fail:
     }
 
     ///
+    /// Log sfupdate output for debugging purposes.
+    ///
+    /// @param fd   Read end of pipe to which
+    ///             sfupdate output was redirected
+    ///
+    static void sfupdateLogOutput(int fd)
+    {
+        char  str[SFU_STR_MAX_LEN];
+        FILE *f = fdopen(fd, "r");
+
+        if (f == NULL)
+            return;
+        while (1)
+        {
+            if (fgets(str, SFU_STR_MAX_LEN, f) != str)
+                break;
+            CIMPLE_DBG(("%s", str));
+        }
+        fclose(f);
+    }
+
+    ///
     /// Wrapper function working like popen("sfupdate ..."). It
     /// redirects stdout and stderr to pipe and calls main function
     /// of sfupdate with arguments obtained from a given command line.
@@ -1160,6 +1182,8 @@ fail:
             return pipefds[0];
         else
         {
+            CIMPLE_DBG(("sfupdate failed:"));
+            sfupdateLogOutput(pipefds[0]);
             close(pipefds[0]);
             return rc;
         }
@@ -1574,6 +1598,32 @@ fail:
         UNUSED(mac);
     }
 
+    ///
+    /// Check firmware path, fix it if necessary and return it.
+    ///
+    /// @param path     Path to firmware image
+    /// @param defPath  What to add to the path if it does not
+    ///                 end with firmware image file name (*.dat)
+    ///
+    /// @return Fixed firmware image path
+    ///
+    static String fixFwImagePath(const char *path,
+                                 const char *defPath)
+    {
+        char    *fn = strdup(path);
+        String   strPath;
+
+        if (fn == NULL)
+            return String("");
+        trim(fn);
+        strPath = String(fn);
+        if (strstr(fn, ".dat") != fn + (strlen(fn) - 4))
+            strPath.append(String(defPath));
+        free(fn);
+
+        return strPath;
+    }
+
     class VMwareNICFirmware : public NICFirmware {
         const NIC *owner;
     public:
@@ -1583,7 +1633,10 @@ fail:
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *file_name)
         {
-            if (vmwareInstallFirmware(owner, file_name) < 0)
+            String strPath = fixFwImagePath(file_name,
+                                            "/image/mcfw/MR_MCHENRY.dat");
+
+            if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
                 return false;
 
             return true;
@@ -1936,6 +1989,7 @@ curl_fail:
         else // Protocol not supported
             return -1;
 
+        CIMPLE_DBG(("Run sfupdate command '%s'", cmd));
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
         {
@@ -1943,6 +1997,8 @@ curl_fail:
                 unlink(tmp_file);
             return -1;
         }
+
+        sfupdateLogOutput(fd);
 
         close(fd);
         if (tmp_file_used)
@@ -2263,6 +2319,9 @@ curl_fail:
     {
         Auto_Mutex     auto_lock(bootROMVersLock);
         unsigned int   i = 0;
+        String         strPath =
+                            fixFwImagePath(file_name,
+                                           "/image/bootrom/SFL9021.dat");
 
         for (i = 0; i < bootROMVers.size(); i++)
         {
@@ -2274,7 +2333,7 @@ curl_fail:
             }
         }
 
-        if (vmwareInstallFirmware(owner, file_name) < 0)
+        if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
             return false;
 
         return true;

@@ -165,6 +165,32 @@ namespace solarflare
         return NULL;
     }
 
+    const CIMHelper* SWType::cimDispatch(const Meta_Class& cls) const
+    {
+        static const SoftwareInstallationServiceHelper swTypeInstallation;
+        static const FwSoftwareInstallationServiceCapsHelper
+                                                    fwInstallationCaps;
+        static const BundleSoftwareInstallationServiceCapsHelper
+                                                    bundleInstallationCaps;
+
+        bool isInstallable = (this->classify() == SWPackage ||
+                              this->classify() == SWFirmware);
+
+        if (&cls == &SF_SoftwareInstallationService::static_meta_class &&
+            isInstallable)
+            return &swTypeInstallation;
+        else if (&cls == &SF_SoftwareInstallationServiceCapabilities::
+                                                        static_meta_class &&
+                 isInstallable)
+        {
+            if (this->classify() == SWFirmware)
+                return &fwInstallationCaps;
+            else
+                return &bundleInstallationCaps;
+        }
+        else
+            return SWElement::cimDispatch(cls);
+    }
 
     Instance *
     SoftwareIdentityHelper::reference(const solarflare::SystemElement& se, unsigned) const
@@ -174,22 +200,51 @@ namespace solarflare
         return identity;
     }
 
+    ///
+    /// Get software identity class.
+    ///
+    /// @param ourClass   Our representation of software class
+    ///
+    /// @return CIM software identity class
+    ///
+    static unsigned int getSWIdentityClass(SWElement::SWClass ourClass)
+    {
+        switch (ourClass)
+        {
+            case SWElement::SWDriver:
+                return SF_SoftwareIdentity::_Classifications::enum_Driver;
+
+            case SWElement::SWTool:
+                return SF_SoftwareIdentity::_Classifications::
+                                              enum_Configuration_Software;
+
+            case SWElement::SWLibrary:
+                return SF_SoftwareIdentity::_Classifications::
+                                                          enum_Middleware;
+
+            case SWElement::SWPackage:
+                return SF_SoftwareIdentity::_Classifications::
+                                                      enum_Software_Bundle;
+
+            case SWElement::SWFirmware:
+                return SF_SoftwareIdentity::_Classifications::enum_Firmware;
+
+            case SWElement::SWDiagnostics:
+                return SF_SoftwareIdentity::_Classifications::
+                                                  enum_Diagnostic_Software;
+
+            default:
+                return SF_SoftwareIdentity::_Classifications::enum_Unknown;
+        }
+    }
+
+
     Instance *
     SoftwareIdentityHelper::instance(const SystemElement& se, unsigned idx) const
     {
         const SWElement& sw = static_cast<const SWElement&>(se);
         
         SF_SoftwareIdentity *identity = static_cast<SF_SoftwareIdentity *>(reference(sw, idx));
-        static const unsigned classmap[] = {
-            SF_SoftwareIdentity::_Classifications::enum_Unknown,
-            SF_SoftwareIdentity::_Classifications::enum_Unknown,
-            SF_SoftwareIdentity::_Classifications::enum_Unknown,
-            SF_SoftwareIdentity::_Classifications::enum_Driver,
-            SF_SoftwareIdentity::_Classifications::enum_Middleware,
-            SF_SoftwareIdentity::_Classifications::enum_Configuration_Software,
-            SF_SoftwareIdentity::_Classifications::enum_Software_Bundle,
-            SF_SoftwareIdentity::_Classifications::enum_Firmware
-        };
         
         identity->IsEntity.set(true);
 #if CIM_SCHEMA_VERSION_MINOR > 0
@@ -224,7 +279,8 @@ namespace solarflare
         identity->IdentityInfoValue.value.append("Default");    
         
         identity->Classifications.null = false;
-        identity->Classifications.value.append(classmap[sw.classify()]);
+        identity->Classifications.value.append(
+                                      getSWIdentityClass(sw.classify()));
     
         return identity;
     }
@@ -528,7 +584,7 @@ namespace solarflare
         SF_SoftwareInstallationService *newSvc = SF_SoftwareInstallationService::create(true);
         
         newSvc->CreationClassName.set("SF_SoftwareInstallationService");
-        newSvc->Name.set(se.name());
+        newSvc->Name.set(se.genericName());
         newSvc->SystemCreationClassName.set(system->CreationClassName.value);
         newSvc->SystemName.set(system->Name.value);
         return newSvc;
@@ -544,10 +600,10 @@ namespace solarflare
 
         newSvc->Description.set(sw.description());
 #if CIM_SCHEMA_VERSION_MINOR > 0
-        newSvc->ElementName.set(sw.name());
+        newSvc->ElementName.set(sw.genericName());
 #endif
 #if CIM_SCHEMA_VERSION_MINOR == 26
-        newSvc->InstanceID.set(instanceID(sw.name()));
+        newSvc->InstanceID.set(instanceID(sw.genericName()));
         newSvc->InstanceID.value.append(" Installer");
 #endif
 #if CIM_SCHEMA_VERSION_MINOR > 0
@@ -568,11 +624,13 @@ namespace solarflare
     SoftwareInstallationServiceHelper::match(const SystemElement& se,
                                              const Instance& inst, unsigned) const
     {
-        const cimple::CIM_SoftwareInstallationService *svc = cast<const cimple::CIM_SoftwareInstallationService *>(&inst);
+        const cimple::SF_SoftwareInstallationService *svc =
+            cast<const cimple::SF_SoftwareInstallationService *>(&inst);
         
+        const SWElement& sw = static_cast<const SWElement&>(se);
+
         if (svc == NULL)
             return false;
-
 
         if (svc->CreationClassName.null || svc->Name.null || 
             svc->CreationClassName.value != "SF_SoftwareInstallationService" ||
@@ -582,7 +640,7 @@ namespace solarflare
         if (!isOurSystem(svc->SystemCreationClassName.value, svc->SystemName.value))
             return false;
 
-        return svc->Name.value == se.name();
+        return svc->Name.value == sw.genericName();
     }
 
     
@@ -591,7 +649,7 @@ namespace solarflare
     {
         SF_SoftwareInstallationServiceCapabilities *newSvc = SF_SoftwareInstallationServiceCapabilities::create(true);
     
-        newSvc->InstanceID.set(instanceID(se.name()));
+        newSvc->InstanceID.set(instanceID(se.genericName()));
         newSvc->InstanceID.value.append(" Installation Capabilities");
         return newSvc;
     }
