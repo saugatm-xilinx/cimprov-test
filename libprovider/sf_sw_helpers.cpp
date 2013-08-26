@@ -708,7 +708,8 @@ namespace solarflare
     {
         SF_SoftwareInstallationServiceCapabilities *newSvc = 
         static_cast<SF_SoftwareInstallationServiceCapabilities *>(SoftwareInstallationServiceCapsHelper::instance(se, idx));
-        const solarflare::Package& pkg = static_cast<const solarflare::Package&>(se);
+        const solarflare::SWPkgType& pkg =
+                        static_cast<const solarflare::SWPkgType&>(se);
         unsigned pkgType = 0;
 
         switch (pkg.type())

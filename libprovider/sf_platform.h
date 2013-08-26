@@ -482,6 +482,30 @@ namespace solarflare
         virtual bool isHostSw() const { return false; }
 
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
+        /// Returns generic type of this software.
+        ///
+        /// @return SWType class instance
+        virtual SWType *getSWType() const;
+    };
+
+    ///
+    /// Class representing generic software package type.
+    ///
+    class SWPkgType : public SWType {
+      Package::PkgType pkgType;
+    public:
+        SWPkgType(const String& d, const String& sn,
+                  const String& genName, SWClass swClassId,
+                  Package::PkgType type) : SWType(d, sn,
+                                                  genName, swClassId),
+                                           pkgType(type)
+        {};
+
+        virtual Package::PkgType type() const
+        {
+            return pkgType;
+        }
     };
 
     /// @brief An abstract topmost class. Implementors must subclass it to

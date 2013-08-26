@@ -258,4 +258,15 @@ namespace solarflare
             return false;
         return true;
     }
+
+    SWType *Package::getSWType() const
+    {
+        SWPkgType *type = new SWPkgType(this->description(),
+                                        this->sysName(),
+                                        this->genericName(),
+                                        this->classify(),
+                                        this->type());
+
+        return type;
+    }
 } // namespace

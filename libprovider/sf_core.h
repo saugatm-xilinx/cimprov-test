@@ -206,7 +206,7 @@ namespace solarflare
         /// Returns generic type of this software.
         ///
         /// @return SWType class instance
-        SWType *getSWType() const;
+        virtual SWType *getSWType() const;
     };
 
     /// @brief Class representing generic software type
