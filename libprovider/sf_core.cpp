@@ -70,5 +70,22 @@ namespace solarflare
 
         return type;
     }
+
+    String Firmware::sysName() const
+    {
+        VitalProductData vpdata;
+
+        if (nic() == NULL)
+            return String("");
+
+        vpdata = nic()->vitalProductData();
+
+        if (strcmp(vpdata.part().c_str(), "SFN5162F") == 0)
+            return String("47C9955");
+        else if (strcmp(vpdata.part().c_str(), "SFN6122F") == 0)
+            return String("47C9963");
+        else
+            return String("unknown");
+    }
 } // namespace
 

@@ -151,7 +151,7 @@ namespace solarflare
         /// Method returns system name of the component (e.g. object's file
         /// name, rpm name etc.). This is required so that we can relate to
         /// some OS-level object.
-        const String& sysName() const { return sysname; }
+        virtual String sysName() const { return sysname; }
 
         /// Kind of the software entity.
         ///
@@ -309,6 +309,9 @@ namespace solarflare
         virtual bool isHostSw() const { return false; }
         /// @return Name of the firmware image prefixed with NIC name
         virtual String name() const;
+
+        /// @return IBM-specific value for IdentityInfoValue value
+        virtual String sysName() const;
     };
 
     class Package;
