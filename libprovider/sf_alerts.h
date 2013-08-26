@@ -333,7 +333,8 @@ namespace solarflare
                     }
                 }
 
-                Time::sleep(500 * Time::MSEC);
+                // Both MCDI and WMI requests are expensive
+                Time::sleep(2 * Time::SEC);
             }
 
             return NULL;

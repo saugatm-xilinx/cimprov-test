@@ -1,4 +1,4 @@
-libsfupdate.a and libutils.a were built from 377b29a7397d
+libsfupdate.a and libutils.a were built from e874ac8cf0d2
 revision of v5-incoming repository on VMWare Workbench 2.1 with the
 following command:
 make -C build/gnu/ -j3 CC='gcc -fPIC' TARGET_CC="'gcc -fPIC'" SFUPDATE_NO_DEFAULT_IMAGES=1 SFUPDATE_NO_NETIF_FLAGS=1
