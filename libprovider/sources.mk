@@ -178,7 +178,7 @@ $(libprovider_DIR)/resource.o : WINDRES_CPPFLAGS = -DPROVIDER_LIBRARY=\\\"$(PROV
 $(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/repository.mof $(MAKEFILE_LIST)
 	tac $< | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
 
-.PHONY : msi
+.PHONY : msi InstallShieldProject
 
 PROVIDER_MSI_PACKAGE=sf_cim_provider
 MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_windows_32-64.exe
@@ -188,5 +188,10 @@ msi : $(MSI_NAME)
 $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt \
 	 		 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' $<
+
+SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
+					$(libcimobjects_DIR)/repository.mof $(libprovider_DIR)/register.mof \
+					$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
+	lcab -n $^ $@
 
 endif
