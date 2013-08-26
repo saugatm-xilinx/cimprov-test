@@ -275,7 +275,7 @@ namespace solarflare
         identity->IdentityInfoType.value.append("SoftwareStatus");
         
         identity->IdentityInfoValue.null = false;
-        identity->IdentityInfoValue.value.append(sw.name());
+        identity->IdentityInfoValue.value.append(sw.sysName());
         char status[8];
         snprintf(status, sizeof(status), "%d", SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
         identity->IdentityInfoValue.value.append(status);
