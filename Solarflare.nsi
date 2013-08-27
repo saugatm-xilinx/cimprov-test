@@ -65,6 +65,7 @@ SectionEnd
 Section un.ProviderDLL
 
 !insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED  ${ProviderDLL}
+Delete ${ProviderDLL}
 
 SectionEnd
 

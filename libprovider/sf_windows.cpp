@@ -1442,11 +1442,12 @@ cleanup:
 
     class WindowsDriver : public Driver {
         VersionInfo vers;
-    public:
-        WindowsDriver(const NICDescr &ndesc);
-        WindowsDriver(const String& d, const String& sn,
-                     const VersionInfo& v) :
+        WindowsDriver(const String& d, const String& sn, const VersionInfo& v) :
             Driver(d, sn), vers(v) {}
+        static void appendDeviceID(const char *str, const char *limit, String& target);
+    public:
+        static WindowsDriver byDeviceID(const String& devid, const String& version);
+        static WindowsDriver byNICDescr(const NICDescr &rhs);
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
         virtual bool syncInstall(const char *) { return false; }
@@ -1454,45 +1455,71 @@ cleanup:
         virtual const Package *package() const { return NULL; }
     };
 
-    WindowsDriver::WindowsDriver(const NICDescr &ndesc) : Driver("", "")
+    void WindowsDriver::appendDeviceID(const char *str, const char *limit, String& target)
     {
-        String path("SELECT * FROM Win32_PnPSignedDriver WHERE DeviceID='");
-        
-        const char *inst = ndesc.ports[0].deviceInstanceName.c_str();
-        const char *lastUnderscore = strrchr(inst, '_');
+        for (; *str != '\0' && str != limit; str++)
+            {
+                if (*str == '\\')
+                    target.append('\\');
+                target.append(*str);
+            }
+    }
 
-        unsigned int i = 0;
+    WindowsDriver WindowsDriver::byDeviceID(const String& deviceID, const String& version)
+    {
+            String entityPath("Win32_PnPEntity.DeviceID=\"");
+            String sysDriverPath("Win32_SystemDriver.Name=\"");
+            String serviceName;
+            String driverBinary;
+            String driverDescription;
 
-        for (; *inst != '\0' && inst != lastUnderscore; inst++)
-        {
-            if (*inst == '\\')
-                path.append('\\');
-            path.append(*inst);
-        }
-        path.append('\'');
+            appendDeviceID(deviceID.c_str(), NULL, entityPath);
+            entityPath.append('"');
 
-        if (wmiEstablishConn() != 0)
-            return;
+            IWbemClassObject *entity;
+            if (wmiGetObject(cimWMIConn, entityPath.c_str(), &entity) < 0)
+                return WindowsDriver("", "", VersionInfo());
+            wmiGetStringProp(entity, "Service", serviceName);
+            entity->Release();
+            
+            sysDriverPath.append(serviceName);
+            sysDriverPath.append('"');
+            IWbemClassObject *sysDriver;
+            if (wmiGetObject(cimWMIConn, sysDriverPath.c_str(), &sysDriver) < 0)
+                return WindowsDriver("", "", VersionInfo());
+            wmiGetStringProp(sysDriver, "PathName", driverBinary);
+            wmiGetStringProp(sysDriver, "Description", driverDescription);
+            sysDriver->Release();
+
+            return WindowsDriver(driverDescription, driverBinary, VersionInfo(version.c_str()));
+    }    
+
+    WindowsDriver WindowsDriver::byNICDescr(const NICDescr &ndesc)
+    {
+        String deviceID;
+        String version;
+        String query("SELECT * FROM Win32_PnPSignedDriver WHERE DeviceID='");
+
+        const char *name = ndesc.ports[0].deviceInstanceName.c_str();
+        const char *lastUnderscore = strrchr(name, '_');
+        appendDeviceID(name, lastUnderscore, query);
 
         Array<IWbemClassObject *> drivers;
-        if (wmiEnumInstancesQuery(cimWMIConn, path.c_str(), drivers) < 0)
-            return;
+        if (wmiEnumInstancesQuery(cimWMIConn, query.c_str(), drivers) < 0)
+            return WindowsDriver("", "", VersionInfo());
 
         if (drivers.size() > 0)
         {
-            String version;
-            String description;
-            String sysname;
+            wmiGetStringProp(drivers[0], "deviceID", deviceID);
             wmiGetStringProp(drivers[0], "DriverVersion", version);
-            wmiGetStringProp(drivers[0], "Description", description);
-            wmiGetStringProp(drivers[0], "InfName", sysname);
-            *this = WindowsDriver(description, sysname,
-                                  VersionInfo(version.c_str()));
         }
 
-        for (i = 0; i < drivers.size(); i++)
+        for (unsigned i = 0; i < drivers.size(); i++)
             drivers[i]->Release();
+
+        return byDeviceID(deviceID, version);
     }
+
 
     class WindowsNIC : public NIC {
         WindowsNICFirmware nicFw;
@@ -1532,7 +1559,7 @@ cleanup:
             NIC(idx),
             nicFw(this),
             rom(this),
-            nicDriver(descr),
+            nicDriver(WindowsDriver::byNICDescr(descr)),
             pciAddr(0, descr.pci_bus, descr.pci_device)
         {
             int i = 0;
@@ -1915,17 +1942,12 @@ cleanup:
 
         for (unsigned i = 0; i < drivers.size(); i++)
         {
+            String deviceID;
             String version;
-            String description;
-            String sysname;
-
+            wmiGetStringProp(drivers[i], "DeviceID", deviceID);
             wmiGetStringProp(drivers[i], "DriverVersion", version);
-            wmiGetStringProp(drivers[i], "Description", description);
-            wmiGetStringProp(drivers[i], "InfName", sysname);
 
-            WindowsDriver drv(description, sysname,
-                              VersionInfo(version.c_str()));
-
+            WindowsDriver drv = WindowsDriver::byDeviceID(deviceID, version);
             if (!en.process(drv))
             {
                 result = false;
