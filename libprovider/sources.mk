@@ -95,7 +95,9 @@ libprovider_CPPFLAGS = -Ilibprovider -Ilibprovider/v5_import -DTARGET_CIM_SERVER
 ifeq ($(CIM_SERVER),esxi)
 NEED_ASSOC_IN_ROOT_CIMV2=1
 libprovider_CPPFLAGS += -DNEED_ASSOC_IN_ROOT_CIMV2=$(NEED_ASSOC_IN_ROOT_CIMV2)
+endif
 
+ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 CI_INCLUDES = libprovider/v5_import libprovider/v5_import/ci libprovider/v5_import/ci/app \
 	      libprovider/v5_import/ci/app/platform \
 		libprovider/v5_import/ci/compat libprovider/v5_import/ci/driver \
