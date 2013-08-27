@@ -8,7 +8,7 @@
 Name "${PROVIDERNAME}"
 OutFile "${INSTALLERNAME}"
 
-InstallDir "$PROGRAMFILES\${PROVIDERNAME}"
+InstallDir "$PROGRAMFILES\Solarflare Communications\Solarflare CIM provider"
 
 !insertmacro MUI_PAGE_LICENSE "sf-license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
@@ -43,7 +43,7 @@ SectionEnd
 
 Section
 WriteUninstaller $INSTDIR\uninstall.exe
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "DisplayName" "${PROVIDERNAME}"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "DisplayName" "Solarflare CIM"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "UninstallString" "$INSTDIR\uninstall.exe"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "InstallLocation" "$INSTDIR"
 SectionEnd
