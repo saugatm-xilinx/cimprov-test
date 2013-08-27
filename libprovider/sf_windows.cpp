@@ -1491,7 +1491,13 @@ cleanup:
             wmiGetStringProp(sysDriver, "Description", driverDescription);
             sysDriver->Release();
 
-            return WindowsDriver(driverDescription, driverBinary, VersionInfo(version.c_str()));
+            const char *properName = strrchr(driverBinary.c_str(), '\\');
+            if (properName)
+                properName++;
+            else
+                properName = driverBinary.c_str();
+            
+            return WindowsDriver(driverDescription, properName, VersionInfo(version.c_str()));
     }    
 
     WindowsDriver WindowsDriver::byNICDescr(const NICDescr &ndesc)
@@ -1503,6 +1509,7 @@ cleanup:
         const char *name = ndesc.ports[0].deviceInstanceName.c_str();
         const char *lastUnderscore = strrchr(name, '_');
         appendDeviceID(name, lastUnderscore, query);
+        query.append('\'');
 
         Array<IWbemClassObject *> drivers;
         if (wmiEnumInstancesQuery(cimWMIConn, query.c_str(), drivers) < 0)
