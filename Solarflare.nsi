@@ -53,6 +53,7 @@ Section un.MOFs
 ExecWait 'wmic path __Win32Provider.Name="Solarflare" delete'
 ExecWait `wmic path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
 ExecWait `wmic path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+ExecWait `wmic path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
 ExecWait 'mofcomp.exe -N:${NAMESPACE} "$INSTDIR\unregister.mof"'
 Delete $INSTDIR\unregister.mof
 Delete $INSTDIR\register.mof

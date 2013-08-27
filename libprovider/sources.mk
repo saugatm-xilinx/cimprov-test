@@ -187,11 +187,13 @@ msi : $(MSI_NAME)
 
 $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt \
 	 		 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
+	i686-w64-mingw32-strip $(libprovider_TARGET)
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' $<
 
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
 					$(libcimobjects_DIR)/repository.mof $(libprovider_DIR)/register.mof \
 					$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
+	i686-w64-mingw32-strip $(libprovider_TARGET)
 	lcab -n $^ $@
 
 endif
