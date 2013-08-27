@@ -706,20 +706,28 @@ fail:
                     return -1;
                 }
 
+                // If a new NIC was found - insert it so that
+                // NICs are still sorted in ascending order
+                // relative to their PCI address.
                 for (j = 0; j < (int)nics.size(); j++)
                 {
-                    if (nics[j].pci_domain == cur_domain &&
-                        nics[j].pci_bus == cur_bus &&
-                        nics[j].pci_device == cur_dev)
+                    if (nics[j].pci_domain > cur_domain ||
+                        (nics[j].pci_domain == cur_domain &&
+                         (nics[j].pci_bus > cur_bus ||
+                          (nics[j].pci_bus == cur_bus &&
+                           nics[j].pci_device >= cur_dev))))
                         break;
                 }
 
-                if (j == (int)nics.size())
+                if (j == (int)nics.size() ||
+                    !(nics[j].pci_domain == cur_domain &&
+                      nics[j].pci_bus == cur_bus &&
+                      nics[j].pci_device == cur_dev))
                 {
                     tmp_nic.pci_domain = cur_domain;
                     tmp_nic.pci_bus = cur_bus;
                     tmp_nic.pci_device = cur_dev;
-                    nics.append(tmp_nic);
+                    nics.insert(j, tmp_nic);
                 }
 
                 tmp_port.pci_fn = cur_fn;
