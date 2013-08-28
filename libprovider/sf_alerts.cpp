@@ -43,6 +43,12 @@ namespace solarflare
             alerts.append(alert);
             result = true;
         }
+
+        if (linkStateFirstTime && !result)
+            System::target.saveVariable(
+                  this->getId(),
+                  this->curState2String());
+
         linkStateFirstTime = false;
         prevLinkState = curLinkState;
         return result;

@@ -60,6 +60,7 @@ namespace solarflare
     /// specific implementation.
     ///
     class AlertInfo {
+        String id;
     public:
         AlertInfo() {};
         virtual ~AlertInfo() {}
@@ -84,6 +85,25 @@ namespace solarflare
 
             return false;
         }
+
+        /// Set unique ID of this instance
+        void setId(String idVal)
+        {
+            id = idVal;
+        }
+
+        /// Get unique ID of this instance
+        String getId()
+        {
+            return id;
+        }
+
+        /// Get generic name of this instance
+        virtual String genericName() = 0;
+        /// Get string representation of current state
+        virtual String curState2String() = 0;
+        /// Restore previous state from string representation
+        virtual int prevStateFromString(String &backup) = 0;
     };
 
     /// Abstract class for link state alert
@@ -107,6 +127,36 @@ namespace solarflare
         virtual ~LinkStateAlertInfo() {};
 
         virtual bool check(Array<AlertProps> &alerts);
+
+        virtual String curState2String()
+        {
+            String str;
+
+            if (curLinkState)
+                str.append("Up");
+            else
+                str.append("Down");
+
+            return str;
+        };
+
+        virtual int prevStateFromString(String &backup)
+        {
+            if (strcmp(backup.c_str(), "Up") == 0)
+                prevLinkState = true;
+            else if (strcmp(backup.c_str(), "Down") == 0)
+                prevLinkState = false;
+            else
+                return -1;
+
+            linkStateFirstTime = false;
+            return 0;
+        };
+
+        virtual String genericName()
+        {
+            return String("LinkState");
+        }
     };
 
     /// Abstract class for sensors alert
@@ -132,6 +182,23 @@ namespace solarflare
         virtual ~SensorsAlertInfo() {};
 
         virtual bool check(Array<AlertProps> &alerts);
+
+        virtual String curState2String()
+        {
+            String str;
+
+            return str;
+        }
+
+        virtual int prevStateFromString(String &backup)
+        {
+            return 0;
+        };
+
+        virtual String genericName()
+        {
+            return String("Sensors");
+        }
     };
 
     ///
@@ -160,7 +227,7 @@ namespace solarflare
         /// For each given Port instance, obtain alert
         /// description instances.
         ///
-        /// @param obj    Reference to Port instance
+        /// @param obj    Reference to Interface instance
         /// @param data   Pointer to CIMAlertNotify instance for which
         ///               list of alert descriptions is filled
         ///
@@ -179,6 +246,10 @@ namespace solarflare
 
             const CIMHelper *helper =
                   obj.cimDispatch(SF_EthernetPort::static_meta_class);
+
+            const Interface &seInterface =
+                                  dynamic_cast<const Interface&>(obj);
+            const Port *sePort = seInterface.port();
 
             if (owner->fillPortAlertsInfo == NULL)
                 return;
@@ -223,6 +294,22 @@ namespace solarflare
 
             for (i = 0; i < alerts.size(); i++)
             {
+                const NIC *nic = (sePort == NULL ? NULL : sePort->nic());
+                if (nic != NULL)
+                {
+                    String           prevState;
+                    VitalProductData vpd = nic->vitalProductData();
+                    Buffer           buf;
+
+                    buf.format("%s.%s.%d.%s", vpd.serial().c_str(),
+                               vpd.part().c_str(), sePort->elementId(),
+                               alerts[i]->genericName().c_str());
+                    alerts[i]->setId(String(buf.data()));
+
+                    if (System::target.loadVariable(alerts[i]->getId(),
+                                                    prevState) == 0)
+                        alerts[i]->prevStateFromString(prevState);
+                }
                 alerts[i]->instPath = portPath;
                 alerts[i]->sysName = portSysName;
                 alerts[i]->sysCreationClassName = portSysCreationClassName;
@@ -330,6 +417,10 @@ namespace solarflare
                         for (j = 0; j < alertsProps.size(); j++)
                             owner->handler->handle(
                               owner->makeIndication(alertsProps[j]));
+
+                        System::target.saveVariable(
+                              owner->instancesInfo[i]->getId(),
+                              owner->instancesInfo[i]->curState2String());
                     }
                 }
 
@@ -372,7 +463,7 @@ namespace solarflare
             instsInfoClear();
 
             System::target.forAllInterfaces(en);
-            
+
             CIMNotify<CIMClass>::enable(hnd);
         }
 

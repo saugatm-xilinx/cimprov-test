@@ -612,6 +612,17 @@ namespace solarflare
 
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
 
+        /// Save variable so that its value can be restored across reboots
+        virtual int saveVariable(const String &id, const String &val) const
+        {
+            return -1;
+        }
+
+        /// Get value of previously saved variable
+        virtual int loadVariable(const String &id, String &val) const
+        {
+            return -1;
+        }
     };
 
 } // namespace

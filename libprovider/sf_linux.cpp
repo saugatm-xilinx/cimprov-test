@@ -1295,6 +1295,8 @@ namespace solarflare
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
+        virtual int saveVariable(const String &id, const String &val) const;
+        virtual int loadVariable(const String &id, String &val) const;
     };
 
     bool LinuxSystem::is64bit() const
@@ -1476,6 +1478,69 @@ namespace solarflare
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
+    }
+
+    int LinuxSystem::saveVariable(const String &id, const String &val) const
+    {
+        int       fd;
+        Buffer    buf;
+        int       rc;
+        int       len;
+
+        buf.format("/var/tmp/%s", id.c_str());
+        fd = open(buf.data(), O_WRONLY | O_CREAT | O_TRUNC);
+        if (fd < 0)
+        {
+            CIMPLE_ERR(("Failed to open %s", buf.data()));
+            return -1;
+        }
+
+        len = strlen(val.c_str());
+
+        rc = write(fd, val.c_str(), len);
+        if (rc != len)
+        {
+            close(fd);
+            return -1;
+        }
+
+        close(fd);
+        return 0;
+    }
+
+    int LinuxSystem::loadVariable(const String &id, String &val) const
+    {
+#define READ_SIZE 1024
+        Buffer buf;
+        int    fd;
+        char   bytes[READ_SIZE];
+        int    rc;
+        String readVal;
+
+        buf.format("/var/tmp/%s", id.c_str());
+        fd = open(buf.data(), O_RDONLY);
+        if (fd < 0)
+            return -1;
+
+        while ((rc = read(fd, bytes, READ_SIZE - 1)) > 0)
+        {
+            bytes[rc] = '\0';
+            readVal.append(bytes);
+        }
+
+        if (rc < 0)
+        {
+            CIMPLE_ERR(("Reading from file %s failed with errno %d",
+                        buf.data(), errno));
+            close(fd);
+            return -1;
+        }
+
+        close(fd);
+
+        val = readVal;
+        return 0;
+#undef READ_SIZE
     }
 
     LinuxSystem LinuxSystem::target;
