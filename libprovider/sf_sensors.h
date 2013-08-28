@@ -81,6 +81,16 @@ namespace solarflare
     ///
     String sensorType2StrId(SensorType type);
 
+    /// Get sensor type by its string representation
+    /// used in IndicationIdentifier.
+    ///
+    /// @param strType         String representation of sensor type
+    /// @param type      [out] Sensor type
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    int sensorStrId2Type(const char *strType, SensorType &type);
+
     ///
     /// Get string representation of sensor state.
     ///
@@ -99,6 +109,16 @@ namespace solarflare
     /// @return String representation
     ///
     String sensorState2StrId(SensorState state);
+
+    /// Get sensor state by its string representation
+    /// used in IndicationIdentifier.
+    ///
+    /// @param strState        String representation of sensor state
+    /// @param state     [out] Sensor state
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    int sensorStrId2State(const char *strState, SensorState &state);
 
     /// Sensor readings class
     class Sensor

@@ -43,6 +43,36 @@ namespace solarflare
         return String(buffer);
     }
 
+    ///
+    /// Get some enumeration value from its string representation.
+    ///
+    /// @param values    Pointer to array storing correspondence
+    ///                  between enum values and their string
+    ///                  representations
+    ///
+    /// @param str       String representation
+    /// @param val [out] Enumeration value
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    static int str2Enum(const struct value_name_enum *values,
+                        const char *str,
+                        unsigned int &val)
+    {
+        int i;
+
+        for (i = 0; values[i].name != NULL; i++)
+        {
+            if (strcmp(values[i].name, str) == 0)
+            {
+                val = values[i].value;
+                return 0;
+            }
+        }
+
+        return -1;
+    }
+
     /// String representations of sensor states
     static const struct value_name_enum sensor_states[] =
     {
@@ -182,9 +212,31 @@ namespace solarflare
     }
 
     /// Desribed in sf_sensors.h
+    int sensorStrId2State(const char *strState, SensorState &state)
+    {
+        unsigned int val;
+        int          rc;
+
+        rc = str2Enum(sensor_states_ids, strState, val);
+        state = static_cast<SensorState>(val);
+        return rc;
+    }
+
+    /// Desribed in sf_sensors.h
     String sensorType2StrId(SensorType type)
     {
         return enum2Str(sensor_types_ids, type);
+    }
+
+    /// Desribed in sf_sensors.h
+    int sensorStrId2Type(const char *strType, SensorType &type)
+    {
+        unsigned int val;
+        int          rc;
+
+        rc = str2Enum(sensor_types_ids, strType, val);
+        type = static_cast<SensorType>(val);
+        return rc;
     }
 
     /// Desribed in sf_sensors.h

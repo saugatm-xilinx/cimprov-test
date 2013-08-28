@@ -258,8 +258,110 @@ namespace solarflare
             }
         }
 
+        if (sensorsStateFirstTime && !result)
+            System::target.saveVariable(
+                  this->getId(),
+                  this->curState2String());
+
         sensorsStateFirstTime = false;
         sensorsPrev = sensorsCur;
         return result;
+    }
+
+    String LinkStateAlertInfo::curState2String() const
+    {
+        String str;
+
+        if (curLinkState)
+            str.append("Up");
+        else
+            str.append("Down");
+
+        return str;
+    }
+
+    int LinkStateAlertInfo::prevStateFromString(const String &backup)
+    {
+        if (strcmp(backup.c_str(), "Up") == 0)
+            prevLinkState = true;
+        else if (strcmp(backup.c_str(), "Down") == 0)
+            prevLinkState = false;
+        else
+            return -1;
+
+        linkStateFirstTime = false;
+        return 0;
+    }
+
+    String SensorsAlertInfo::curState2String() const
+    {
+        String        str;
+        unsigned int  i;
+
+        for (i = 0; i < sensorsCur.size(); i++)
+        {
+            str.append(sensorType2StrId(sensorsCur[i].type));
+            str.append("\n");
+            str.append(sensorState2StrId(sensorsCur[i].state));
+            str.append("\n");
+        }
+
+        return str;
+    }
+
+    int SensorsAlertInfo::prevStateFromString(const String &backup)
+    {
+        char   *s = strdup(backup.c_str());
+        char   *p;
+        char   *q = s;
+        bool    isType = true;
+
+        SensorType    type;
+        SensorState   state;
+        Array<Sensor> loadSensors;
+
+        if (s == NULL)
+            return -1;
+
+        p = strchr(q, '\n');
+        while (p != NULL)
+        {
+            *p = '\0';
+
+            if (isType)
+            {
+                if (sensorStrId2Type(q, type) != 0)
+                {
+                    free(s);
+                    return -1;
+                }
+            }
+            else
+            {
+                Sensor sensor;
+
+                if (sensorStrId2State(q, state) != 0)
+                {
+                    free(s);
+                    return -1;
+                }
+           
+                sensor.type = type;
+                sensor.state = state;
+                loadSensors.append(sensor);
+            }
+
+            q = p + 1;
+            p = strchr(q, '\n');
+            isType = !isType;
+        }
+
+        if (!isType || *q != '\0')
+            return -1;
+
+        sensorsPrev = loadSensors;
+        sensorsStateFirstTime = false;
+
+        return 0;
     }
 }

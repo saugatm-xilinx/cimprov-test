@@ -99,11 +99,11 @@ namespace solarflare
         }
 
         /// Get generic name of this instance
-        virtual String genericName() = 0;
+        virtual String genericName() const = 0;
         /// Get string representation of current state
-        virtual String curState2String() = 0;
+        virtual String curState2String() const = 0;
         /// Restore previous state from string representation
-        virtual int prevStateFromString(String &backup) = 0;
+        virtual int prevStateFromString(const String &backup) = 0;
     };
 
     /// Abstract class for link state alert
@@ -128,32 +128,11 @@ namespace solarflare
 
         virtual bool check(Array<AlertProps> &alerts);
 
-        virtual String curState2String()
-        {
-            String str;
+        virtual String curState2String() const;
 
-            if (curLinkState)
-                str.append("Up");
-            else
-                str.append("Down");
+        virtual int prevStateFromString(const String &backup);
 
-            return str;
-        };
-
-        virtual int prevStateFromString(String &backup)
-        {
-            if (strcmp(backup.c_str(), "Up") == 0)
-                prevLinkState = true;
-            else if (strcmp(backup.c_str(), "Down") == 0)
-                prevLinkState = false;
-            else
-                return -1;
-
-            linkStateFirstTime = false;
-            return 0;
-        };
-
-        virtual String genericName()
+        virtual String genericName() const
         {
             return String("LinkState");
         }
@@ -183,19 +162,11 @@ namespace solarflare
 
         virtual bool check(Array<AlertProps> &alerts);
 
-        virtual String curState2String()
-        {
-            String str;
+        virtual String curState2String() const;
 
-            return str;
-        }
+        virtual int prevStateFromString(const String &backup);
 
-        virtual int prevStateFromString(String &backup)
-        {
-            return 0;
-        };
-
-        virtual String genericName()
+        virtual String genericName() const
         {
             return String("Sensors");
         }
@@ -301,7 +272,7 @@ namespace solarflare
                     VitalProductData vpd = nic->vitalProductData();
                     Buffer           buf;
 
-                    buf.format("%s.%s.%d.%s", vpd.serial().c_str(),
+                    buf.format("%s-%s-%d-%s", vpd.serial().c_str(),
                                vpd.part().c_str(), sePort->elementId(),
                                alerts[i]->genericName().c_str());
                     alerts[i]->setId(String(buf.data()));
