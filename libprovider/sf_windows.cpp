@@ -49,6 +49,8 @@
 
 #define EFX_MAX_MTU 9216
 
+#define WIN_REG_PATH "SOFTWARE\\Solarflare Communications\\CIM provider\\"
+
 /// Job states in EFX_DiagnosticJob
 enum {
   JobCreated = 0,
@@ -1893,6 +1895,8 @@ cleanup:
         bool forAllPackages(ElementEnumerator& en);
         bool forAllSoftware(ConstElementEnumerator& en) const;
         bool forAllSoftware(ElementEnumerator& en);
+        virtual int saveVariable(const String &id, const String &val) const;
+        virtual int loadVariable(const String &id, String &val) const;
     };
 
     WindowsSystem::~WindowsSystem()
@@ -1996,6 +2000,119 @@ cleanup:
         if (!System::forAllSoftware(en))
             return false;
         return forAllDrivers(en);
+    }
+
+    int WindowsSystem::saveVariable(const String &id,
+                                    const String &val) const
+    {
+        LONG   rc;
+        HKEY   varKey;
+        int    retVal = 0;
+
+        rc = RegCreateKeyExA(HKEY_LOCAL_MACHINE,
+                             reinterpret_cast<LPCTSTR>(WIN_REG_PATH),
+                             0, NULL, 0, KEY_WRITE, NULL,
+                             &varKey, NULL);
+        if (rc != ERROR_SUCCESS)
+        {
+            CIMPLE_ERR(("Failed to create and/or open registry key %s, "
+                        "rc = %ld(0x%lx)", WIN_REG_PATH, rc, rc));
+            return -1;
+        }
+
+        rc = RegSetValueExA(varKey,
+                            reinterpret_cast<LPCTSTR>(id.c_str()),
+                            0, REG_SZ,
+                            reinterpret_cast<const BYTE *>(val.c_str()),
+                            static_cast<DWORD>(strlen(val.c_str()) + 1));
+        if (rc != ERROR_SUCCESS)
+        {
+            CIMPLE_ERR(("Failed to set value '%s'='%s' for registry "
+                        "key %s, rc = %ld(0x%lx)", id.c_str(), val.c_str(),
+                        WIN_REG_PATH, rc, rc));
+            retVal = -1;
+        }
+
+        rc = RegCloseKey(varKey);
+        if (rc != ERROR_SUCCESS)
+        {
+            CIMPLE_ERR(("Failed to close registry key %s, "
+                        "rc = %ld(0x%lx)", WIN_REG_PATH, rc, rc));
+            return -1;
+        }
+
+        return retVal;
+    }
+
+    int WindowsSystem::loadVariable(const String &id, String &val) const
+    {
+        LONG   rc;
+        HKEY   varKey;
+        DWORD  bufSize = 0;
+        DWORD  varType;
+        int    retVal = 0;
+
+        rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                           reinterpret_cast<LPCTSTR>(WIN_REG_PATH),
+                           0, KEY_READ, &varKey);
+        if (rc != ERROR_SUCCESS)
+        {
+            CIMPLE_ERR(("Failed to open registry key %s for reading, "
+                        "rc = %ld(0x%lx)", WIN_REG_PATH, rc, rc));
+            return -1;
+        }
+
+        rc = RegQueryValueExA(varKey,
+                              reinterpret_cast<LPCTSTR>(id.c_str()),
+                              NULL, &varType, NULL, &bufSize);
+        if (rc != ERROR_SUCCESS)
+        {
+            CIMPLE_ERR(("Failed to get type and size of registry key %s "
+                        "value %s, rc = %ld(0x%lx)", WIN_REG_PATH,
+                        id.c_str(), rc, rc));
+            return -1;
+        }
+        else if (varType != REG_SZ)
+        {
+            CIMPLE_ERR(("Registry key %s value %s has wrong type %ld",
+                        WIN_REG_PATH, id.c_str(),
+                        static_cast<long int>(varType)));
+            retVal = -1;
+        }
+
+        if (retVal == 0)
+        {
+            char *buf = new char[bufSize + 1];
+        
+            rc = RegQueryValueExA(varKey,
+                                  reinterpret_cast<LPCTSTR>(id.c_str()),
+                                  NULL, NULL,
+                                  reinterpret_cast<LPBYTE>(buf), &bufSize);
+            if (rc != ERROR_SUCCESS)
+            {
+                CIMPLE_ERR(("Failed to get value of registry key %s "
+                            "value %s, rc = %ld(0x%lx)", WIN_REG_PATH,
+                            id.c_str(), rc, rc));
+                retVal = -1;
+            }
+            else
+            {
+                buf[bufSize] = '\0';
+                val = String(buf);
+            }
+
+            delete[] buf;
+        }
+
+        rc = RegCloseKey(varKey);
+        if (rc != ERROR_SUCCESS)
+        {
+            CIMPLE_ERR(("Failed to close registry key %s, "
+                        "rc = %ld(0x%lx)", WIN_REG_PATH, rc, rc));
+            return -1;
+        }
+
+        return retVal;
     }
 
     WindowsSystem WindowsSystem::target;

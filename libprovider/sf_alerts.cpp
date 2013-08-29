@@ -287,7 +287,11 @@ namespace solarflare
         else if (strcmp(backup.c_str(), "Down") == 0)
             prevLinkState = false;
         else
+        {
+            CIMPLE_ERR(("Failed to get saved link state from %s",
+                        backup.c_str()));
             return -1;
+        }
 
         linkStateFirstTime = false;
         return 0;
@@ -321,7 +325,11 @@ namespace solarflare
         Array<Sensor> loadSensors;
 
         if (s == NULL)
+        {
+            CIMPLE_ERR(("Failed to get saved sensors state: "
+                        "strdup() failed"));
             return -1;
+        }
 
         p = strchr(q, '\n');
         while (p != NULL)
@@ -333,7 +341,7 @@ namespace solarflare
                 if (sensorStrId2Type(q, type) != 0)
                 {
                     free(s);
-                    return -1;
+                    break;
                 }
             }
             else
@@ -343,7 +351,7 @@ namespace solarflare
                 if (sensorStrId2State(q, state) != 0)
                 {
                     free(s);
-                    return -1;
+                    break;
                 }
            
                 sensor.type = type;
@@ -356,8 +364,12 @@ namespace solarflare
             isType = !isType;
         }
 
-        if (!isType || *q != '\0')
+        if (p != NULL || !isType || *q != '\0')
+        {
+            CIMPLE_ERR(("Failed to get saved sensors state from\n%s",
+                        backup.c_str()));
             return -1;
+        }
 
         sensorsPrev = loadSensors;
         sensorsStateFirstTime = false;
