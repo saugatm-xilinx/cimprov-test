@@ -116,7 +116,8 @@ platform : $(PLATFORM_BUILD)/Makefile
 $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk
 		mkdir -p $(PLATFORM_BUILD)
 		cd $(PLATFORM_BUILD); $(HG) manifest | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
-		echo "PRESET=$(PRESET)" >$@
+		echo "PRESET:=$(PRESET)" >$@
+		echo "TOP:=$(CURDIR)" >>$@
 		cat $< >>$@
 
 include $(TOP)/mk/rules.mk
