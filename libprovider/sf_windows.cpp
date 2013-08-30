@@ -132,6 +132,7 @@ namespace solarflare
         String productName() const;   ///< Get product name from VPD
         String productNumber() const; ///< Get product number from VPD
         String serialNumber() const;  ///< Get serial number from VPD
+        VitalProductData vpd() const; ///< Get VitalProductData structure
 
         IWbemClassObject *efxPort;  ///< Associated EFX_Port object
 
@@ -487,6 +488,21 @@ namespace solarflare
         getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('S', 'N'),
                         snum);
         return snum;
+    }
+
+    /// Get VitalProductData() for SF Ethernet port;
+    VitalProductData PortDescr::vpd() const
+    {
+        String pname;
+        String pnum;
+        String snum; 
+        int    rc;
+
+        rc = getPortVPDFields(efxPort, pname, pnum, snum);
+        if (rc != 0)
+            return VitalProductData("", "", "", "", "", "");
+
+        return VitalProductData(snum, "", snum, pnum, pname, pnum);
     }
 
     ///
@@ -1009,10 +1025,10 @@ cleanup:
     class WindowsPort : public Port {
         const NIC *owner;
         Array<WindowsDiagnostic *> diags;
+        PortDescr portInfo;
         friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
                                              const Port *port);
     public:
-        PortDescr portInfo;
 
         WindowsPort(const NIC *up, unsigned i, PortDescr &descr) :
             Port(i), 
@@ -1043,7 +1059,25 @@ cleanup:
             return speedValue(portInfo.linkSpeed());
         }            
         virtual void linkSpeed(Speed sp) { }
-            
+
+        /// @return Associated interface's administrative status
+        DWORD getAdminStatus() const
+        {
+            return portInfo.ifInfo.AdminStatus;
+        }
+
+        /// @return Associated interface's index
+        DWORD getIfIndex() const
+        {
+            return portInfo.ifInfo.Index;
+        }
+
+        /// @return MTU
+        DWORD getMTU() const
+        {
+            return portInfo.ifInfo.MTU;
+        }
+
         /// @return full-duplex state
         virtual bool fullDuplex() const
         {
@@ -1072,6 +1106,59 @@ cleanup:
                               portInfo.permanentMAC[4],
                               portInfo.permanentMAC[5]);
         };
+
+        /// @return Current MAC address
+        virtual MACAddress currentMAC() const
+        {
+            return MACAddress(portInfo.currentMAC[0],
+                              portInfo.currentMAC[1],
+                              portInfo.currentMAC[2],
+                              portInfo.currentMAC[3],
+                              portInfo.currentMAC[4],
+                              portInfo.currentMAC[5]);
+        };
+
+        /// @return Current MAC address as an integer array
+        virtual Array<int> currentMACArr() const
+        {
+            return portInfo.currentMAC;
+        };
+
+        /// @return Associated interface name
+        virtual String ifName() const
+        {
+            return portInfo.ifInfo.Name;
+        }
+
+        /// @return Vital Product Data
+        virtual VitalProductData vpd() const
+        {
+            return portInfo.vpd();
+        }
+
+        /// @return Controller firmware version
+        virtual String getMcfwVersion() const
+        {
+            return portInfo.mcfwVersion();
+        }
+
+        /// @return BootROM version
+        virtual String getBootROMVersion() const
+        {
+            return portInfo.bootROMVersion();
+        }
+
+        /// @return EFX_Port instance Id
+        virtual int efxPortId() const
+        {
+            return portInfo.port_id;
+        }
+
+        /// @return Pointer to access EFX_Port instance
+        virtual IWbemClassObject *efxPort() const
+        {
+            return portInfo.efxPort;
+        }
 
         virtual const NIC *nic() const { return owner; }
         virtual PCIAddress pciAddress() const
@@ -1178,10 +1265,8 @@ cleanup:
         { }
         virtual bool ifStatus() const
         {
-            PortDescr *portInfo = &boundPort->portInfo;
-
-            return
-              (portInfo->ifInfo.AdminStatus == MIB_IF_ADMIN_STATUS_UP ? 
+            return 
+              (boundPort->getAdminStatus() == MIB_IF_ADMIN_STATUS_UP ? 
                                                             true : false);
         }
 
@@ -1189,10 +1274,9 @@ cleanup:
         {
             DWORD      rc;
             MIB_IFROW  mibIfRow;
-            PortDescr *portInfo = &boundPort->portInfo;
         
             memset(&mibIfRow, 0, sizeof(mibIfRow));
-            mibIfRow.dwIndex = portInfo->ifInfo.Index;
+            mibIfRow.dwIndex = boundPort->getIfIndex();
             if (st)
                 mibIfRow.dwAdminStatus = MIB_IF_ADMIN_STATUS_UP;
             else
@@ -1207,9 +1291,7 @@ cleanup:
         /// @return current MTU
         virtual uint64 mtu() const
         {
-            PortDescr *portInfo = &boundPort->portInfo;
-
-            return portInfo->ifInfo.MTU;
+            return boundPort->getMTU();
         }            
         /// change MTU to @p u
         virtual void mtu(uint64 u) { };
@@ -1218,14 +1300,7 @@ cleanup:
         /// @return MAC address actually in use
         virtual MACAddress currentMAC() const
         {
-            PortDescr *portInfo = &boundPort->portInfo;
-
-            return MACAddress(portInfo->currentMAC[0],
-                              portInfo->currentMAC[1],
-                              portInfo->currentMAC[2],
-                              portInfo->currentMAC[3],
-                              portInfo->currentMAC[4],
-                              portInfo->currentMAC[5]);
+            return boundPort->currentMAC();
         }        
         /// Change the current MAC address to @p mac
         virtual void currentMAC(const MACAddress& mac);
@@ -1256,15 +1331,11 @@ cleanup:
 
     String WindowsInterface::ifName() const
     {
-        PortDescr *portInfo = &boundPort->portInfo;
-
-        return portInfo->ifInfo.Name;
+        return boundPort->ifName();
     }
     
     void WindowsInterface::currentMAC(const MACAddress& mac)
     {
-        PortDescr *portInfo = &boundPort->portInfo;
-
         Array<IWbemClassObject *>   efxNetAdapters;
 
         unsigned int              i;
@@ -1301,7 +1372,7 @@ cleanup:
                 goto cleanup;
             }
 
-            if (netAddr == portInfo->currentMAC)
+            if (netAddr == boundPort->currentMACArr())
                 break;
         }
 
@@ -1590,18 +1661,8 @@ cleanup:
 
         virtual VitalProductData vitalProductData() const 
         {
-          
             if (ports.size() > 0)
-            {
-                const PortDescr *portInfo = &ports[0].portInfo;
-
-                return VitalProductData(portInfo->serialNumber(),
-                                        "",
-                                        portInfo->serialNumber(),
-                                        portInfo->productNumber(),
-                                        portInfo->productName(),
-                                        portInfo->productNumber());
-            }
+                return ports[0].vpd(); 
             else
                 return VitalProductData("", "", "", "", "", "");
         }
@@ -2125,8 +2186,8 @@ cleanup:
             return VersionInfo("0.0.0");
         else
             return VersionInfo(
-                        (dynamic_cast<const WindowsNIC *>(owner))->ports[0].
-                                        portInfo.mcfwVersion().c_str());
+                       dynamic_cast<const WindowsNIC *>(owner)->ports[0].
+                                       getMcfwVersion().c_str());
     }
 
     VersionInfo WindowsBootROM::version() const
@@ -2136,7 +2197,7 @@ cleanup:
         else
             return VersionInfo(
                   (dynamic_cast<const WindowsNIC *>(owner))->ports[0].
-                                        portInfo.bootROMVersion().c_str());
+                                        getBootROMVersion().c_str());
     }
 
     ///
@@ -2447,11 +2508,11 @@ cleanup:
                       dynamic_cast<const WindowsPort *>(port);
 
         linkStateInstInfo = new WindowsLinkStateAlertInfo();
-        linkStateInstInfo->portId = windowsPort->portInfo.port_id;
+        linkStateInstInfo->portId = windowsPort->efxPortId();
         info.append(linkStateInstInfo);
 
         sensorsInstInfo = new WindowsSensorsAlertInfo();
-        sensorsInstInfo->portId = windowsPort->portInfo.port_id;
+        sensorsInstInfo->portId = windowsPort->efxPortId();
         sensorsInstInfo->portFn = windowsPort->pciAddress().fn();
         info.append(sensorsInstInfo);
 
@@ -2501,6 +2562,37 @@ cleanup:
         return 0;
     }
 
+    ///
+    /// Get the only object matching a query.
+    ///
+    /// @param query          Query
+    /// @param obj      [out] Object pointer
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    static int querySingleObj(const char *query, IWbemClassObject *&obj)
+    {
+        Array<IWbemClassObject *> objs;
+        unsigned int              i;
+        int                       rc;
+
+        rc = wmiEnumInstancesQuery(NULL, query, objs);
+        if (rc != 0)
+            return rc;
+        if (objs.size() != 1)
+        {
+            CIMPLE_ERR(("%s():   incorrect number %u of matching "
+                        "objects found, query '%s'", __FUNCTION__,
+                        objs.size(), query));
+            for (i = 0; i < objs.size(); i++)
+                objs[i]->Release();
+            return -1;
+        }
+
+        obj = objs[0];
+        return 0;
+    }
+
     Diagnostic::Result WindowsDiagnostic::syncTest() 
     {
         static Mutex  lock(false);
@@ -2518,10 +2610,10 @@ cleanup:
         int       rc;
         long int  completionCode;
         uint64    jobId;
-        char      query[WMI_QUERY_MAX];
+        Buffer    bufQuery;
 
-        Array<IWbemClassObject *> jobs;
-        Array<IWbemClassObject *> jobConfs;
+        IWbemClassObject         *job = NULL;
+        IWbemClassObject         *jobConf = NULL;
         unsigned int              iterNum;
         unsigned int              i;
         VARIANT                   argWait;
@@ -2559,7 +2651,7 @@ cleanup:
         if (requiresQuiescence)
         {
             rc = EFXPortQuiesce(
-              (dynamic_cast<const WindowsPort *>(owner))->portInfo.efxPort,
+              (dynamic_cast<const WindowsPort *>(owner))->efxPort(),
               (dynamic_cast<const WindowsPort *>(owner))->name(),
               awakePort);
             if (rc != 0)
@@ -2576,69 +2668,38 @@ cleanup:
         if (rc != 0)
             goto cleanup;
 
-        rc = snprintf(query, sizeof(query), "Select * From "
-                      "EFX_DiagnosticJob Where Id=%lu",
-                      (long unsigned int)jobId);
-        if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
-        {
-            CIMPLE_ERR(("%s():   failed to create query to search "
-                     "for matching EFX_DiagnosticJob",
-                     __FUNCTION__));
-            goto cleanup;
-        }
-
-        rc = wmiEnumInstancesQuery(NULL, query, jobs);
+        bufQuery.format("Select * From EFX_DiagnosticJob Where Id=%lu",
+                        (long unsigned int)jobId);
+        rc = querySingleObj(bufQuery.data(), job);
         if (rc != 0)
             goto cleanup;
-        if (jobs.size() != 1)
-        {
-            CIMPLE_ERR(("%s():   incorrect number %u of matching "
-                     "diagnostic jobs found", __FUNCTION__,
-                     jobs.size()));
-            rc = -1;
-            goto cleanup;
-        }
 
-        rc = wmiGetStringProp(jobs[0], "__Path", jobPath);
+        rc = wmiGetStringProp(job, "__Path", jobPath);
         if (rc != 0)
             goto cleanup;
         job_created = true;
 
-        rc = snprintf(query, sizeof(query), "Select * From "
-                      "EFX_DiagnosticConfigurationParams Where Id=%lu",
-                      static_cast<long unsigned int>(jobId));
-        if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
-        {
-            CIMPLE_ERR(("%s():   failed to create query to search "
-                     "for matching EFX_DiagnosticConfigurationParams",
-                     __FUNCTION__));
-            rc = -1;
+        bufQuery.clear();
+        bufQuery.format("Select * From EFX_DiagnosticConfigurationParams "
+                        "Where Id=%lu",
+                        static_cast<long unsigned int>(jobId));
+        rc = querySingleObj(bufQuery.data(), jobConf);
+        if (rc != 0)
             goto cleanup;
-        }
 
-        rc = wmiEnumInstancesQuery(NULL, query, jobConfs);
-        if (jobConfs.size() != 1)
-        {
-            CIMPLE_ERR(("%s():   incorrect number %u of matching "
-                        "diagnostic job configurations found",
-                        __FUNCTION__,
-                        jobConfs.size()));
-            goto cleanup;
-        }
-
-        rc = wmiGetIntProp<unsigned int>(jobConfs[0], "Iterations",
+        rc = wmiGetIntProp<unsigned int>(jobConf, "Iterations",
                                          &iterNum);
         if (rc != 0)
             goto cleanup;
 
         currentJobLock.lock();
-        currentJob = jobs[0];
+        currentJob = job;
         currentJobLock.unlock();
 
         pOut->Release();
         pOut = NULL;
 
-        rc = wmiPrepareMethodCall(jobs[0], startJobMethod,
+        rc = wmiPrepareMethodCall(job, startJobMethod,
                                   jobPath, &pIn);
         if (rc != 0)
             goto cleanup;
@@ -2677,12 +2738,12 @@ cleanup:
                 currentJobLock.unlock();
                 goto cleanup;
             }
-            jobs[0] = currentJob;
+            job = currentJob;
             currentJobLock.unlock();
 
             percentage_prev = percentage_cur;
             percentage_cur = percentage();
-            rc = wmiGetIntProp<int>(jobs[0], "State", &jobState);
+            rc = wmiGetIntProp<int>(job, "State", &jobState);
             if (rc != 0)
                 goto cleanup;
             if (jobState == JobComplete)
@@ -2696,7 +2757,7 @@ cleanup:
         {
             unsigned int iterPassedNum = 0;
 
-            rc = wmiGetIntProp<unsigned int>(jobs[0], "PassCount",
+            rc = wmiGetIntProp<unsigned int>(job, "PassCount",
                                              &iterPassedNum);
             if (rc == 0)
             {
@@ -2729,10 +2790,10 @@ cleanup:
                           NULL, NULL);
         }
 
-        for (i = 0; i < jobs.size(); i++)
-            jobs[i]->Release();
-        for (i = 0; i < jobConfs.size(); i++)
-            jobConfs[i]->Release();
+        if (job != NULL)
+            job->Release();
+        if (jobConf != NULL)
+            jobConf->Release();
 
         log().logStatus(testPassed == Passed ? "passed" : "failed");
 
