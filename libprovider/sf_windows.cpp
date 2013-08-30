@@ -2501,6 +2501,37 @@ cleanup:
         return 0;
     }
 
+    ///
+    /// Get the only object matching a query.
+    ///
+    /// @param query          Query
+    /// @param obj      [out] Object pointer
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    static int querySingleObj(const char *query, IWbemClassObject *&obj)
+    {
+        Array<IWbemClassObject *> objs;
+        unsigned int              i;
+        int                       rc;
+
+        rc = wmiEnumInstancesQuery(NULL, query, objs);
+        if (rc != 0)
+            return rc;
+        if (objs.size() != 1)
+        {
+            CIMPLE_ERR(("%s():   incorrect number %u of matching "
+                        "objects found, query '%s'", __FUNCTION__,
+                        objs.size(), query));
+            for (i = 0; i < objs.size(); i++)
+                objs[i]->Release();
+            return -1;
+        }
+
+        obj = objs[0];
+        return 0;
+    }
+
     Diagnostic::Result WindowsDiagnostic::syncTest() 
     {
         static Mutex  lock(false);
@@ -2518,10 +2549,10 @@ cleanup:
         int       rc;
         long int  completionCode;
         uint64    jobId;
-        char      query[WMI_QUERY_MAX];
+        Buffer    bufQuery;
 
-        Array<IWbemClassObject *> jobs;
-        Array<IWbemClassObject *> jobConfs;
+        IWbemClassObject         *job = NULL;
+        IWbemClassObject         *jobConf = NULL;
         unsigned int              iterNum;
         unsigned int              i;
         VARIANT                   argWait;
@@ -2576,69 +2607,38 @@ cleanup:
         if (rc != 0)
             goto cleanup;
 
-        rc = snprintf(query, sizeof(query), "Select * From "
-                      "EFX_DiagnosticJob Where Id=%lu",
-                      (long unsigned int)jobId);
-        if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
-        {
-            CIMPLE_ERR(("%s():   failed to create query to search "
-                     "for matching EFX_DiagnosticJob",
-                     __FUNCTION__));
-            goto cleanup;
-        }
-
-        rc = wmiEnumInstancesQuery(NULL, query, jobs);
+        bufQuery.format("Select * From EFX_DiagnosticJob Where Id=%lu",
+                        (long unsigned int)jobId);
+        rc = querySingleObj(bufQuery.data(), job);
         if (rc != 0)
             goto cleanup;
-        if (jobs.size() != 1)
-        {
-            CIMPLE_ERR(("%s():   incorrect number %u of matching "
-                     "diagnostic jobs found", __FUNCTION__,
-                     jobs.size()));
-            rc = -1;
-            goto cleanup;
-        }
 
-        rc = wmiGetStringProp(jobs[0], "__Path", jobPath);
+        rc = wmiGetStringProp(job, "__Path", jobPath);
         if (rc != 0)
             goto cleanup;
         job_created = true;
 
-        rc = snprintf(query, sizeof(query), "Select * From "
-                      "EFX_DiagnosticConfigurationParams Where Id=%lu",
-                      static_cast<long unsigned int>(jobId));
-        if (rc < 0 || rc >= static_cast<int>(sizeof(query)))
-        {
-            CIMPLE_ERR(("%s():   failed to create query to search "
-                     "for matching EFX_DiagnosticConfigurationParams",
-                     __FUNCTION__));
-            rc = -1;
+        bufQuery.clear();
+        bufQuery.format("Select * From EFX_DiagnosticConfigurationParams "
+                        "Where Id=%lu",
+                        static_cast<long unsigned int>(jobId));
+        rc = querySingleObj(bufQuery.data(), jobConf);
+        if (rc != 0)
             goto cleanup;
-        }
 
-        rc = wmiEnumInstancesQuery(NULL, query, jobConfs);
-        if (jobConfs.size() != 1)
-        {
-            CIMPLE_ERR(("%s():   incorrect number %u of matching "
-                        "diagnostic job configurations found",
-                        __FUNCTION__,
-                        jobConfs.size()));
-            goto cleanup;
-        }
-
-        rc = wmiGetIntProp<unsigned int>(jobConfs[0], "Iterations",
+        rc = wmiGetIntProp<unsigned int>(jobConf, "Iterations",
                                          &iterNum);
         if (rc != 0)
             goto cleanup;
 
         currentJobLock.lock();
-        currentJob = jobs[0];
+        currentJob = job;
         currentJobLock.unlock();
 
         pOut->Release();
         pOut = NULL;
 
-        rc = wmiPrepareMethodCall(jobs[0], startJobMethod,
+        rc = wmiPrepareMethodCall(job, startJobMethod,
                                   jobPath, &pIn);
         if (rc != 0)
             goto cleanup;
@@ -2677,12 +2677,12 @@ cleanup:
                 currentJobLock.unlock();
                 goto cleanup;
             }
-            jobs[0] = currentJob;
+            job = currentJob;
             currentJobLock.unlock();
 
             percentage_prev = percentage_cur;
             percentage_cur = percentage();
-            rc = wmiGetIntProp<int>(jobs[0], "State", &jobState);
+            rc = wmiGetIntProp<int>(job, "State", &jobState);
             if (rc != 0)
                 goto cleanup;
             if (jobState == JobComplete)
@@ -2696,7 +2696,7 @@ cleanup:
         {
             unsigned int iterPassedNum = 0;
 
-            rc = wmiGetIntProp<unsigned int>(jobs[0], "PassCount",
+            rc = wmiGetIntProp<unsigned int>(job, "PassCount",
                                              &iterPassedNum);
             if (rc == 0)
             {
@@ -2729,10 +2729,10 @@ cleanup:
                           NULL, NULL);
         }
 
-        for (i = 0; i < jobs.size(); i++)
-            jobs[i]->Release();
-        for (i = 0; i < jobConfs.size(); i++)
-            jobConfs[i]->Release();
+        if (job != NULL)
+            job->Release();
+        if (jobConf != NULL)
+            jobConf->Release();
 
         log().logStatus(testPassed == Passed ? "passed" : "failed");
 
