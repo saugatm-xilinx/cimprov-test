@@ -90,7 +90,7 @@ libprovider_TARGET = lib$(PROVIDER_LIBRARY).so
 endif
 
 libprovider_INCLUDES = $(libprovider_DIR)
-libprovider_CPPFLAGS = -Ilibprovider -Ilibprovider/v5_import -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
+libprovider_CPPFLAGS = $(libprovider_PROVIDE_CPPFLAGS) -Ilibprovider/v5_import -DTARGET_CIM_SERVER_$(CIM_SERVER) -DCIM_SCHEMA_VERSION_MINOR=$(CIM_SCHEMA_VERSION_MINOR)
 
 ifeq ($(CIM_SERVER),esxi)
 NEED_ASSOC_IN_ROOT_CIMV2=1
@@ -140,8 +140,8 @@ $(eval $(call component,libprovider,SHARED_LIBRARIES))
 
 ifneq ($(CIM_SERVER),pegasus)
 
-repository.reg : $(libcimobjects_DIR)/repository.mof.cpp $(libcimobjects_DIR)/classes mof2reg.awk
-	$(AWK) -f mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
+repository.reg : $(libcimobjects_DIR)/repository.mof.cpp $(libcimobjects_DIR)/classes $(TOP)/mof2reg.awk
+	$(AWK) -f $(TOP)/mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
                 -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
                 -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),root/cimv2)" \
                 -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
@@ -190,7 +190,7 @@ msi : $(MSI_NAME)
 $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt \
 	 		 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
 	i686-w64-mingw32-strip $(libprovider_TARGET)
-	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' $<
+	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' -DTOP=$(TOP) -NOCD $<
 
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
 					$(libcimobjects_DIR)/repository.mof $(libprovider_DIR)/register.mof \

@@ -10,7 +10,7 @@ OutFile "${INSTALLERNAME}"
 
 InstallDir "$PROGRAMFILES\Solarflare Communications\Solarflare CIM provider"
 
-!insertmacro MUI_PAGE_LICENSE "sf-license.txt"
+!insertmacro MUI_PAGE_LICENSE "${TOP}/sf-license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES

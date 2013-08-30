@@ -1,2 +1,2 @@
-include presets/default.mk
+include $(TOP)/presets/default.mk
 override INTREE_PEGASUS=1

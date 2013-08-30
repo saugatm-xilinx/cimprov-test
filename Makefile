@@ -1,34 +1,35 @@
-include mk/def.mk
+TOP ?= .
+include $(TOP)/mk/def.mk
 
 .DEFAULT_GOAL := all
 
 PRESET ?= default
-include presets/$(PRESET).mk
+include $(TOP)/presets/$(PRESET).mk
 
-include mk/vars.mk
+include $(TOP)/mk/vars.mk
 ifeq ($(CIM_SERVER),wmi)
-include mk/wmi.mk
-include cimple/posix/sources.mk
+include $(TOP)/mk/wmi.mk
+include $(TOP)/cimple/posix/sources.mk
 endif
 
 .PHONY: all
 
-include cimple/lib/sources.mk
-include cimple/tools/lib/sources.mk
+include $(TOP)/cimple/lib/sources.mk
+include $(TOP)/cimple/tools/lib/sources.mk
 ifeq ($(CIM_SERVER),sfcb)
-include mk/sfcb.mk
+include $(TOP)/mk/sfcb.mk
 else ifeq ($(CIM_SERVER),esxi)
-include mk/esxi.mk
+include $(TOP)/mk/esxi.mk
 else ifeq ($(CIM_SERVER),pegasus)
-include pegasus/sources.mk
-include cimple/pegasus/sources.mk
+include $(TOP)/pegasus/sources.mk
+include $(TOP)/cimple/pegasus/sources.mk
 
 PEGASUS_TOOLS_DEPS = libtoolstgt libcimplepeg 
-include cimple/tools/regmod/sources.mk
+include $(TOP)/cimple/tools/regmod/sources.mk
 ifeq ($(SLES10_BUILD_HOST),)
-include cimple/tools/regview/sources.mk
-include cimple/tools/ciminvoke/sources.mk
-include cimple/tools/cimlisten/sources.mk
+include $(TOP)/cimple/tools/regview/sources.mk
+include $(TOP)/cimple/tools/ciminvoke/sources.mk
+include $(TOP)/cimple/tools/cimlisten/sources.mk
 endif
 else ifeq ($(CIM_SERVER),wmi)
 # do nothing
@@ -36,19 +37,19 @@ else
 $(error Unknown CIM_SERVER: $(CIM_SERVER))
 endif
 ifeq ($(CIM_INTERFACE),cmpi)
-include cimple/cmpi/sources.mk
+include $(TOP)/cimple/cmpi/sources.mk
 endif
 ifeq ($(CIM_INTERFACE),wmi)
-include cimple/wmi/sources.mk
+include $(TOP)/cimple/wmi/sources.mk
 # include wmihelper/sources.mk
 endif
 
-include cimple/tools/file2c/sources.mk
-include cimple/tools/libmof/sources.mk
-include cimple/tools/libgencommon/sources.mk
-include cimple/tools/genclass/sources.mk
-include cimple/tools/genmod/sources.mk
-include cimple/tools/genprov/sources.mk
+include $(TOP)/cimple/tools/file2c/sources.mk
+include $(TOP)/cimple/tools/libmof/sources.mk
+include $(TOP)/cimple/tools/libgencommon/sources.mk
+include $(TOP)/cimple/tools/genclass/sources.mk
+include $(TOP)/cimple/tools/genmod/sources.mk
+include $(TOP)/cimple/tools/genprov/sources.mk
 
 .PHONY : bootstrap
 
@@ -57,15 +58,15 @@ CLASSLIST = $(libcimobjects_DIR)/classes
 bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
 	$(abspath $(genprov_TARGET))  -F$<
 
-include libcimobjects/sources.mk
+include $(TOP)/libcimobjects/sources.mk
 
-include libprovider/sources.mk
+include $(TOP)/libprovider/sources.mk
 ifeq ($(CIM_SERVER),esxi)
-include esxi_solarflare/sources.mk
+include $(TOP)/esxi_solarflare/sources.mk
 endif
 
 ifneq ($(SLES10_BUILD_HOST),)
-include sles10/sources.mk
+include $(TOP)/sles10/sources.mk
 endif
 
 top_LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
@@ -108,4 +109,14 @@ install-aux : $(libcimobjects_DIR)/repository.mof regmod
 	cp $(libcimobjects_DIR)/repository.mof $(DESTDIR)$(PROVIDER_ROOT)/mof
 endif
 
-include mk/rules.mk
+.PHONY : platform
+PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
+platform : $(PLATFORM_BUILD)/Makefile
+
+$(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk
+		mkdir -p $(PLATFORM_BUILD)
+		cd $(PLATFORM_BUILD); $(HG) manifest | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
+		echo "PRESET=$(PRESET)" >$@
+		cat $< >>$@
+
+include $(TOP)/mk/rules.mk

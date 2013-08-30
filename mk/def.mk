@@ -56,6 +56,7 @@ $(1)_PROVIDE_LIBRARIES += $$(patsubst lib%.a,%,$$($(1)_TARGET))
 endif
 
 $(1)_PROVIDE_CPPFLAGS += $$(addprefix -I,$$($(1)_INCLUDES))
+$(1)_PROVIDE_CPPFLAGS += $$(addprefix -I$$(TOP)/,$$($(1)_INCLUDES))
 $(call _augment_vars,$(1),CPPFLAGS)
 $(call _augment_vars,$(1),LDFLAGS)
 $(call _augment_vars,$(1),LIBRARIES)
@@ -65,7 +66,7 @@ _$(1)_SOURCES = $$(addprefix $$($(1)_DIR)/,$$($(1)_SOURCES))
 _$(1)_GENERATED = $$(addprefix $$($(1)_DIR)/,$$($(1)_GENERATED)) $$(foreach d,$$(_$(1)_DEPENDS),$$(_$$(d)_GENERATED) )
 ifneq ($(2),)
 ALL_SOURCES += $$(_$(1)_SOURCES)
-_$(1)_HEADERS = $$(foreach incdir,$$($(1)_INCLUDES),$$(wildcard $$(incdir)/*.h) )
+_$(1)_HEADERS = $$(foreach incdir,$$($(1)_INCLUDES),$$(wildcard $$(incdir)/*.h) $$(wildcard $$(TOP)/$$(incdir)/*.h))
 ALL_HEADERS += $$(_$(1)_HEADERS)
 $(1)_OBJS = $$(patsubst %.cpp,%.o,$$(_$(1)_SOURCES))
 $(2) += $$($(1)_TARGET)
@@ -91,3 +92,10 @@ endif
 
 COMPONENTS += $(1)
 endef
+
+ifeq ($(MAKECMDGOALS),clean)
+_DO_NOT_GENERATE := 1
+endif
+ifeq ($(MAKECMDGOALS),platform)
+_DO_NOT_GENERATE := 1
+endif

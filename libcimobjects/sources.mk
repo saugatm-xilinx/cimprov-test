@@ -15,17 +15,20 @@ ifeq ($(CIM_SERVER),wmi)
 libcimobjects_EXTRA_MOF += Win32_ComputerSystem
 endif
 
+ifneq ($(_DO_NOT_GENERATE),1)
 include $(libcimobjects_DIR)/classes.mk
+endif
 
 libcimobjects_GENERATED = $(libcimobjects_SOURCES) $(patsubst %.cpp,%.h,$(libcimobjects_SOURCES)) classes.mk repository.mof 
 
 $(eval $(call component,libcimobjects,STATIC_LIBRARIES))
+$(info libcimobjects_SOURCES = $(libcimobjects_SOURCES))
 
 genclass_cmd = cd $(libcimobjects_DIR); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genclass_TARGET))
 
 $(libcimobjects_DIR)/.genclass : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof \
 								 $(CIM_SCHEMA_ROOTFILE) $(genclass_TARGET)
-	$(genclass_cmd) -S -r -e -F$(notdir $<) $(libcimobjects_EXTRA_MOF)
+	$(genclass_cmd) -S -r -e -F$< $(libcimobjects_EXTRA_MOF)
 
 $(filter %.h,$(_libcimobjects_GENERATED)) : $(libcimobjects_DIR)/classes.mk
 

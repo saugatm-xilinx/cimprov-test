@@ -59,7 +59,7 @@ lib$(PROVIDER_LIBRARY).spec : lib$(PROVIDER_LIBRARY).spec.in $(MAKEFILE_LIST)
 %.o: %.rc
 	$(WINDRES) -o $@ -i $< $(WINDRES_CPPFLAGS)
 
-ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(_DO_NOT_GENERATE),1)
 include $(patsubst %.cpp,%.d,$(ALL_SOURCES))
 endif
 
@@ -70,7 +70,7 @@ endif
 	$(FLEX) -P$(notdir $*)_ -o$@ $<
 
 $(STATIC_LIBRARIES) : %.a:
-	$(AR) crsu $@ $(filter %o,$^)
+	$(AR) crsu $@ $(filter %.o,$^)
 
 link_static_to_shared_start = -Wl,-whole-archive
 link_static_to_shared_end = -Wl,-no-whole-archive
