@@ -184,7 +184,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         if (Target != NULL &&
             !solarflare::CIMHelper::isOurSystem(sys))
         {
-            return_value.set(Error);
+            return_value.set(InvalidParameter);
             return INVOKE_METHOD_OK;
         }
         Installer installer(URI.value.c_str(), self);
@@ -192,7 +192,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         if (installer.isOk())
             return_value.set(OK);
         else
-            return_value.set(InvalidParameter);
+            return_value.set(Error);
     }
     else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
     {
@@ -201,7 +201,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         if (installer.isOk())
             return_value.set(OK);
         else
-            return_value.set(InvalidParameter);
+            return_value.set(Error);
     }
     else
     {
