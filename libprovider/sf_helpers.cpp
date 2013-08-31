@@ -362,6 +362,11 @@ namespace solarflare
         else
             job->ElapsedTime.set(Datetime((uint64)0));
 
+        job->ErrorCode.null = false;
+        job->ErrorCode.value = 0;
+        job->ErrorDescription.null = false;
+        job->ErrorDescription.value = String("");
+
         return job;
     }
 
