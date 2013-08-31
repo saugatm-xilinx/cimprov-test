@@ -109,7 +109,7 @@
 
 // Define the name for the directory that normally used by CIMPLE including
 // for log output.  Also defines the prefix for the configuration file.
-#define DEFAULT_CONFIG_FILE_NAME ".cimple"
+#define DEFAULT_CONFIG_FILE_NAME ".solarflarecim"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -608,7 +608,12 @@ static void _initialize(const char* name)
     {
         LOG_ERR(("No CIMPLE_HOME env var defined. Looking for %s",
             cimple_home_envvar.c_str()));
-        return;
+        home = getenv("HOME");
+        if (!home)
+        {
+            LOG_ERR(("No HOME env var defined as well"));
+            return;
+        }
     }
     LOG_DIAG(("CIMPLE home %s from env var %s",
         home,cimple_home_envvar.c_str()));
