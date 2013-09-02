@@ -362,10 +362,12 @@ namespace solarflare
         else
             job->ElapsedTime.set(Datetime((uint64)0));
 
+#if CIM_SCHEMA_VERSION_MINOR > 0
         job->ErrorCode.null = false;
         job->ErrorCode.value = 0;
         job->ErrorDescription.null = false;
         job->ErrorDescription.value = String("");
+#endif
 
         return job;
     }

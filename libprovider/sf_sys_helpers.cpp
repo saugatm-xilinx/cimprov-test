@@ -222,9 +222,6 @@ namespace solarflare
         newLog->OverwritePolicy.value = SF_RecordLog::_OverwritePolicy::enum_Wraps_When_Full;
         newLog->MaxNumberOfRecords.set(log->logSize());
         newLog->CurrentNumberOfRecords.set(log->currentSize());
-        newLog->OperationalStatus.null = false;
-        newLog->OperationalStatus.value.append(
-                                        SF_RecordLog::_OperationalStatus::enum_OK);
         
         return newLog;
     }
