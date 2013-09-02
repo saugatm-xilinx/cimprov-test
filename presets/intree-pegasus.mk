@@ -1,2 +1,1 @@
-include $(TOP)/presets/default.mk
-override INTREE_PEGASUS=1
+override CONFIG=local

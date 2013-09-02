@@ -3,8 +3,12 @@ include $(TOP)/mk/def.mk
 
 .DEFAULT_GOAL := all
 
-PRESET ?= default
+ifneq ($(PRESET),)
 include $(TOP)/presets/$(PRESET).mk
+$(warning Presets are obsolete, use 'make CONFIG=$(CONFIG)' instead)
+endif
+
+include $(TOP)/config/$(CONFIG).mk
 
 include $(TOP)/mk/vars.mk
 ifeq ($(CIM_SERVER),wmi)
@@ -113,10 +117,10 @@ endif
 PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
 platform : $(PLATFORM_BUILD)/Makefile
 
-$(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk
+$(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
 		mkdir -p $(PLATFORM_BUILD)
 		cd $(PLATFORM_BUILD); $(HG) manifest | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
-		echo "PRESET:=$(PRESET)" >$@
+		echo "CONFIG:=$(CONFIG)" >$@
 		echo "TOP:=$(CURDIR)" >>$@
 		cat $< >>$@
 

@@ -1,5 +1,3 @@
-CIM_SERVER=pegasus
-
 ifeq ($(HOST_CIMPLE_PLATFORM),)
 ifeq ($(origin BITNESS), undefined)
 BITNESS:=$(shell getconf LONG_BIT)
@@ -15,8 +13,3 @@ endif
 endif
 $(info Platform detected as $(HOST_CIMPLE_PLATFORM))
 endif
-
-CIMPLE_PLATFORM = $(HOST_CIMPLE_PLATFORM)
-
-
-PROVIDER_PLATFORM = linux

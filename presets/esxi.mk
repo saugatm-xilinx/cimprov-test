@@ -1,5 +1,2 @@
-override CIM_SERVER=esxi
-override CIMPLE_PLATFORM=LINUX_IX86_GNU
-override HOST_CIMPLE_PLATFORM=$(CIMPLE_PLATFORM)
-override PROVIDER_PLATFORM=vmware
+override CONFIG=vmware/default
 

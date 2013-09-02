@@ -1,2 +1,2 @@
-include $(TOP)/presets/esxi.mk
-ESXI_BUILD_HOST=dibenchvm017
+override CONFIG=vmware/dell2970
+

@@ -22,7 +22,6 @@ endif
 libcimobjects_GENERATED = $(libcimobjects_SOURCES) $(patsubst %.cpp,%.h,$(libcimobjects_SOURCES)) classes.mk repository.mof 
 
 $(eval $(call component,libcimobjects,STATIC_LIBRARIES))
-$(info libcimobjects_SOURCES = $(libcimobjects_SOURCES))
 
 genclass_cmd = cd $(libcimobjects_DIR); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genclass_TARGET))
 
