@@ -207,6 +207,9 @@ namespace solarflare
         newLog->OperationalStatus.value.append(SF_RecordLog::_OperationalStatus::enum_OK);
         newLog->HealthState.null = false;
         newLog->HealthState.value = SF_RecordLog::_HealthState::enum_OK;
+        newLog->OperatingStatus.null = false;
+        newLog->OperatingStatus.value =
+                          SF_RecordLog::_OperatingStatus::enum_Not_Available;
 #endif
         newLog->EnabledState.null = false;
         newLog->EnabledState.value = (log->isEnabled() ? 
