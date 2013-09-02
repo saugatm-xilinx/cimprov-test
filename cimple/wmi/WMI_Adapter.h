@@ -30,7 +30,7 @@
 #include <cimple/cimple.h>
 #include <cimple/Provider_Handle.h>
 #include <wbemprov.h>
-#include "log.h"
+#include <cimple/log.h>
 #pragma comment(lib, "wbemuuid.lib")
 
 CIMPLE_NAMESPACE_BEGIN

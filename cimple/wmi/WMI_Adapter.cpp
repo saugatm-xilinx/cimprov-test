@@ -41,7 +41,7 @@
 #include "WMI_Containers.h"
 #include "WMI_Converter.h"
 #include "WMI_Thread_Context.h"
-#include "log.h"
+#include <cimple/log.h>
 #include "Variant.h"
 #include "utils.h"
 #include "WMI_Ref.h"

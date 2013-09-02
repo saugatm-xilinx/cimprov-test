@@ -25,7 +25,7 @@
 */
 
 #include "CimpleConfig.h"
-#include "log.h"
+#include <cimple/log.h>
 #include "options.h"
 
 CIMPLE_NAMESPACE_BEGIN

@@ -30,7 +30,7 @@
 #include <cimple/cimple.h>
 #include <objbase.h>
 #include "SafeArr.h"
-#include "log.h"
+#include <cimple/log.h>
 #include "utils.h"
 
 CIMPLE_NAMESPACE_BEGIN

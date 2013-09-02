@@ -67,7 +67,7 @@
 #include <sys/stat.h>
 #include <cctype>
 #include <pthread.h>
-#include "log.h"
+#include <cimple/log.h>
 #include "File_Lock.h"
 #include "Buffer.h"
 #include "Datetime.h"

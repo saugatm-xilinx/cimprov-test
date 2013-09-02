@@ -47,7 +47,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include "config.h"
-#include "log.h"
+#include <cimple/log.h>
 
 CIMPLE_NAMESPACE_BEGIN
 

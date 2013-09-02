@@ -24,7 +24,7 @@
 **==============================================================================
 */
 
-#include "log.h"
+#include <cimple/log.h>
 #include "Container.h"
 #include "Buffer.h"
 #include "Property.h"

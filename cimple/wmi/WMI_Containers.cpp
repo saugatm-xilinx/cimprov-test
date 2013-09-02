@@ -30,7 +30,7 @@
 #include "WMI_Containers.h"
 #include "SafeArr.h"
 #include "BString.h"
-#include "log.h"
+#include <cimple/log.h>
 #include "utils.h"
 
 CIMPLE_NAMESPACE_BEGIN

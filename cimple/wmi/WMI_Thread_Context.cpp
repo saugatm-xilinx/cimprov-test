@@ -27,7 +27,7 @@
 #include <cimple/cimple.h>
 #include <wbemprov.h>
 #include "utils.h"
-#include "log.h"
+#include <cimple/log.h>
 #include "WMI_Thread_Context.h"
 #include "WMI_Converter.h"
 #include "WMI_Ref.h"

@@ -27,7 +27,7 @@
 #include <objbase.h>
 #include "WMI_Adapter.h"
 #include "WMI_Adapter_Factory.h"
-#include "log.h"
+#include <cimple/log.h>
 
 CIMPLE_NAMESPACE_BEGIN
 

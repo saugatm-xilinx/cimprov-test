@@ -26,7 +26,7 @@
 
 #include "config.h"
 #include "Adapter_Tracer.h"
-#include "log.h"
+#include <cimple/log.h>
 
 CIMPLE_NAMESPACE_BEGIN
 

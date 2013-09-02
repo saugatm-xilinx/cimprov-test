@@ -54,7 +54,7 @@
 #include "Thread.h"
 #include "Mutex.h"
 #include "Auto_Mutex.h"
-#include "log.h"
+#include <cimple/log.h>
 #include "Instance_Hnd.h"
 #include "Instance_Ref.h"
 #include "Ops.h"

@@ -24,7 +24,7 @@
 **==============================================================================
 */
 
-#include "log.h"
+#include <cimple/log.h>
 #include "Value.h"
 #include "Property.h"
 

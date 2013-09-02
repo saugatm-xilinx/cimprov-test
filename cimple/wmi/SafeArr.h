@@ -30,7 +30,7 @@
 
 #include <cimple/cimple.h>
 #include <wbemprov.h>
-#include "log.h"
+#include <cimple/log.h>
 
 CIMPLE_NAMESPACE_BEGIN
 

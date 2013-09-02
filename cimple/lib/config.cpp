@@ -24,7 +24,7 @@
 **==============================================================================
 */
 
-#include "config.h"
+#include <cimple/config.h>
 
 #ifdef __USE_GNU
 #  include <execinfo.h>
