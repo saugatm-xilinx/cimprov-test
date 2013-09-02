@@ -333,6 +333,9 @@ namespace solarflare
         newLog->OverwritePolicy.value = SF_DiagnosticLog::_OverwritePolicy::enum_Wraps_When_Full;
         newLog->MaxNumberOfRecords.set(diag.log().logSize());
         newLog->CurrentNumberOfRecords.set(diag.log().currentSize());
+        newLog->OperatingStatus.null = false;
+        newLog->OperatingStatus.value =
+               SF_DiagnosticLog::_OperatingStatus::enum_Not_Available;
         
         return newLog;
     }
