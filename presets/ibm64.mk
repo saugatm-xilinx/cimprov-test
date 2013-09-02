@@ -1,1 +1,1 @@
-override CONFIG=linux64/ibmdpa.mk
+override CONFIG=linux64/ibmdpa

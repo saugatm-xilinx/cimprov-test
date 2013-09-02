@@ -21,8 +21,6 @@ sles10_archive_SOURCES += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DI
 sles10_archive_SOURCES += Makefile
 sles10_archive_SOURCES += lib$(PROVIDER_LIBRARY).spec
 
-$(warning Components: $(sles10_archive_COMPONENTS))
-
 _sles10_archive_SOURCES = $(addprefix $(sles10_archive_DIR)/,$(sles10_archive_SOURCES))
 
 ifeq ($(MAKECMDGOALS),clean)
