@@ -1,2 +1,2 @@
-override CONFIG=vmware/default
+override CONFIG=vmware32/default
 
