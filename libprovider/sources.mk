@@ -144,7 +144,7 @@ repository.reg : $(libcimobjects_DIR)/repository.mof.cpp $(libcimobjects_DIR)/cl
 	$(AWK) -f $(TOP)/mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
                 -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
                 -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),root/cimv2)" \
-                -vCLASSLIST="`cat $(libcimobjects_DIR)/classes`" $< >$@
+                -vCLASSLIST="`cat $(word 2,$^)`" $< >$@
 endif
 
 ifeq ($(CIM_SERVER),pegasus)
