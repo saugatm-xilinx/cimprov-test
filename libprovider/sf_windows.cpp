@@ -21,8 +21,8 @@
 #include "sf_alerts.h"
 
 /// Memory allocation for WinAPI calls
-#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x)) 
-#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+#define MALLOC(x) (new char[x])
+#define FREE(x) delete[] reinterpret_cast<char *>(x)
 
 /// This value was taken from
 /// v5-incoming:src/driver/win/bus/driver/bus_ioctl.h

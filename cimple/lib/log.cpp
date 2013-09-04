@@ -619,9 +619,18 @@ static void _initialize(const char* name)
         home,cimple_home_envvar.c_str()));
 
     // Read parameters from .<name>rc configuration file.
-    char conf_path[1024];
+    char          conf_path[1024];
+    FILE         *f;
 
     sprintf(conf_path, "%s/%src", home, name);
+    f = fopen(conf_path, "r");
+    if (f == NULL)
+    {
+        LOG_ERR(("Failed to open config file '%s' for reading",
+                 conf_path));
+        return;
+    }
+    fclose(f);
 
     // WARNING: errors here are not really caught since the only way
     // to display is the log and these represent a log error.
