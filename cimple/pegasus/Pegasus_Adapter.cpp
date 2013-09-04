@@ -939,7 +939,7 @@ static bool _enum_associator_proc_2(
     {
         instance = data->handle->getInstance(
             data->context,
-            data->objectPath.getNameSpace(),
+            objectPath.getNameSpace(),
             objectPath,
             false,
             data->includeQualifiers,
