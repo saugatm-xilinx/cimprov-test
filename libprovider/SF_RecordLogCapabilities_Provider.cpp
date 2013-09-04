@@ -55,6 +55,7 @@ Modify_Instance_Status SF_RecordLogCapabilities_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+#if CIM_SCHEMA_VERSION_MINOR < 28
 Invoke_Method_Status SF_RecordLogCapabilities_Provider::CreateGoalSettings(
     const SF_RecordLogCapabilities* self,
     const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
@@ -64,6 +65,7 @@ Invoke_Method_Status SF_RecordLogCapabilities_Provider::CreateGoalSettings(
 {
     return INVOKE_METHOD_UNSUPPORTED;
 }
+#endif
 
 /*@END@*/
 

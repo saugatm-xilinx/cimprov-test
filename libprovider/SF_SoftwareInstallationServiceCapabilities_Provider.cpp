@@ -60,6 +60,7 @@ Modify_Instance_Status SF_SoftwareInstallationServiceCapabilities_Provider::modi
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+#if CIM_SCHEMA_VERSION_MINOR < 28
 Invoke_Method_Status SF_SoftwareInstallationServiceCapabilities_Provider::CreateGoalSettings(
     const SF_SoftwareInstallationServiceCapabilities* self,
     const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
@@ -69,6 +70,7 @@ Invoke_Method_Status SF_SoftwareInstallationServiceCapabilities_Provider::Create
 {
     return INVOKE_METHOD_UNSUPPORTED;
 }
+#endif
 
 /*@END@*/
 

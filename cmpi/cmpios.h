@@ -53,14 +53,6 @@
    pthread_key_t. This will not be problem for 32-bit platforms.
 */
 # define CMPI_THREAD_KEY_TYPE unsigned int
-# ifndef HAVE_STRUCT_TIMESPEC
-#  define HAVE_STRUCT_TIMESPEC
-   struct timespec
-   {
-       long tv_sec;
-       long tv_nsec;
-   };
-# endif /* HAVE_STRUCT_TIMESPEC */
 
 #elif defined(CMPI_PLATFORM_ZOS_ZSERIES_IBM)
 # include <pthread.h>

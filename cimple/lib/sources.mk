@@ -61,7 +61,7 @@ libcimple_CPPFLAGS = $(libcimple_PROVIDE_CPPFLAGS) -DCIMPLE_BUILDING_LIBCIMPLE
 
 libcimple_TARGET = libcimple.a
 
-ifeq ($(CIM_SERVER),wmi)
+ifeq ($(PROVIDER_PLATFORM),windows)
 libcimple_DEPENDS = libcimpleposix
 endif
 

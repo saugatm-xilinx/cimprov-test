@@ -50,7 +50,7 @@ lib$(PROVIDER_LIBRARY).spec : lib$(PROVIDER_LIBRARY).spec.in $(MAKEFILE_LIST)
 	$(subst_spec)
 
 %.d: %.cpp
-	@echo Producing $@
+	@echo Producing $@ with $(CPPFLAGS)
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$; \
 	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \

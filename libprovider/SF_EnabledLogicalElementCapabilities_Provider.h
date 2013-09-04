@@ -40,11 +40,13 @@ public:
         const SF_EnabledLogicalElementCapabilities* model,
         const SF_EnabledLogicalElementCapabilities* instance);
 
+#if CIM_SCHEMA_VERSION_MINOR < 28
     Invoke_Method_Status CreateGoalSettings(
         const SF_EnabledLogicalElementCapabilities* self,
         const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
         Property< Array<CIM_SettingData*> >& SupportedGoalSettings,
         Property<uint16>& return_value);
+#endif
 
     /*@END@*/
 };

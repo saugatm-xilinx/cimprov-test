@@ -4,6 +4,7 @@ regmod_INCLUDES = $(regmod_DIR)
 regmod_SOURCES = main.cpp
 regmod_TARGET = regmod
 regmod_DEPENDS = $(PEGASUS_TOOLS_DEPS)
+regmod_LIBRARIES = pegclient
 
 $(eval $(call component,regmod,BINARIES))
 

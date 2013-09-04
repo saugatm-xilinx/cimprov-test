@@ -330,8 +330,13 @@ namespace solarflare
         bool is64 = System::target.is64bit();
         unsigned cimType[][2] = {
             {
+#if CIM_SCHEMA_VERSION_MINOR < 28
                 CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003, 
                 CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003_64_Bit
+#else
+                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2003, 
+                CIM_OperatingSystem::_OSType::enum_Microsoft_Windows_Server_2003_64_Bit
+#endif
             },
 #if CIM_SCHEMA_VERSION_MINOR > 0
             {
@@ -362,7 +367,32 @@ namespace solarflare
                 CIM_SoftwareIdentity::_TargetOSTypes::enum_Microsoft_Windows_Server_2003_64_Bit
             },
 #endif
-#if CIM_SCHEMA_VERSION_MINOR == 26
+#if CIM_SCHEMA_VERSION_MINOR >= 28
+            {
+                CIM_OperatingSystem::_OSType::enum_RedHat_Enterprise_Linux,
+                CIM_OperatingSystem::_OSType::enum_RedHat_Enterprise_Linux_64_Bit
+            },
+            {
+                CIM_OperatingSystem::_OSType::enum_SLES,
+                CIM_OperatingSystem::_OSType::enum_SLES_64_Bit
+            },
+            {
+                CIM_OperatingSystem::_OSType::enum_Debian,
+                CIM_OperatingSystem::_OSType::enum_Debian_64_Bit
+            },
+            {
+                CIM_OperatingSystem::_OSType::enum_CentOS_32_bit,
+                CIM_OperatingSystem::_OSType::enum_CentOS_64_bit
+            },
+            {
+                CIM_OperatingSystem::_OSType::enum_Oracle_Enterprise_Linux_32_bit,
+                CIM_OperatingSystem::_OSType::enum_Oracle_Enterprise_Linux_64_bit
+            },
+            {
+                CIM_OperatingSystem::_OSType::enum_Linux_2_6_x,
+                CIM_OperatingSystem::_OSType::enum_Linux_2_6_x_64_Bit
+            },
+#elif CIM_SCHEMA_VERSION_MINOR == 26
             {
                 CIM_SoftwareIdentity::_TargetOSTypes::enum_RedHat_Enterprise_Linux,
                 CIM_SoftwareIdentity::_TargetOSTypes::enum_RedHat_Enterprise_Linux_64_Bit
@@ -398,7 +428,10 @@ namespace solarflare
 #undef GENERIC_LINUX
 #endif
             {
-#if CIM_SCHEMA_VERSION_MINOR == 26
+#if CIM_SCHEMA_VERSION_MINOR >= 28
+                CIM_OperatingSystem::_OSType::enum_VMware_ESXi,
+                CIM_OperatingSystem::_OSType::enum_VMware_ESXi,
+#elif CIM_SCHEMA_VERSION_MINOR == 26
                 CIM_SoftwareIdentity::_TargetOSTypes::enum_VMware_ESXi,
                 CIM_SoftwareIdentity::_TargetOSTypes::enum_VMware_ESXi,
 #else

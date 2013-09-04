@@ -77,13 +77,15 @@ ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 libprovider_SOURCES += sf_mcdi_sensors.cpp
 endif
 
-ifeq ($(CIM_INTERFACE),wmi)
+ifeq ($(PROVIDER_PLATFORM),windows)
 libprovider_SOURCES += sf_wmi.cpp
+endif
+ifeq ($(CIM_INTERFACE),wmi)
 libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof $(MSI_NAME)
 endif
 
 libprovider_DIR = libprovider
-ifeq ($(CIM_INTERFACE),wmi)
+ifeq ($(PROVIDER_PLATFORM),windows)
 libprovider_TARGET = $(PROVIDER_LIBRARY).dll
 else
 libprovider_TARGET = lib$(PROVIDER_LIBRARY).so

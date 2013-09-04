@@ -13,6 +13,9 @@ include $(TOP)/config/$(CONFIG).mk
 include $(TOP)/mk/vars.mk
 ifeq ($(CIM_SERVER),wmi)
 include $(TOP)/mk/wmi.mk
+endif
+ifeq ($(PROVIDER_PLATFORM),windows)
+include $(TOP)/mk/windows$(BITNESS).mk
 include $(TOP)/cimple/posix/sources.mk
 endif
 
@@ -43,9 +46,8 @@ endif
 ifeq ($(CIM_INTERFACE),cmpi)
 include $(TOP)/cimple/cmpi/sources.mk
 endif
-ifeq ($(CIM_INTERFACE),wmi)
+ifeq ($(PROVIDER_PLATFORM),windows)
 include $(TOP)/cimple/wmi/sources.mk
-# include wmihelper/sources.mk
 endif
 
 include $(TOP)/cimple/tools/file2c/sources.mk

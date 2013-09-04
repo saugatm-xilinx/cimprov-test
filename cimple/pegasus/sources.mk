@@ -18,6 +18,6 @@ libcimplepeg_DEPENDS = pegasus libcimple
 $(eval $(call component,libcimplepeg,STATIC_LIBRARIES))
 
 ifeq ($(CIM_INTERFACE),pegasus)
-CIMPLE_COMPONENT := libcimplepeg 
+CIMPLE_COMPONENT += libcimplepeg 
 endif
 

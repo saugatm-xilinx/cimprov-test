@@ -11,6 +11,6 @@ libcimplecmpi_DEPENDS = libcimple
 
 $(eval $(call component,libcimplecmpi,STATIC_LIBRARIES))
 
-CIMPLE_COMPONENT := libcimplecmpi 
+CIMPLE_COMPONENT += libcimplecmpi 
 
 
