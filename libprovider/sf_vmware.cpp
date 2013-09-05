@@ -2332,17 +2332,6 @@ curl_fail:
     static int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
                                         const Port *port);
 
-    /// Enable CIMPLE logging for debug
-    void debugLogEnable()
-    {
-        FILE *f = fopen("/.cimplerc", "w");
-
-        fprintf(f, "LOG_LEVEL=DBG\n");
-        fclose(f);
-
-        setenv("CIMPLE_HOME", "/", 1);
-    }
-
     /// @brief stub-only System implementation
     class VMwareSystem : public System {
         VMwareKernelPackage kernelPackage;
@@ -2352,10 +2341,6 @@ curl_fail:
         {
             curl_global_init(CURL_GLOBAL_ALL);
             onAlert.setFillPortAlertsInfo(vmwareFillPortAlertsInfo);
-
-#if 0
-            debugLogEnable();
-#endif
         };
 
         ~VMwareSystem()
