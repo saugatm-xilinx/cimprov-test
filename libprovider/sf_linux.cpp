@@ -1113,12 +1113,10 @@ namespace solarflare
 
     class LinuxDriver : public Driver {
         const Package *owner;
-        VersionInfo vers;
         static const String drvName;
     public:
-        LinuxDriver(const Package *pkg, const String& d, const String& sn,
-                     const VersionInfo& v) :
-            Driver(d, sn), owner(pkg), vers(v) {}
+        LinuxDriver(const Package *pkg, const String& d, const String& sn) :
+            Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
         virtual bool syncInstall(const char *) { return false; }
@@ -1223,9 +1221,12 @@ namespace solarflare
     public:
         LinuxKernelPackage() :
             Package("NET Driver RPM", "sfc"),
-            kernelDriver(this, "NET Driver", "sfc", "3.3") {}
+            kernelDriver(this, "NET Driver", "sfc") {}
         virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("3.3"); }
+        virtual VersionInfo version() const
+        {
+            return kernelDriver.version();
+        }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {

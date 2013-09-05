@@ -2287,7 +2287,10 @@ curl_fail:
             Package("NET Driver VIB", "sfc"),
             kernelDriver(this, "NET Driver", "sfc") {}
         virtual PkgType type() const { return VSphereBundle; }
-        virtual VersionInfo version() const { return VersionInfo("3.3"); }
+        virtual VersionInfo version() const
+        {
+            return kernelDriver.version();
+        }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
