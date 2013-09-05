@@ -2284,9 +2284,9 @@ curl_fail:
         virtual void setupContents() { kernelDriver.initialize(); };
     public:
         VMwareKernelPackage() :
-            Package("NET Driver RPM", "sfc"),
+            Package("NET Driver VIB", "sfc"),
             kernelDriver(this, "NET Driver", "sfc") {}
-        virtual PkgType type() const { return RPM; }
+        virtual PkgType type() const { return VSphereBundle; }
         virtual VersionInfo version() const { return VersionInfo("3.3"); }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
@@ -2308,10 +2308,14 @@ curl_fail:
         virtual void setupContents() { providerLibrary.initialize(); };
     public:
         VMwareManagementPackage() :
-            Package("CIM Provider RPM", "sfcprovider"),
-            providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
-        virtual PkgType type() const { return RPM; }
-        virtual VersionInfo version() const { return VersionInfo("0.1"); }
+            Package("CIM Provider VIB", "sfcprovider"),
+            providerLibrary(this, "CIM Provider library",
+                            "libSolarflare.so", SF_LIBPROV_VERSION) {}
+        virtual PkgType type() const { return VSphereBundle; }
+        virtual VersionInfo version() const
+        {
+            return VersionInfo(SF_LIBPROV_VERSION);
+        }
         virtual bool syncInstall(const char *) { return true; }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
