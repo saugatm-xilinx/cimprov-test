@@ -12,4 +12,5 @@ override PEGASUS_PREBUILT = 1
 override PEGASUS_UPSTREAM_VERSION = winbuild
 override PEGASUS_SETUP_SUBDIR =
 override USE_REGMOD = 
-override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))/DMTF
+override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
+override CIM_SCHEMA_DMTF_SUBDIR = /DMTF
