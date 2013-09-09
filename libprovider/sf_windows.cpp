@@ -1899,9 +1899,52 @@ cleanup:
     /// so initialize() does nothing 
     class WindowsSystem : public System {
         WindowsManagementPackage mgmtPackage;
-        WindowsSystem()
+        bool comInitialized;
+        WindowsSystem() : comInitialized(false)
         {
+            HRESULT hr;
+            IWbemLocator *wbemLocator = NULL;
+
             onAlert.setFillPortAlertsInfo(windowsFillPortAlertsInfo);
+
+            /// Testing whether COM is initialized, initialize it if not
+            /// (it is not in case of OpenPegasus)
+            hr = CoCreateInstance(CLSID_WbemLocator, NULL,
+                                  CLSCTX_INPROC_SERVER,
+                                  IID_IWbemLocator,
+                                  reinterpret_cast<LPVOID *>(&wbemLocator));
+            if (hr == CO_E_NOTINITIALIZED)
+            {
+                hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+                if (hr != S_OK)
+                    CIMPLE_ERR(("CoInitializeEx() returned %ld(0x%lx)",
+                                static_cast<long int>(hr),
+                                static_cast<long int>(hr)));
+                else
+                {
+                    comInitialized = true;
+                    hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
+                                              RPC_C_AUTHN_LEVEL_DEFAULT,
+                                              RPC_C_IMP_LEVEL_IMPERSONATE,
+                                              NULL, EOAC_NONE, NULL);
+                    if (hr != S_OK)
+                        CIMPLE_ERR(("CoInitializeSecurity() "
+                                    "returned %ld(0x%lx)",
+                                    static_cast<long int>(hr),
+                                    static_cast<long int>(hr)));
+                }
+
+            }
+            else
+            {
+                if (FAILED(hr))
+                    CIMPLE_ERR(("CoCreateInstance() returned %ld(0x%lx)",
+                                static_cast<long int>(hr),
+                                static_cast<long int>(hr)));
+
+                if (!FAILED(hr))
+                    wbemLocator->Release();
+            }
         };
         ~WindowsSystem();
     protected:
@@ -1963,6 +2006,9 @@ cleanup:
     WindowsSystem::~WindowsSystem()
     {
         wmiReleaseConn();
+
+        if (comInitialized)
+            CoUninitialize();
     }
 
     bool WindowsSystem::forAllNICs(ElementEnumerator& en)
