@@ -140,17 +140,18 @@ libprovider_BUILD_DEPENDS = genmod
 
 $(eval $(call component,libprovider,SHARED_LIBRARIES))
 
-ifneq ($(CIM_SERVER),pegasus)
+ifeq ($(USE_REGMOD),)
 
 repository.reg : $(libcimobjects_DIR)/repository.mof.cpp $(libcimobjects_DIR)/classes $(TOP)/mof2reg.awk
 	$(AWK) -f $(TOP)/mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
                 -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
                 -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),root/cimv2)" \
-                -vCLASSLIST="`cat $(word 2,$^)`" $< >$@
+                -vCLASSLIST="`cat $(word 2,$^)`" -vTARGET="$(CIM_SERVER)" $< >$@
 endif
 
 ifeq ($(CIM_SERVER),pegasus)
 
+ifneq ($(USE_REGMOD),)
 register: install $(regmod_TARGET) $(PEGASUS_START_CONF)
 	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO)
 	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
@@ -158,6 +159,18 @@ register: install $(regmod_TARGET) $(PEGASUS_START_CONF)
 unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
 	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
 	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO)
+else
+
+register: repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof install $(PEGASUS_START_CONF)
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/repository.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg
+
+unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimprovider -r -m $(PROVIDER_LIBRARY)_Module
+
+endif
+
 endif
 
 ifeq ($(CIM_SERVER),sfcb)
@@ -169,7 +182,7 @@ register: repository.reg install
 
 endif
 
-ifeq ($(CIM_SERVER),wmi)
+ifeq ($(PROVIDER_PLATFORM),windows)
 
 $(libprovider_TARGET) : $(libprovider_DIR)/resource.o
 
@@ -179,8 +192,10 @@ $(libprovider_DIR)/resource.o : WINDRES_CPPFLAGS = -DPROVIDER_LIBRARY=\\\"$(PROV
 												   -DPROVIDER_VERSION_MINOR=$(PROVIDER_VERSION_MINOR) \
 												   -DPROVIDER_REVISION_NO=0 -DPROVIDER_BUILD_NO=0
 
+ifeq ($(CIM_INTERFACE),wmi)
 $(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/repository.mof $(MAKEFILE_LIST)
 	tac $< | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
+endif
 
 .PHONY : msi InstallShieldProject
 
@@ -189,10 +204,17 @@ MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_window
 
 msi : $(MSI_NAME)
 
-$(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt \
-	 		 $(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
+ifeq ($(CIM_INTERFACE),wmi)
+NSIS_DEPENDENCIES=$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
+NSIS_OPTIONS=-DNAMESPACE='\\.\root\cimv2'
+else
+NSIS_DEPENDENCIES=repository.reg $(libcimobjects_DIR)/interop.mof
+NSIS_OPTIONS=-DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMESPACE)'
+endif
+
+$(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSIS_DEPENDENCIES)
 	i686-w64-mingw32-strip $(libprovider_TARGET)
-	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DINSTALLERNAME=$@ -DNAMESPACE='\\.\root\cimv2' -DTOP=$(TOP) -NOCD $<
+	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DCIM_INTERFACE=$(CIM_INTERFACE) -DINSTALLERNAME=$@ $(NSIS_OPTIONS) -DTOP=$(TOP) -NOCD $<
 
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
 					$(libcimobjects_DIR)/repository.mof $(libprovider_DIR)/register.mof \

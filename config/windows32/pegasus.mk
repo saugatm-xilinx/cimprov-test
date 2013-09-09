@@ -12,3 +12,4 @@ override PEGASUS_SERVER = $(PEGASUS_BINPATH)/cimserver.exe
 override PEGASUS_PREBUILT = 1
 override PEGASUS_UPSTREAM_VERSION = winbuild
 override PEGASUS_SETUP_SUBDIR =
+override USE_REGMOD = 
