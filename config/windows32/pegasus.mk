@@ -7,7 +7,6 @@ override CIM_SERVER = pegasus
 override CIM_INTERFACE = cmpi
 override PROVIDER_PLATFORM = windows
 override INTREE_PEGASUS = 1
-override USE_EXISITING_SCHEMA=1
 override PEGASUS_SERVER = $(PEGASUS_BINPATH)/cimserver.exe
 override PEGASUS_PREBUILT = 1
 override PEGASUS_UPSTREAM_VERSION = winbuild
