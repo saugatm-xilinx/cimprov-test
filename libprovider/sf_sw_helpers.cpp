@@ -596,6 +596,8 @@ namespace solarflare
             return &firmwareInstallation;
         if (&cls == &SF_SoftwareInstallationServiceCapabilities::static_meta_class)
             return &firmwareInstallationCaps;
+        if (&cls == &SF_ElementCapabilities::static_meta_class)
+            return &capsLink;
         if (&cls == &SF_ConcreteJob::static_meta_class)
             return &installationJob;
         if (&cls == &SF_ElementSoftwareIdentity::static_meta_class)

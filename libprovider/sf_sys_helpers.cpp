@@ -56,6 +56,12 @@ namespace solarflare
         virtual Instance *reference(const SystemElement&, unsigned idx) const;
     };
 
+    class RecordLogCapsLinkHelper : public CIMHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+    };
+
     class RecordLogUseOfLogHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const;
@@ -275,6 +281,19 @@ namespace solarflare
         return newRlc;
     }
 
+    unsigned RecordLogCapsLinkHelper::nObjects(const SystemElement& sys) const
+    {
+        static const RecordLogHelper delegate;
+        return delegate.nObjects(sys);
+    }
+
+    Instance *RecordLogCapsLinkHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        ElementCapabilitiesHelper capsLink(SF_RecordLog::static_meta_class,
+                                           SF_RecordLogCapabilities::static_meta_class);
+        return capsLink.instance(se, idx);
+    }
+
     unsigned RecordLogUseOfLogHelper::nObjects(const SystemElement& sys) const
     {
         static const RecordLogHelper delegate;
@@ -413,8 +432,7 @@ namespace solarflare
         static const RecordLogManagesRecordHelper logManagesRecordHelper;
         static const RegisteredProfileHelper registeredProfileHelper;
         static const ReferencedProfileHelper referencedProfileHelper;
-        static const ElementCapabilitiesHelper capsLink(SF_RecordLog::static_meta_class,
-                                                        SF_RecordLogCapabilities::static_meta_class);
+        static const RecordLogCapsLinkHelper capsLink;
 
         if (&cls == &SF_LogEntry::static_meta_class)
             return &logEntryHelper;

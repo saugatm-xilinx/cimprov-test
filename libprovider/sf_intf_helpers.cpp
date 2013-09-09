@@ -338,7 +338,7 @@ namespace solarflare
             case 0:
                 return portCaps.reference(se, 0);
             case 1:
-                return endpointCaps.reference(se, 0);
+                return endpointCaps.reference(se, 1);
             default:
                 return NULL;
         }
@@ -351,7 +351,7 @@ namespace solarflare
             case 0:
                 return portCaps.instance(se, 0);
             case 1:
-                return endpointCaps.instance(se, 0);
+                return endpointCaps.instance(se, 1);
             default:
                 return NULL;
         }
@@ -364,7 +364,7 @@ namespace solarflare
             case 0:
                 return portCaps.instance(se, 0);
             case 1:
-                return endpointCaps.instance(se, 0);
+                return endpointCaps.instance(se, 1);
             default:
                 return NULL;
         }

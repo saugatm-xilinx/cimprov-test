@@ -422,12 +422,12 @@ namespace solarflare
     }
 
     Instance *
-    ElementCapabilitiesHelper::instance(const SystemElement& el, unsigned) const
+    ElementCapabilitiesHelper::instance(const SystemElement& el, unsigned idx) const
     {
         SF_ElementCapabilities *link = SF_ElementCapabilities::create(true);
 
-        link->ManagedElement = cast<cimple::CIM_LogicalElement *>(el.cimReference(elementClass));
-        link->Capabilities = cast<cimple::CIM_Capabilities *>(el.cimReference(capsClass));
+        link->ManagedElement = cast<cimple::CIM_LogicalElement *>(el.cimReference(elementClass, idx));
+        link->Capabilities = cast<cimple::CIM_Capabilities *>(el.cimReference(capsClass, idx));
         link->Characteristics.null = false;
         link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Default);
         link->Characteristics.value.append(SF_ElementCapabilities::_Characteristics::enum_Current);
