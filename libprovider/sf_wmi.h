@@ -322,6 +322,8 @@ namespace solarflare
     ///
     /// Get WMI object by a given path.
     ///
+    /// @param wbemSvc            If not NULL, will be used
+    ///                           instead of rootWMIConn
     /// @param objPath            Object path
     /// @param obj          [out] Where to save obtained object pointer
     ///
@@ -370,6 +372,19 @@ namespace solarflare
     /// @return 0 on success or -1 on failure
     ///
     int updateWbemClassObject(IWbemClassObject **obj);
+
+    ///
+    /// Get the only object matching a query.
+    ///
+    /// @param wbemSvc        If not NULL, will be used
+    ///                       instead of rootWMIConn
+    /// @param query          Query
+    /// @param obj      [out] Object pointer
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    int querySingleObj(IWbemServices *wbemSvc,
+                       const char *query, IWbemClassObject *&obj);
 }
 
 #endif // SOLARFLARE_SF_PROVIDER_H

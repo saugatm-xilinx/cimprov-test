@@ -1540,25 +1540,29 @@ cleanup:
 
     WindowsDriver WindowsDriver::byDeviceID(const String& deviceID, const String& version)
     {
-            String entityPath("Win32_PnPEntity.DeviceID=\"");
-            String sysDriverPath("Win32_SystemDriver.Name=\"");
+            String entityQuery("SELECT * FROM Win32_PnPEntity "
+                               "WHERE DeviceID=\"");
+            String sysDriverQuery("SELECT * FROM Win32_SystemDriver "
+                                  "WHERE Name=\"");
             String serviceName;
             String driverBinary;
             String driverDescription;
 
-            appendDeviceID(deviceID.c_str(), NULL, entityPath);
-            entityPath.append('"');
+            appendDeviceID(deviceID.c_str(), NULL, entityQuery);
+            entityQuery.append('"');
 
-            IWbemClassObject *entity;
-            if (wmiGetObject(cimWMIConn, entityPath.c_str(), &entity) < 0)
+            IWbemClassObject *entity = NULL;
+            if (querySingleObj(cimWMIConn, entityQuery.c_str(),
+                               entity) < 0)
                 return WindowsDriver("", "", VersionInfo());
             wmiGetStringProp(entity, "Service", serviceName);
             entity->Release();
             
-            sysDriverPath.append(serviceName);
-            sysDriverPath.append('"');
-            IWbemClassObject *sysDriver;
-            if (wmiGetObject(cimWMIConn, sysDriverPath.c_str(), &sysDriver) < 0)
+            sysDriverQuery.append(serviceName);
+            sysDriverQuery.append('"');
+            IWbemClassObject *sysDriver = NULL;
+            if (querySingleObj(cimWMIConn, sysDriverQuery.c_str(),
+                               sysDriver) < 0)
                 return WindowsDriver("", "", VersionInfo());
             wmiGetStringProp(sysDriver, "PathName", driverBinary);
             wmiGetStringProp(sysDriver, "Description", driverDescription);
@@ -1570,7 +1574,8 @@ cleanup:
             else
                 properName = driverBinary.c_str();
             
-            return WindowsDriver(driverDescription, properName, VersionInfo(version.c_str()));
+            return WindowsDriver(driverDescription, properName,
+                                 VersionInfo(version.c_str()));
     }    
 
     WindowsDriver WindowsDriver::byNICDescr(const NICDescr &ndesc)
@@ -1941,8 +1946,7 @@ cleanup:
                     CIMPLE_ERR(("CoCreateInstance() returned %ld(0x%lx)",
                                 static_cast<long int>(hr),
                                 static_cast<long int>(hr)));
-
-                if (!FAILED(hr))
+                else
                     wbemLocator->Release();
             }
         };
@@ -2608,37 +2612,6 @@ cleanup:
         return 0;
     }
 
-    ///
-    /// Get the only object matching a query.
-    ///
-    /// @param query          Query
-    /// @param obj      [out] Object pointer
-    ///
-    /// @return 0 on success, -1 on failure
-    ///
-    static int querySingleObj(const char *query, IWbemClassObject *&obj)
-    {
-        Array<IWbemClassObject *> objs;
-        unsigned int              i;
-        int                       rc;
-
-        rc = wmiEnumInstancesQuery(NULL, query, objs);
-        if (rc != 0)
-            return rc;
-        if (objs.size() != 1)
-        {
-            CIMPLE_ERR(("%s():   incorrect number %u of matching "
-                        "objects found, query '%s'", __FUNCTION__,
-                        objs.size(), query));
-            for (i = 0; i < objs.size(); i++)
-                objs[i]->Release();
-            return -1;
-        }
-
-        obj = objs[0];
-        return 0;
-    }
-
     Diagnostic::Result WindowsDiagnostic::syncTest() 
     {
         static Mutex  lock(false);
@@ -2716,7 +2689,7 @@ cleanup:
 
         bufQuery.format("Select * From EFX_DiagnosticJob Where Id=%lu",
                         (long unsigned int)jobId);
-        rc = querySingleObj(bufQuery.data(), job);
+        rc = querySingleObj(NULL, bufQuery.data(), job);
         if (rc != 0)
             goto cleanup;
 
@@ -2729,7 +2702,7 @@ cleanup:
         bufQuery.format("Select * From EFX_DiagnosticConfigurationParams "
                         "Where Id=%lu",
                         static_cast<long unsigned int>(jobId));
-        rc = querySingleObj(bufQuery.data(), jobConf);
+        rc = querySingleObj(NULL, bufQuery.data(), jobConf);
         if (rc != 0)
             goto cleanup;
 
