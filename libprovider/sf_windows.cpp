@@ -2051,9 +2051,11 @@ cleanup:
 
     bool WindowsSystem::forAllDrivers(ElementEnumerator &en)
     {
-        int  rc;
-        bool result = true;
+        int                       rc;
+        bool                      result = true;
         Array<IWbemClassObject *> drivers;
+        Array<String>             drvNames;
+        unsigned int              j;
 
         rc = wmiEnumInstancesQuery(cimWMIConn, 
                                    "SELECT * FROM Win32_PnPSignedDriver "
@@ -2070,10 +2072,19 @@ cleanup:
             wmiGetStringProp(drivers[i], "DriverVersion", version);
 
             WindowsDriver drv = WindowsDriver::byDeviceID(deviceID, version);
-            if (!en.process(drv))
+
+            for (j = 0; j < drvNames.size(); j++)
+                if (strcmp(drvNames[j].c_str(), drv.name().c_str()) == 0)
+                    break;
+
+            if (j >= drvNames.size())
             {
-                result = false;
-                break;
+                drvNames.append(drv.name());
+                if (!en.process(drv))
+                {
+                    result = false;
+                    break;
+                }
             }
         }
 
