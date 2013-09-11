@@ -600,17 +600,35 @@ namespace solarflare
         return newDlc;
     }
 
+    static void findDriver(const SystemElement& obj,
+                           void *data)
+    {
+        const SWElement &sw = dynamic_cast<const SWElement&>(obj);
+
+        void **driver = reinterpret_cast<void **>(data);
+
+        if (driver == NULL || *driver != NULL)
+            return;
+
+        if (sw.classify() == SWElement::SWDriver)
+            *driver = sw.cimReference(
+                            SF_SoftwareIdentity::static_meta_class);
+    }
+
     Instance *DiagnosticElementSoftwareIdentityHelper::instance(const solarflare::SystemElement& se, unsigned) const
     {
         const Diagnostic& diag = static_cast<const solarflare::Diagnostic&>(se);
-        const SWElement *tool = diag.diagnosticTool();
-    
-        if (tool == NULL)
+        void  *driver = NULL;
+
+        ConstEnumProvClsInsts en(findDriver, &driver);
+
+        System::target.forAllSoftware(en);
+        if (driver == NULL)
             return NULL;
         
         SF_DiagElementSoftwareIdentity *item = SF_DiagElementSoftwareIdentity::create(true);
     
-        item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(tool->cimReference(SF_SoftwareIdentity::static_meta_class));
+        item->Antecedent = reinterpret_cast<cimple::CIM_SoftwareIdentity *>(driver);
         item->Dependent = cast<cimple::CIM_DiagnosticTest *>(diag.cimReference(SF_DiagnosticTest::static_meta_class));
         item->ElementSoftwareStatus.null = false;
         item->ElementSoftwareStatus.value.append(SF_DiagElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
