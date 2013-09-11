@@ -42,14 +42,15 @@ SectionEnd
 Section MOFs
 SetOutPath $INSTDIR
 File libcimobjects/repository.mof
+File libcimobjects/schema.mof
 !if ${CIM_INTERFACE} == cmpi
 File libcimobjects/interop.mof
 File repository.reg
+ExecWait '${PegasusPath}\cimmof.exe -n ${NAMESPACE} "$INSTDIR\schema.mof"'
 ExecWait '${PegasusPath}\cimmof.exe -n ${NAMESPACE} "$INSTDIR\repository.mof"'
 ExecWait '${PegasusPath}\cimmof.exe -n ${INTEROP_NAMESPACE} "$INSTDIR\interop.mof"'
 ExecWait '${PegasusPath}\cimmof.exe -n ${INTEROP_NAMESPACE} "$INSTDIR\repository.reg"'
 !else
-File libcimobjects/schema.mof
 File libprovider/register.mof
 File libprovider/unregister.mof
 ExecWait 'mofcomp.exe -N:${NAMESPACE} "$INSTDIR\schema.mof"'
