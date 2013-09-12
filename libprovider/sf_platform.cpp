@@ -92,6 +92,7 @@ namespace solarflare
         if (this->nic() != NULL &&
              (driver = this->nic()->driver()) != NULL)
             vers = driver->version();
+        else
         {
             ConstEnumProvClsInsts en(findDriverVersion, &vers);
 
