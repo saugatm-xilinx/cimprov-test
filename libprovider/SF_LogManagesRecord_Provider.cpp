@@ -38,7 +38,8 @@ Enum_Instances_Status SF_LogManagesRecord_Provider::enum_instances(
     const SF_LogManagesRecord* model,
     Enum_Instances_Handler<SF_LogManagesRecord>* handler)
 {
-    solarflare::EnumInstances<SF_LogManagesRecord>::allObjects(handler);
+    solarflare::EnumInstances<SF_LogManagesRecord>::topmost(handler);
+    solarflare::EnumInstances<SF_LogManagesRecord>::allDiagnostics(handler);
     return ENUM_INSTANCES_OK;
 }
 

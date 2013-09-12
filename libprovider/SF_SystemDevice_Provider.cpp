@@ -37,7 +37,9 @@ Enum_Instances_Status SF_SystemDevice_Provider::enum_instances(
     const SF_SystemDevice* model,
     Enum_Instances_Handler<SF_SystemDevice>* handler)
 {
-    solarflare::EnumInstances<SF_SystemDevice>::allObjects(handler);
+    solarflare::EnumInstances<SF_SystemDevice>::allNICs(handler);
+    solarflare::EnumInstances<SF_SystemDevice>::allInterfaces(handler);
+    solarflare::EnumInstances<SF_SystemDevice>::allPorts(handler);
     return ENUM_INSTANCES_OK;
 }
 

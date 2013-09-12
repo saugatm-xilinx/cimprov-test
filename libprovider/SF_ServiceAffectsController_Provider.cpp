@@ -41,7 +41,7 @@ Enum_Instances_Status SF_ServiceAffectsController_Provider::enum_instances(
     const SF_ServiceAffectsController* model,
     Enum_Instances_Handler<SF_ServiceAffectsController>* handler)
 {
-    solarflare::EnumInstances<SF_ServiceAffectsController>::allObjects(handler);
+    solarflare::EnumInstances<SF_ServiceAffectsController>::allDiagnostics(handler);
 
     return ENUM_INSTANCES_OK;
 }

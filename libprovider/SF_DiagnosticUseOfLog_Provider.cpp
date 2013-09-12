@@ -38,7 +38,7 @@ Enum_Instances_Status SF_DiagnosticUseOfLog_Provider::enum_instances(
     const SF_DiagnosticUseOfLog* model,
     Enum_Instances_Handler<SF_DiagnosticUseOfLog>* handler)
 {
-    solarflare::EnumInstances<SF_DiagnosticUseOfLog>::allObjects(handler);
+    solarflare::EnumInstances<SF_DiagnosticUseOfLog>::allDiagnostics(handler);
     return ENUM_INSTANCES_OK;
 }
 

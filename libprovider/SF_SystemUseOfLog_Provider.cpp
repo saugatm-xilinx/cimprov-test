@@ -38,7 +38,7 @@ Enum_Instances_Status SF_SystemUseOfLog_Provider::enum_instances(
     const SF_SystemUseOfLog* model,
     Enum_Instances_Handler<SF_SystemUseOfLog>* handler)
 {
-    solarflare::EnumInstances<SF_SystemUseOfLog>::allObjects(handler);
+    solarflare::EnumInstances<SF_SystemUseOfLog>::topmost(handler);
     return ENUM_INSTANCES_OK;
 }
 
