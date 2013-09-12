@@ -38,7 +38,8 @@ Enum_Instances_Status SF_DiagElementSoftwareIdentity_Provider::enum_instances(
     const SF_DiagElementSoftwareIdentity* model,
     Enum_Instances_Handler<SF_DiagElementSoftwareIdentity>* handler)
 {
-    solarflare::EnumInstances<SF_DiagElementSoftwareIdentity>::allObjects(handler);
+    solarflare::EnumInstances<SF_DiagElementSoftwareIdentity>::
+                                                    allDiagnostics(handler);
     return ENUM_INSTANCES_OK;
 }
 
