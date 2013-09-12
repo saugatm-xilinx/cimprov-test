@@ -146,19 +146,21 @@ namespace solarflare
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
 
         virtual bool forAllSoftware(ElementEnumerator& en) {
-            // This is called to get software identity info - it is not
-            // obtained in constructor
-            diagnosticTool();
+            // diagnosticTool() is called to get software identity
+            // info - it is not obtained in constructor
+            if (diagnosticTool() != NULL)
+                return en.process(soft);
 
-            return en.process(soft);
+            return true;
         }
 
         virtual bool forAllSoftware(ConstElementEnumerator& en) const {
-            // This is called to get software identity info - it is not
-            // obtained in constructor
-            diagnosticTool();
+            // diagnosticTool() is called to get software identity
+            // info - it is not obtained in constructor
+            if (diagnosticTool() != NULL)
+                return en.process(soft);
 
-            return en.process(soft);
+            return true;
         }
     };
 
@@ -625,7 +627,9 @@ namespace solarflare
         virtual bool forAllInterfaces(ElementEnumerator& en);
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const;
         virtual bool forAllDiagnostics(ElementEnumerator& en);
+        virtual bool forAllNDiagSoftware(ConstElementEnumerator& en) const;
         virtual bool forAllSoftware(ConstElementEnumerator& en) const;
+        virtual bool forAllNDiagSoftware(ElementEnumerator& en);
         virtual bool forAllSoftware(ElementEnumerator& en);
         
         virtual const String& genericName() const { return systemName; }

@@ -70,37 +70,38 @@ namespace solarflare
         return n;
     }
 
-    static void findDriver(const SystemElement& obj,
-                           void *data)
+    static void findDriverVersion(const SystemElement& obj,
+                                  void *data)
     {
         const SWElement &sw = dynamic_cast<const SWElement&>(obj);
 
-        void **driver = reinterpret_cast<void **>(data);
+        VersionInfo *vers = reinterpret_cast<VersionInfo *>(data);
 
-        if (driver == NULL || *driver != NULL)
+        if (vers == NULL)
             return;
 
         if (sw.classify() == SWElement::SWDriver)
-            *driver = sw.cimReference(
-                           cimple::SF_SoftwareIdentity::static_meta_class);
+            *vers = sw.version();
     }
 
     const SWElement *Diagnostic::diagnosticTool() const
     {
         Driver      *driver = NULL;
+        VersionInfo  vers;
 
-        if (!(this->nic() != NULL &&
-              (driver = this->nic()->driver()) != NULL))
+        if (this->nic() != NULL &&
+             (driver = this->nic()->driver()) != NULL)
+            vers = driver->version();
         {
-            ConstEnumProvClsInsts en(findDriver, &driver);
+            ConstEnumProvClsInsts en(findDriverVersion, &vers);
 
-            System::target.forAllSoftware(en);
-            if (driver == NULL)
+            System::target.forAllNDiagSoftware(en);
+            if (vers == VersionInfo())
                 return NULL;
         }
 
         soft = DiagSWElement(this->description(), this->name(),
-                             driver->version());
+                             vers);
 
         return &soft;
     }
@@ -289,7 +290,7 @@ namespace solarflare
         return forAllNICs(embed);
     }
 
-    bool System::forAllSoftware(ConstElementEnumerator& en) const
+    bool System::forAllNDiagSoftware(ConstElementEnumerator& en) const
     {
         ConstPackageContentsEnumerator embed(en);
         if (!forAllPackages(embed))
@@ -299,6 +300,14 @@ namespace solarflare
         if (!forAllNICs(embedfw))
             return false;
 
+        return true;
+    }
+
+    bool System::forAllSoftware(ConstElementEnumerator& en) const
+    {
+        if (!forAllNDiagSoftware(en))
+            return false;
+
         ConstDiagSwEnumerator embedsw(en);
         if (!forAllDiagnostics(embedsw))
             return false;
@@ -306,7 +315,7 @@ namespace solarflare
         return true;
     }
 
-    bool System::forAllSoftware(ElementEnumerator& en)
+    bool System::forAllNDiagSoftware(ElementEnumerator& en)
     {
         PackageContentsEnumerator embed(en);
         if (!forAllPackages(embed))
@@ -314,6 +323,14 @@ namespace solarflare
         
         NICFwEnumerator embedfw(en);
         if (!forAllNICs(embedfw))
+            return false;
+
+        return true;
+    }
+
+    bool System::forAllSoftware(ElementEnumerator& en)
+    {
+        if (!forAllNDiagSoftware(en))
             return false;
 
         DiagSwEnumerator embedsw(en);
