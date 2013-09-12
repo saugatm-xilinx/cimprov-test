@@ -7,7 +7,7 @@
 #include "CIM_OperatingSystem.h"
 #include "SF_ElementConformsToProfile.h"
 #include "SF_ElementCapabilities.h"
-#include "SF_ElementSoftwareIdentity.h"
+#include "SF_ControllerSoftwareIdentity.h"
 #include "SF_PortController.h"
 #include "SF_HostedService.h"
 #include "SF_InstalledSoftwareIdentity.h"
@@ -34,7 +34,7 @@ namespace solarflare
     using cimple::CIM_ManagedElement;
     using cimple::SF_ElementConformsToProfile;
     using cimple::SF_ElementCapabilities;
-    using cimple::SF_ElementSoftwareIdentity;
+    using cimple::SF_ControllerSoftwareIdentity;
     using cimple::SF_PortController;
     using cimple::SF_HostedService;
     using cimple::SF_InstalledSoftwareIdentity;
@@ -277,7 +277,7 @@ namespace solarflare
         identity->IdentityInfoValue.null = false;
         identity->IdentityInfoValue.value.append(sw.sysName());
         char status[8];
-        snprintf(status, sizeof(status), "%d", SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        snprintf(status, sizeof(status), "%d", SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
         identity->IdentityInfoValue.value.append(status);
         
         identity->Classifications.null = false;
@@ -600,7 +600,7 @@ namespace solarflare
             return &capsLink;
         if (&cls == &SF_ConcreteJob::static_meta_class)
             return &installationJob;
-        if (&cls == &SF_ElementSoftwareIdentity::static_meta_class)
+        if (&cls == &SF_ControllerSoftwareIdentity::static_meta_class)
             return &elementSoftwareIdentity;
         if (&cls == &SF_HostedService::static_meta_class)
             return &hostedService;
@@ -786,15 +786,15 @@ namespace solarflare
     FirmwareElementSoftwareIdentityHelper::instance(const SystemElement& se, unsigned) const
     {
         const Firmware& fw = static_cast<const Firmware&>(se);
-        SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
+        SF_ControllerSoftwareIdentity *item = SF_ControllerSoftwareIdentity::create(true);
         
         item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(fw.cimReference(SF_SoftwareIdentity::static_meta_class));
         item->Dependent = cast<cimple::CIM_PortController *>(fw.nic()->cimReference(SF_PortController::static_meta_class));
         item->ElementSoftwareStatus.null = false;
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Installed);
+        item->ElementSoftwareStatus.value.append(SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        item->ElementSoftwareStatus.value.append(SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
+        item->ElementSoftwareStatus.value.append(SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
+        item->ElementSoftwareStatus.value.append(SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Installed);
         return item;
     }
 

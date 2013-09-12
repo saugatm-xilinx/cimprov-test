@@ -4,7 +4,13 @@ libcimobjects_DIR = libcimobjects
 libcimobjects_INCLUDES = $(libcimobjects_DIR)
 libcimobjects_DEPENDS = $(CIMPLE_COMPONENT)
 
-libcimobjects_EXTRA_MOF = CIM_OperatingSystem 
+libcimobjects_EXTRA_MOF = CIM_OperatingSystem SF_ServiceAffectsElement
+libcimobjects_EXTRA_MOF += SF_InstCreation SF_InstModification SF_AlertIndication
+libcimobjects_EXTRA_MOF += SF_Card SF_ConnectorOnPackage SF_OrderedComponent
+libcimobjects_EXTRA_MOF += SF_DeviceSAPImplementation SF_Realizes
+libcimobjects_EXTRA_MOF += SF_UseOfLog SF_RecordLogCapabilities SF_RecordLog
+libcimobjects_EXTRA_MOF += SF_ElementSoftwareIdentity
+
 ifeq ($(CIM_SERVER),pegasus)
 libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem PG_ComputerSystem PG_RegisteredProfile 
 endif

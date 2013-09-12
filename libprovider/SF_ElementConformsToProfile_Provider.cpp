@@ -7,7 +7,7 @@
 #include "SF_PhysicalConnector_Provider.h"
 #include "SF_ConcreteJob_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"
-#include "SF_RecordLog_Provider.h"
+#include "SF_ProviderLog_Provider.h"
 #include "SF_RegisteredProfile_Provider.h"
 #include "sf_provider.h"
 

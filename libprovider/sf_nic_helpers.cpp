@@ -3,7 +3,7 @@
 #include "SF_PortController.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
 #include "SF_ElementCapabilities.h"
-#include "SF_ElementSoftwareIdentity.h"
+#include "SF_ControllerSoftwareIdentity.h"
 #include "SF_ElementConformsToProfile.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_SystemDevice.h"
@@ -22,7 +22,7 @@ namespace solarflare
     using cimple::SF_PortController;
     using cimple::SF_EnabledLogicalElementCapabilities;
     using cimple::SF_ElementCapabilities;
-    using cimple::SF_ElementSoftwareIdentity;
+    using cimple::SF_ControllerSoftwareIdentity;
     using cimple::SF_ElementConformsToProfile;
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_SystemDevice;
@@ -88,7 +88,7 @@ namespace solarflare
             return &capabilities;
         if (&cls == &SF_ElementCapabilities::static_meta_class)
             return &capsLink;
-        if (&cls == &SF_ElementSoftwareIdentity::static_meta_class)
+        if (&cls == &SF_ControllerSoftwareIdentity::static_meta_class)
             return &driverSoftwareIdentity;
         if (&cls == &SF_SystemDevice::static_meta_class)
             return &systemDevice;
@@ -224,15 +224,15 @@ namespace solarflare
         
         if (drv == NULL)
             return NULL;
-        SF_ElementSoftwareIdentity *item = SF_ElementSoftwareIdentity::create(true);
+        SF_ControllerSoftwareIdentity *item = SF_ControllerSoftwareIdentity::create(true);
     
         item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(drv->cimReference(SF_SoftwareIdentity::static_meta_class));
         item->Dependent = cast<cimple::CIM_PortController *>(nic.cimReference(SF_PortController::static_meta_class));
     
         item->ElementSoftwareStatus.null = false;
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
-        item->ElementSoftwareStatus.value.append(SF_ElementSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
+        item->ElementSoftwareStatus.value.append(SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        item->ElementSoftwareStatus.value.append(SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
+        item->ElementSoftwareStatus.value.append(SF_ControllerSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
 
         return item;
     }
