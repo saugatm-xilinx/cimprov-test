@@ -1,4 +1,5 @@
 #include "sf_provider.h"
+#include "SF_SoftwareIdentity.h"
 
 #if defined(linux)
 #include <unistd.h>
@@ -67,6 +68,41 @@ namespace solarflare
         n.append(" ");
         n.append(genericName());
         return n;
+    }
+
+    static void findDriver(const SystemElement& obj,
+                           void *data)
+    {
+        const SWElement &sw = dynamic_cast<const SWElement&>(obj);
+
+        void **driver = reinterpret_cast<void **>(data);
+
+        if (driver == NULL || *driver != NULL)
+            return;
+
+        if (sw.classify() == SWElement::SWDriver)
+            *driver = sw.cimReference(
+                           cimple::SF_SoftwareIdentity::static_meta_class);
+    }
+
+    const SWElement *Diagnostic::diagnosticTool() const
+    {
+        Driver      *driver = NULL;
+
+        if (!(this->nic() != NULL &&
+              (driver = this->nic()->driver()) != NULL))
+        {
+            ConstEnumProvClsInsts en(findDriver, &driver);
+
+            System::target.forAllSoftware(en);
+            if (driver == NULL)
+                return NULL;
+        }
+
+        soft = DiagSWElement(this->description(), this->name(),
+                             driver->version());
+
+        return &soft;
     }
 
     const String Port::portName = "Ethernet Port";
@@ -197,6 +233,26 @@ namespace solarflare
         }
     };
 
+    class DiagSwEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
+    public:
+        DiagSwEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& n) 
+        {
+            return static_cast<Diagnostic&>(n).forAllSoftware(en);
+        }
+    };
+
+    class ConstDiagSwEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
+    public:
+        ConstDiagSwEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& n) 
+        {
+            return static_cast<const Diagnostic&>(n).forAllSoftware(en);
+        }
+    };
+
     bool System::forAllPorts(ConstElementEnumerator& en) const
     {
         ConstNICPortEnumerator embed(en);
@@ -233,7 +289,6 @@ namespace solarflare
         return forAllNICs(embed);
     }
 
-
     bool System::forAllSoftware(ConstElementEnumerator& en) const
     {
         ConstPackageContentsEnumerator embed(en);
@@ -242,6 +297,10 @@ namespace solarflare
         
         ConstNICFwEnumerator embedfw(en);
         if (!forAllNICs(embedfw))
+            return false;
+
+        ConstDiagSwEnumerator embedsw(en);
+        if (!forAllDiagnostics(embedsw))
             return false;
 
         return true;
@@ -256,6 +315,11 @@ namespace solarflare
         NICFwEnumerator embedfw(en);
         if (!forAllNICs(embedfw))
             return false;
+
+        DiagSwEnumerator embedsw(en);
+        if (!forAllDiagnostics(embedsw))
+            return false;
+
         return true;
     }
 

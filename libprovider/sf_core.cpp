@@ -87,5 +87,7 @@ namespace solarflare
         else
             return String("unknown");
     }
+
+    const String DiagSWElement::diagSwGenName = "Diagnostic";
 } // namespace
 

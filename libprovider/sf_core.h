@@ -259,6 +259,53 @@ namespace solarflare
         }
     };
 
+    /// @brief Auxuliary class to represent software identity associated
+    ///        with a diagnostic instance
+    class DiagSWElement : public SWElement {
+        VersionInfo vers;
+        static const String diagSwGenName;
+
+      public:
+
+        DiagSWElement() : SWElement("", "") {}
+
+        DiagSWElement(const String& d, const String& sn,
+                      const VersionInfo version) :
+                             SWElement(d, sn), vers(version) {}
+
+        virtual String name() const
+        {
+            return sysName();
+        }
+
+        virtual VersionInfo version() const
+        {
+            return vers;
+        }
+
+        virtual bool syncInstall(const char *filename)
+        {
+            return false;
+        }
+
+        virtual SWClass classify() const
+        {
+            return SWDiagnostics;
+        }
+
+        virtual void initialize() {}
+
+        virtual bool isHostSw() const
+        {
+            return true;
+        }
+
+        virtual const String& genericName() const
+        {
+            return diagSwGenName;
+        }
+    };
+
     /// @brief Abstract class for bus components (currently, NICs and
     /// Ports).  A hardware element always has an ordinal number inside its
     /// parent object, and a PCI bus address.
