@@ -995,10 +995,10 @@ cleanup:
             String testName;
             Buffer buf;
 
-            buf.appends(owner->name().c_str());
-            buf.append(' ');
+            buf.appends(owner->nic()->name().c_str());
+            buf.appends(" Port ");
             buf.append_uint16(owner->elementId());
-            buf.appends(": ");
+            buf.append(' ');
 
             if (wmiGetStringProp(efxDiagTest, "Name", testName) == 0)
                 buf.appends(testName.c_str());
