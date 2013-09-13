@@ -118,6 +118,19 @@ namespace solarflare
         SWElement(const String& d, const String& sn) :
             SystemElement(d), sysname(sn), installer(this) {}
 
+        /// This is defined to prevent incorrect copying of
+        /// a child thread class member
+        SWElement &operator=(const SWElement &rhs)
+        {
+            if (this == &rhs)
+                return *this;
+
+            SystemElement::operator=(rhs);
+            sysname = rhs.sysname;
+
+            return *this;
+        }
+
         /// Returns version of the installed component. Platform-specific
         /// subclasses shall implement the actual behaviour and retrieve the
         /// version from OS or driver.

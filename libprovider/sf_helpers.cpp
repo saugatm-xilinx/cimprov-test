@@ -62,9 +62,6 @@ namespace solarflare
 
     const CIM_ComputerSystem *CIMHelper::findSystem()
     {
-        if (cimSystem)
-            return cast<CIM_ComputerSystem *>(cimSystem.ptr());
-
         static cimple::Mutex findSystemMutex;
         static const char * const namespaces[] =
         {
@@ -92,8 +89,11 @@ namespace solarflare
             &CIM_ComputerSystem::static_meta_class,
             NULL
         };
+
         cimple::Auto_Mutex guard(findSystemMutex);
 
+        if (cimSystem)
+            return cast<CIM_ComputerSystem *>(cimSystem.ptr());
 
         // Try to find Base Server Profile instance
         Ref<Instance> cimInstance;

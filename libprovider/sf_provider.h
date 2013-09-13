@@ -420,7 +420,6 @@ namespace solarflare
         static void allObjects(cimple::Enum_Instances_Handler<CIMClass> *handler)
         {
             EnumInstances<CIMClass> iter(handler);
-
             System::target.forAllObjects(iter);
         }
     };
