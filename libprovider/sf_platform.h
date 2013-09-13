@@ -621,6 +621,14 @@ namespace solarflare
         /// Apply en to all softwre packages in the system 
         virtual bool forAllPackages(ElementEnumerator& en) = 0;
 
+        virtual bool forAllDrivers(ConstElementEnumerator& en) const
+        {
+            return true;
+        };
+        virtual bool forAllDrivers(ElementEnumerator& en)
+        {
+            return true;
+        };
         virtual bool forAllPorts(ConstElementEnumerator& en) const;
         virtual bool forAllPorts(ElementEnumerator& en);
         virtual bool forAllInterfaces(ConstElementEnumerator& en) const;
@@ -631,6 +639,9 @@ namespace solarflare
         virtual bool forAllSoftware(ConstElementEnumerator& en) const;
         virtual bool forAllNDiagSoftware(ElementEnumerator& en);
         virtual bool forAllSoftware(ElementEnumerator& en);
+
+        virtual bool forAllObjects(ConstElementEnumerator& en) const;
+        virtual bool forAllObjects(ElementEnumerator& en);
         
         virtual const String& genericName() const { return systemName; }
 

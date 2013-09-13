@@ -24,7 +24,6 @@ namespace cimple
 };
 #endif
 
-
 /// This file contains some helpers and utilities
 /// for writing CIMPLE providers. None of the code is platform-dependent
 
@@ -421,12 +420,8 @@ namespace solarflare
         static void allObjects(cimple::Enum_Instances_Handler<CIMClass> *handler)
         {
             EnumInstances<CIMClass> iter(handler);
-            iter.process(System::target);
-            System::target.forAllSoftware(iter);
-            System::target.forAllNICs(iter);
-            System::target.forAllInterfaces(iter);
-            System::target.forAllPorts(iter);
-            System::target.forAllDiagnostics(iter);
+
+            System::target.forAllObjects(iter);
         }
     };
 

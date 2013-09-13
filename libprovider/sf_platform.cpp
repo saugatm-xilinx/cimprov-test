@@ -215,26 +215,6 @@ namespace solarflare
         }
     };
 
-    class NICFwEnumerator : public ElementEnumerator {
-        ElementEnumerator& en;
-    public:
-        NICFwEnumerator(ElementEnumerator& e) : en(e) {}
-        virtual bool process(SystemElement& n) 
-        {
-            return static_cast<NIC&>(n).forAllFw(en);
-        }
-    };
-
-    class ConstNICFwEnumerator : public ConstElementEnumerator {
-        ConstElementEnumerator& en;
-    public:
-        ConstNICFwEnumerator(ConstElementEnumerator& e) : en(e) {}
-        virtual bool process(const SystemElement& n) 
-        {
-            return static_cast<const NIC&>(n).forAllFw(en);
-        }
-    };
-
     class DiagSwEnumerator : public ElementEnumerator {
         ElementEnumerator& en;
     public:
@@ -252,6 +232,82 @@ namespace solarflare
         virtual bool process(const SystemElement& n) 
         {
             return static_cast<const Diagnostic&>(n).forAllSoftware(en);
+        }
+    };
+
+    class NICContentsEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
+    public:
+        NICContentsEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& se) 
+        {
+            NIC *nic = dynamic_cast<NIC *>(&se);
+
+            DiagSwEnumerator embedsw(en);
+
+            if (!en.process(*nic))
+                return false;
+
+            if (!nic->forAllPorts(en))
+                return false;
+            if (!nic->forAllInterfaces(en))
+                return false;
+            if (!nic->forAllDiagnostics(en))
+                return false;
+            if (!nic->forAllSoftware(en))
+                return false;
+            if (!nic->forAllDiagnostics(embedsw))
+                return false;
+
+            return true;
+        }
+    };
+
+    class ConstNICContentsEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
+    public:
+        ConstNICContentsEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& se) 
+        {
+            const NIC *nic = dynamic_cast<const NIC *>(&se);
+
+            ConstDiagSwEnumerator embedsw(en);
+
+            if (!en.process(*nic))
+                return false;
+
+            if (!nic->forAllPorts(en))
+                return false;
+            if (!nic->forAllInterfaces(en))
+                return false;
+            if (!nic->forAllDiagnostics(en))
+                return false;
+            if (!nic->forAllSoftware(en))
+                return false;
+            if (!nic->forAllDiagnostics(embedsw))
+                return false;
+
+            return true;
+        }
+    };
+
+    class NICFwEnumerator : public ElementEnumerator {
+        ElementEnumerator& en;
+    public:
+        NICFwEnumerator(ElementEnumerator& e) : en(e) {}
+        virtual bool process(SystemElement& n) 
+        {
+            return static_cast<NIC&>(n).forAllFw(en);
+        }
+    };
+
+    class ConstNICFwEnumerator : public ConstElementEnumerator {
+        ConstElementEnumerator& en;
+    public:
+        ConstNICFwEnumerator(ConstElementEnumerator& e) : en(e) {}
+        virtual bool process(const SystemElement& n) 
+        {
+            return static_cast<const NIC&>(n).forAllFw(en);
         }
     };
 
@@ -301,7 +357,7 @@ namespace solarflare
         if (!forAllNICs(embedfw))
             return false;
 
-        return true;
+        return forAllDrivers(en);
     }
 
     bool System::forAllSoftware(ConstElementEnumerator& en) const
@@ -326,7 +382,7 @@ namespace solarflare
         if (!forAllNICs(embedfw))
             return false;
 
-        return true;
+        return forAllDrivers(en);
     }
 
     bool System::forAllSoftware(ElementEnumerator& en)
@@ -336,6 +392,46 @@ namespace solarflare
 
         DiagSwEnumerator embedsw(en);
         if (!forAllDiagnostics(embedsw))
+            return false;
+
+        return true;
+    }
+
+    bool System::forAllObjects(ConstElementEnumerator& en) const
+    {
+        en.process(System::target);
+
+        // Enumerate software in packages
+        ConstPackageContentsEnumerator embedPkg(en);
+        if (!forAllPackages(embedPkg))
+            return false;
+
+        if (!forAllDrivers(en))
+            return false;
+
+        // Enumerate NICs and all objects they contain
+        ConstNICContentsEnumerator embedNIC(en);
+        if (!forAllNICs(embedNIC))
+            return false;
+
+        return true;
+    }
+
+    bool System::forAllObjects(ElementEnumerator& en)
+    {
+        en.process(System::target);
+
+        // Enumerate software in packages
+        PackageContentsEnumerator embedPkg(en);
+        if (!forAllPackages(embedPkg))
+            return false;
+
+        if (!forAllDrivers(en))
+            return false;
+
+        // Enumerate NICs and all objects they contain
+        NICContentsEnumerator embedNIC(en);
+        if (!forAllNICs(embedNIC))
             return false;
 
         return true;

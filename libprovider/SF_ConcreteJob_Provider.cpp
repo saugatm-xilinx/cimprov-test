@@ -33,8 +33,7 @@ Enum_Instances_Status SF_ConcreteJob_Provider::enum_instances(
     const SF_ConcreteJob* model,
     Enum_Instances_Handler<SF_ConcreteJob>* handler)
 {
-    solarflare::EnumInstances<SF_ConcreteJob>::allSoftware(handler);
-    solarflare::EnumInstances<SF_ConcreteJob>::allDiagnostics(handler);
+    solarflare::EnumInstances<SF_ConcreteJob>::allObjects(handler);
     
     return ENUM_INSTANCES_OK;
 }

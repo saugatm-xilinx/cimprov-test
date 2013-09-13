@@ -36,8 +36,7 @@ Enum_Instances_Status SF_HostedService_Provider::enum_instances(
     const SF_HostedService* model,
     Enum_Instances_Handler<SF_HostedService>* handler)
 {
-    solarflare::EnumInstances<SF_HostedService>::allSoftware(handler);
-    solarflare::EnumInstances<SF_HostedService>::allDiagnostics(handler);
+    solarflare::EnumInstances<SF_HostedService>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 

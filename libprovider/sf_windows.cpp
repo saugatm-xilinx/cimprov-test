@@ -1973,8 +1973,8 @@ cleanup:
         {
             mgmtPackage.initialize();
         };
-        bool forAllDrivers(ConstElementEnumerator& en) const;
-        bool forAllDrivers(ElementEnumerator& en);
+        virtual bool forAllDrivers(ConstElementEnumerator& en) const;
+        virtual bool forAllDrivers(ElementEnumerator& en);
     public:
         static WindowsSystem target;
         bool is64bit() const { return true; }
@@ -2013,8 +2013,6 @@ cleanup:
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
-        bool forAllSoftware(ConstElementEnumerator& en) const;
-        bool forAllSoftware(ElementEnumerator& en);
         virtual int saveVariable(const String &id, const String &val) const;
         virtual int loadVariable(const String &id, String &val) const;
     };
@@ -2120,20 +2118,6 @@ cleanup:
     bool WindowsSystem::forAllPackages(ElementEnumerator& en)
     {
         return en.process(mgmtPackage);
-    }
-
-    bool WindowsSystem::forAllSoftware(ConstElementEnumerator& en) const
-    {
-        if (!System::forAllSoftware(en))
-            return false;
-        return forAllDrivers(en);
-    }
-    
-    bool WindowsSystem::forAllSoftware(ElementEnumerator& en)
-    {
-        if (!System::forAllSoftware(en))
-            return false;
-        return forAllDrivers(en);
     }
 
     int WindowsSystem::saveVariable(const String &id,

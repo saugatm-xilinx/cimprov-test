@@ -38,9 +38,7 @@ Enum_Instances_Status SF_ControllerSoftwareIdentity_Provider::enum_instances(
     const SF_ControllerSoftwareIdentity* model,
     Enum_Instances_Handler<SF_ControllerSoftwareIdentity>* handler)
 {
-    solarflare::EnumInstances<SF_ControllerSoftwareIdentity>::allNICs(handler);
-    solarflare::EnumInstances<SF_ControllerSoftwareIdentity>::allSoftware(handler);
-    solarflare::EnumInstances<SF_ControllerSoftwareIdentity>::allDiagnostics(handler);
+    solarflare::EnumInstances<SF_ControllerSoftwareIdentity>::allObjects(handler);
     return ENUM_INSTANCES_OK;
 }
 

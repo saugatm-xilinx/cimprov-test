@@ -158,7 +158,7 @@ namespace solarflare
     {
         const CIM_ComputerSystem *system = findSystem();
         SF_PortController *newPC = SF_PortController::create(true);
-    
+
         newPC->CreationClassName.set("SF_PortController");
         newPC->DeviceID.set(static_cast<const NIC&>(nic).vitalProductData().id());
         newPC->SystemCreationClassName.set(system->CreationClassName.value);
