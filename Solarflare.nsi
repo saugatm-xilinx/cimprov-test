@@ -23,11 +23,21 @@ InstallDir "$PROGRAMFILES\Solarflare Communications\Solarflare CIM provider"
 RequestExecutionLevel admin 
 
 !if ${CIM_INTERFACE} == cmpi
-!define PegasusPath 'c:\cimom\pegasus_2.11.2\bin'
+!define PegasusRoot 'c:\cimom\pegasus_2.11.2'
+!define PegasusPath '${PegasusRoot}\bin'
 !define ProviderDLL '"${PegasusPath}\${PROVIDERNAME}.dll"'
 !else
 !define ProviderDLL '"$SYSDIR\wbem\${PROVIDERNAME}.dll"'
 !endif
+
+!macro SilentExec Command Args
+   nsExec::ExecToLog '"${Command}" ${Args}'
+   Pop $0
+   StrCmp $0 "error" +2 0
+   StrCmp $0 "0" +3 +2
+   Abort "${Command} cannot be executed"
+   Abort "${Command} returned $0"
+!macroend
 
 Section ProviderDLL
 
@@ -46,16 +56,16 @@ File libcimobjects/schema.mof
 !if ${CIM_INTERFACE} == cmpi
 File libcimobjects/interop.mof
 File repository.reg
-ExecWait '${PegasusPath}\cimmof.exe -n ${NAMESPACE} "$INSTDIR\schema.mof"'
-ExecWait '${PegasusPath}\cimmof.exe -n ${NAMESPACE} "$INSTDIR\repository.mof"'
-ExecWait '${PegasusPath}\cimmof.exe -n ${INTEROP_NAMESPACE} "$INSTDIR\interop.mof"'
-ExecWait '${PegasusPath}\cimmof.exe -n ${INTEROP_NAMESPACE} "$INSTDIR\repository.reg"'
+!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\schema.mof"'
+!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\repository.mof"'
+!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\interop.mof"'
+!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\repository.reg"'
 !else
 File libprovider/register.mof
 File libprovider/unregister.mof
-ExecWait 'mofcomp.exe -N:${NAMESPACE} "$INSTDIR\schema.mof"'
-ExecWait 'mofcomp.exe -N:${NAMESPACE} "$INSTDIR\repository.mof"'
-ExecWait 'mofcomp.exe -N:${NAMESPACE} "$INSTDIR\register.mof"'
+!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\schema.mof"'
+!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\repository.mof"'
+!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\register.mof"'
 !endif
 SectionEnd
 
@@ -69,21 +79,23 @@ SectionEnd
 Section un.MOFs
 
 !if ${CIM_INTERFACE} == cmpi
-ExecWait '${PegasusPath}\cimprovider.exe -r -m ${PROVIDERNAME}_Module'
+!insertmacro SilentExec '${PegasusPath}\cimprovider.exe' '-r -m ${PROVIDERNAME}_Module'
+!insertmacro SilentExec 'sc' 'stop cimserver'
+RMDir /r '${PegasusRoot}\repository\root#solarflare'
+!insertmacro SilentExec 'sc' 'start cimserver'
 Delete $INSTDIR\repository.reg
 Delete $INSTDIR\interop.mof
 !else
-ExecWait 'wmic path __Win32Provider.Name="Solarflare" delete'
-ExecWait `wmic path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-ExecWait `wmic path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-ExecWait `wmic path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-ExecWait 'mofcomp.exe -N:${NAMESPACE} "$INSTDIR\unregister.mof"'
+!insertmacro SilentExec wmic 'path __Win32Provider.Name="Solarflare" delete'
+!insertmacro SilentExec wmic 'path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+!insertmacro SilentExec wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+!insertmacro SilentExec wmic `path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\unregister.mof"'
 Delete $INSTDIR\unregister.mof
 Delete $INSTDIR\register.mof
-Delete $INSTDIR\schema.mof
 !endif
 Delete $INSTDIR\repository.mof
-
+Delete $INSTDIR\schema.mof
 SectionEnd
 
 Section un.ProviderDLL
@@ -99,6 +111,7 @@ SectionEnd
 
 Section uninstall
 
+DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}"
 Delete $INSTDIR\uninstall.exe
 RmDir $INSTDIR
 
