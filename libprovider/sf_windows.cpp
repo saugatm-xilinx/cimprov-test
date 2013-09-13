@@ -1024,7 +1024,8 @@ cleanup:
 
     class WindowsPort : public Port {
         const NIC *owner;
-        Array<WindowsDiagnostic *> diags;
+        mutable Array<WindowsDiagnostic *> diags;
+        mutable bool diagsInitialized;
         PortDescr portInfo;
         friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
                                              const Port *port);
@@ -1033,6 +1034,7 @@ cleanup:
         WindowsPort(const NIC *up, unsigned i, PortDescr &descr) :
             Port(i), 
             owner(up), 
+            diagsInitialized(false),
             portInfo(descr) {}
 
         void clear()
@@ -1166,7 +1168,7 @@ cleanup:
             return owner->pciAddress().fn(portInfo.pci_fn);
         }
 
-        virtual void initialize()
+        virtual void diagsInitialize() const
         {
             int                       rc = 0;
             Array<IWbemClassObject *> efxDiagTests;
@@ -1174,6 +1176,9 @@ cleanup:
             char                      query[WMI_QUERY_MAX];
  
             WindowsDiagnostic *diag = NULL;
+
+            if (diagsInitialized)
+                return;
 
             // WillBlock='false' means that we do not run tests
             // from provider which "require user assistance".
@@ -1204,6 +1209,7 @@ cleanup:
                 diag = NULL;
             }
 
+            diagsInitialized = true;
 cleanup:
             if (diag != NULL)
                 delete diag;
@@ -1222,11 +1228,15 @@ cleanup:
                 }
                 diags.clear();
             }
-        };
+        }
+
+        virtual void initialize() {}
 
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             unsigned int i;
+
+            diagsInitialize();
 
             for (i = 0; i < diags.size(); i++)
                 if (!en.process(*(diags[i])))
@@ -1238,6 +1248,8 @@ cleanup:
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             unsigned int i;
+
+            diagsInitialize();
 
             for (i = 0; i < diags.size(); i++)
                 if (!en.process(*(diags[i])))
