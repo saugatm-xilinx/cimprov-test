@@ -468,4 +468,29 @@ cleanup:
 
         return 0;
     }
+
+    /// Described in sf_wmi.h.
+    int querySingleObj(IWbemServices *wbemSvc,
+                       const char *query, IWbemClassObject *&obj)
+    {
+        Array<IWbemClassObject *> objs;
+        unsigned int              i;
+        int                       rc;
+
+        rc = wmiEnumInstancesQuery(wbemSvc, query, objs);
+        if (rc != 0)
+            return rc;
+        if (objs.size() != 1)
+        {
+            CIMPLE_ERR(("%s():   incorrect number %u of matching "
+                        "objects found, query '%s'", __FUNCTION__,
+                        objs.size(), query));
+            for (i = 0; i < objs.size(); i++)
+                objs[i]->Release();
+            return -1;
+        }
+
+        obj = objs[0];
+        return 0;
+    }
 }

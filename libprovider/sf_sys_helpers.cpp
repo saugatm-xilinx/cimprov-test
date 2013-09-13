@@ -5,8 +5,8 @@
 #include "SF_ConcreteJob.h"
 #include "CIM_OperatingSystem.h"
 #include "SF_LogEntry.h"
-#include "SF_RecordLog.h"
-#include "SF_RecordLogCapabilities.h"
+#include "SF_ProviderLog.h"
+#include "SF_ProviderLogCapabilities.h"
 #include "SF_SystemUseOfLog.h"
 #include "SF_LogManagesRecord.h"
 #include "SF_RegisteredProfile.h"
@@ -22,8 +22,8 @@ namespace solarflare
     using cimple::cast;
     using cimple::is_a;
     using cimple::SF_LogEntry;
-    using cimple::SF_RecordLog;
-    using cimple::SF_RecordLogCapabilities;
+    using cimple::SF_ProviderLog;
+    using cimple::SF_ProviderLogCapabilities;
     using cimple::SF_ElementCapabilities;
     using cimple::SF_SystemUseOfLog;
     using cimple::SF_LogManagesRecord;
@@ -41,7 +41,7 @@ namespace solarflare
         static unsigned indexToLogIndex(unsigned idx);
     };
 
-    class RecordLogHelper : public CIMHelper {
+    class ProviderLogHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const;
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
@@ -49,26 +49,26 @@ namespace solarflare
         virtual bool match(const SystemElement&, const Instance& inst, unsigned idx) const;
     };
 
-    class RecordLogCapabilitiesHelper : public CIMHelper {
+    class ProviderLogCapabilitiesHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const;
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
         virtual Instance *reference(const SystemElement&, unsigned idx) const;
     };
 
-    class RecordLogCapsLinkHelper : public CIMHelper {
+    class ProviderLogCapsLinkHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const;
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
     };
 
-    class RecordLogUseOfLogHelper : public CIMHelper {
+    class ProviderLogUseOfLogHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const;
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
     };
 
-    class RecordLogManagesRecordHelper : public CIMHelper {
+    class ProviderLogManagesRecordHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const;
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
@@ -182,7 +182,7 @@ namespace solarflare
         return le->InstanceID.value == instanceID(log->description());
     }
 
-    unsigned RecordLogHelper::nObjects(const SystemElement&) const
+    unsigned ProviderLogHelper::nObjects(const SystemElement&) const
     {
         unsigned n = 0;
         for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
@@ -190,17 +190,17 @@ namespace solarflare
         return n;
     }
 
-    Instance *RecordLogHelper::reference(const SystemElement&, unsigned idx) const
+    Instance *ProviderLogHelper::reference(const SystemElement&, unsigned idx) const
     {
-        SF_RecordLog *newLog = SF_RecordLog::create(true);
+        SF_ProviderLog *newLog = SF_ProviderLog::create(true);
         
         newLog->InstanceID.set(CIMHelper::instanceID(Logger::knownLogs[idx]->description()));
         return newLog;
     }
 
-    Instance *RecordLogHelper::instance(const SystemElement& sys, unsigned idx) const
+    Instance *ProviderLogHelper::instance(const SystemElement& sys, unsigned idx) const
     {
-        SF_RecordLog *newLog = static_cast<SF_RecordLog *>(reference(sys, idx));
+        SF_ProviderLog *newLog = static_cast<SF_ProviderLog *>(reference(sys, idx));
         const Logger *log = Logger::knownLogs[idx];
 
         newLog->Name.set(log->description());
@@ -210,32 +210,32 @@ namespace solarflare
         newLog->Description.set(log->description());
 #if CIM_SCHEMA_VERSION_MINOR > 0
         newLog->OperationalStatus.null = false;
-        newLog->OperationalStatus.value.append(SF_RecordLog::_OperationalStatus::enum_OK);
+        newLog->OperationalStatus.value.append(SF_ProviderLog::_OperationalStatus::enum_OK);
         newLog->HealthState.null = false;
-        newLog->HealthState.value = SF_RecordLog::_HealthState::enum_OK;
+        newLog->HealthState.value = SF_ProviderLog::_HealthState::enum_OK;
         newLog->OperatingStatus.null = false;
         newLog->OperatingStatus.value =
-                          SF_RecordLog::_OperatingStatus::enum_Not_Available;
+                          SF_ProviderLog::_OperatingStatus::enum_Not_Available;
 #endif
         newLog->EnabledState.null = false;
         newLog->EnabledState.value = (log->isEnabled() ? 
-                                      SF_RecordLog::_EnabledState::enum_Enabled :
-                                      SF_RecordLog::_EnabledState::enum_Disabled);
+                                      SF_ProviderLog::_EnabledState::enum_Enabled :
+                                      SF_ProviderLog::_EnabledState::enum_Disabled);
         newLog->RequestedState.null = false;
-        newLog->RequestedState.value = SF_RecordLog::_RequestedState::enum_No_Change;
+        newLog->RequestedState.value = SF_ProviderLog::_RequestedState::enum_No_Change;
         newLog->LogState.null = false;
         newLog->LogState.value = (log->isEnabled() ?
-                                  SF_RecordLog::_LogState::enum_Normal :
-                                  SF_RecordLog::_LogState::enum_Not_Applicable);
+                                  SF_ProviderLog::_LogState::enum_Normal :
+                                  SF_ProviderLog::_LogState::enum_Not_Applicable);
         newLog->OverwritePolicy.null = false;
-        newLog->OverwritePolicy.value = SF_RecordLog::_OverwritePolicy::enum_Wraps_When_Full;
+        newLog->OverwritePolicy.value = SF_ProviderLog::_OverwritePolicy::enum_Wraps_When_Full;
         newLog->MaxNumberOfRecords.set(log->logSize());
         newLog->CurrentNumberOfRecords.set(log->currentSize());
         
         return newLog;
     }
 
-    bool RecordLogHelper::match(const SystemElement&, const Instance& instance, unsigned idx) const
+    bool ProviderLogHelper::match(const SystemElement&, const Instance& instance, unsigned idx) const
     {
         const cimple::CIM_RecordLog *logObj = cast<const cimple::CIM_RecordLog *>(&instance);
         if (logObj == NULL)
@@ -247,7 +247,7 @@ namespace solarflare
         return CIMHelper::instanceID(Logger::knownLogs[idx]->description()) == logObj->InstanceID.value;
     }
 
-    unsigned RecordLogCapabilitiesHelper::nObjects(const SystemElement&) const
+    unsigned ProviderLogCapabilitiesHelper::nObjects(const SystemElement&) const
     {
         unsigned n = 0;
         for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
@@ -255,18 +255,18 @@ namespace solarflare
         return n;
     }
 
-    Instance *RecordLogCapabilitiesHelper::reference(const SystemElement&, unsigned idx) const
+    Instance *ProviderLogCapabilitiesHelper::reference(const SystemElement&, unsigned idx) const
     {
-        SF_RecordLogCapabilities *newRlc = SF_RecordLogCapabilities::create(true);
+        SF_ProviderLogCapabilities *newRlc = SF_ProviderLogCapabilities::create(true);
         newRlc->InstanceID.set(CIMHelper::instanceID(Logger::knownLogs[idx]->description()));
         newRlc->InstanceID.value.append(" Capabilities");
 
         return newRlc;
     }
 
-    Instance *RecordLogCapabilitiesHelper::instance(const SystemElement& sys, unsigned idx) const
+    Instance *ProviderLogCapabilitiesHelper::instance(const SystemElement& sys, unsigned idx) const
     {
-        SF_RecordLogCapabilities *newRlc = static_cast<SF_RecordLogCapabilities *>(reference(sys, idx));
+        SF_ProviderLogCapabilities *newRlc = static_cast<SF_ProviderLogCapabilities *>(reference(sys, idx));
         const Logger *log = Logger::knownLogs[idx];
 
         
@@ -274,35 +274,35 @@ namespace solarflare
         newRlc->ElementName.set(log->description());
         
         newRlc->SupportedRecordTypes.null = false;
-        newRlc->SupportedRecordTypes.value.append(SF_RecordLogCapabilities::_SupportedRecordTypes::enum_Record_Data);
+        newRlc->SupportedRecordTypes.value.append(SF_ProviderLogCapabilities::_SupportedRecordTypes::enum_Record_Data);
         newRlc->ElementNameEditSupported.set(false);
         newRlc->RequestedStatesSupported.null = false;
 
         return newRlc;
     }
 
-    unsigned RecordLogCapsLinkHelper::nObjects(const SystemElement& sys) const
+    unsigned ProviderLogCapsLinkHelper::nObjects(const SystemElement& sys) const
     {
-        static const RecordLogHelper delegate;
+        static const ProviderLogHelper delegate;
         return delegate.nObjects(sys);
     }
 
-    Instance *RecordLogCapsLinkHelper::instance(const SystemElement& se, unsigned idx) const
+    Instance *ProviderLogCapsLinkHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        ElementCapabilitiesHelper capsLink(SF_RecordLog::static_meta_class,
-                                           SF_RecordLogCapabilities::static_meta_class);
+        ElementCapabilitiesHelper capsLink(SF_ProviderLog::static_meta_class,
+                                           SF_ProviderLogCapabilities::static_meta_class);
         return capsLink.instance(se, idx);
     }
 
-    unsigned RecordLogUseOfLogHelper::nObjects(const SystemElement& sys) const
+    unsigned ProviderLogUseOfLogHelper::nObjects(const SystemElement& sys) const
     {
-        static const RecordLogHelper delegate;
+        static const ProviderLogHelper delegate;
         return delegate.nObjects(sys);
     }
 
-    Instance *RecordLogUseOfLogHelper::instance(const SystemElement& se, unsigned idx) const
+    Instance *ProviderLogUseOfLogHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        Instance *log = se.cimReference(SF_RecordLog::static_meta_class, idx);
+        Instance *log = se.cimReference(SF_ProviderLog::static_meta_class, idx);
         CIM_ComputerSystem *sys = solarflare::CIMHelper::findSystem()->clone();
         SF_SystemUseOfLog *link = SF_SystemUseOfLog::create(true);
         
@@ -314,20 +314,20 @@ namespace solarflare
         return link;
     }
 
-    unsigned RecordLogManagesRecordHelper::nObjects(const SystemElement& sys) const
+    unsigned ProviderLogManagesRecordHelper::nObjects(const SystemElement& sys) const
     {
         static const LogEntryHelper delegate;
         return delegate.nObjects(sys);
     }
 
-    Instance *RecordLogManagesRecordHelper::instance(const SystemElement& se, unsigned idx) const
+    Instance *ProviderLogManagesRecordHelper::instance(const SystemElement& se, unsigned idx) const
     {
         Instance *entry = se.cimReference(SF_LogEntry::static_meta_class, idx);
         unsigned logId = LogEntryHelper::indexToLogIndex(idx);
         
         SF_LogManagesRecord *link = SF_LogManagesRecord::create(true);
 
-        link->Log = cast<cimple::CIM_Log *>(se.cimReference(SF_RecordLog::static_meta_class, logId));
+        link->Log = cast<cimple::CIM_Log *>(se.cimReference(SF_ProviderLog::static_meta_class, logId));
         link->Record = static_cast<cimple::CIM_RecordForLog *>(entry);
 
         return link;
@@ -426,20 +426,20 @@ namespace solarflare
     const CIMHelper *System::cimDispatch(const Meta_Class& cls) const
     {
         static const LogEntryHelper logEntryHelper;
-        static const RecordLogHelper recordLogHelper;
-        static const RecordLogCapabilitiesHelper recordLogCapabilitiesHelper;
-        static const RecordLogUseOfLogHelper useOfLogHelper;
-        static const RecordLogManagesRecordHelper logManagesRecordHelper;
+        static const ProviderLogHelper providerLogHelper;
+        static const ProviderLogCapabilitiesHelper providerLogCapabilitiesHelper;
+        static const ProviderLogUseOfLogHelper useOfLogHelper;
+        static const ProviderLogManagesRecordHelper logManagesRecordHelper;
         static const RegisteredProfileHelper registeredProfileHelper;
         static const ReferencedProfileHelper referencedProfileHelper;
-        static const RecordLogCapsLinkHelper capsLink;
+        static const ProviderLogCapsLinkHelper capsLink;
 
         if (&cls == &SF_LogEntry::static_meta_class)
             return &logEntryHelper;
-        if (&cls == &SF_RecordLog::static_meta_class)
-            return &recordLogHelper;
-        if (&cls == &SF_RecordLogCapabilities::static_meta_class)
-            return &recordLogCapabilitiesHelper;          
+        if (&cls == &SF_ProviderLog::static_meta_class)
+            return &providerLogHelper;
+        if (&cls == &SF_ProviderLogCapabilities::static_meta_class)
+            return &providerLogCapabilitiesHelper;          
         if (&cls == &SF_SystemUseOfLog::static_meta_class)
             return &useOfLogHelper;
         if (&cls == &SF_LogManagesRecord::static_meta_class)

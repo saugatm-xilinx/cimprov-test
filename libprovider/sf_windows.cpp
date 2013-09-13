@@ -995,10 +995,10 @@ cleanup:
             String testName;
             Buffer buf;
 
-            buf.appends(owner->name().c_str());
-            buf.append(' ');
+            buf.appends(owner->nic()->name().c_str());
+            buf.appends(" Port ");
             buf.append_uint16(owner->elementId());
-            buf.appends(": ");
+            buf.append(' ');
 
             if (wmiGetStringProp(efxDiagTest, "Name", testName) == 0)
                 buf.appends(testName.c_str());
@@ -1024,7 +1024,8 @@ cleanup:
 
     class WindowsPort : public Port {
         const NIC *owner;
-        Array<WindowsDiagnostic *> diags;
+        mutable Array<WindowsDiagnostic *> diags;
+        mutable bool diagsInitialized;
         PortDescr portInfo;
         friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
                                              const Port *port);
@@ -1033,6 +1034,7 @@ cleanup:
         WindowsPort(const NIC *up, unsigned i, PortDescr &descr) :
             Port(i), 
             owner(up), 
+            diagsInitialized(false),
             portInfo(descr) {}
 
         void clear()
@@ -1166,7 +1168,7 @@ cleanup:
             return owner->pciAddress().fn(portInfo.pci_fn);
         }
 
-        virtual void initialize()
+        virtual void diagsInitialize() const
         {
             int                       rc = 0;
             Array<IWbemClassObject *> efxDiagTests;
@@ -1174,6 +1176,9 @@ cleanup:
             char                      query[WMI_QUERY_MAX];
  
             WindowsDiagnostic *diag = NULL;
+
+            if (diagsInitialized)
+                return;
 
             // WillBlock='false' means that we do not run tests
             // from provider which "require user assistance".
@@ -1204,6 +1209,7 @@ cleanup:
                 diag = NULL;
             }
 
+            diagsInitialized = true;
 cleanup:
             if (diag != NULL)
                 delete diag;
@@ -1222,11 +1228,15 @@ cleanup:
                 }
                 diags.clear();
             }
-        };
+        }
+
+        virtual void initialize() {}
 
         virtual bool forAllDiagnostics(ElementEnumerator& en)
         {
             unsigned int i;
+
+            diagsInitialize();
 
             for (i = 0; i < diags.size(); i++)
                 if (!en.process(*(diags[i])))
@@ -1238,6 +1248,8 @@ cleanup:
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             unsigned int i;
+
+            diagsInitialize();
 
             for (i = 0; i < diags.size(); i++)
                 if (!en.process(*(diags[i])))
@@ -1540,25 +1552,29 @@ cleanup:
 
     WindowsDriver WindowsDriver::byDeviceID(const String& deviceID, const String& version)
     {
-            String entityPath("Win32_PnPEntity.DeviceID=\"");
-            String sysDriverPath("Win32_SystemDriver.Name=\"");
+            String entityQuery("SELECT * FROM Win32_PnPEntity "
+                               "WHERE DeviceID=\"");
+            String sysDriverQuery("SELECT * FROM Win32_SystemDriver "
+                                  "WHERE Name=\"");
             String serviceName;
             String driverBinary;
             String driverDescription;
 
-            appendDeviceID(deviceID.c_str(), NULL, entityPath);
-            entityPath.append('"');
+            appendDeviceID(deviceID.c_str(), NULL, entityQuery);
+            entityQuery.append('"');
 
-            IWbemClassObject *entity;
-            if (wmiGetObject(cimWMIConn, entityPath.c_str(), &entity) < 0)
+            IWbemClassObject *entity = NULL;
+            if (querySingleObj(cimWMIConn, entityQuery.c_str(),
+                               entity) < 0)
                 return WindowsDriver("", "", VersionInfo());
             wmiGetStringProp(entity, "Service", serviceName);
             entity->Release();
             
-            sysDriverPath.append(serviceName);
-            sysDriverPath.append('"');
-            IWbemClassObject *sysDriver;
-            if (wmiGetObject(cimWMIConn, sysDriverPath.c_str(), &sysDriver) < 0)
+            sysDriverQuery.append(serviceName);
+            sysDriverQuery.append('"');
+            IWbemClassObject *sysDriver = NULL;
+            if (querySingleObj(cimWMIConn, sysDriverQuery.c_str(),
+                               sysDriver) < 0)
                 return WindowsDriver("", "", VersionInfo());
             wmiGetStringProp(sysDriver, "PathName", driverBinary);
             wmiGetStringProp(sysDriver, "Description", driverDescription);
@@ -1570,7 +1586,8 @@ cleanup:
             else
                 properName = driverBinary.c_str();
             
-            return WindowsDriver(driverDescription, properName, VersionInfo(version.c_str()));
+            return WindowsDriver(driverDescription, properName,
+                                 VersionInfo(version.c_str()));
     }    
 
     WindowsDriver WindowsDriver::byNICDescr(const NICDescr &ndesc)
@@ -1941,8 +1958,7 @@ cleanup:
                     CIMPLE_ERR(("CoCreateInstance() returned %ld(0x%lx)",
                                 static_cast<long int>(hr),
                                 static_cast<long int>(hr)));
-
-                if (!FAILED(hr))
+                else
                     wbemLocator->Release();
             }
         };
@@ -2047,9 +2063,11 @@ cleanup:
 
     bool WindowsSystem::forAllDrivers(ElementEnumerator &en)
     {
-        int  rc;
-        bool result = true;
+        int                       rc;
+        bool                      result = true;
         Array<IWbemClassObject *> drivers;
+        Array<String>             drvNames;
+        unsigned int              j;
 
         rc = wmiEnumInstancesQuery(cimWMIConn, 
                                    "SELECT * FROM Win32_PnPSignedDriver "
@@ -2066,10 +2084,19 @@ cleanup:
             wmiGetStringProp(drivers[i], "DriverVersion", version);
 
             WindowsDriver drv = WindowsDriver::byDeviceID(deviceID, version);
-            if (!en.process(drv))
+
+            for (j = 0; j < drvNames.size(); j++)
+                if (strcmp(drvNames[j].c_str(), drv.name().c_str()) == 0)
+                    break;
+
+            if (j >= drvNames.size())
             {
-                result = false;
-                break;
+                drvNames.append(drv.name());
+                if (!en.process(drv))
+                {
+                    result = false;
+                    break;
+                }
             }
         }
 
@@ -2608,37 +2635,6 @@ cleanup:
         return 0;
     }
 
-    ///
-    /// Get the only object matching a query.
-    ///
-    /// @param query          Query
-    /// @param obj      [out] Object pointer
-    ///
-    /// @return 0 on success, -1 on failure
-    ///
-    static int querySingleObj(const char *query, IWbemClassObject *&obj)
-    {
-        Array<IWbemClassObject *> objs;
-        unsigned int              i;
-        int                       rc;
-
-        rc = wmiEnumInstancesQuery(NULL, query, objs);
-        if (rc != 0)
-            return rc;
-        if (objs.size() != 1)
-        {
-            CIMPLE_ERR(("%s():   incorrect number %u of matching "
-                        "objects found, query '%s'", __FUNCTION__,
-                        objs.size(), query));
-            for (i = 0; i < objs.size(); i++)
-                objs[i]->Release();
-            return -1;
-        }
-
-        obj = objs[0];
-        return 0;
-    }
-
     Diagnostic::Result WindowsDiagnostic::syncTest() 
     {
         static Mutex  lock(false);
@@ -2716,7 +2712,7 @@ cleanup:
 
         bufQuery.format("Select * From EFX_DiagnosticJob Where Id=%lu",
                         (long unsigned int)jobId);
-        rc = querySingleObj(bufQuery.data(), job);
+        rc = querySingleObj(NULL, bufQuery.data(), job);
         if (rc != 0)
             goto cleanup;
 
@@ -2729,7 +2725,7 @@ cleanup:
         bufQuery.format("Select * From EFX_DiagnosticConfigurationParams "
                         "Where Id=%lu",
                         static_cast<long unsigned int>(jobId));
-        rc = querySingleObj(bufQuery.data(), jobConf);
+        rc = querySingleObj(NULL, bufQuery.data(), jobConf);
         if (rc != 0)
             goto cleanup;
 

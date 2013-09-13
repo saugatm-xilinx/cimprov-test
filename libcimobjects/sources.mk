@@ -4,7 +4,13 @@ libcimobjects_DIR = libcimobjects
 libcimobjects_INCLUDES = $(libcimobjects_DIR)
 libcimobjects_DEPENDS = $(CIMPLE_COMPONENT)
 
-libcimobjects_EXTRA_MOF = CIM_OperatingSystem 
+libcimobjects_EXTRA_MOF = CIM_OperatingSystem SF_ServiceAffectsElement
+libcimobjects_EXTRA_MOF += SF_InstCreation SF_InstModification SF_AlertIndication
+libcimobjects_EXTRA_MOF += SF_Card SF_ConnectorOnPackage SF_OrderedComponent
+libcimobjects_EXTRA_MOF += SF_DeviceSAPImplementation SF_Realizes
+libcimobjects_EXTRA_MOF += SF_UseOfLog SF_RecordLogCapabilities SF_RecordLog
+libcimobjects_EXTRA_MOF += SF_ElementSoftwareIdentity
+
 ifeq ($(CIM_SERVER),pegasus)
 libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem PG_ComputerSystem PG_RegisteredProfile 
 endif
@@ -35,15 +41,22 @@ $(libcimobjects_DIR)/classes.mk : $(libcimobjects_DIR)/.genclass
 	$(AWK) '{ print "libcimobjects_SOURCES += ", $$0 }' $< >$@
 
 libcimobjects_MOF_CPPFLAGS = -DINSTANCE='$(MOF_INSTANCE_DEF)' -DASSOCIATION='$(MOF_ASSOCIATION_DEF)' \
-							 -DINDICATION='$(MOF_INDICATION_DEF)'
+	-DINDICATION='$(MOF_INDICATION_DEF)' -DINSTANCE_NWMI='$(MOF_INSTANCE_NWMI_DEF)' \
+	-DASSOCIATION_NWMI='$(MOF_ASSOCIATION_NWMI_DEF)' -DINDICATION_NWMI='$(MOF_INDICATION_NWMI_DEF)'
 ifeq ($(CIM_SERVER),wmi)
 MOF_INSTANCE_DEF = [dynamic, provider("$(PROVIDER_LIBRARY)")]
 MOF_ASSOCIATION_DEF = $(MOF_INSTANCE_DEF)
 MOF_INDICATION_DEF = [dynamic, provider("$(PROVIDER_LIBRARY)"), Indication]
+MOF_INSTANCE_NWMI_DEF = 
+MOF_ASSOCIATION_NWMI_DEF =
+MOF_INDICATION_NWMI_DEF =
 else
 MOF_INSTANCE_DEF = 
 MOF_ASSOCIATION_DEF = [Association]
 MOF_INDICATION_DEF = [Indication]
+MOF_INSTANCE_NWMI_DEF = 
+MOF_ASSOCIATION_NWMI_DEF = [Association]
+MOF_INDICATION_NWMI_DEF = [Indication]
 endif
 
 MOF_PREPROCESS := $(target_CXX) -E -P -DTARGET_CIM_SERVER_$(CIM_SERVER) \

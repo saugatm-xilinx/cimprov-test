@@ -2,7 +2,7 @@ SF_SoftwareIdentity
 SF_ConcreteJob
 SF_InstalledSoftwareIdentity
 SF_DiagElementSoftwareIdentity
-SF_ElementSoftwareIdentity
+SF_ControllerSoftwareIdentity
 SF_BundleComponent
 SF_ComputerSystem
 SF_NICCard
@@ -13,6 +13,7 @@ SF_PortController
 SF_EnabledLogicalElementCapabilities
 SF_SystemDevice
 SF_ConnectorRealizesPort
+SF_ConnectorRealizesController
 SF_CardRealizesController
 SF_LANEndpoint
 SF_NICSAPImplementation
@@ -26,8 +27,8 @@ SF_ServiceAffectsSoftware
 SF_HostedService
 SF_ControlledBy
 SF_HostedAccessPoint
-SF_RecordLog
-SF_RecordLogCapabilities
+SF_ProviderLog
+SF_ProviderLogCapabilities
 SF_LogEntry
 SF_LogManagesRecord
 SF_SystemUseOfLog

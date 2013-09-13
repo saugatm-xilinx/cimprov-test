@@ -30,7 +30,8 @@ namespace solarflare
 
     /// @brief Abstract class for diagnostics. Implementors shall subclass it for
     /// platform-specific port representation.
-    class Diagnostic : public SystemElement, public NICElement {
+    class Diagnostic : public SystemElement, public NICElement,
+                       public SoftwareContainer {
         //// Private subclass of Thread to run diagnostics asynchronously
         class DiagnosticThread : public Thread {
             Diagnostic *owner;
@@ -60,6 +61,9 @@ namespace solarflare
 
         /// Number of failure events stored
         static const unsigned maxRecordedEvents;
+
+        /// Associated software identity
+        mutable DiagSWElement soft;
 
     public:
         /// Constructor
@@ -101,7 +105,7 @@ namespace solarflare
         /// Thread object to control over asynchronous tests
         Thread *asyncThread() { return diagThread.findUpdate(); }
         /// @return an associated software element or NULL
-        virtual const SWElement *diagnosticTool() const { return NULL; }
+        virtual const SWElement *diagnosticTool() const;
 
         /// @return a name prefixed with NIC name
         virtual String name() const;
@@ -140,6 +144,24 @@ namespace solarflare
 
         virtual Thread *embeddedThread() { return asyncThread(); }
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
+        virtual bool forAllSoftware(ElementEnumerator& en) {
+            // diagnosticTool() is called to get software identity
+            // info - it is not obtained in constructor
+            if (diagnosticTool() != NULL)
+                return en.process(soft);
+
+            return true;
+        }
+
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const {
+            // diagnosticTool() is called to get software identity
+            // info - it is not obtained in constructor
+            if (diagnosticTool() != NULL)
+                return en.process(soft);
+
+            return true;
+        }
     };
 
     /// @brief Abstract class for ports. Implementors shall subclass it for
@@ -605,7 +627,9 @@ namespace solarflare
         virtual bool forAllInterfaces(ElementEnumerator& en);
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const;
         virtual bool forAllDiagnostics(ElementEnumerator& en);
+        virtual bool forAllNDiagSoftware(ConstElementEnumerator& en) const;
         virtual bool forAllSoftware(ConstElementEnumerator& en) const;
+        virtual bool forAllNDiagSoftware(ElementEnumerator& en);
         virtual bool forAllSoftware(ElementEnumerator& en);
         
         virtual const String& genericName() const { return systemName; }

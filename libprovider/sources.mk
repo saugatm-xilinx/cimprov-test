@@ -6,6 +6,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_ConcreteJob_Provider.cpp \
 	SF_ConnectorOnNIC_Provider.cpp \
 	SF_ConnectorRealizesPort_Provider.cpp \
+	SF_ConnectorRealizesController_Provider.cpp \
 	SF_CardRealizesController_Provider.cpp \
 	SF_ControlledBy_Provider.cpp \
 	SF_DiagnosticCompletionRecord_Provider.cpp \
@@ -17,7 +18,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_ElementCapabilities_Provider.cpp \
 	SF_ElementConformsToProfile_Provider.cpp \
 	SF_ElementSettingData_Provider.cpp \
-	SF_ElementSoftwareIdentity_Provider.cpp \
+	SF_ControllerSoftwareIdentity_Provider.cpp \
 	SF_DiagElementSoftwareIdentity_Provider.cpp \
 	SF_EnabledLogicalElementCapabilities_Provider.cpp \
 	SF_EthernetPort_Provider.cpp \
@@ -33,8 +34,8 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_PhysicalConnector_Provider.cpp \
 	SF_PortController_Provider.cpp \
 	SF_RecordAppliesToElement_Provider.cpp \
-	SF_RecordLog_Provider.cpp \
-	SF_RecordLogCapabilities_Provider.cpp \
+	SF_ProviderLog_Provider.cpp \
+	SF_ProviderLogCapabilities_Provider.cpp \
 	SF_ReferencedProfile_Provider.cpp \
 	SF_RegisteredProfile_Provider.cpp \
 	SF_ServiceAffectsCard_Provider.cpp \
