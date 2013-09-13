@@ -9,17 +9,13 @@ class SF_ConcreteJob : CIM_ConcreteJob {
 #endif
 
 #if defined(ROOTNS) || defined(IMPNS)
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION
 class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 };
 #endif
 
 #if defined(IMPNS)
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION_NWMI
 class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
 #ifdef TARGET_CIM_SERVER_wmi
     [Override ( "Antecedent" ), Key]
@@ -62,9 +58,7 @@ class SF_DiagElementSoftwareIdentity : SF_ElementSoftwareIdentity {
    CIM_DiagnosticTest REF Dependent;
 };
 
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION_NWMI
 class SF_OrderedComponent : CIM_OrderedComponent {
       [Override("GroupComponent")
 #ifdef TARGET_CIM_SERVER_wmi
@@ -100,6 +94,7 @@ INSTANCE
 class SF_ComputerSystem : CIM_ComputerSystem {
 };
 
+INSTANCE_NWMI
 class SF_Card : CIM_Card {
 #if defined(TARGET_CIM_SERVER_wmi)
     [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
@@ -123,9 +118,7 @@ class SF_PhysicalConnector : CIM_PhysicalConnector {
 #endif
 };
 
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION_NWMI
 class SF_ConnectorOnPackage : CIM_ConnectorOnPackage {
 #if defined(TARGET_CIM_SERVER_wmi)
   [Override("GroupComponent"),Key] CIM_PhysicalPackage Ref GroupComponent;
@@ -169,17 +162,13 @@ class SF_SystemDevice : CIM_SystemDevice {
 #endif
 
 #if defined(ROOTNS) || defined(IMPNS)
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION_NWMI
 class SF_ServiceAffectsElement : CIM_ServiceAffectsElement {
 };
 #endif
 
 #if defined(IMPNS)
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION_NWMI
 class SF_Realizes : CIM_Realizes {
 #if defined(TARGET_CIM_SERVER_wmi)
   [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
@@ -215,9 +204,7 @@ class SF_LANEndpoint : CIM_LANEndpoint {
 #endif
 };
 
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION_NWMI
 class SF_DeviceSAPImplementation : CIM_DeviceSAPImplementation {
 #if defined(TARGET_CIM_SERVER_wmi)
   [Override("Antecedent"),Key] CIM_LogicalDevice Ref Antecedent;
@@ -319,6 +306,7 @@ INSTANCE
 class SF_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities {
 };
 
+INSTANCE_NWMI
 class SF_RecordLog : CIM_RecordLog {
 };
 
@@ -326,7 +314,7 @@ INSTANCE
 class SF_ProviderLog : SF_RecordLog {
 };
 
-INSTANCE
+INSTANCE_NWMI
 class SF_RecordLogCapabilities : CIM_RecordLogCapabilities {
 };
 
@@ -356,9 +344,7 @@ class SF_LogManagesRecord : CIM_LogManagesRecord {
 #endif
 
 #if defined(ROOTNS) || defined(IMPNS)
-#ifndef TARGET_CIM_SERVER_wmi
-[Association]
-#endif
+ASSOCIATION_NWMI
 class SF_UseOfLog : CIM_UseOfLog {
 #if defined(TARGET_CIM_SERVER_wmi)
       [Override ( "Antecedent" ), Key]
@@ -608,7 +594,7 @@ class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
 #endif
 
 #if defined(IMPNS)
-[Indication]
+INDICATION_NWMI
 class SF_InstCreation : CIM_InstCreation
 {
 };
@@ -618,7 +604,7 @@ class SF_JobCreated : SF_InstCreation
 {
 };
 
-[Indication]
+INDICATION_NWMI
 class SF_InstModification : CIM_InstModification
 {
 };
@@ -643,7 +629,7 @@ class SF_JobSuccess : SF_InstModification
 {
 };
 
-[Indication]
+INDICATION_NWMI
 class SF_AlertIndication : CIM_AlertIndication
 {
 };

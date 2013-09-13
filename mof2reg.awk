@@ -72,6 +72,8 @@ $1 == "class" && IMPLEMENTED[$2] {
 
 /ASSOCIATION/ { association = 1; }
 /INDICATION/ { indication = 1; }
+/ASSOCIATION_NWMI/ { association = 1; }
+/INDICATION_NWMI/ { indication = 1; }
 
 /#if/ { if_level++; } 
 /#endif/ {
