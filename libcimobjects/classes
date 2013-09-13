@@ -13,6 +13,7 @@ SF_PortController
 SF_EnabledLogicalElementCapabilities
 SF_SystemDevice
 SF_ConnectorRealizesPort
+SF_ConnectorRealizesController
 SF_CardRealizesController
 SF_LANEndpoint
 SF_NICSAPImplementation

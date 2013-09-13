@@ -2,6 +2,7 @@
 #include "SF_EthernetPort.h"
 #include "SF_LANEndpoint.h"
 #include "SF_ConnectorRealizesPort.h"
+#include "SF_ConnectorRealizesController.h"
 #include "SF_PhysicalConnector.h"
 #include "SF_PortController.h"
 #include "SF_ControlledBy.h"
@@ -22,6 +23,7 @@ namespace solarflare
     using cimple::SF_EthernetPort;
     using cimple::SF_LANEndpoint;
     using cimple::SF_ConnectorRealizesPort;
+    using cimple::SF_ConnectorRealizesController;
     using cimple::SF_PhysicalConnector;
     using cimple::SF_PortController;
     using cimple::SF_ControlledBy;
@@ -47,6 +49,11 @@ namespace solarflare
     };
 
     class ConnectorRealizesPortHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+    };
+
+    class ConnectorRealizesControllerHelper : public CIMHelper {
     public:
         virtual Instance *instance(const SystemElement&, unsigned) const;
     };
@@ -106,6 +113,8 @@ namespace solarflare
         static const EthernetPortHelper ethernetPortHelper;
         static const LANEndpointHelper lanEndpointHelper;
         static const ConnectorRealizesPortHelper connectorRealizesPortHelper;
+        static const ConnectorRealizesControllerHelper
+                                            connectorRealizesControllerHelper;
         static const ControlledByHelper controlledByHelper;
         static const PortAndEndpointCapabilitiesHelper capabilities;
         static const PortAndEndpointCapsLinkHelper capsLink;
@@ -120,6 +129,8 @@ namespace solarflare
             return &lanEndpointHelper;
         if (&cls == &SF_ConnectorRealizesPort::static_meta_class)
             return &connectorRealizesPortHelper;
+        if (&cls == &SF_ConnectorRealizesController::static_meta_class)
+            return &connectorRealizesControllerHelper;
         if (&cls == &SF_ControlledBy::static_meta_class)
             return &controlledByHelper;
         if (&cls == &SF_SystemDevice::static_meta_class)
@@ -318,7 +329,26 @@ namespace solarflare
         {
             return NULL;
         }
-        
+    }
+
+    Instance *ConnectorRealizesControllerHelper::instance(const SystemElement& se,
+                                                          unsigned idx) const
+    {
+        const solarflare::Interface& intf = static_cast<const solarflare::Interface&>(se);
+    
+        const solarflare::Port *port = intf.port();
+        const solarflare::NIC *nic = intf.nic();
+        if (port != NULL && nic != NULL)
+        {
+            SF_ConnectorRealizesController* link =
+                              SF_ConnectorRealizesController::create(true);
+            
+            link->Antecedent = cast<cimple::CIM_PhysicalElement *>(port->cimReference(SF_PhysicalConnector::static_meta_class));
+            link->Dependent = cast<cimple::CIM_LogicalDevice *>(nic->cimReference(SF_PortController::static_meta_class));
+            return link;
+        }
+        else
+            return NULL;
     }
 
     Instance *ControlledByHelper::instance(const SystemElement& se, unsigned) const

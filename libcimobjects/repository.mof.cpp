@@ -185,6 +185,14 @@ class SF_ConnectorRealizesPort : SF_Realizes {
 };
 
 ASSOCIATION
+class SF_ConnectorRealizesController : SF_Realizes {
+#if defined(TARGET_CIM_SERVER_wmi)
+  [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
+  [Override("Dependent"),Key] CIM_LogicalDevice Ref Dependent;
+#endif
+};
+
+ASSOCIATION
 class SF_CardRealizesController : SF_Realizes {
 #if defined(TARGET_CIM_SERVER_wmi)
   [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
