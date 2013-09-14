@@ -120,6 +120,11 @@ namespace solarflare
 
         /// This is defined to prevent incorrect copying of
         /// a child thread class member
+        SWElement(const SWElement &rhs) :
+            SystemElement(rhs), sysname(rhs.sysname), installer(this) {}
+
+        /// This is defined to prevent incorrect copying of
+        /// a child thread class member
         SWElement &operator=(const SWElement &rhs)
         {
             if (this == &rhs)
