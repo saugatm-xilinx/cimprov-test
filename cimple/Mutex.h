@@ -95,6 +95,25 @@ public:
     void unlock();
 
 private:
+    /*
+     * Initialize a mutex.
+     *
+     * The input parameter determines whether the mutex will be 
+     * recursive. 
+     * @param recursive bool Optional parameter that determines if 
+     * the mutex will be recursive.  If true the mutex will be
+     * recursive. The default is true (recursive). If false a 
+     * non-recursive mutex is created. 
+     */
+    void init(bool recursive = true);
+
+    /**
+     * These should not be used. Defined to prevent incorrect
+     * Mutex copying and print error message in a log about
+     * an attempt.
+     */
+    Mutex(const Mutex &m);
+    Mutex &operator=(const Mutex &m);
 
     union
     {

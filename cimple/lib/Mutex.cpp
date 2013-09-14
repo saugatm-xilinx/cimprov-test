@@ -29,6 +29,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <cassert>
+#include "log.h"
 
 #if defined(CIMPLE_PLATFORM_SOLARIS_SPARC_GNU)
 # define PTHREAD_MUTEX_RECURSIVE_NP PTHREAD_MUTEX_RECURSIVE
@@ -48,7 +49,7 @@ struct MutexRep
     Magic<0x482A8C83> magic;
 };
 
-Mutex::Mutex(bool recursive)
+void Mutex::init(bool recursive)
 {
     assert(sizeof(MutexRep) <= sizeof(_rep));
 
@@ -84,6 +85,25 @@ Mutex::Mutex(bool recursive)
         pthread_mutex_init(&rep->mutex, NULL);
 
 #endif /* CIMPLE_NO_RECURSIVE_MUTEXES */
+}
+
+Mutex::Mutex(bool recursive)
+{
+    init(recursive);
+}
+
+Mutex::Mutex(const Mutex &m)
+{
+    init();
+    CIMPLE_ERR(("You are trying to use copy constructor "
+                "for cimple::Mutex. DO NOT DO THIS!!!"));
+}
+
+Mutex &Mutex::operator=(const Mutex &m)
+{
+    CIMPLE_ERR(("You are trying to use assignment operator "
+                "for cimple::Mutex. DO NOT DO THIS!!!"));
+    return *this;
 }
 
 Mutex::~Mutex()
