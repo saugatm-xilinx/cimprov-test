@@ -17,38 +17,18 @@ namespace solarflare
     using cimple::uint16;
     using cimple::Array;
 
-    ///
-    /// WMI connection (with namespace root\WMI).
-    ///
-    extern IWbemServices *rootWMIConn;
+    class WMIThreadContext;
 
-    ///
-    /// WMI connection (with namespace root\WMI).
-    ///
-    extern IWbemServices *cimWMIConn;
-
-    ///
-    /// Establish WMI connection with a given namespace.
-    ///
-    /// @param ns           Namespace
-    /// @param svc    [out] Where to save connected IWbemServices
-    ///
-    /// @return 0 on success, -1 on failure
-    ///
-    int wmiEstablishConnNs(const char *ns,
-                           IWbemServices **svc);
-
-    ///
-    /// Establish WMI connection.
-    ///
-    /// @return 0 on success, -1 on failure
-    ///
-    int wmiEstablishConn();
-
-    ///
-    /// Release WMI connection.
-    ///
-    void wmiReleaseConn();
+    /// WMI thread context reference
+    class WMICtxRef {
+        WMIThreadContext *myContext;
+    public:
+        WMICtxRef();
+        virtual ~WMICtxRef();
+        IWbemServices *getRootWMIConn() const;
+        IWbemServices *getCIMWMIConn() const;
+        operator bool() const;
+    };
 
     ///
     /// Get string property value of WMI object.

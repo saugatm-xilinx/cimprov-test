@@ -242,7 +242,9 @@ namespace solarflare
         IWbemClassObject *pIn = NULL;
         IWbemClassObject *pOut = NULL;
 
-        if (wmiEstablishConn() != 0)
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
             return -1;
 
         if (port == NULL)
@@ -312,10 +314,12 @@ namespace solarflare
         IWbemClassObject *pIn = NULL;
         IWbemClassObject *pOut = NULL;
 
-        CIMPLE_DBG(("%s: tag=%u, keyword=%u", __FUNCTION__, tag, keyword));
+        WMICtxRef ctxRef;
 
-        if (wmiEstablishConn() != 0)
+        if (!ctxRef)
             return -1;
+
+        CIMPLE_DBG(("%s: tag=%u, keyword=%u", __FUNCTION__, tag, keyword));
 
         if (port == NULL)
             return -1;
@@ -1365,6 +1369,11 @@ cleanup:
 
         String methodName("EFX_NetworkAdapter_SetNetworkAddress");
 
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return;
+
         if (wmiEnumInstancesQuery(NULL,
                                   "SELECT * FROM EFX_NetworkAdapter "
                                   "WHERE DummyInstance='false'",
@@ -1440,9 +1449,10 @@ cleanup:
         }
 
         CoImpersonateClient();
-        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
-                                     BString(methodName).rep(),
-                                     0, NULL, pIn, &pOut, NULL);
+        hr = ctxRef.getRootWMIConn()->ExecMethod(
+                                              BString(objPath).rep(),
+                                              BString(methodName).rep(),
+                                              0, NULL, pIn, &pOut, NULL);
         CoRevertToSelf();
         if (FAILED(hr))
         {
@@ -1560,11 +1570,17 @@ cleanup:
             String driverBinary;
             String driverDescription;
 
+            WMICtxRef ctxRef;
+
+            if (!ctxRef)
+                return WindowsDriver("", "", VersionInfo());
+
             appendDeviceID(deviceID.c_str(), NULL, entityQuery);
             entityQuery.append('"');
 
             IWbemClassObject *entity = NULL;
-            if (querySingleObj(cimWMIConn, entityQuery.c_str(),
+            if (querySingleObj(ctxRef.getCIMWMIConn(),
+                               entityQuery.c_str(),
                                entity) < 0)
                 return WindowsDriver("", "", VersionInfo());
             wmiGetStringProp(entity, "Service", serviceName);
@@ -1573,7 +1589,8 @@ cleanup:
             sysDriverQuery.append(serviceName);
             sysDriverQuery.append('"');
             IWbemClassObject *sysDriver = NULL;
-            if (querySingleObj(cimWMIConn, sysDriverQuery.c_str(),
+            if (querySingleObj(ctxRef.getCIMWMIConn(),
+                               sysDriverQuery.c_str(),
                                sysDriver) < 0)
                 return WindowsDriver("", "", VersionInfo());
             wmiGetStringProp(sysDriver, "PathName", driverBinary);
@@ -1598,11 +1615,18 @@ cleanup:
 
         const char *name = ndesc.ports[0].deviceInstanceName.c_str();
         const char *lastUnderscore = strrchr(name, '_');
+
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return WindowsDriver("", "", VersionInfo());
+
         appendDeviceID(name, lastUnderscore, query);
         query.append('\'');
 
         Array<IWbemClassObject *> drivers;
-        if (wmiEnumInstancesQuery(cimWMIConn, query.c_str(), drivers) < 0)
+        if (wmiEnumInstancesQuery(ctxRef.getCIMWMIConn(),
+                                  query.c_str(), drivers) < 0)
             return WindowsDriver("", "", VersionInfo());
 
         if (drivers.size() > 0)
@@ -1916,53 +1940,10 @@ cleanup:
     /// so initialize() does nothing 
     class WindowsSystem : public System {
         WindowsManagementPackage mgmtPackage;
-        bool comInitialized;
-        WindowsSystem() : comInitialized(false)
+        WindowsSystem()
         {
-            HRESULT hr;
-            IWbemLocator *wbemLocator = NULL;
-
             onAlert.setFillPortAlertsInfo(windowsFillPortAlertsInfo);
-
-            /// Testing whether COM is initialized, initialize it if not
-            /// (it is not in case of OpenPegasus)
-            hr = CoCreateInstance(CLSID_WbemLocator, NULL,
-                                  CLSCTX_INPROC_SERVER,
-                                  IID_IWbemLocator,
-                                  reinterpret_cast<LPVOID *>(&wbemLocator));
-            if (hr == CO_E_NOTINITIALIZED)
-            {
-                hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-                if (hr != S_OK)
-                    CIMPLE_ERR(("CoInitializeEx() returned %ld(0x%lx)",
-                                static_cast<long int>(hr),
-                                static_cast<long int>(hr)));
-                else
-                {
-                    comInitialized = true;
-                    hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
-                                              RPC_C_AUTHN_LEVEL_DEFAULT,
-                                              RPC_C_IMP_LEVEL_IMPERSONATE,
-                                              NULL, EOAC_NONE, NULL);
-                    if (hr != S_OK)
-                        CIMPLE_ERR(("CoInitializeSecurity() "
-                                    "returned %ld(0x%lx)",
-                                    static_cast<long int>(hr),
-                                    static_cast<long int>(hr)));
-                }
-
-            }
-            else
-            {
-                if (FAILED(hr))
-                    CIMPLE_ERR(("CoCreateInstance() returned %ld(0x%lx)",
-                                static_cast<long int>(hr),
-                                static_cast<long int>(hr)));
-                else
-                    wbemLocator->Release();
-            }
         };
-        ~WindowsSystem();
     protected:
         void setupNICs()
         {
@@ -1973,8 +1954,6 @@ cleanup:
         {
             mgmtPackage.initialize();
         };
-        virtual bool forAllDrivers(ConstElementEnumerator& en) const;
-        virtual bool forAllDrivers(ElementEnumerator& en);
     public:
         static WindowsSystem target;
         bool is64bit() const { return true; }
@@ -2009,21 +1988,30 @@ cleanup:
             // FIXME: no "unknown" value in enum
             return WindowsServer2003;
         }
-        bool forAllNICs(ConstElementEnumerator& en) const;
-        bool forAllNICs(ElementEnumerator& en);
-        bool forAllPackages(ConstElementEnumerator& en) const;
-        bool forAllPackages(ElementEnumerator& en);
+        virtual bool forAllNICs(ConstElementEnumerator& en) const;
+        virtual bool forAllNICs(ElementEnumerator& en);
+        virtual bool forAllPackages(ConstElementEnumerator& en) const;
+        virtual bool forAllPackages(ElementEnumerator& en);
+
+        virtual bool forAllPorts(ConstElementEnumerator& en) const;
+        virtual bool forAllPorts(ElementEnumerator& en);
+        virtual bool forAllInterfaces(ConstElementEnumerator& en) const;
+        virtual bool forAllInterfaces(ElementEnumerator& en);
+        virtual bool forAllDiagnostics(ConstElementEnumerator& en) const;
+        virtual bool forAllDiagnostics(ElementEnumerator& en);
+        virtual bool forAllNDiagSoftware(ConstElementEnumerator& en) const;
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const;
+        virtual bool forAllNDiagSoftware(ElementEnumerator& en);
+        virtual bool forAllSoftware(ElementEnumerator& en);
+        virtual bool forAllDrivers(ConstElementEnumerator& en) const;
+        virtual bool forAllDrivers(ElementEnumerator& en);
+
+        virtual bool forAllObjects(ConstElementEnumerator& en) const;
+        virtual bool forAllObjects(ElementEnumerator& en);
+
         virtual int saveVariable(const String &id, const String &val) const;
         virtual int loadVariable(const String &id, String &val) const;
     };
-
-    WindowsSystem::~WindowsSystem()
-    {
-        wmiReleaseConn();
-
-        if (comInitialized)
-            CoUninitialize();
-    }
 
     bool WindowsSystem::forAllNICs(ElementEnumerator& en)
     {
@@ -2032,6 +2020,11 @@ cleanup:
         bool        res;
         bool        ret = true;
         int         rc;
+
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
 
         if ((rc = getNICs(nics)) < 0)
         {
@@ -2055,6 +2048,10 @@ cleanup:
 
     bool WindowsSystem::forAllNICs(ConstElementEnumerator& en) const
     {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
         return const_cast<WindowsSystem *>
                     (this)->forAllNICs((ElementEnumerator&) en); 
     }
@@ -2067,7 +2064,12 @@ cleanup:
         Array<String>             drvNames;
         unsigned int              j;
 
-        rc = wmiEnumInstancesQuery(cimWMIConn, 
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        rc = wmiEnumInstancesQuery(ctxRef.getCIMWMIConn(), 
                                    "SELECT * FROM Win32_PnPSignedDriver "
                                    "WHERE Manufacturer='Solarflare'",
                                    drivers);
@@ -2106,18 +2108,153 @@ cleanup:
 
     bool WindowsSystem::forAllDrivers(ConstElementEnumerator& en) const
     {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
         return const_cast<WindowsSystem *>
                   (this)->forAllDrivers((ElementEnumerator&) en); 
     }
     
     bool WindowsSystem::forAllPackages(ConstElementEnumerator& en) const
     {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
         return en.process(mgmtPackage);
     }
     
     bool WindowsSystem::forAllPackages(ElementEnumerator& en)
     {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
         return en.process(mgmtPackage);
+    }
+
+    bool WindowsSystem::forAllPorts(ConstElementEnumerator& en) const
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllPorts(en);
+    }
+
+    bool WindowsSystem::forAllPorts(ElementEnumerator& en)
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllPorts(en);
+    }
+
+    bool WindowsSystem::forAllInterfaces(ConstElementEnumerator& en) const
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllInterfaces(en);
+    }
+
+    bool WindowsSystem::forAllInterfaces(ElementEnumerator& en)
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllInterfaces(en);
+    }
+
+    bool WindowsSystem::forAllDiagnostics(ConstElementEnumerator& en) const
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllDiagnostics(en);
+    }
+
+    bool WindowsSystem::forAllDiagnostics(ElementEnumerator& en)
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllDiagnostics(en);
+    }
+
+    bool WindowsSystem::forAllNDiagSoftware(ConstElementEnumerator& en) const
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllNDiagSoftware(en);
+    }
+
+    bool WindowsSystem::forAllSoftware(ConstElementEnumerator& en) const
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllSoftware(en);
+    }
+
+    bool WindowsSystem::forAllNDiagSoftware(ElementEnumerator& en)
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllNDiagSoftware(en);
+    }
+
+    bool WindowsSystem::forAllSoftware(ElementEnumerator& en)
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllSoftware(en);
+    }
+
+    bool WindowsSystem::forAllObjects(ConstElementEnumerator& en) const
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllObjects(en);
+    }
+
+    bool WindowsSystem::forAllObjects(ElementEnumerator& en)
+    {
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return false;
+
+        return System::forAllObjects(en);
     }
 
     int WindowsSystem::saveVariable(const String &id,
@@ -2279,6 +2416,11 @@ cleanup:
 
             Array<IWbemClassObject *> ports;
 
+            WMICtxRef ctxRef;
+
+            if (!ctxRef)
+                return -1;
+
             rc = snprintf(query, sizeof(query), "SELECT * FROM EFX_Port "
                           "WHERE Id='%d' AND DummyInstance='False'",
                           this->portId);
@@ -2405,6 +2547,10 @@ cleanup:
 
             Array<IWbemClassObject *> monitors;
 
+            WMICtxRef ctxRef;
+
+            if (!ctxRef)
+                return -1;
 #if 0
             // For debug only
             static unsigned int t = 0;
@@ -2656,7 +2802,9 @@ cleanup:
 
         testPassed = Failed;
 
-        if (wmiEstablishConn() != 0)
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
             goto cleanup;
 
         rc = wmiGetStringProp(efxDiagTest, "__Path",

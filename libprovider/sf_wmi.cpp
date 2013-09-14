@@ -12,16 +12,43 @@ namespace solarflare
     using cimple::uint8;
     using cimple::uint16;
     using cimple::Array;
+    using cimple::Mutex;
+    using cimple::Auto_Mutex;
 
-    /// Described in sf_wmi.h.
-    IWbemServices *rootWMIConn = NULL;
+    class WMIThreadContext {
+        int            counter;
+        bool           comInitialized;
+        bool           ok;
+    public:
+        DWORD          threadId;
+        IWbemServices *rootWMIConn;
+        IWbemServices *cimWMIConn;
 
-    /// Described in sf_wmi.h.
-    IWbemServices *cimWMIConn = NULL;
+        WMIThreadContext();
+        virtual ~WMIThreadContext();
 
-    /// Described in sf_wmi.h.
-    int wmiEstablishConnNs(const char *ns,
-                           IWbemServices **svc)
+        void inc()
+        {
+            counter++;
+        }
+        void dec()
+        {
+            counter--;
+        }
+
+        operator bool() const
+        {
+            return (counter > 0);
+        }
+
+        bool isOk() const
+        {
+            return ok;
+        }
+    };
+
+    static int wmiEstablishConnNs(const char *ns,
+                                  IWbemServices **svc)
     {
         HRESULT       hr;
         IWbemLocator *wbemLocator = NULL;
@@ -51,28 +78,42 @@ namespace solarflare
         return 0;
     }
 
-    /// Described in sf_wmi.h.
-    int wmiEstablishConn()
+    WMIThreadContext::WMIThreadContext() :
+      counter(0), comInitialized(false), ok(false),
+      threadId(GetCurrentThreadId()), rootWMIConn(NULL),
+      cimWMIConn(NULL)
     {
-        int rc = 0;
-        
-        if (rootWMIConn == NULL)
+        HRESULT hr;
+        IWbemLocator *wbemLocator = NULL;
+
+        /// Testing whether COM is initialized, initialize it if not
+        /// (it is not in case of OpenPegasus)
+        hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+        if (hr == S_FALSE)
+            CoUninitialize();
+        else if (hr == S_OK)
         {
-            rc  = wmiEstablishConnNs("\\\\.\\ROOT\\WMI",
-                                     &rootWMIConn);
-            if (rc != 0)
-                return rc;
+            comInitialized = true;
+
+            hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
+                                      RPC_C_AUTHN_LEVEL_DEFAULT,
+                                      RPC_C_IMP_LEVEL_IMPERSONATE,
+                                      NULL, EOAC_NONE, NULL);
+            if (hr != S_OK)
+                CIMPLE_ERR(("CoInitializeSecurity() "
+                            "returned %ld(0x%lx)",
+                            static_cast<long int>(hr),
+                            static_cast<long int>(hr)));
         }
-        if (cimWMIConn == NULL)
-        {
-            rc = wmiEstablishConnNs("\\\\.\\ROOT\\CIMV2",
-                                    &cimWMIConn);
-        }
-        return rc;
+
+        if (wmiEstablishConnNs("\\\\.\\ROOT\\WMI",
+                               &rootWMIConn) == 0 &&
+            wmiEstablishConnNs("\\\\.\\ROOT\\CIMV2",
+                               &cimWMIConn) == 0)
+            ok = true;
     }
 
-    /// Described in sf_wmi.h.
-    void wmiReleaseConn()
+    WMIThreadContext::~WMIThreadContext()
     {
         if (rootWMIConn != NULL)
             rootWMIConn->Release();
@@ -81,6 +122,67 @@ namespace solarflare
         if (cimWMIConn != NULL)
             cimWMIConn->Release();
         cimWMIConn = NULL;
+
+        if (comInitialized)
+            CoUninitialize();
+    }
+
+    static Array<WMIThreadContext *> threadContexts;
+    static Mutex                     ctxMutex;
+
+    WMICtxRef::WMICtxRef() : myContext(NULL)
+    {
+        Auto_Mutex    guard(ctxMutex);
+        unsigned int  i;
+
+        DWORD threadId = GetCurrentThreadId();
+
+        for (i = 0; i < threadContexts.size(); i++)
+            if (threadContexts[i]->threadId == threadId)
+                break;
+
+        if (i == threadContexts.size())
+            threadContexts.append(new WMIThreadContext());
+
+        myContext = threadContexts[i];
+        assert(myContext != NULL);
+        myContext->inc();
+    }
+
+    WMICtxRef::~WMICtxRef()
+    {
+        Auto_Mutex    guard(ctxMutex);
+        unsigned int  i;
+
+        assert(myContext != NULL);
+        myContext->dec(); 
+
+        if (!*myContext)
+        {
+            for (i = 0; i < threadContexts.size(); i++)
+                if (threadContexts[i]->threadId == myContext->threadId)
+                    break;
+
+            if (i < threadContexts.size())
+                threadContexts.remove(i);
+
+            delete myContext;
+        }
+    }
+
+    IWbemServices *WMICtxRef::getRootWMIConn() const
+    {
+        return myContext->rootWMIConn;
+    }
+
+    IWbemServices *WMICtxRef::getCIMWMIConn() const
+    {
+        return myContext->cimWMIConn;
+    }
+
+    WMICtxRef::operator bool() const
+    {
+        return myContext->isOk();
     }
 
     /// Described in sf_wmi.h.
@@ -204,10 +306,13 @@ namespace solarflare
         unsigned int          i;
         BString               bstrQuery(className);
 
-        if (wbemSvc == NULL && wmiEstablishConn() != 0)
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
             return -1;
-        else if (wbemSvc == NULL)
-            wbemSvc = rootWMIConn;
+
+        if (wbemSvc == NULL)
+            wbemSvc = ctxRef.getRootWMIConn();
 
         hr = wbemSvc->CreateInstanceEnum(bstrQuery.rep(),
                                          WBEM_FLAG_SHALLOW, NULL,
@@ -240,10 +345,13 @@ namespace solarflare
         static BString wqlName("WQL");
         BString        searchBstr(search);
 
-        if (wbemSvc == NULL && wmiEstablishConn() != 0)
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
             return -1;
-        else if (wbemSvc == NULL)
-            wbemSvc = rootWMIConn;
+
+        if (wbemSvc == NULL)
+            wbemSvc = ctxRef.getRootWMIConn();
 
         hr = wbemSvc->ExecQuery(wqlName.rep(),
                                 searchBstr.rep(),
@@ -268,11 +376,13 @@ namespace solarflare
     {
         HRESULT hr;
 
-        if (wmiEstablishConn() != 0)
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
             return -1;
 
         if (wbemSvc == NULL)
-            wbemSvc = cimWMIConn;
+            wbemSvc = ctxRef.getCIMWMIConn();
         
         hr = wbemSvc->GetObject(BString(objPath).rep(),
                                 WBEM_FLAG_RETURN_WBEM_COMPLETE,
@@ -302,13 +412,14 @@ namespace solarflare
         IWbemClassObject *classObj = NULL;
         IWbemClassObject *pInDef = NULL;
 
-        int  rc = 0;
+        int       rc = 0;
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return -1;
 
         className.vt = VT_NULL;
         path.vt = VT_NULL;
-
-        if (wmiEstablishConn() != 0)
-            return -1;
 
         if (instance == NULL)
             return -1;
@@ -317,8 +428,8 @@ namespace solarflare
                            &className, NULL, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to obtain class name of WMI object, "
-                        "rc=%lx", __FUNCTION__, hr));
+            CIMPLE_ERR(("%s():   failed to obtain class name of "
+                        "WMI object, rc=%lx", __FUNCTION__, hr));
             return -1;
         }
 
@@ -332,8 +443,8 @@ namespace solarflare
             goto cleanup;
         }
 
-        hr = rootWMIConn->GetObject(className.bstrVal, 0, NULL,
-                                    &classObj, NULL);
+        hr = ctxRef.getRootWMIConn()->GetObject(className.bstrVal, 0, NULL,
+                                                &classObj, NULL);
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to obtain class definition "
@@ -392,13 +503,19 @@ cleanup:
 
         IWbemClassObject *tmpPOut = NULL;
 
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return -1;
+
         if (pOut != NULL)
             *pOut = NULL;
 
         CoImpersonateClient();
-        hr = rootWMIConn->ExecMethod(BString(objPath).rep(),
-                                     BString(methodName).rep(),
-                                     0, NULL, pIn, &tmpPOut, NULL);
+        hr = ctxRef.getRootWMIConn()->ExecMethod(BString(objPath).rep(),
+                                                 BString(methodName).rep(),
+                                                 0, NULL, pIn, &tmpPOut,
+                                                 NULL);
         CoRevertToSelf();
         if (FAILED(hr))
         {
@@ -443,8 +560,11 @@ cleanup:
         int               rc = 0;
         HRESULT           hr;
 
-        if ((rc = wmiEstablishConn()) != 0)
-            return rc;
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+            return -1;
+
         if (obj == NULL)
             return -1;
 
@@ -452,9 +572,10 @@ cleanup:
         if (rc != 0)
             return rc;
 
-        hr = rootWMIConn->GetObject(BString(objPath).rep(),
-                                    WBEM_FLAG_RETURN_WBEM_COMPLETE,
-                                    NULL, &newObj, NULL);
+        hr = ctxRef.getRootWMIConn()->GetObject(
+                                        BString(objPath).rep(),
+                                        WBEM_FLAG_RETURN_WBEM_COMPLETE,
+                                        NULL, &newObj, NULL);
         if (FAILED(hr))
         {
             CIMPLE_ERR(("%s():   failed to get object '%s',"
