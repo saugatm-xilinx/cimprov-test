@@ -29,7 +29,7 @@
 #include <pthread.h>
 #include <errno.h>
 #include <cassert>
-#include "log.h"
+#include "cimple/log.h"
 
 #if defined(CIMPLE_PLATFORM_SOLARIS_SPARC_GNU)
 # define PTHREAD_MUTEX_RECURSIVE_NP PTHREAD_MUTEX_RECURSIVE
