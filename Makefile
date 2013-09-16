@@ -15,7 +15,7 @@ ifeq ($(CIM_SERVER),wmi)
 include $(TOP)/mk/wmi.mk
 endif
 ifeq ($(PROVIDER_PLATFORM),windows)
-include $(TOP)/mk/windows$(BITNESS).mk
+include $(TOP)/mk/windows$(PROVIDER_BITNESS).mk
 include $(TOP)/cimple/posix/sources.mk
 endif
 
@@ -116,7 +116,7 @@ install-aux : $(libcimobjects_DIR)/repository.mof regmod
 endif
 
 .PHONY : platform
-PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
+PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
 platform : $(PLATFORM_BUILD)/Makefile
 
 $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)

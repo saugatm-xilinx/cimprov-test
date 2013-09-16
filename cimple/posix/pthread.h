@@ -37,6 +37,7 @@
 #ifndef _cimple_posix_pthread_h
 #define _cimple_posix_pthread_h
 
+#include <inttypes.h>
 #include "linkage.h"
 
 POSIX_NAMESPACE_BEGIN
@@ -143,7 +144,7 @@ POSIX_LINKAGE void* pthread_getspecific(
 #define PTHREAD_CREATE_JOINABLE 1
 #define PTHREAD_CREATE_DETACHED 2
 
-typedef long pthread_t;
+typedef uintptr_t pthread_t;
 
 struct pthread_attr_t
 {

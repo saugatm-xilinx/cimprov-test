@@ -87,7 +87,7 @@ Delete $INSTDIR\repository.reg
 Delete $INSTDIR\interop.mof
 !else
 !insertmacro SilentExec wmic 'path __Win32Provider.Name="Solarflare" delete'
-!insertmacro SilentExec wmic 'path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+!insertmacro SilentExec wmic `path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
 !insertmacro SilentExec wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
 !insertmacro SilentExec wmic `path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
 !insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\unregister.mof"'

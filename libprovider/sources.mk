@@ -201,7 +201,7 @@ endif
 .PHONY : msi InstallShieldProject
 
 PROVIDER_MSI_PACKAGE=sf_cim_provider
-MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_windows_32-64.exe
+MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_windows_$(PROVIDER_BITNESS).exe
 
 msi : $(MSI_NAME)
 
@@ -214,13 +214,13 @@ NSIS_OPTIONS=-DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMES
 endif
 
 $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSIS_DEPENDENCIES)
-	i686-w64-mingw32-strip $(libprovider_TARGET)
+	$(target_STRIP) $(libprovider_TARGET)
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DCIM_INTERFACE=$(CIM_INTERFACE) -DINSTALLERNAME=$@ $(NSIS_OPTIONS) -DTOP=$(TOP) -NOCD $<
 
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
 					$(libcimobjects_DIR)/repository.mof $(libprovider_DIR)/register.mof \
 					$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
-	i686-w64-mingw32-strip $(libprovider_TARGET)
+	$(target_STRIP) $(libprovider_TARGET)
 	lcab -n $^ $@
 
 endif

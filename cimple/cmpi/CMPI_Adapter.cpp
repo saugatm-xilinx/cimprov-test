@@ -2376,7 +2376,7 @@ extern "C" CIMPLE_ADAPTER_LINKAGE int cimple_cmpi_adapter(
     const CMPIBroker* broker = (const CMPIBroker*)arg3;
     const CMPIContext* context = (const CMPIContext*)arg4;
     const char* prov_name = (const char*)arg5;
-    long mi_type = (long)arg6;
+    intptr_t mi_type = (intptr_t)arg6;
 
     // Be sure static data buffer is small enough.
 

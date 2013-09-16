@@ -543,7 +543,7 @@ int pthread_create(
         pthread_mutex_unlock(&_join_list_mutex);
     }
 
-    *thread = (long)rep;
+    *thread = (uintptr_t)rep;
 
     return 0;
 }
@@ -570,7 +570,7 @@ pthread_t pthread_self()
         pthread_setspecific(_self_key, self);
     }
 
-    return (long)self;
+    return (uintptr_t)self;
 }
 
 void pthread_exit(void* value_ptr)

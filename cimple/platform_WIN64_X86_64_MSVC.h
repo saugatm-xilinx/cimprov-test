@@ -61,6 +61,7 @@
 #define CIMPLE_IMPORT __declspec(dllimport)
 #define CIMPLE_EXPORT __declspec(dllexport)
 
+#ifndef __GNUC__
 inline int strcasecmp(const char* s1, const char* s2)
 {
     return _stricmp(s1, s2);
@@ -78,11 +79,18 @@ inline int vsnprintf(char* str, size_t size, const char* format, va_list ap)
 
 typedef __int32 ssize_t;
 
+#endif
+
 #define CIMPLE_BIG_ENDIAN
 
 #define CIMPLE_PLATFORM_ID "WIN64_X86_64_MSVC"
 
+#ifdef __GNUC__
+#define CIMPLE_UINT64_LITERAL(X) ((uint64)(X##ULL))
+#define CIMPLE_SINT64_LITERAL(X) ((sint64)(X##LL))
+#else
 #define CIMPLE_UINT64_LITERAL(X) ((uint64)(X))
 #define CIMPLE_SINT64_LITERAL(X) ((sint64)(X))
+#endif
 
 #endif /* _cimple_WIN64_X86_64_MSVC_h */

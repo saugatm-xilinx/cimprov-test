@@ -76,9 +76,10 @@ inline int vsnprintf(char* str, size_t size, const char* format, va_list ap)
 {
     return _vsnprintf(str, size, format, ap);
 }
+typedef __int32 ssize_t;
+
 #endif
 
-typedef __int32 ssize_t;
 
 #define CIMPLE_BIG_ENDIAN
 
