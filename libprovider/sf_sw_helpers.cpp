@@ -138,6 +138,12 @@ namespace solarflare
         virtual Instance *instance(const SystemElement& se, unsigned idx) const;
     };
 
+    class FirmwareServiceAffectsSystemHelper : public CIMHelper {
+    public:
+        virtual unsigned nObjects(const SystemElement&) const { return 2; }
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
+
     class PackageServiceAffectsSoftwareHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const { return 2; }
@@ -591,6 +597,7 @@ namespace solarflare
         static const FirmwareElementSoftwareIdentityHelper elementSoftwareIdentity;
         static const FirmwareServiceAffectsCardHelper serviceAffectsCard;
         static const FirmwareServiceAffectsSoftwareHelper serviceAffectsSoftware;
+        static const FirmwareServiceAffectsSystemHelper serviceAffectsSystem;
 
         if (&cls == &SF_SoftwareInstallationService::static_meta_class)
             return &firmwareInstallation;
@@ -608,6 +615,8 @@ namespace solarflare
             return &serviceAffectsCard;
         if (&cls == &SF_ServiceAffectsSoftware::static_meta_class)
             return &serviceAffectsSoftware;
+        if (&cls == &SF_ServiceAffectsSystem::static_meta_class)
+            return &serviceAffectsSystem;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conformToProfile;
         else
@@ -866,6 +875,24 @@ namespace solarflare
 
     Instance *
     PackageServiceAffectsSystemHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        SF_ServiceAffectsSystem *link = NULL;
+
+        if (idx != 0)
+            return NULL;
+
+        link = SF_ServiceAffectsSystem::create(true);
+        link->AffectedElement = cast<cimple::CIM_ComputerSystem *>(findSystem()->clone());
+        link->AffectingElement = cast<cimple::CIM_Service *>(se.cimReference(SF_SoftwareInstallationService::static_meta_class));
+
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        link->AffectingElement->__name_space = CIMHelper::solarflareNS;
+#endif
+        return link;
+    }
+
+    Instance *
+    FirmwareServiceAffectsSystemHelper::instance(const SystemElement& se, unsigned idx) const
     {
         SF_ServiceAffectsSystem *link = NULL;
 
