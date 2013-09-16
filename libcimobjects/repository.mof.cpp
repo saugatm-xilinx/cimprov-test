@@ -504,7 +504,7 @@ class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
 };
 #endif
 
-#if defined(TARGET_CIM_SERVER_pegasus) && defined(IMPNS)
+#if defined(TARGET_CIM_SERVER_pegasus) && defined(IMPNS) && defined(INBUILD)
 INSTANCE
 class IBMPSG_ComputerSystem : CIM_UnitaryComputerSystem
 {

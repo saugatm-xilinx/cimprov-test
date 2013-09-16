@@ -51,20 +51,20 @@ SectionEnd
 
 Section MOFs
 SetOutPath $INSTDIR
-File libcimobjects/repository.mof
+File libcimobjects/namespace.mof
 File libcimobjects/schema.mof
 !if ${CIM_INTERFACE} == cmpi
 File libcimobjects/interop.mof
 File repository.reg
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\schema.mof"'
-!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\repository.mof"'
+!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\namespace.mof"'
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\interop.mof"'
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\repository.reg"'
 !else
 File libprovider/register.mof
 File libprovider/unregister.mof
 !insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\schema.mof"'
-!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\repository.mof"'
+!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\namespace.mof"'
 !insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\register.mof"'
 !endif
 SectionEnd
@@ -94,7 +94,7 @@ Delete $INSTDIR\interop.mof
 Delete $INSTDIR\unregister.mof
 Delete $INSTDIR\register.mof
 !endif
-Delete $INSTDIR\repository.mof
+Delete $INSTDIR\namespace.mof
 Delete $INSTDIR\schema.mof
 SectionEnd
 

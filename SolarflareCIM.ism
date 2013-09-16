@@ -1019,7 +1019,7 @@
 		<col def="S255">ISComments</col>
 		<row><td>CleanupCIMNamespace</td><td>98</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]unregister.mof"</td><td/><td/></row>
 		<row><td>CompileCIMSchema</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]schema.mof"</td><td/><td/></row>
-		<row><td>CompileSFSchema</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]repository.mof"</td><td/><td/></row>
+		<row><td>CompileSFSchema</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]namespace.mof"</td><td/><td/></row>
 		<row><td>ISPreventDowngrade</td><td>19</td><td/><td>[IS_PREVENT_DOWNGRADE_EXIT]</td><td/><td>Exits install when a newer version of this product is found</td></row>
 		<row><td>ISPrint</td><td>1</td><td>SetAllUsers.dll</td><td>PrintScrollableText</td><td/><td>Prints the contents of a ScrollableText control on a dialog.</td></row>
 		<row><td>ISSelfRegisterCosting</td><td>1</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterCosting</td><td/><td/></row>
@@ -1842,7 +1842,7 @@
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
 		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\register.mof</td><td>1</td><td/></row>
-		<row><td>repository.mof</td><td>AllOtherFiles</td><td>REPOSI~1.MOF|repository.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\repository.mof</td><td>1</td><td/></row>
+		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>REPOSI~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\namespace.mof</td><td>1</td><td/></row>
 		<row><td>schema.mof</td><td>AllOtherFiles</td><td>schema.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\schema.mof</td><td>1</td><td/></row>
 		<row><td>solarflare.dll</td><td>Provider</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\Solarflare.dll</td><td>1</td><td/></row>
 		<row><td>unregister.mof</td><td>AllOtherFiles</td><td>UNREGI~1.MOF|unregister.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\unregister.mof</td><td>1</td><td/></row>

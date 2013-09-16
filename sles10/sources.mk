@@ -17,7 +17,8 @@ sles10_regmod_INCLUDES = $(foreach comp,$(sles10_regmod_COMPONENTS),$($(comp)_IN
 sles10_regmod_CPPFLAGS = $(foreach comp,$(sles10_regmod_COMPONENTS),$($(comp)_CPPFLAGS) )
 
 sles10_archive_SOURCES = $(foreach comp,$(sles10_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
-sles10_archive_SOURCES += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
+sles10_archive_SOURCES += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/namespace.mof \
+						  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
 sles10_archive_SOURCES += Makefile
 sles10_archive_SOURCES += lib$(PROVIDER_LIBRARY).spec
 
@@ -35,7 +36,7 @@ $(sles10_archive_TARGET) : $(_sles10_archive_SOURCES)
 	cp -r $(sles10_archive_DIR)/* $(PROVIDER_TARBALL_DIR)
 	tar -czf $@ $(PROVIDER_TARBALL_DIR)
 
-$(sles10_archive_DIR)/$(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof \
+$(sles10_archive_DIR)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/namespace.mof \
 	$(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS))
 	mkdir -p $(dir $@)
 	cat $^ >$@
@@ -61,8 +62,6 @@ endef
 $(sles10_archive_DIR)/lib$(PROVIDER_LIBRARY).spec : $(sles10_archive_DIR)/lib$(PROVIDER_LIBRARY).spec.in $(MAKEFILE_LIST)
 	$(subst_spec)
 
-
-
 $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "PEGASUS_ROOT=$(PEGASUS_ROOT)" >$@
 	echo "PEGASUS_HOME=$(PEGASUS_HOME)" >>$@
@@ -85,33 +84,24 @@ $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "lib$(PROVIDER_LIBRARY).so : %.so:" >>$@
 	echo "		\$$(CXX) -shared -o \$$@ \$$(LDFLAGS) \$$(CXXFLAGS) \$$(filter %.o,\$$^) \\" >>$@
 	echo "		\$$(addprefix -l,\$$(SYSLIBRARIES))" >>$@
-	echo "regmod_INCLUDES=$(sles10_regmod_INCLUDES) \$$(PEGASUS_ROOT)/src" >>$@
-	echo "regmod_LIBDIR=\$$(PEGASUS_HOME)/lib" >>$@
-	echo "regmod_LIBRARIES=$(pegasus_PROVIDE_LIBRARIES)" >>$@
-	echo "regmod_SOURCES=$(sles10_regmod_SOURCES)" >>$@
-	echo "regmod_CPPFLAGS=\$$(addprefix -I,\$$(regmod_INCLUDES))" >>$@
-	echo "regmod: \$$(patsubst %.cpp,%.o,\$$(regmod_SOURCES))" >>$@
-	echo "regmod: %:" >>$@
-	echo "		 \$$(CXX) -o \$$@ \$$(regmod_CPPFLAGS) \$$(filter %.o,\$$^) \\" >>$@
-	echo "		 \$$(addprefix -l,\$$(regmod_LIBRARIES)) \\" >>$@
-	echo "		-L\$$(regmod_LIBDIR) -Wl,-rpath=\$$(regmod_LIBDIR)" >>$@
 	echo "install:" >>$@
 	echo "		strip lib$(PROVIDER_LIBRARY).so" >>$@
-	echo "		strip regmod" >>$@
 	echo "		mkdir -p \$$(DESTDIR)\$$(PROVIDER_LIBPATH)" >>$@
 	echo "		cp lib$(PROVIDER_LIBRARY).so \$$(DESTDIR)\$$(PROVIDER_LIBPATH)" >>$@
-	echo "register: install regmod" >>$@
-	echo "		$(RUNASROOT) ./regmod -n$(IMP_NAMESPACE) -c \$$(DESTDIR)\$$(PROVIDER_LIBPATH)/lib$(PROVIDER_LIBRARY).so" >>$@
-	echo "		$(RUNASROOT) ./regmod -n$(INTEROP_NAMESPACE) -c \$$(DESTDIR)\$$(PROVIDER_LIBPATH)/lib$(PROVIDER_LIBRARY).so $(INTEROP_CLASSES)" >>$@
-	echo "unregister: regmod" >>$@
-	echo "		$(RUNASROOT) ./regmod -n$(INTEROP_NAMESPACE) -u -c -i \$$(DESTDIR)\$$(PROVIDER_LIBPATH)/lib$(PROVIDER_LIBRARY).so $(INTEROP_CLASSES)" >>$@
-	echo "		$(RUNASROOT) ./regmod -n$(IMP_NAMESPACE) -u -c -i \$$(DESTDIR)\$$(PROVIDER_LIBPATH)/lib$(PROVIDER_LIBRARY).so" >>$@
+	echo "register: install" >>$@
+	echo "	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof" >>$@
+	echo "	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/namespace.mof" >>$@
+	echo "	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof" >>$@
+	echo "	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg" >>$@
+	echo "" >>$@
+	echo "unregister: " >>$@
+	echo "	$(RUNASROOT) $(PEGASUS_BINPATH)/cimprovider -r -m $(PROVIDER_LIBRARY)_Module" >>$@
 	echo "ifneq (\$$(PROVIDER_ROOT),)" >>$@
-	echo "install-aux : regmod" >>$@
+	echo "install-aux : " >>$@
 	echo "		mkdir -p \$$(DESTDIR)\$$(PROVIDER_ROOT)/bin" >>$@
 	echo "		cp regmod \$$(DESTDIR)\$$(PROVIDER_ROOT)/bin" >>$@
 	echo "		mkdir -p \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
-	echo "		cp libcimobjects/repository.mof \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
+	echo "		cp libcimobjects/namespace.mof \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
 	echo "endif" >>$@
 
 COMPONENTS += sles10_archive

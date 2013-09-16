@@ -150,13 +150,13 @@ repository.reg : $(libcimobjects_DIR)/repository.mof.cpp $(libcimobjects_DIR)/cl
 
 .PHONY : registration 
 
-registration : repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof
+registration : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof
 
 ifeq ($(CIM_SERVER),pegasus)
 
-register: repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof install $(PEGASUS_START_CONF)
+register: repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof install $(PEGASUS_START_CONF)
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof
-	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/repository.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/namespace.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg
 
@@ -168,7 +168,7 @@ endif
 ifeq ($(CIM_SERVER),sfcb)
 
 register: repository.reg install
-	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg repository.mof
+	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg namespace.mof
 	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg interop.mof
 	$(RUNASROOT) $(SFCBREPOS)
 
@@ -185,7 +185,7 @@ $(libprovider_DIR)/resource.o : WINDRES_CPPFLAGS = -DPROVIDER_LIBRARY=\\\"$(PROV
 												   -DPROVIDER_REVISION_NO=0 -DPROVIDER_BUILD_NO=0
 
 ifeq ($(CIM_INTERFACE),wmi)
-$(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/repository.mof $(MAKEFILE_LIST)
+$(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/namespace.mof $(MAKEFILE_LIST)
 	tac $< | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
 endif
 
@@ -209,7 +209,7 @@ $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSI
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DCIM_INTERFACE=$(CIM_INTERFACE) -DINSTALLERNAME=$@ $(NSIS_OPTIONS) -DTOP=$(TOP) -NOCD $<
 
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
-					$(libcimobjects_DIR)/repository.mof $(libprovider_DIR)/register.mof \
+					$(libcimobjects_DIR)/namespace.mof $(libprovider_DIR)/register.mof \
 					$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
 	$(target_STRIP) $(libprovider_TARGET)
 	lcab -n $^ $@

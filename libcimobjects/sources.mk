@@ -65,6 +65,9 @@ MOF_PREPROCESS := $(target_CXX) -E -P -DTARGET_CIM_SERVER_$(CIM_SERVER) \
 
 
 $(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof.cpp
+	$(MOF_PREPROCESS) -DINBUILD=1 -DIMPNS=1 $< >$@
+
+$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/repository.mof.cpp
 	$(MOF_PREPROCESS) -DIMPNS=1 $< >$@
 
 $(libcimobjects_DIR)/interop.mof : $(libcimobjects_DIR)/repository.mof.cpp

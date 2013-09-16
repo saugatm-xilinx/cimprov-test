@@ -5,7 +5,8 @@ esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $(findstring target,
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_GENERATED = $(patsubst $(TOP)/%,%,$(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) ))
-ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
+ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/namespace.mof \
+				  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
 ESXI_GENERATED += repository.reg.in 
 ESXI_GENERATED += Makefile.am
 ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs/i386/libutils.a
@@ -46,7 +47,7 @@ $(esxi_archive_TARGET) : $(_esxi_archive_SOURCES)
 	cd $(esxi_archive_DIR); tar -rf $(basename $(abspath $@)) *
 	gzip -f $(basename $@)
 
-$(ESXI_SRC_PATH)/$(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof \
+$(ESXI_SRC_PATH)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/namespace.mof \
 													   $(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS))
 	mkdir -p $(dir $@)
 	cat $^ >$@
@@ -82,7 +83,7 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace) root/cimv2" >>$@
 	echo "if ENABLE_SFCB" >>$@
 	echo "dist_sfcb_interop_ns_DATA = libcimobjects/interop.mof" >>$@
-	echo "dist_sfcb_ns_DATA = libcimobjects/repository.mof" >>$@
+	echo "dist_sfcb_ns_DATA = libcimobjects/namespace.mof" >>$@
 	echo "dist_sfcb_root_ns_DATA = libcimobjects/root.mof" >>$@
 	echo "dist_sfcb_reg_DATA = repository.reg" >>$@
 	echo "endif" >>$@
