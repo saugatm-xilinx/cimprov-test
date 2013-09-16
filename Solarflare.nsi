@@ -39,6 +39,13 @@ RequestExecutionLevel admin
    Abort "${Command} returned $0"
 !macroend
 
+!macro SilentExecNofail Command Args
+   nsExec::ExecToLog '"${Command}" ${Args}'
+   Pop $0
+   StrCmp $0 "error" +2 0
+   Abort "${Command} cannot be executed"
+!macroend
+
 Section ProviderDLL
 
 !if ${CIM_INTERFACE} == cmpi
@@ -86,11 +93,11 @@ RMDir /r '${PegasusRoot}\repository\root#solarflare'
 Delete $INSTDIR\repository.reg
 Delete $INSTDIR\interop.mof
 !else
-!insertmacro SilentExec wmic 'path __Win32Provider.Name="Solarflare" delete'
-!insertmacro SilentExec wmic `path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-!insertmacro SilentExec wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-!insertmacro SilentExec wmic `path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\unregister.mof"'
+!insertmacro SilentExecNofail wmic `path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+!insertmacro SilentExecNofail wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+!insertmacro SilentExecNofail wmic `path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
+!insertmacro SilentExecNofail wmic 'path __Win32Provider.Name="Solarflare" delete'
+!insertmacro SilentExecNofail mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\unregister.mof"'
 Delete $INSTDIR\unregister.mof
 Delete $INSTDIR\register.mof
 !endif
