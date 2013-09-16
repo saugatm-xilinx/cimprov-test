@@ -200,7 +200,7 @@ ifeq ($(CIM_INTERFACE),wmi)
 NSIS_DEPENDENCIES=$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
 NSIS_OPTIONS=-DNAMESPACE='\\.\root\cimv2'
 else
-NSIS_DEPENDENCIES=repository.reg $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof
+NSIS_DEPENDENCIES=repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof
 NSIS_OPTIONS=-DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMESPACE)'
 endif
 
