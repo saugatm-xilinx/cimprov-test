@@ -80,9 +80,9 @@ Section un.MOFs
 
 !if ${CIM_INTERFACE} == cmpi
 !insertmacro SilentExec '${PegasusPath}\cimprovider.exe' '-r -m ${PROVIDERNAME}_Module'
-!insertmacro SilentExec 'sc' 'stop cimserver'
+!insertmacro SilentExec 'net' 'stop cimserver'
 RMDir /r '${PegasusRoot}\repository\root#solarflare'
-!insertmacro SilentExec 'sc' 'start cimserver'
+!insertmacro SilentExec 'net' 'start cimserver'
 Delete $INSTDIR\repository.reg
 Delete $INSTDIR\interop.mof
 !else
