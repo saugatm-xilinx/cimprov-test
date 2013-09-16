@@ -892,7 +892,7 @@ namespace solarflare
     }
 
     Instance *
-    FirmwareServiceAffectsSystemHelper::insta4nce(const SystemElement& se, unsigned idx) const
+    FirmwareServiceAffectsSystemHelper::instance(const SystemElement& se, unsigned idx) const
     {
         SF_ServiceAffectsSystem *link = NULL;
 
