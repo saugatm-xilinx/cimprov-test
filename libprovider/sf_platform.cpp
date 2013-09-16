@@ -86,13 +86,10 @@ namespace solarflare
 
     const SWElement *Diagnostic::diagnosticTool() const
     {
-        Driver      *driver = NULL;
         VersionInfo  vers;
 
-        if (this->nic() != NULL &&
-             (driver = this->nic()->driver()) != NULL)
-            vers = driver->version();
-        else
+        if (!(this->nic() != NULL &&
+             (vers = this->nic()->driverVersion()) != VersionInfo()))
         {
             ConstEnumProvClsInsts en(findDriverVersion, &vers);
 
@@ -446,5 +443,13 @@ namespace solarflare
                                         this->type());
 
         return type;
+    }
+
+    VersionInfo NIC::driverVersion() const
+    {
+        if (driver() != NULL)
+            return driver()->version();
+        else
+            return VersionInfo();
     }
 } // namespace

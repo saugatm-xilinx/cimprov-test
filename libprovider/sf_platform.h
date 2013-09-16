@@ -391,6 +391,12 @@ namespace solarflare
         /// @return NIC VPD
         virtual VitalProductData vitalProductData() const = 0;
 
+        /// @return NIC Tag
+        virtual String tag() const
+        {
+            return vitalProductData().id();
+        }
+
         /// Network connector type.
         enum Connector {
             RJ45,
@@ -403,6 +409,9 @@ namespace solarflare
 
         /// @return Associated device driver or NULL
         virtual Driver *driver() const { return NULL; }
+
+        /// @return Associated device driver or NULL
+        virtual VersionInfo driverVersion() const;
 
         /// @return maximum link speed (defaults to 10G)
         /// fixme: enum

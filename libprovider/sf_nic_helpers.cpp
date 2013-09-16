@@ -106,7 +106,7 @@ namespace solarflare
         SF_NICCard *card = SF_NICCard::create(true);
 
         card->CreationClassName.set("SF_NICCard");
-        card->Tag.set(static_cast<const NIC&>(se).vitalProductData().id());
+        card->Tag.set(static_cast<const NIC&>(se).tag());
 
         return card;
     }

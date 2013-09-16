@@ -1145,6 +1145,24 @@ cleanup:
             return portInfo.bootROMVersion();
         }
 
+        /// @return Device Instance Name
+        virtual String getDevInstName() const
+        {
+            return portInfo.deviceInstanceName;
+        }
+
+        /// @return Serial number from VPD
+        virtual String serialNumber() const
+        {
+            return portInfo.serialNumber();
+        }
+
+        /// @return Product number from VPD
+        virtual String productNumber() const
+        {
+            return portInfo.productNumber();
+        }
+
         /// @return EFX_Port instance Id
         virtual int efxPortId() const
         {
@@ -1528,12 +1546,12 @@ cleanup:
 
     class WindowsDriver : public Driver {
         VersionInfo vers;
-        WindowsDriver(const String& d, const String& sn, const VersionInfo& v) :
-            Driver(d, sn), vers(v) {}
         static void appendDeviceID(const char *str, const char *limit, String& target);
     public:
+        WindowsDriver(const String& d, const String& sn, const VersionInfo& v) :
+            Driver(d, sn), vers(v) {}
         static WindowsDriver byDeviceID(const String& devid, const String& version);
-        static WindowsDriver byNICDescr(const NICDescr &rhs);
+        static WindowsDriver byDevInstName(const char *name);
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
         virtual bool syncInstall(const char *) { return false; }
@@ -1598,13 +1616,12 @@ cleanup:
                                  VersionInfo(version.c_str()));
     }    
 
-    WindowsDriver WindowsDriver::byNICDescr(const NICDescr &ndesc)
+    WindowsDriver WindowsDriver::byDevInstName(const char *name)
     {
         String deviceID;
         String version;
         String query("SELECT * FROM Win32_PnPSignedDriver WHERE DeviceID='");
 
-        const char *name = ndesc.ports[0].deviceInstanceName.c_str();
         const char *lastUnderscore = strrchr(name, '_');
 
         WMICtxRef ctxRef;
@@ -1638,6 +1655,7 @@ cleanup:
         WindowsBootROM rom;
         mutable WindowsDriver nicDriver;
         PCIAddress pciAddr;
+        NICDescr nicDescr;
     public:
         Array<WindowsPort> ports;
         Array<WindowsInterface> intfs;
@@ -1671,7 +1689,7 @@ cleanup:
             NIC(idx),
             nicFw(this),
             rom(this),
-            nicDriver(WindowsDriver::byNICDescr(descr)),
+            nicDriver("", "", VersionInfo()),
             pciAddr(0, descr.pci_bus, descr.pci_device)
         {
             int i = 0;
@@ -1700,9 +1718,13 @@ cleanup:
         }
         Connector connector() const
         {
-            VitalProductData        vpd = vitalProductData();
-            const char             *part = vpd.part().c_str();
+            String                  strPart;
+            const char             *part = NULL;
             char                    last = 'T';
+
+            if (ports.size() > 0)
+                strPart = ports[0].productNumber(); 
+            part = strPart.c_str();
 
             if (*part != '\0')
                 last = part[strlen(part) - 1];
@@ -1813,7 +1835,48 @@ cleanup:
             return pciAddr;
         }
 
-        virtual Driver *driver() const { return &nicDriver; }
+        virtual Driver *driver() const
+        {
+            if (ports.size() > 0)
+                nicDriver = WindowsDriver::byDevInstName(
+                                      ports[0].getDevInstName().c_str());
+            return &nicDriver;
+        }
+
+        virtual String tag() const
+        {
+            if (ports.size() > 0)
+                return ports[0].serialNumber(); 
+            else
+                return String("");
+        }
+
+        VersionInfo driverVersion() const
+        {
+            WMICtxRef ctxRef;
+
+            IWbemClassObject *efxRoot;
+            String            drvVersion;
+            int               rc;
+
+            if (!ctxRef)
+                return VersionInfo();
+
+            rc = querySingleObj(NULL,
+                                "SELECT DriverVersion "
+                                "FROM EFX_Root WHERE "
+                                "DummyInstance='false'",
+                                efxRoot);
+            if (rc != 0)
+                return VersionInfo();
+
+            rc = wmiGetStringProp(efxRoot, "DriverVersion", drvVersion);
+            efxRoot->Release();
+            if (rc != 0)
+                return VersionInfo();
+
+            return VersionInfo(drvVersion.c_str());
+        }
     };
 
     class WindowsLibrary : public Library {
