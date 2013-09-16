@@ -12,6 +12,7 @@
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 #include "SF_ElementCapabilities.h"
+#include "SF_ElementConformsToProfile.h"
 
 namespace solarflare 
 {
@@ -29,6 +30,7 @@ namespace solarflare
     using cimple::SF_LogManagesRecord;
     using cimple::SF_RegisteredProfile;
     using cimple::SF_ReferencedProfile;
+    using cimple::SF_ElementConformsToProfile;
 
     class LogEntryHelper : public CIMHelper {
         const Logger *logger(unsigned& idx) const;
@@ -84,6 +86,12 @@ namespace solarflare
 
     class ReferencedProfileHelper : public CIMHelper {
         const DMTFProfileInfo *refProfile(unsigned idx, const DMTFProfileInfo*& ref) const;
+    public:
+        virtual unsigned nObjects(const SystemElement&) const;
+        virtual Instance *instance(const SystemElement&, unsigned idx) const;
+    };
+
+    class ProviderLogConformsToProfileHelper : public CIMHelper {
     public:
         virtual unsigned nObjects(const SystemElement&) const;
         virtual Instance *instance(const SystemElement&, unsigned idx) const;
@@ -333,6 +341,18 @@ namespace solarflare
         return link;
     }
 
+    unsigned ProviderLogConformsToProfileHelper::nObjects(const SystemElement& sys) const
+    {
+        static const ProviderLogHelper delegate;
+        return delegate.nObjects(sys);
+    }
+
+    Instance *ProviderLogConformsToProfileHelper::instance(const SystemElement& se, unsigned idx) const
+    {
+        return DMTFProfileInfo::RecordLogProfile.
+            conformingElement(se.cimReference(SF_ProviderLog::static_meta_class, idx));
+    }
+
     unsigned RegisteredProfileHelper::nObjects(const SystemElement&) const
     {
         unsigned n = 0;
@@ -433,6 +453,7 @@ namespace solarflare
         static const RegisteredProfileHelper registeredProfileHelper;
         static const ReferencedProfileHelper referencedProfileHelper;
         static const ProviderLogCapsLinkHelper capsLink;
+        static const ProviderLogConformsToProfileHelper conforming;
 
         if (&cls == &SF_LogEntry::static_meta_class)
             return &logEntryHelper;
@@ -450,6 +471,8 @@ namespace solarflare
             return &referencedProfileHelper;
         if (&cls == &SF_ElementCapabilities::static_meta_class)
             return &capsLink;
+        if (&cls == &SF_ElementConformsToProfile::static_meta_class)
+            return &conforming;
         return NULL;
     }
 
