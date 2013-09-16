@@ -713,7 +713,6 @@ namespace solarflare
         String                    portName;
         unsigned int              i;
         unsigned int              j;
-        bool                      clearPciInfos = false;
         int                       pci_cmp_rc;
 
         rc = wmiEnumInstancesQuery(NULL,
@@ -726,6 +725,15 @@ namespace solarflare
         rc = getInterfacesInfo2(intfsInfo);
         if (rc < 0)
             goto cleanup;
+
+        if (wmiEnumInstancesQuery(NULL,
+                                  "SELECT * FROM EFX_PciInformation "
+                                  "WHERE DummyInstance='false'",
+                                  pciInfos) != 0)
+        {
+            rc = -1;
+            goto cleanup;
+        }
 
         for (i = 0; i < ports.size(); i++)
         {
@@ -780,13 +788,6 @@ namespace solarflare
 
             portDescr.ifInfo = intfsInfo[j];
 
-            if (wmiEnumInstances(NULL, "EFX_PciInformation",
-                                 pciInfos) != 0)
-            {
-                rc = -1;
-                goto cleanup;
-            }
-
             for (j = 0; j < pciInfos.size(); j++)
             {
                 int pciPortId;
@@ -795,7 +796,6 @@ namespace solarflare
                                        &pciPortId) != 0)
                 {
                     rc = -1;
-                    clearPciInfos = true;
                     goto cleanup;
                 }
 
@@ -807,7 +807,6 @@ namespace solarflare
                 CIMPLE_ERR(("Failed to find matching EFX_PciInformation for "
                             "PortId=%d", portDescr.port_id));
                 rc = -1;
-                clearPciInfos = true;
                 goto cleanup;
             }
 
@@ -827,13 +826,8 @@ namespace solarflare
                 CIMPLE_ERR(("Failed to obtain all required EFX_PciInformation "
                             "properties for PortId=%d", portDescr.port_id));
                 rc = -1;
-                clearPciInfos = true;
                 goto cleanup;
             }
-
-            for (j = 0; j < pciInfos.size(); j++)
-                pciInfos[j]->Release();
-            pciInfos.clear();
 
             for (j = 0; j < portDescrs.size(); j++)
             {
@@ -888,12 +882,9 @@ namespace solarflare
         }
 
 cleanup:
-        if (clearPciInfos)
-        {
-            for (j = 0; j < pciInfos.size(); j++)
-                pciInfos[j]->Release();
-            pciInfos.clear();
-        }
+        for (j = 0; j < pciInfos.size(); j++)
+            pciInfos[j]->Release();
+        pciInfos.clear();
 
         for (i = 0; i < ports.size(); i++)
             if (ports[i] != NULL)
