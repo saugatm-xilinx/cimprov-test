@@ -9,8 +9,8 @@ URL: http://solarflare.com
 Source0: %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-#BuildRequires:
-%{REQUIRES}
+BuildRequires: %{BUILD_REQUIRES}
+Requires: %{REQUIRES}
 
 %description
 
@@ -22,13 +22,13 @@ Prefix: %{PROVIDER_ROOT}/mof
 
 
 %build
-make PRESET=%{PRESET} %{?_smp_mflags}
-make PRESET=%{PRESET} %{?_smp_mflags} registration
+make CONFIG=%{CONFIG} %{?_smp_mflags}
+make CONFIG=%{CONFIG} %{?_smp_mflags} registration
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make PRESET=%{PRESET} DESTDIR=$RPM_BUILD_ROOT install
-make PRESET=%{PRESET} DESTDIR=$RPM_BUILD_ROOT install-aux
+make CONFIG=%{CONFIG} DESTDIR=$RPM_BUILD_ROOT install
+make CONFIG=%{CONFIG} DESTDIR=$RPM_BUILD_ROOT install-aux
 
 %post
 %{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} -uc -aE %{PROVIDER_ROOT}/mof/schema.mof
