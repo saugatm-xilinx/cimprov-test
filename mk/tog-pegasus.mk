@@ -13,7 +13,9 @@ override PEGASUS_REPODIR = $(PEGASUS_HOME)/repository
 override PROVIDER_LIBPATH = $(PEGASUS_LIBDIR)/Pegasus/providers
 
 CIMPLE_PLATFORM = $(HOST_CIMPLE_PLATFORM)
-PROVIDER_PLATFORM = linux
+override PROVIDER_PLATFORM = linux
 PROVIDER_PLATFORM_VARIANT = tog-pegasus
-CIM_SERVER=pegasus
-CIM_INTERFACE=cmpi
+override CIM_SERVER=pegasus
+override CIM_INTERFACE=cmpi
+
+override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
