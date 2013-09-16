@@ -19,3 +19,8 @@ override CIM_SERVER=pegasus
 override CIM_INTERFACE=cmpi
 
 override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
+
+define PROVIDER_RPM_REQUIRES
+Build-Requires: tog-pegasus-devel
+Requires: tog-pegasus-libs
+endef
