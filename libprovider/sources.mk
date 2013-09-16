@@ -141,36 +141,27 @@ libprovider_BUILD_DEPENDS = genmod
 
 $(eval $(call component,libprovider,SHARED_LIBRARIES))
 
-ifeq ($(USE_REGMOD),)
-
 repository.reg : $(libcimobjects_DIR)/repository.mof.cpp $(libcimobjects_DIR)/classes $(TOP)/mof2reg.awk
 	$(AWK) -f $(TOP)/mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
                 -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
                 -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),root/cimv2)" \
+				-vINTERFACE="$(CIM_INTERFACE)" \
                 -vCLASSLIST="`cat $(word 2,$^)`" -vTARGET="$(CIM_SERVER)" $< >$@
-endif
+
+.PHONY : registration 
+
+registration : repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof
 
 ifeq ($(CIM_SERVER),pegasus)
 
-ifneq ($(USE_REGMOD),)
-register: install $(regmod_TARGET) $(PEGASUS_START_CONF)
-	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO)
-	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -c $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
-
-unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
-	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(INTEROP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO) $(INTEROP_CLASSES)
-	$(RUNASROOT) $(abspath $(regmod_TARGET)) -n $(IMP_NAMESPACE) -u -c -i $(PROVIDER_LIBRARY_SO)
-else
-
-register: repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/interop.mof install $(PEGASUS_START_CONF)
+register: repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof install $(PEGASUS_START_CONF)
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/repository.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg
 
 unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimprovider -r -m $(PROVIDER_LIBRARY)_Module
-
-endif
 
 endif
 

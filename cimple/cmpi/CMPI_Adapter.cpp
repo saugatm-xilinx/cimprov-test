@@ -25,6 +25,7 @@
 */
 
 #include "CMPI_Adapter.h"
+#include <inttypes.h>
 #include <string.h>
 #include <time.h>
 #include <cimple/Strings.h>

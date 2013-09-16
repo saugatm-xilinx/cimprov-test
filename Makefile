@@ -108,11 +108,9 @@ install : all
 endif
 
 ifneq ($(PROVIDER_ROOT),)
-install-aux : $(libcimobjects_DIR)/repository.mof regmod
-	mkdir -p $(DESTDIR)$(PROVIDER_ROOT)/bin
-	cp regmod $(DESTDIR)$(PROVIDER_ROOT)/bin
+install-aux : repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof
 	mkdir -p $(DESTDIR)$(PROVIDER_ROOT)/mof
-	cp $(libcimobjects_DIR)/repository.mof $(DESTDIR)$(PROVIDER_ROOT)/mof
+	cp $^ $(DESTDIR)$(PROVIDER_ROOT)/mof
 endif
 
 .PHONY : platform

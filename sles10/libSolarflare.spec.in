@@ -15,7 +15,6 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %description
 
 Prefix: %{PROVIDER_LIBPATH}
-Prefix: %{PROVIDER_ROOT}/bin
 Prefix: %{PROVIDER_ROOT}/mof
 
 %prep
@@ -24,7 +23,7 @@ Prefix: %{PROVIDER_ROOT}/mof
 
 %build
 make %{?_smp_mflags}
-make %{?_smp_mflags} regmod
+make %{?_smp_mflags} registration
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -32,14 +31,14 @@ make DESTDIR=$RPM_BUILD_ROOT install
 make DESTDIR=$RPM_BUILD_ROOT install-aux
 
 %post
-%{PROVIDER_ROOT}/bin/regmod -n %{IMP_NAMESPACE} -c %{PROVIDER_LIBPATH}/%{PROVIDER_SO}
-%{PROVIDER_ROOT}/bin/regmod -n %{INTEROP_NAMESPACE} -c %{PROVIDER_LIBPATH}/%{PROVIDER_SO} \
-%{INTEROP_CLASSES}
+%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} %{PROVIDER_ROOT}/mof/schema.mof
+%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} %{PROVIDER_ROOT}/mof/repository.mof
+%{PEGASUS_HOME}/bin/cimmof -n %{INTEROP_NAMESPACE} %{PROVIDER_ROOT}/mof/interop.mof
+%{PEGASUS_HOME}/bin/cimmof -n %{INTEROP_NAMESPACE} %{PROVIDER_ROOT}/mof/repository.reg
+
 
 %preun
-%{PROVIDER_ROOT}/bin/regmod -n %{INTEROP_NAMESPACE} -u -c -i %{PROVIDER_LIBPATH}/%{PROVIDER_SO} \
-%{INTEROP_CLASSES}
-%{PROVIDER_ROOT}/bin/regmod -n %{IMP_NAMESPACE} -u -c -i %{PROVIDER_LIBPATH}/%{PROVIDER_SO}
+${PEGASUS_HOME}/bin/cimprovider -r -m %{PROVIDER_LIBRARY}_Module
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -47,9 +46,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%attr(500,root,root) %{PROVIDER_ROOT}/bin/regmod
 %{PROVIDER_LIBPATH}/%{PROVIDER_SO}
 %attr(444,root,root) %{PROVIDER_ROOT}/mof/repository.mof
+%attr(444,root,root) %{PROVIDER_ROOT}/mof/interop.mof
+%attr(444,root,root) %{PROVIDER_ROOT}/mof/schema.mof
+%attr(444,root,root) %{PROVIDER_ROOT}/mof/repository.reg
 %doc
 
 %changelog

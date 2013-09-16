@@ -13,9 +13,16 @@ BEGIN {
         print "instance of PG_ProviderModule\n{"
         print "\tName = \"" PRODUCTNAME "_Module\";"
         print "\tVendor = \"" VENDORNAME "\";"
-        print "\tVersion = \"2.0.0\";"
-        print "\tInterfaceType = \"CMPI\";"
-        print "\tInterfaceVersion = \"2.0.0\";"
+        if (INTERFACE == "cmpi")
+        {
+            print "\tVersion = \"2.0.0\";"
+            print "\tInterfaceType = \"CMPI\";"
+            print "\tInterfaceVersion = \"2.0.0\";"
+        } else {
+            print "\tVersion = \"2.5.0\";"
+            print "\tInterfaceType = \"C++Default\";"
+            print "\tInterfaceVersion = \"2.5.0\";"
+        }
         print "\tLocation = \"" PRODUCTNAME "\";"
         print "};"
         print ""

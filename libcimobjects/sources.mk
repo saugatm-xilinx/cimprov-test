@@ -73,7 +73,6 @@ $(libcimobjects_DIR)/interop.mof : $(libcimobjects_DIR)/repository.mof.cpp
 $(libcimobjects_DIR)/root.mof : $(libcimobjects_DIR)/repository.mof.cpp
 	$(MOF_PREPROCESS) -DROOTNS=1 $< >$@
 
-ifeq ($(PROVIDER_PLATFORM),windows)
 ifeq ($(CIM_INTERFACE),wmi)
 PATCH_SCHEMA_FOR_WMI = | $(SED) 's/\[\([^]]*\)Association,[[:space:]]*/\[\1/; s/\[\([^]]*\)Abstract,[[:space:]]*/\[\1/'
 CIM_CLASS_PREFIX = CIM_
@@ -81,4 +80,3 @@ endif
 $(libcimobjects_DIR)/schema.mof : $(CIM_SCHEMA_ROOTFILE) $(MAKEFILE_LIST)
 	cat `$(SED) -n 's!#pragma include ("\($(CIM_CLASS_PREFIX)[^"]*\)")!$(dir $<)/\1!p' $<` $(PATCH_SCHEMA_FOR_WMI) >$@
 
-endif
