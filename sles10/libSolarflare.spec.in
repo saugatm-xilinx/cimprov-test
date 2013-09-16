@@ -31,9 +31,9 @@ make DESTDIR=$RPM_BUILD_ROOT install
 make DESTDIR=$RPM_BUILD_ROOT install-aux
 
 %post
-%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} %{PROVIDER_ROOT}/mof/schema.mof
-%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} %{PROVIDER_ROOT}/mof/repository.mof
-%{PEGASUS_HOME}/bin/cimmof -n %{INTEROP_NAMESPACE} %{PROVIDER_ROOT}/mof/interop.mof
+%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} -uc -aE %{PROVIDER_ROOT}/mof/schema.mof
+%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} -uc %{PROVIDER_ROOT}/mof/repository.mof
+%{PEGASUS_HOME}/bin/cimmof -n %{INTEROP_NAMESPACE} -uc %{PROVIDER_ROOT}/mof/interop.mof
 %{PEGASUS_HOME}/bin/cimmof -n %{INTEROP_NAMESPACE} %{PROVIDER_ROOT}/mof/repository.reg
 
 

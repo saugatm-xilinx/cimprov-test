@@ -155,9 +155,9 @@ registration : repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobject
 ifeq ($(CIM_SERVER),pegasus)
 
 register: repository.reg $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof install $(PEGASUS_START_CONF)
-	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof
-	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/repository.mof
-	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/repository.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg
 
 unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
