@@ -23,7 +23,7 @@ InstallDir "$PROGRAMFILES\Solarflare Communications\Solarflare CIM provider"
 RequestExecutionLevel admin 
 
 !if ${CIM_INTERFACE} == cmpi
-!define PegasusRoot 'c:\cimom\pegasus_2.11.2'
+!define PegasusRoot 'c:\pegasus\build'
 !define PegasusPath '${PegasusRoot}\bin'
 !define ProviderDLL '"${PegasusPath}\${PROVIDERNAME}.dll"'
 !else
