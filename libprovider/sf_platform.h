@@ -397,6 +397,12 @@ namespace solarflare
             return vitalProductData().id();
         }
 
+        /// @return NIC product number from VPD
+        virtual String productNumber() const
+        {
+            return vitalProductData().part();
+        }
+
         /// Network connector type.
         enum Connector {
             RJ45,

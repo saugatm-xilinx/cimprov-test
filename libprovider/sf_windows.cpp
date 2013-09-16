@@ -103,6 +103,14 @@ namespace solarflare
     ///
     class PortDescr
     {
+    private:
+        mutable String savedProductName;
+        mutable bool vpdPNameGot;
+        mutable String savedProductNumber;
+        mutable bool vpdPNumGot;
+        mutable String savedSerialNumber;
+        mutable bool vpdSNumGot;
+
     public:
         int pci_fn;             ///< PCI function
         int pci_bus;            ///< PCI bus ID
@@ -136,7 +144,8 @@ namespace solarflare
 
         IWbemClassObject *efxPort;  ///< Associated EFX_Port object
 
-        PortDescr() : efxPort(NULL) {};
+        PortDescr() : vpdPNameGot(false), vpdPNumGot(false),
+                      vpdSNumGot(false), efxPort(NULL) {};
 
         inline void clear()
         {
@@ -467,31 +476,39 @@ namespace solarflare
     /// Get product name from VPD for SF Ethernet port
     String PortDescr::productName() const
     {
-        String pname; 
-
-        getPortVPDField(efxPort, VPD_TAG_ID, 0,
-                        pname);
-        return pname;
+        if (!vpdPNameGot)
+        {
+            if (getPortVPDField(efxPort, VPD_TAG_ID, 0,
+                                savedProductName) == 0)
+                vpdPNameGot = true;
+        }
+        return savedProductName;
     }
 
     /// Get product number from VPD for SF Ethernet port
     String PortDescr::productNumber() const
     {
-        String pnum; 
-
-        getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('P', 'N'),
-                        pnum);
-        return pnum;
+        if (!vpdPNumGot)
+        {
+            if (getPortVPDField(efxPort, VPD_TAG_R,
+                                VPD_KEYWORD('P', 'N'),
+                                savedProductNumber) == 0)
+                vpdPNumGot = true;
+        }
+        return savedProductNumber;
     }
 
     /// Get serial number from VPD for SF Ethernet port
     String PortDescr::serialNumber() const
     {
-        String snum; 
-
-        getPortVPDField(efxPort, VPD_TAG_R, VPD_KEYWORD('S', 'N'),
-                        snum);
-        return snum;
+        if (!vpdSNumGot)
+        {
+            if (getPortVPDField(efxPort, VPD_TAG_R,
+                                VPD_KEYWORD('S', 'N'),
+                                savedSerialNumber) == 0)
+                vpdSNumGot = true;
+        }
+        return savedSerialNumber;
     }
 
     /// Get VitalProductData() for SF Ethernet port;
@@ -500,11 +517,10 @@ namespace solarflare
         String pname;
         String pnum;
         String snum; 
-        int    rc;
 
-        rc = getPortVPDFields(efxPort, pname, pnum, snum);
-        if (rc != 0)
-            return VitalProductData("", "", "", "", "", "");
+        pname = productName();
+        pnum = productNumber();
+        snum = serialNumber();
 
         return VitalProductData(snum, "", snum, pnum, pname, pnum);
     }
@@ -1521,9 +1537,11 @@ cleanup:
 
     class WindowsNICFirmware : public NICFirmware {
         const NIC *owner;
+        mutable VersionInfo vers;
+        mutable bool versGot;
     public:
         WindowsNICFirmware(const NIC *o) :
-            owner(o) {}
+            owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *)
@@ -1535,9 +1553,11 @@ cleanup:
 
     class WindowsBootROM : public BootROM {
         const NIC *owner;
+        mutable VersionInfo vers;
+        mutable bool versGot;
     public:
         WindowsBootROM(const NIC *o) :
-            owner(o) {}
+            owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *) { return true; }
@@ -1854,6 +1874,14 @@ cleanup:
         {
             if (ports.size() > 0)
                 return ports[0].serialNumber(); 
+            else
+                return String("");
+        }
+
+        virtual String productNumber() const
+        {
+            if (ports.size() > 0)
+                return ports[0].productNumber(); 
             else
                 return String("");
         }
@@ -2499,22 +2527,32 @@ cleanup:
 
     VersionInfo WindowsNICFirmware::version() const
     {
-        if ((dynamic_cast<const WindowsNIC *>(owner))->ports.size() == 0)
-            return VersionInfo("0.0.0");
-        else
-            return VersionInfo(
-                       dynamic_cast<const WindowsNIC *>(owner)->ports[0].
-                                       getMcfwVersion().c_str());
+        if (!versGot)
+        {
+            if ((dynamic_cast<const WindowsNIC *>(owner))->ports.size() == 0)
+                vers = VersionInfo("0.0.0");
+            else
+                vers = VersionInfo(
+                           dynamic_cast<const WindowsNIC *>(owner)->ports[0].
+                                           getMcfwVersion().c_str());
+            versGot = true;
+        }
+        return vers;
     }
 
     VersionInfo WindowsBootROM::version() const
     {
-        if ((dynamic_cast<const WindowsNIC *>(owner))->ports.size() == 0)
-            return VersionInfo("0.0.0");
-        else
-            return VersionInfo(
-                  (dynamic_cast<const WindowsNIC *>(owner))->ports[0].
-                                        getBootROMVersion().c_str());
+        if (!versGot)
+        {
+            if ((dynamic_cast<const WindowsNIC *>(owner))->ports.size() == 0)
+                vers = VersionInfo("0.0.0");
+            else
+                vers = VersionInfo(
+                      (dynamic_cast<const WindowsNIC *>(owner))->ports[0].
+                                            getBootROMVersion().c_str()); 
+            versGot = true;
+        }
+        return vers;
     }
 
     ///
