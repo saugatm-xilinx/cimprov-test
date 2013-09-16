@@ -3,7 +3,7 @@
 DESC_NAME := solarflare
 DESC_ESX_VERSION := 5.0.0
 DESC_VENDOR_EMAIL := none@vmware.com
-DESC_VERSION := 1.0-0.0
+DESC_VERSION := 1.0-1.0
 DESC_VENDOR := Solarflare
 DESC_SUMMARY := Solarflare NIC CIM Provider
 
