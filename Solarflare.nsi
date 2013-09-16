@@ -31,7 +31,7 @@ RequestExecutionLevel admin
 !endif
 
 !macro SilentExec Command Args
-   nsExec::ExecToLog '"${Command}" ${Args}'
+   nsExec::ExecToLog `"${Command}" ${Args}`
    Pop $0
    StrCmp $0 "error" +2 0
    StrCmp $0 "0" +3 +2
@@ -40,7 +40,7 @@ RequestExecutionLevel admin
 !macroend
 
 !macro SilentExecNofail Command Args
-   nsExec::ExecToLog '"${Command}" ${Args}'
+   nsExec::ExecToLog `"${Command}" ${Args}`
    Pop $0
    StrCmp $0 "error" 0 +2
    Abort "${Command} cannot be executed"
