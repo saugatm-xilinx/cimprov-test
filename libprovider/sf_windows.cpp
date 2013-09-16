@@ -1557,6 +1557,13 @@ cleanup:
         virtual bool syncInstall(const char *) { return false; }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return NULL; }
+
+        // Dummy operator to make possible using of cimple::Array
+        inline bool operator== (const WindowsDriver &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
     };
 
     void WindowsDriver::appendDeviceID(const char *str, const char *limit, String& target)
@@ -1993,8 +2000,13 @@ cleanup:
     /// @note all structures are initialised statically,
     /// so initialize() does nothing 
     class WindowsSystem : public System {
+        Array<WindowsDriver> savedDrivers;
+        bool driversFromScratch;
+        Mutex driversLock;
+        VersionInfo driversVersion;
+
         WindowsManagementPackage mgmtPackage;
-        WindowsSystem()
+        WindowsSystem() : driversFromScratch(true), driversLock(false)
         {
             onAlert.setFillPortAlertsInfo(windowsFillPortAlertsInfo);
         };
@@ -2110,7 +2122,7 @@ cleanup:
                     (this)->forAllNICs((ElementEnumerator&) en); 
     }
 
-    bool WindowsSystem::forAllDrivers(ElementEnumerator &en)
+    static int driversFillArray(Array<WindowsDriver> &arr)
     {
         int                       rc;
         bool                      result = true;
@@ -2120,15 +2132,17 @@ cleanup:
 
         WMICtxRef ctxRef;
 
+        arr.clear();
+
         if (!ctxRef)
-            return false;
+            return -1;
 
         rc = wmiEnumInstancesQuery(ctxRef.getCIMWMIConn(), 
                                    "SELECT * FROM Win32_PnPSignedDriver "
                                    "WHERE Manufacturer='Solarflare'",
                                    drivers);
         if (rc < 0)
-            return false;
+            return -1;
 
         for (unsigned i = 0; i < drivers.size(); i++)
         {
@@ -2146,18 +2160,73 @@ cleanup:
             if (j >= drvNames.size())
             {
                 drvNames.append(drv.name());
-                if (!en.process(drv))
-                {
-                    result = false;
-                    break;
-                }
+                arr.append(drv);
             }
         }
 
         for (unsigned i = 0; i < drivers.size(); i++)
             drivers[i]->Release();
 
-        return result;
+        return 0;
+    }
+
+    bool WindowsSystem::forAllDrivers(ElementEnumerator &en)
+    {
+        IWbemClassObject *efxRoot;
+        String            strDrvVersion;
+        VersionInfo       curDriversVersion;
+        int               rc;
+        unsigned int      i;
+
+        WMICtxRef ctxRef;
+
+        if (!ctxRef)
+        {
+            driversFromScratch = true;
+            return false;
+        }
+
+        rc = querySingleObj(NULL,
+                            "SELECT DriverVersion "
+                            "FROM EFX_Root WHERE "
+                            "DummyInstance='false'",
+                            efxRoot);
+        if (rc != 0)
+        {
+            driversFromScratch = true;
+            return false;
+        }
+
+        rc = wmiGetStringProp(efxRoot, "DriverVersion", strDrvVersion);
+        efxRoot->Release();
+        if (rc != 0)
+        {
+            driversFromScratch = true;
+            return false;
+        }
+
+        curDriversVersion = VersionInfo(strDrvVersion.c_str());
+
+        if (driversFromScratch ||
+            curDriversVersion != driversVersion)
+        {
+            Auto_Mutex guard(driversLock);
+
+            if (driversFillArray(savedDrivers) != 0)
+            {
+                driversFromScratch = true;
+                return false;
+            }
+
+            driversVersion = curDriversVersion;
+            driversFromScratch = false;
+        }
+
+        for (i = 0; i < savedDrivers.size(); i++)
+            if (!en.process(savedDrivers[i]))
+                return false;
+
+        return true;
     }
 
     bool WindowsSystem::forAllDrivers(ConstElementEnumerator& en) const
