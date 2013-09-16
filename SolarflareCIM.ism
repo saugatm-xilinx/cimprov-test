@@ -1842,7 +1842,7 @@
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
 		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\register.mof</td><td>1</td><td/></row>
-		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>REPOSI~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\namespace.mof</td><td>1</td><td/></row>
+		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>NAMESP~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\namespace.mof</td><td>1</td><td/></row>
 		<row><td>schema.mof</td><td>AllOtherFiles</td><td>schema.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\schema.mof</td><td>1</td><td/></row>
 		<row><td>solarflare.dll</td><td>Provider</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\Solarflare.dll</td><td>1</td><td/></row>
 		<row><td>unregister.mof</td><td>AllOtherFiles</td><td>UNREGI~1.MOF|unregister.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\unregister.mof</td><td>1</td><td/></row>
