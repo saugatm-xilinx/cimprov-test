@@ -47,7 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{PROVIDER_LIBPATH}/%{PROVIDER_SO}
-%attr(444,root,root) %{PROVIDER_ROOT}/mof/repository.mof
+%attr(444,root,root) %{PROVIDER_ROOT}/mof/namespace.mof
 %attr(444,root,root) %{PROVIDER_ROOT}/mof/interop.mof
 %attr(444,root,root) %{PROVIDER_ROOT}/mof/schema.mof
 %attr(444,root,root) %{PROVIDER_ROOT}/mof/repository.reg
