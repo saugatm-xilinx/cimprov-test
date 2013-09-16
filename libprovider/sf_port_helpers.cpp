@@ -52,9 +52,8 @@ namespace solarflare
     String PhysicalConnectorHelper::tag(const Port& p) const
     {
         Buffer buf;
-        buf.appends(p.nic()->vitalProductData().id().c_str());
-        buf.append(':');
-        buf.append_uint16(p.elementId());
+        buf.appends("PhysicalConnector for ");
+        buf.appends(p.permanentMAC().string().c_str());
         return buf.data();
     }
 
@@ -72,11 +71,19 @@ namespace solarflare
     {
         const solarflare::Port& p = static_cast<const solarflare::Port&>(se);
         SF_PhysicalConnector *phc = static_cast<SF_PhysicalConnector *>(reference(p, idx));
+        Buffer buf;
+
+        buf.appends("LocalPhysicalPort:");
+        buf.append_uint16(p.elementId());
+        buf.appends(",Transceiver:");
+        /// TODO: fix it
+        buf.appends("SFP+");
+        phc->OtherIdentifyingInfo.set(buf.data());
 
 #if  CIM_SCHEMA_VERSION_MINOR == 26
         phc->InstanceID.set(instanceID(p.name()));
 #endif
-        phc->Name.set(p.name());
+        phc->Name.set(tag(p));
 #if CIM_SCHEMA_VERSION_MINOR > 0
         phc->ElementName.set(p.name());
 #endif
@@ -129,6 +136,7 @@ namespace solarflare
 #endif
                 break;
         }
+
         return phc;
     }
 
