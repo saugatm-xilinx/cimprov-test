@@ -78,8 +78,12 @@ $(libcimobjects_DIR)/root.mof : $(libcimobjects_DIR)/repository.mof.cpp
 
 ifeq ($(CIM_INTERFACE),wmi)
 PATCH_SCHEMA_FOR_WMI = | $(SED) 's/\[\([^]]*\)Association,[[:space:]]*/\[\1/; s/\[\([^]]*\)Abstract,[[:space:]]*/\[\1/'
-endif
 CIM_CLASS_PREFIX = CIM_
+else
+CIM_CLASS_PREFIX = CIM_\|qualifiers
+endif
+
+
 $(libcimobjects_DIR)/schema.mof : $(CIM_SCHEMA_ROOTFILE) $(MAKEFILE_LIST)
-	cat `$(SED) -n 's!#pragma include ("\(\([^"/]\+/\)\?\($(CIM_CLASS_PREFIX)\|qualifiers\)[^/"]*\.mof\)")!$(dir $<)\1!p' $<` $(PATCH_SCHEMA_FOR_WMI) >$@
+	cat `$(SED) -n 's!#pragma include ("\(\([^"/]\+/\)\?\($(CIM_CLASS_PREFIX)\)[^/"]*\.mof\)")!$(dir $<)\1!p' $<` $(PATCH_SCHEMA_FOR_WMI) >$@
 
