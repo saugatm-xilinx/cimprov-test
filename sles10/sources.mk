@@ -99,6 +99,9 @@ $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "		mkdir -p \$$(DESTDIR)\$$(PROVIDER_ROOT)/bin" >>$@
 	echo "		mkdir -p \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
 	echo "		cp libcimobjects/namespace.mof \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
+	echo "		cp libcimobjects/interop.mof \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
+	echo "		cp libcimobjects/schema.mof \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
+	echo "		cp repository.reg \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
 	echo "endif" >>$@
 
 COMPONENTS += sles10_archive
