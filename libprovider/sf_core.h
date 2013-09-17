@@ -7,7 +7,13 @@
 #include "sf_utils.h"
 #include "sf_threads.h"
 
-#define SF_LIBPROV_VERSION      "1.0.1.0"
+#define __SF_MK_VSTRING(_x, _y, _z) #_x "." #_y "." #_z
+#define SF_MK_VSTRING(_x, _y, _z) __SF_MK_VSTRING(_x, _y, _z)
+
+#define SF_LIBPROV_VERSION                      \
+    SF_MK_VSTRING(PROVIDER_VERSION_MAJOR,       \
+                  PROVIDER_VERSION_MINOR,       \
+                  PROVIDER_REVISION)
 
 // Platform-independent classes.
 
