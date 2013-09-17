@@ -23,7 +23,6 @@ Prefix: %{PROVIDER_ROOT}/mof
 
 %build
 make %{?_smp_mflags}
-make %{?_smp_mflags} registration
 
 %install
 rm -rf $RPM_BUILD_ROOT

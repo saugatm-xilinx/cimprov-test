@@ -13,7 +13,8 @@ sles10_libprov_SOURCES = $(foreach comp,$(sles10_libprov_COMPONENTS),$(_$(comp)_
 
 sles10_archive_SOURCES = $(patsubst $(TOP)/%,%,$(foreach comp,$(sles10_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) ))
 sles10_archive_SOURCES += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/namespace.mof \
-						  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
+						  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof \
+                          repository.reg
 sles10_archive_SOURCES += Makefile
 sles10_archive_SOURCES += lib$(PROVIDER_LIBRARY).spec
 
