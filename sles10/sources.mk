@@ -5,18 +5,13 @@ sles10_archive_TARGET = $(PROVIDER_TARBALL_DIR).tar.gz
 sles10_archive_DIR = sles10
 
 sles10_libprov_COMPONENTS = libcimple libcimplepeg libcimobjects libprovider
-sles10_regmod_COMPONENTS = regmod libcimple $(PEGASUS_TOOLS_DEPS)
-sles10_archive_COMPONENTS = $(sles10_libprov_COMPONENTS) $(sles10_regmod_COMPONENTS)
+sles10_archive_COMPONENTS = $(sles10_libprov_COMPONENTS)
 
 sles10_libprov_INCLUDES = $(foreach comp,$(sles10_libprov_COMPONENTS),$($(comp)_INCLUDES) )
 sles10_libprov_CPPFLAGS = $(foreach comp,$(sles10_libprov_COMPONENTS),$($(comp)_CPPFLAGS) )
 sles10_libprov_SOURCES = $(foreach comp,$(sles10_libprov_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
 
-sles10_regmod_SOURCES = $(foreach comp,$(sles10_regmod_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
-sles10_regmod_INCLUDES = $(foreach comp,$(sles10_regmod_COMPONENTS),$($(comp)_INCLUDES) )
-sles10_regmod_CPPFLAGS = $(foreach comp,$(sles10_regmod_COMPONENTS),$($(comp)_CPPFLAGS) )
-
-sles10_archive_SOURCES = $(foreach comp,$(sles10_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
+sles10_archive_SOURCES = $(patsubst $(TOP)/%,%,$(foreach comp,$(sles10_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) ))
 sles10_archive_SOURCES += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/namespace.mof \
 						  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
 sles10_archive_SOURCES += Makefile
@@ -70,8 +65,8 @@ $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "PROVIDER_LIBPATH?=$(PEGASUS_HOME)/lib" >>$@
 	echo "TARGET=lib$(PROVIDER_LIBRARY).so" >>$@
 	echo "SOURCES=$(sles10_libprov_SOURCES)" >>$@
-	echo "INCLUDES=$(sles10_libprov_INCLUDES) $(sles10_regmod_INCLUDES) . \$$(PEGASUS_ROOT)/src " >>$@
-	echo "CPPFLAGS=$(sles10_libprov_CPPFLAGS) $(sles10_regmod_CPPFLAGS)" >>$@
+	echo "INCLUDES=$(sles10_libprov_INCLUDES) . \$$(PEGASUS_ROOT)/src " >>$@
+	echo "CPPFLAGS=$(sles10_libprov_CPPFLAGS)" >>$@
 	echo "CPPFLAGS += -I. -I\$$(PEGASUS_ROOT)/src" >>$@
 	echo "CPPFLAGS += -DPEGASUS_PLATFORM_\$$(PEGASUS_PLATFORM)" >>$@
 	echo "CPPFLAGS += -DSF_IMPLEMENTATION_NS=\\\"$(IMP_NAMESPACE)\\\"" >>$@
@@ -99,7 +94,6 @@ $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "ifneq (\$$(PROVIDER_ROOT),)" >>$@
 	echo "install-aux : " >>$@
 	echo "		mkdir -p \$$(DESTDIR)\$$(PROVIDER_ROOT)/bin" >>$@
-	echo "		cp regmod \$$(DESTDIR)\$$(PROVIDER_ROOT)/bin" >>$@
 	echo "		mkdir -p \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
 	echo "		cp libcimobjects/namespace.mof \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
 	echo "endif" >>$@

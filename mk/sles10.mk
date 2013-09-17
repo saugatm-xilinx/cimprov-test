@@ -1,5 +1,5 @@
 override CIM_SERVER=pegasus
-override CIM_INTERFACE=pegasus
+override CIM_INTERFACE=cmpi
 override CIMPLE_PLATFORM=$(HOST_CIMPLE_PLATFORM)
 override PEGASUS_ROOT=/tmp/pegasus
 override PEGASUS_HOME=/tmp/pegasus
