@@ -29,6 +29,8 @@ _sles10_archive_GENERATED = $(_sles10_archive_SOURCES)
 $(sles10_archive_TARGET) : $(_sles10_archive_SOURCES)
 	mkdir -p $(PROVIDER_TARBALL_DIR)
 	cp -r $(sles10_archive_DIR)/* $(PROVIDER_TARBALL_DIR)
+	mkdir -p $(PROVIDER_TARBALL_DIR)/schemas
+	cp -r $(CIM_SCHEMA_DIR) $(PROVIDER_TARBALL_DIR)/schemas/$(notdir $(CIM_SCHEMA_DIR))
 	tar -czf $@ $(PROVIDER_TARBALL_DIR)
 
 $(sles10_archive_DIR)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/namespace.mof \
