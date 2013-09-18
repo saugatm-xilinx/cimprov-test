@@ -680,10 +680,12 @@ namespace solarflare
 
         if (svc->CreationClassName.null || svc->Name.null || 
             svc->CreationClassName.value != "SF_SoftwareInstallationService" ||
-            svc->SystemCreationClassName.null || svc->SystemName.null)
+            svc->SystemCreationClassName.null)
             return false;
         
-        if (!isOurSystem(svc->SystemCreationClassName.value, svc->SystemName.value))
+        if (!isOurSystem(svc->SystemCreationClassName.value,
+                         svc->SystemName.null ?
+                                  String("") : svc->SystemName.value))
             return false;
 
         return svc->Name.value == sw.genericName();

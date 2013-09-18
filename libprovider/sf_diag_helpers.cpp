@@ -223,7 +223,7 @@ namespace solarflare
         newSvc->Name.set(instanceID(diag.name()));
         newSvc->SystemCreationClassName.set(system->CreationClassName.value);
         newSvc->SystemName.set(system->Name.value);
-        
+
         return newSvc;
     }
 
@@ -280,9 +280,11 @@ namespace solarflare
         // among keys of CIM_DiagnosticTest, so all these would be NULL.
         if (test->CreationClassName.null || test->Name.null || 
             test->CreationClassName.value != "SF_DiagnosticTest" ||
-            test->SystemCreationClassName.null || test->SystemName.null)
+            test->SystemCreationClassName.null)
             return false;
-        if (!isOurSystem(test->SystemCreationClassName.value, test->SystemName.value))
+        if (!isOurSystem(test->SystemCreationClassName.value,
+                         test->SystemName.null ?
+                                  String("") : test->SystemName.value))
             return false;
 #endif
         

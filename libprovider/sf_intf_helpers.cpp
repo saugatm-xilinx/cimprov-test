@@ -242,10 +242,12 @@ namespace solarflare
             return false;
         if (eth->CreationClassName.null || eth->DeviceID.null ||
             eth->CreationClassName.value != "SF_EthernetPort" ||
-            eth->SystemCreationClassName.null || eth->SystemName.null)
+            eth->SystemCreationClassName.null)
             return false;
 
-        if (!isOurSystem(eth->SystemCreationClassName.value, eth->SystemName.value))
+        if (!isOurSystem(eth->SystemCreationClassName.value,
+                         eth->SystemName.null ?
+                                String("") : eth->SystemName.value))
             return false;
     
         return eth->DeviceID.value == static_cast<const Interface&>(se).ifName();
@@ -302,10 +304,12 @@ namespace solarflare
             return false;
         if (lan->CreationClassName.null || lan->Name.null ||
             lan->CreationClassName.value != "SF_LANEndpoint" ||
-            lan->SystemCreationClassName.null || lan->SystemName.null)
+            lan->SystemCreationClassName.null)
             return false;
 
-        if (!isOurSystem(lan->SystemCreationClassName.value, lan->SystemName.value))
+        if (!isOurSystem(lan->SystemCreationClassName.value,
+                         lan->SystemName.null ?
+                                      String("") : lan->SystemName.value))
             return false;
     
         return lan->Name.value == static_cast<const Interface&>(se).ifName();
