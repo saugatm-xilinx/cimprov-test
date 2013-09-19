@@ -317,13 +317,13 @@ namespace solarflare
 
     /// @brief stub-only implementation of a software package
     /// with provider library
-    class SampleManagementPackage : public Package {
+    class SampleManagementPackage : public ManagementPackage {
         SampleLibrary providerLibrary;
     protected:
         virtual void setupContents() { providerLibrary.initialize(); };
     public:
         SampleManagementPackage() :
-            Package("CIM Provider RPM", "sfcprovider"),
+            ManagementPackage("CIM Provider RPM", "sfcprovider"),
             providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("0.1"); }

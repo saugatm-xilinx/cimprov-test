@@ -3,6 +3,7 @@ SF_ConcreteJob
 SF_InstalledSoftwareIdentity
 SF_DiagElementSoftwareIdentity
 SF_ControllerSoftwareIdentity
+SF_SystemSoftwareIdentity
 SF_BundleComponent
 SF_ComputerSystem
 SF_NICCard

@@ -2305,13 +2305,13 @@ curl_fail:
 
     /// @brief stub-only implementation of a software package
     /// with provider library
-    class VMwareManagementPackage : public Package {
+    class VMwareManagementPackage : public ManagementPackage {
         VMwareLibrary providerLibrary;
     protected:
         virtual void setupContents() { providerLibrary.initialize(); };
     public:
         VMwareManagementPackage() :
-            Package("CIM Provider VIB", "sfcprovider"),
+            ManagementPackage("CIM Provider VIB", "sfcprovider"),
             providerLibrary(this, "CIM Provider library",
                             "libSolarflare.so", SF_LIBPROV_VERSION) {}
         virtual PkgType type() const { return VSphereBundle; }

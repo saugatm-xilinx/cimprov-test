@@ -8,6 +8,7 @@
 #include "SF_ElementConformsToProfile.h"
 #include "SF_ElementCapabilities.h"
 #include "SF_ControllerSoftwareIdentity.h"
+#include "SF_SystemSoftwareIdentity.h"
 #include "SF_PortController.h"
 #include "SF_HostedService.h"
 #include "SF_InstalledSoftwareIdentity.h"
@@ -35,6 +36,7 @@ namespace solarflare
     using cimple::SF_ElementConformsToProfile;
     using cimple::SF_ElementCapabilities;
     using cimple::SF_ControllerSoftwareIdentity;
+    using cimple::SF_SystemSoftwareIdentity;
     using cimple::SF_PortController;
     using cimple::SF_HostedService;
     using cimple::SF_InstalledSoftwareIdentity;
@@ -98,6 +100,10 @@ namespace solarflare
         virtual Instance *instance(const SystemElement& se, unsigned idx) const;
     };
 
+    class SystemElementSoftwareIdentityHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement& se, unsigned idx) const;
+    };
 
     class InstallationHostedServiceHelper : public CIMHelper {
     public:
@@ -538,6 +544,15 @@ namespace solarflare
             return SWElement::cimDispatch(cls);
     }
 
+    const CIMHelper* ManagementPackage::cimDispatch(const Meta_Class& cls) const
+    {
+        static const SystemElementSoftwareIdentityHelper sysSoftwareIdentity;
+        if (&cls == &SF_SystemSoftwareIdentity::static_meta_class)
+            return &sysSoftwareIdentity;
+        else
+            return Package::cimDispatch(cls);
+    }
+
     void BundleSoftwareIdentityHelper::addPackageType(SF_SoftwareIdentity *identity,
                                                       Package::PkgType type)
     {
@@ -623,6 +638,15 @@ namespace solarflare
             return SWElement::cimDispatch(cls);
     }
 
+    const CIMHelper* Library::cimDispatch(const Meta_Class& cls) const
+    {
+        static const SystemElementSoftwareIdentityHelper sysSoftwareIdentity;
+
+        if (&cls == &SF_SystemSoftwareIdentity::static_meta_class)
+            return &sysSoftwareIdentity;
+        else
+            return SWElement::cimDispatch(cls);
+    }
 
     Instance *SoftwareInstallationServiceHelper::reference(const SystemElement& se, unsigned idx) const
     {
@@ -809,6 +833,25 @@ namespace solarflare
         return item;
     }
 
+    Instance *
+    SystemElementSoftwareIdentityHelper::instance(const SystemElement& se, unsigned) const
+    {
+        const SWElement& sw = static_cast<const SWElement&>(se);
+        SF_SystemSoftwareIdentity *item = NULL;
+
+        if (findSystem() == NULL)
+            return NULL;
+
+        item = SF_SystemSoftwareIdentity::create(true);
+        item->Antecedent = cast<cimple::CIM_SoftwareIdentity *>(sw.cimReference(SF_SoftwareIdentity::static_meta_class));
+        item->Dependent = solarflare::CIMHelper::systemRef();
+        item->ElementSoftwareStatus.null = false;
+        item->ElementSoftwareStatus.value.append(SF_SystemSoftwareIdentity::_ElementSoftwareStatus::enum_Current);
+        item->ElementSoftwareStatus.value.append(SF_SystemSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
+        item->ElementSoftwareStatus.value.append(SF_SystemSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
+        item->ElementSoftwareStatus.value.append(SF_SystemSoftwareIdentity::_ElementSoftwareStatus::enum_Installed);
+        return item;
+    }
 
     Instance * 
     InstallationHostedServiceHelper::instance(const solarflare::SystemElement& se, unsigned) const

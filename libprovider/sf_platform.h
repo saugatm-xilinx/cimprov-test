@@ -473,6 +473,8 @@ namespace solarflare
         Library(const String& d, const String& sn) :
             HostSWElement(d, sn) {};
         virtual SWClass classify() const { return SWLibrary; }
+
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     /// @brief An abstract userspace tool class.
@@ -524,6 +526,16 @@ namespace solarflare
         ///
         /// @return SWType class instance
         virtual SWType *getSWType() const;
+    };
+
+    /// @brief An abstract class for software packages (RPM, MSI, ...)
+    /// cointaining our CIM provider. Implentors shall subclass it
+    /// for platform-specific behaviour
+    class ManagementPackage : public Package {
+    public:
+        ManagementPackage(const String& descr, const String& pkg) :
+            Package(descr, pkg) {}
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
 
     ///

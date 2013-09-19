@@ -1983,7 +1983,7 @@ cleanup:
 
     /// @brief stub-only implementation of a software package
     /// with provider library
-    class WindowsManagementPackage : public Package {
+    class WindowsManagementPackage : public ManagementPackage {
         WindowsLibrary providerLibrary;
 
        static const char *getUninstallerPath()
@@ -2005,7 +2005,7 @@ cleanup:
         virtual void setupContents() { providerLibrary.initialize(); };
     public:
         WindowsManagementPackage() :
-            Package("CIM Provider MSI", getUninstallerPath()),
+            ManagementPackage("CIM Provider MSI", getUninstallerPath()),
             providerLibrary(WindowsLibrary::moduleLibrary(this)) {}
         virtual PkgType type() const { return MSI; }
         virtual VersionInfo version() const

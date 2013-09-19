@@ -1241,13 +1241,13 @@ namespace solarflare
 
     /// @brief stub-only implementation of a software package
     /// with provider library
-    class LinuxManagementPackage : public Package {
+    class LinuxManagementPackage : public ManagementPackage {
         LinuxLibrary providerLibrary;
     protected:
         virtual void setupContents() { providerLibrary.initialize(); };
     public:
         LinuxManagementPackage() :
-            Package("CIM Provider RPM", "sfcprovider"),
+            ManagementPackage("CIM Provider RPM", "sfcprovider"),
             providerLibrary(this, "CIM Provider library", "libSolarflare.so",
                             SF_LIBPROV_VERSION) {}
         virtual PkgType type() const { return RPM; }

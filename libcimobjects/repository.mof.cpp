@@ -41,7 +41,6 @@ class SF_ControllerSoftwareIdentity : SF_ElementSoftwareIdentity {
 #endif
       ]
    CIM_PortController REF Dependent;
-
 };
 
 ASSOCIATION
@@ -56,6 +55,20 @@ class SF_DiagElementSoftwareIdentity : SF_ElementSoftwareIdentity {
 #endif
       ]
    CIM_DiagnosticTest REF Dependent;
+};
+
+ASSOCIATION
+class SF_SystemSoftwareIdentity : SF_ElementSoftwareIdentity {
+#ifdef TARGET_CIM_SERVER_wmi
+    [Override ( "Antecedent" ), Key]
+   CIM_SoftwareIdentity REF Antecedent;
+#endif
+      [Override("Dependent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+      ]
+   CIM_System REF Dependent;
 };
 
 ASSOCIATION_NWMI

@@ -21,6 +21,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_ElementSettingData_Provider.cpp \
 	SF_ControllerSoftwareIdentity_Provider.cpp \
 	SF_DiagElementSoftwareIdentity_Provider.cpp \
+	SF_SystemSoftwareIdentity_Provider.cpp \
 	SF_EnabledLogicalElementCapabilities_Provider.cpp \
 	SF_EthernetPort_Provider.cpp \
 	SF_HostedAccessPoint_Provider.cpp \
