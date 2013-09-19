@@ -3,6 +3,7 @@
 
 #include "sf_platform.h"
 #include "CIM_ComputerSystem.h"
+#include "CIM_Chassis.h"
 #include "SF_RegisteredProfile.h"
 #include "SF_ReferencedProfile.h"
 #include "SF_ElementConformsToProfile.h"
@@ -41,6 +42,7 @@ namespace solarflare
     /// @sa SystemElement::cimDispatch()
     class CIMHelper {
         static cimple::Ref<cimple::CIM_ComputerSystem> cimSystem;
+        static cimple::Ref<cimple::CIM_Chassis> cimChassis;
     public:
         virtual ~CIMHelper() {}
         virtual unsigned nObjects(const SystemElement&) const { return 1; }
@@ -73,6 +75,12 @@ namespace solarflare
 
         static String instanceID(const String& name);
         static const cimple::CIM_ComputerSystem *findSystem();
+        static const cimple::CIM_Chassis *findChassis();
+        static cimple::CIM_Chassis *chassisRef()
+        {
+            return reinterpret_cast<cimple::CIM_Chassis *>(
+                                                    findChassis()->clone());
+        }
         static cimple::CIM_System *systemRef()
         {
             return reinterpret_cast<cimple::CIM_System *>(findSystem()->clone());

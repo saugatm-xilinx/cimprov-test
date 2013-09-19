@@ -8,6 +8,7 @@
 #include "SF_SoftwareIdentity.h"
 #include "SF_SystemDevice.h"
 #include "SF_CardRealizesController.h"
+#include "SF_ChassisContainsCard.h"
 #include "SF_ComputerSystemPackage.h"
 
 namespace solarflare 
@@ -15,6 +16,7 @@ namespace solarflare
     using cimple::Instance;
     using cimple::Meta_Class;
     using cimple::CIM_ComputerSystem;
+    using cimple::CIM_Chassis;
     using cimple::Ref;
     using cimple::cast;
 
@@ -27,6 +29,7 @@ namespace solarflare
     using cimple::SF_SoftwareIdentity;
     using cimple::SF_SystemDevice;
     using cimple::SF_CardRealizesController;
+    using cimple::SF_ChassisContainsCard;
     using cimple::SF_ComputerSystemPackage;
 
     class NICCardHelper : public CIMHelper {
@@ -62,6 +65,11 @@ namespace solarflare
         virtual Instance *instance(const SystemElement&, unsigned) const;
     };
 
+    class ChassisContainsCardHelper : public CIMHelper {
+    public:
+        virtual Instance *instance(const SystemElement&, unsigned) const;
+    };
+
     class ComputerSystemPackageHelper : public CIMHelper {
     public:
         virtual Instance *instance(const SystemElement&, unsigned) const;
@@ -78,6 +86,7 @@ namespace solarflare
         static const PortControllerSystemDeviceHelper systemDevice;
         static const NICConformsToProfile conforming;
         static const CardRealizesControllerHelper cardRealizesControllerHelper;
+        static const ChassisContainsCardHelper chassisContainsCardHelper;
         static const ComputerSystemPackageHelper computerSystemPackageHelper;
         
         if (&cls == &SF_NICCard::static_meta_class)
@@ -96,6 +105,8 @@ namespace solarflare
             return &conforming;
         if (&cls == &SF_CardRealizesController::static_meta_class)
             return &cardRealizesControllerHelper;
+        if (&cls == &SF_ChassisContainsCard::static_meta_class)
+            return &chassisContainsCardHelper;
         if (&cls == &SF_ComputerSystemPackage::static_meta_class)
             return &computerSystemPackageHelper;
         return NULL;
@@ -250,7 +261,27 @@ namespace solarflare
 #endif
         return dev;
     }
-    
+
+    Instance *
+    ChassisContainsCardHelper::instance(const solarflare::SystemElement& se, unsigned) const
+    {
+        const NIC& nic = static_cast<const NIC&>(se);
+        SF_ChassisContainsCard *inst = NULL;
+
+        if (findChassis() == NULL)
+            return NULL;
+
+        inst = SF_ChassisContainsCard::create(true);
+        
+        inst->GroupComponent = chassisRef();
+        inst->PartComponent = cast<cimple::CIM_Card *>(
+                                    nic.cimReference(
+                                      SF_NICCard::static_meta_class));
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        inst->PartComponent->__name_space = CIMHelper::solarflareNS;
+#endif
+        return inst;
+    }
 
     Instance *NICConformsToProfile::instance(const SystemElement &se, unsigned) const
     {

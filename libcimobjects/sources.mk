@@ -4,21 +4,21 @@ libcimobjects_DIR = libcimobjects
 libcimobjects_INCLUDES = $(libcimobjects_DIR)
 libcimobjects_DEPENDS = $(CIMPLE_COMPONENT)
 
-libcimobjects_EXTRA_MOF = CIM_OperatingSystem SF_ServiceAffectsElement
+libcimobjects_EXTRA_MOF = CIM_OperatingSystem CIM_Chassis SF_ServiceAffectsElement
 libcimobjects_EXTRA_MOF += SF_InstCreation SF_InstModification SF_AlertIndication
 libcimobjects_EXTRA_MOF += SF_Card SF_ConnectorOnPackage SF_OrderedComponent
 libcimobjects_EXTRA_MOF += SF_DeviceSAPImplementation SF_Realizes
 libcimobjects_EXTRA_MOF += SF_UseOfLog SF_RecordLogCapabilities SF_RecordLog
-libcimobjects_EXTRA_MOF += SF_ElementSoftwareIdentity
+libcimobjects_EXTRA_MOF += SF_ElementSoftwareIdentity SF_Container
 
 ifeq ($(CIM_SERVER),pegasus)
-libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem PG_ComputerSystem PG_RegisteredProfile 
+libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem IBMSD_Chassis PG_ComputerSystem PG_RegisteredProfile
 endif
 ifeq ($(CIM_SERVER),esxi)
-libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem
+libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem OMC_Chassis
 endif
 ifeq ($(CIM_SERVER),wmi)
-libcimobjects_EXTRA_MOF += Win32_ComputerSystem
+libcimobjects_EXTRA_MOF += Win32_ComputerSystem Win32_SystemEnclosure
 endif
 
 ifneq ($(_DO_NOT_GENERATE),1)

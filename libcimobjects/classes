@@ -15,6 +15,7 @@ SF_SystemDevice
 SF_ConnectorRealizesPort
 SF_ConnectorRealizesController
 SF_CardRealizesController
+SF_ChassisContainsCard
 SF_LANEndpoint
 SF_NICSAPImplementation
 SF_SoftwareInstallationService

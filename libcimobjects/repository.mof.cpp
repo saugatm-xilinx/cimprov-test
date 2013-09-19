@@ -519,6 +519,11 @@ string UUID;
 };
 
 INSTANCE
+class IBMSD_Chassis : CIM_Chassis
+{
+};
+
+INSTANCE
 class IBMSD_SPComputerSystem : CIM_ComputerSystem
 {
 };
@@ -598,6 +603,35 @@ class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
    uint16 RequestedState = 12;
       [Override("ResetCapability")]
    uint16 ResetCapability;
+};
+
+INSTANCE
+class OMC_Chassis : CIM_Chassis
+{
+};
+#endif
+
+#if defined(ROOTNS) || defined(IMPNS)
+ASSOCIATION_NWMI
+class SF_Container : CIM_Container
+{
+      [Override("GroupComponent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+]
+   CIM_Chassis REF GroupComponent;
+      [Override("PartComponent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+]
+   CIM_Card REF PartComponent;
+};
+
+ASSOCIATION
+class SF_ChassisContainsCard : SF_Container
+{
 };
 #endif
 

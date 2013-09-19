@@ -8,6 +8,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_ConnectorRealizesPort_Provider.cpp \
 	SF_ConnectorRealizesController_Provider.cpp \
 	SF_CardRealizesController_Provider.cpp \
+	SF_ChassisContainsCard_Provider.cpp \
 	SF_ControlledBy_Provider.cpp \
 	SF_DiagnosticCompletionRecord_Provider.cpp \
 	SF_DiagnosticLog_Provider.cpp \

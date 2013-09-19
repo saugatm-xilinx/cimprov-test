@@ -1,18 +1,22 @@
 #include "sf_provider.h"
 #include "CIM_ComputerSystem.h"
+#include "CIM_Chassis.h"
 #include "CIM_ElementConformsToProfile.h"
 #include "CIM_RegisteredProfile.h"
 #ifdef TARGET_CIM_SERVER_pegasus
 #include "IBMPSG_ComputerSystem.h"
 #include "IBMSD_ComputerSystem.h"
 #include "IBMSD_SPComputerSystem.h"
+#include "IBMSD_Chassis.h"
 #include "PG_ComputerSystem.h"
 #endif
 #ifdef TARGET_CIM_SERVER_wmi
 #include "Win32_ComputerSystem.h"
+#include "Win32_SystemEnclosure.h"
 #endif
 #ifdef TARGET_CIM_SERVER_esxi
 #include "OMC_UnitaryComputerSystem.h"
+#include "OMC_Chassis.h"
 #endif
 #include "SF_ConcreteJob.h"
 #include "SF_EnabledLogicalElementCapabilities.h"
@@ -27,6 +31,7 @@ namespace solarflare
     using cimple::Instance;
     using cimple::Meta_Class;
     using cimple::CIM_ComputerSystem;
+    using cimple::CIM_Chassis;
     using cimple::CIM_ElementConformsToProfile;
     using cimple::CIM_RegisteredProfile;
     using cimple::Ref;
@@ -59,6 +64,7 @@ namespace solarflare
     }
 
     Ref<CIM_ComputerSystem> CIMHelper::cimSystem;
+    Ref<CIM_Chassis>        CIMHelper::cimChassis;
 
     const CIM_ComputerSystem *CIMHelper::findSystem()
     {
@@ -209,6 +215,66 @@ namespace solarflare
 
         return (ourSys->CreationClassName.value == sysclass &&
                 ourSys->Name.value == sysname);
+    }
+
+    const CIM_Chassis *CIMHelper::findChassis()
+    {
+        static cimple::Mutex findChassisMutex;
+        static const char * const namespaces[] =
+        {
+#ifdef TARGET_CIM_SERVER_pegasus
+         ibmseNS, 
+#endif
+         solarflareNS, 
+         baseNS, 
+         NULL
+        };
+        static const Meta_Class * const chassisMetaclasses[] = 
+        {
+#ifdef TARGET_CIM_SERVER_pegasus
+            &cimple::IBMSD_Chassis::static_meta_class,
+#endif
+#ifdef TARGET_CIM_SERVER_wmi
+            &cimple::Win32_SystemEnclosure::static_meta_class,
+#endif
+#ifdef TARGET_CIM_SERVER_esxi
+            &cimple::OMC_Chassis::static_meta_class,
+#endif
+            &CIM_Chassis::static_meta_class,
+            NULL
+        };
+
+        cimple::Auto_Mutex guard(findChassisMutex);
+
+        if (cimChassis)
+            return cast<CIM_Chassis *>(cimChassis.ptr());
+
+        Ref<Instance> chassisInstance;
+
+        for (const Meta_Class * const *mcs = chassisMetaclasses;
+             *mcs != NULL && !bool(chassisInstance); mcs++)
+        {
+            Ref<CIM_Chassis> chassis = cimple::create(*mcs);
+            for (const char * const *ns = namespaces; 
+                 *ns != NULL && !bool(chassisInstance); ns++)
+            {
+                cimple::Instance_Enumerator ie;
+                
+                if (cimple::cimom::enum_instances(*ns, chassis.ptr(),
+                                                  ie) != 0)
+                    continue;
+                
+                chassisInstance = ie();
+            }
+        }
+        if (chassisInstance)
+            cimChassis.reset(cast<CIM_Chassis *>(chassisInstance.ptr()));
+
+        if (cimChassis.ptr() == NULL)
+            CIMPLE_ERR(("%s(): chassis not found, returning NULL",
+                        __FUNCTION__));
+        return cimChassis.ptr();
+
     }
 
     CIMInstanceNotify<cimple::SF_JobCreated> onJobCreated(cimple::SF_ConcreteJob::static_meta_class);
