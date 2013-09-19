@@ -968,6 +968,14 @@ void gen_property_decl(
 
             for (size_t i = 0; i < values.size(); i++)
             {
+                // Omit reserved values - there may be more than one,
+                // as in case of CIM_Chassis ChassisPackageType, and
+                // it will result in compilation error due to enum names
+                // duplication.
+                size_t findPos = values[i].rfind("_Reserved");
+                if (findPos != string::npos &&
+                    findPos == values[i].length() - strlen("_Reserved"))
+                    continue; 
                 out("            ");
                 out("enum_%s = %ld,\n", values[i].c_str(), value_map[i]);
             }
