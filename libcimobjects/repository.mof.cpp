@@ -14,7 +14,7 @@ class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 };
 #endif
 
-#if defined(IMPNS)
+#if defined(ROOTNS) || defined(IMPNS)
 ASSOCIATION_NWMI
 class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
 #ifdef TARGET_CIM_SERVER_wmi
@@ -29,6 +29,22 @@ class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
    CIM_ManagedSystemElement REF Dependent;
 };
 
+ASSOCIATION
+class SF_SystemSoftwareIdentity : SF_ElementSoftwareIdentity {
+#ifdef TARGET_CIM_SERVER_wmi
+    [Override ( "Antecedent" ), Key]
+   CIM_SoftwareIdentity REF Antecedent;
+#endif
+      [Override("Dependent")
+#ifdef TARGET_CIM_SERVER_wmi
+       , Key
+#endif
+      ]
+   CIM_System REF Dependent;
+};
+#endif
+
+#if defined(IMPNS)
 ASSOCIATION
 class SF_ControllerSoftwareIdentity : SF_ElementSoftwareIdentity {
 #ifdef TARGET_CIM_SERVER_wmi
@@ -55,20 +71,6 @@ class SF_DiagElementSoftwareIdentity : SF_ElementSoftwareIdentity {
 #endif
       ]
    CIM_DiagnosticTest REF Dependent;
-};
-
-ASSOCIATION
-class SF_SystemSoftwareIdentity : SF_ElementSoftwareIdentity {
-#ifdef TARGET_CIM_SERVER_wmi
-    [Override ( "Antecedent" ), Key]
-   CIM_SoftwareIdentity REF Antecedent;
-#endif
-      [Override("Dependent")
-#ifdef TARGET_CIM_SERVER_wmi
-       , Key
-#endif
-      ]
-   CIM_System REF Dependent;
 };
 
 ASSOCIATION_NWMI
