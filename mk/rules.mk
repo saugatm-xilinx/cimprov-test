@@ -12,12 +12,20 @@ endif
 
 endif
 
-ifeq ($(MAKECMDGOALS),dist)
+ifneq (, $(filter $(MAKECMDGOALS), dist distname))
 PROVIDER_PACKAGE = solarflare_provider_ibm
 PROVIDER_TARBALL_DIR = $(PROVIDER_PACKAGE)-$(subst /,-,$(CONFIG))-$(PROVIDER_VERSION).$(PROVIDER_REVISION)
+
+ifeq ($(MAKECMDGOALS), dist)
 PROVIDER_DIST_FILES := $(shell $(HG) manifest)
 PROVIDER_DIST_FILES += $(CIM_SCHEMA_ZIP)
 PROVIDER_DIST_FILES += lib$(PROVIDER_LIBRARY).spec
+endif
+
+.PHONY : distname
+
+distname :
+	@echo $(PROVIDER_TARBALL_DIR)
 
 .PHONY : dist
 
@@ -39,6 +47,7 @@ $(SED) 's!%{PROVIDER_LIBRARY}!$(PROVIDER_LIBRARY)!g; \
 		s!%{PROVIDER_PACKAGE}!$(PROVIDER_PACKAGE)!g; \
 		s!%{PROVIDER_SO}!$(libprovider_TARGET)!g; \
 		s!%{PROVIDER_ROOT}!$(PROVIDER_ROOT)!g; \
+		s!%{PROVIDER_TARBALL_DIR}!$(PROVIDER_TARBALL_DIR)!g; \
 		s!%{IMP_NAMESPACE}!$(IMP_NAMESPACE)!g; \
 		s!%{INTEROP_NAMESPACE}!$(INTEROP_NAMESPACE)!g; \
 		s!%{INTEROP_CLASSES}!$(INTEROP_CLASSES)!g; \
