@@ -84,6 +84,7 @@ top_LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
 ifneq ($(CIM_SERVER),esxi)
 ifneq ($(SLES10_BUILD_HOST),)
 all : $(sles10_archive_TARGET)
+	$(warning This target is deprecated, consider using "make dist")
 else
 all : $(libprovider_TARGET)
 endif
@@ -92,6 +93,7 @@ else
 ifeq ($(ESXI_BUILD_HOST),)
 
 all : $(esxi_archive_TARGET)
+	$(warning This target is deprecated, consider using "make dist")
 
 else
 
