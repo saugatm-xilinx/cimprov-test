@@ -4,44 +4,24 @@ PROVIDER_TARBALL_DIR = $(PROVIDER_PACKAGE)-$(PROVIDER_VERSION).$(PROVIDER_REVISI
 sles10_archive_TARGET = $(PROVIDER_TARBALL_DIR).tar.gz
 sles10_archive_DIR = sles10
 
-sles10_libprov_COMPONENTS = libcimple libcimplepeg libcimobjects libprovider
-sles10_archive_COMPONENTS = $(sles10_libprov_COMPONENTS)
+sles10_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
+								  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof \
+				                  repository.reg \
+								  $(CIM_SCHEMA_DIR)
 
-sles10_libprov_INCLUDES = $(foreach comp,$(sles10_libprov_COMPONENTS),$($(comp)_INCLUDES) )
-sles10_libprov_CPPFLAGS = $(foreach comp,$(sles10_libprov_COMPONENTS),$($(comp)_CPPFLAGS) )
-sles10_libprov_SOURCES = $(foreach comp,$(sles10_libprov_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) )
+sles10_archive_GENERATED += Makefile
+sles10_archive_GENERATED += lib$(PROVIDER_LIBRARY).spec
+sles10_archive_GENERATED += $(libcimobjects_DIR)/namespace.mof
+sles10_archive_SOURCES = $(sles10_archive_GENERATED)
 
-sles10_archive_SOURCES = $(patsubst $(TOP)/%,%,$(foreach comp,$(sles10_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) ))
-sles10_archive_SOURCES += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/namespace.mof \
-						  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof \
-                          repository.reg
-sles10_archive_SOURCES += Makefile
-sles10_archive_SOURCES += lib$(PROVIDER_LIBRARY).spec
+$(sles10_archive_TARGET) : TAR_TRANSFORM = !^$(sles10_archive_DIR)/!! !^!$*/!
 
-_sles10_archive_SOURCES = $(addprefix $(sles10_archive_DIR)/,$(sles10_archive_SOURCES))
-
-ifeq ($(MAKECMDGOALS),clean)
-_sles10_archive_SOURCES += $(foreach comp,$(sles10_archive_COMPONENTS), \
-			$(wildcard $(patsubst %,$(sles10_archive_DIR)/%/*.h,$($(comp)_INCLUDES))))
-endif
-
-_sles10_archive_GENERATED = $(_sles10_archive_SOURCES)
-
-$(sles10_archive_TARGET) : $(_sles10_archive_SOURCES)
-	mkdir -p $(PROVIDER_TARBALL_DIR)
-	cp -r $(sles10_archive_DIR)/* $(PROVIDER_TARBALL_DIR)
-	mkdir -p $(PROVIDER_TARBALL_DIR)/schemas
-	cp -r $(CIM_SCHEMA_DIR) $(PROVIDER_TARBALL_DIR)/schemas/$(notdir $(CIM_SCHEMA_DIR))
-	tar -czf $@ $(PROVIDER_TARBALL_DIR)
+$(eval $(call archive_component,sles10_archive))
 
 $(sles10_archive_DIR)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/namespace.mof \
 	$(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS))
 	mkdir -p $(dir $@)
 	cat $^ >$@
-
-$(sles10_archive_DIR)/% : %
-	mkdir -p $(dir $@)
-	cp $< $@
 
 define subst_spec
 $(SED) 's!%{PROVIDER_LIBRARY}!$(PROVIDER_LIBRARY)!g; \
@@ -104,4 +84,4 @@ $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "		cp repository.reg \$$(DESTDIR)\$$(PROVIDER_ROOT)/mof" >>$@
 	echo "endif" >>$@
 
-COMPONENTS += sles10_archive
+

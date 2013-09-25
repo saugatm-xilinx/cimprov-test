@@ -93,6 +93,28 @@ endif
 COMPONENTS += $(1)
 endef
 
+define archive_component
+ifeq ($$($(1)_TARGET),)
+$$(error Target not specified for $(1))
+endif
+
+$(1)_COMPONENTS = $$(foreach comp,$$(COMPONENTS),$$(if $$(findstring target,$$($$(comp)_PURPOSE)),$$(comp) ,))
+
+$(1)_DISTFILES = $$(foreach comp,$$($(1)_COMPONENTS),$$(_$$(comp)_SOURCES) $$(_$$(comp)_HEADERS) )
+$(1)_DISTFILES += $$($(1)_EXTRA_DISTFILES)
+
+_$(1)_SOURCES = $$(addprefix $$($(1)_DIR)/,$$($(1)_SOURCES))
+_$(1)_GENERATED = $$(addprefix $$($(1)_DIR)/,$$($(1)_GENERATED))
+
+$(1)_DISTFILES += $$(_$(1)_SOURCES)
+
+$$($(1)_TARGET) : $$($(1)_DISTFILES)
+
+COMPONENTS += $(1)
+
+endef
+
+
 ifeq ($(MAKECMDGOALS),distname)
 _DO_NOT_GENERATE := 1
 endif

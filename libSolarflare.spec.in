@@ -6,7 +6,7 @@ Summary: CIM provider for Solarflare NIC management
 Group: Applications/System
 License: GPL
 URL: http://solarflare.com
-Source0: %{PROVIDER_TARBALL_DIR}.tar.gz
+Source0: %{PROVIDER_TARBALL}
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %{BUILD_REQUIRES}

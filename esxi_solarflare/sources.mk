@@ -1,32 +1,20 @@
 esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
 
-esxi_archive_COMPONENTS = $(foreach comp,$(COMPONENTS),$(if $(findstring target,$($(comp)_PURPOSE)),$(comp) ,))
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
-ESXI_GENERATED = $(patsubst $(TOP)/%,%,$(foreach comp,$(esxi_archive_COMPONENTS),$(_$(comp)_SOURCES) $(_$(comp)_HEADERS) ))
-ESXI_GENERATED += $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/namespace.mof \
-				  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
-ESXI_GENERATED += repository.reg.in 
-ESXI_GENERATED += Makefile.am
-ESXI_GENERATED += libprovider/esxi_libs/i386/libsfupdate.a libprovider/esxi_libs/i386/libutils.a
-ESXI_GENERATED += libprovider/esxi_libs/i386/libcurl.a
-ESXI_GENERATED += libprovider/esxi_libs/i386/libssh2.a
-ESXI_GENERATED += libprovider/esxi_libs/i386/libssl.so.0.9.8
-ESXI_GENERATED += libprovider/esxi_libs/i386/librt.so.1
-ESXI_GENERATED += libprovider/esxi_libs/i386/libcrypto.so.0.9.8
+ESXI_EXTRA_LIBDIR = $(libprovider_DIR)/esxi_libs/i386
+ESXI_EXTRA_LIBS = libssh2.a libssl.so.0.9.8 librt.so.1 libcrypto.so.0.9.8
 
-esxi_archive_GENERATED = $(addprefix $(ESXI_PROJECT_NAME)/,$(ESXI_GENERATED))
-_esxi_archive_GENERATED = $(addprefix $(esxi_archive_DIR)/,$(esxi_archive_GENERATED))
+esxi_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
+				                $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
+esxi_archive_EXTRA_DISTFILES += $(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))
 
-ifeq ($(MAKECMDGOALS),clean)
-_esxi_archive_GENERATED += $(foreach comp,$(esxi_archive_COMPONENTS), \
-								$(wildcard $(patsubst %,$(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)/%/*.h,$($(comp)_INCLUDES))))
-endif
+esxi_archive_GENERATED = $(ESXI_PROJECT_NAME)/$(libcimobjects_DIR)/namespace.mof \
+						 $(ESXI_PROJECT_NAME)/repository.reg.in \
+						 $(ESXI_PROJECT_NAME)/Makefile.am
 
-
-esxi_archive_SOURCES = $(esxi_archive_GENERATED) \
-					   esxi_bootstrap.sh \
+esxi_archive_SOURCES = esxi_bootstrap.sh \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
 					   $(ESXI_PROJECT_NAME)/solarflare.wsman \
 					   oem/descriptor-urls.xml	\
@@ -38,14 +26,12 @@ esxi_archive_SOURCES = $(esxi_archive_GENERATED) \
 					   oem/solarflare.defs \
 					   oem/solarflare.deps \
 					   oem/solarflare.inc \
-					   oem/solarflare.make
+					   oem/solarflare.make \
+					   $(esxi_archive_GENERATED)
 
-_esxi_archive_SOURCES = $(addprefix $(esxi_archive_DIR)/,$(esxi_archive_SOURCES))
+$(esxi_archive_TARGET) : TAR_TRANSFORM=!^!$(ESXI_PROJECT_NAME)/! !^$(ESXI_PROJECT_NAME)/$(esxi_archive_DIR)/!!
 
-$(esxi_archive_TARGET) : $(_esxi_archive_SOURCES)
-	cd $(TOP)/$(esxi_archive_DIR); tar -cf $(basename $(abspath $@)) *
-	cd $(esxi_archive_DIR); tar -rf $(basename $(abspath $@)) *
-	gzip -f $(basename $@)
+$(eval $(call archive_component,esxi_archive))
 
 $(ESXI_SRC_PATH)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/namespace.mof \
 													   $(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS))
@@ -56,14 +42,10 @@ $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g; s!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
 
-$(ESXI_SRC_PATH)/% : %
-	mkdir -p $(dir $@)
-	cp $< $@
-
 $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "bin_PROGRAMS=lib$(PROVIDER_LIBRARY).so" >$@
-	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(ESXI_GENERATED))" >>$@
-	for src in $(wordlist 2,$(words $(ESXI_GENERATED)),$(ESXI_GENERATED)); do \
+	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(ESXI_CONTENTS))" >>$@
+	for src in $(wordlist 2,$(words $(ESXI_CONTENTS)),$(ESXI_CONTENTS)); do \
 		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
 	done
 	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -I\$$(srcdir)" >>$@
@@ -87,8 +69,6 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "dist_sfcb_root_ns_DATA = libcimobjects/root.mof" >>$@
 	echo "dist_sfcb_reg_DATA = repository.reg" >>$@
 	echo "endif" >>$@
-
-COMPONENTS += esxi_archive
 
 ifneq ($(ESXI_BUILD_HOST),)
 

@@ -12,9 +12,10 @@ endif
 
 endif
 
-ifneq (, $(filter $(MAKECMDGOALS), dist distname))
+CONFIGTAG = $(subst /,-,$(CONFIG))
 PROVIDER_PACKAGE = solarflare_provider_ibm
-PROVIDER_TARBALL_DIR = $(PROVIDER_PACKAGE)-$(subst /,-,$(CONFIG))-$(PROVIDER_VERSION).$(PROVIDER_REVISION)
+PROVIDER_TARBALL_DIR = $(PROVIDER_PACKAGE)-$(CONFIGTAG)-$(PROVIDER_VERSION).$(PROVIDER_REVISION)
+PROVIDER_TARBALL = $(PROVIDER_TARBALL_DIR).tar.gz
 
 ifeq ($(MAKECMDGOALS), dist)
 PROVIDER_DIST_FILES := $(shell $(HG) manifest)
@@ -29,14 +30,10 @@ distname :
 
 .PHONY : dist
 
-dist : $(PROVIDER_TARBALL_DIR).tar.gz
+dist : $(PROVIDER_TARBALL)
 
-$(PROVIDER_TARBALL_DIR).tar.gz : $(addprefix $(PROVIDER_TARBALL_DIR)/,$(PROVIDER_DIST_FILES))
-	tar czf $@ $^
-
-$(PROVIDER_TARBALL_DIR)/% : %
-	mkdir -p $(dir $@)
-	cp $< $@
+ifeq ($(MAKECMDGOALS), dist)
+$(PROVIDER_TARBALL) : $(PROVIDER_DIST_FILES)
 endif
 
 define subst_spec
@@ -45,6 +42,8 @@ $(SED) 's!%{PROVIDER_LIBRARY}!$(PROVIDER_LIBRARY)!g; \
 		s!%{PROVIDER_REVISION}!$(PROVIDER_REVISION)!g; \
 		s!%{PROVIDER_LIBPATH}!$(PROVIDER_LIBPATH)!g; \
 		s!%{PROVIDER_PACKAGE}!$(PROVIDER_PACKAGE)!g; \
+		s!%{PROVIDER_TARBALL_DIR}!$(PROVIDER_TARBALL_DIR)!g; \
+		s!%{PROVIDER_TARBALL}!$(PROVIDER_TARBALL)!g; \
 		s!%{PROVIDER_SO}!$(libprovider_TARGET)!g; \
 		s!%{PROVIDER_ROOT}!$(PROVIDER_ROOT)!g; \
 		s!%{PROVIDER_TARBALL_DIR}!$(PROVIDER_TARBALL_DIR)!g; \
@@ -109,4 +108,9 @@ $(CLEAN_TARGETS) $(EXTRA_CLEAN_TARGETS) : clean-% :
 	-test -z "$($*_PERSISTENT_TARGET)" && rm $($*_TARGET)
 	-$(foreach f,$(_$*_GENERATED),rm $(f);)
 	-$($*_EXTRA_CLEAN)
+
+TAR_TRANSFORM = !^!$*/!
+%.tar.gz :
+	tar $(patsubst %,--transform='s%',$(TAR_TRANSFORM)) -czf $@ $(filter-out $(TOP)/%,$^) -C $(TOP) $(patsubst $(TOP)/%,%,$(filter $(TOP)/%,$^))
+
 
