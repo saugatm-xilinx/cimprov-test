@@ -39,7 +39,7 @@ namespace solarflare
               return String(values[i].name);
         }
 
-        snprintf(buffer, MAX_NAME_LEN, "%d", value);
+        snprintf(buffer, MAX_NAME_LEN, "%u", value);
         return String(buffer);
     }
 
