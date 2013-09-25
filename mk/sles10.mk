@@ -7,5 +7,6 @@ override PROVIDER_ROOT=/tmp/solarflare
 override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
 override PROVIDER_PLATFORM = linux
 override PROVIDER_PLATFORM_VARIANT = sles10
+override DIST_IS_SPECIAL = 1
 RUNASROOT = sudo 
 CURL = curl -u$(LOGNAME)

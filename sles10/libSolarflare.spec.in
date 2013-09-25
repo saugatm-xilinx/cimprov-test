@@ -18,7 +18,7 @@ Prefix: %{PROVIDER_LIBPATH}
 Prefix: %{PROVIDER_ROOT}/mof
 
 %prep
-%setup -q
+%setup -q -n %{PROVIDER_TARBALL_DIR}
 
 
 %build

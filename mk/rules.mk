@@ -12,17 +12,6 @@ endif
 
 endif
 
-CONFIGTAG = $(subst /,-,$(CONFIG))
-PROVIDER_PACKAGE = solarflare_provider_ibm
-PROVIDER_TARBALL_DIR = $(PROVIDER_PACKAGE)-$(CONFIGTAG)-$(PROVIDER_VERSION).$(PROVIDER_REVISION)
-PROVIDER_TARBALL = $(PROVIDER_TARBALL_DIR).tar.gz
-
-ifeq ($(MAKECMDGOALS), dist)
-PROVIDER_DIST_FILES := $(shell $(HG) manifest)
-PROVIDER_DIST_FILES += $(CIM_SCHEMA_ZIP)
-PROVIDER_DIST_FILES += lib$(PROVIDER_LIBRARY).spec
-endif
-
 .PHONY : distname
 
 distname :
@@ -33,7 +22,9 @@ distname :
 dist : $(PROVIDER_TARBALL)
 
 ifeq ($(MAKECMDGOALS), dist)
+ifeq ($(DIST_IS_SPECIAL),)
 $(PROVIDER_TARBALL) : $(PROVIDER_DIST_FILES)
+endif
 endif
 
 define subst_spec

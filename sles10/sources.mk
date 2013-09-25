@@ -1,6 +1,3 @@
-PROVIDER_PACKAGE = solarflare_provider_ibm
-PROVIDER_TARBALL_DIR = $(PROVIDER_PACKAGE)-$(PROVIDER_VERSION).$(PROVIDER_REVISION)
-
 sles10_archive_TARGET = $(PROVIDER_TARBALL_DIR).tar.gz
 sles10_archive_DIR = sles10
 
