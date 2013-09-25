@@ -63,7 +63,7 @@ char* str_printf(const char* format, ...)
 {
     int n;
     int size = 128;
-    char *p;
+    char *p, *q;
     va_list ap;
 
     if ((p = (char*)malloc(size)) == NULL)
@@ -83,8 +83,13 @@ char* str_printf(const char* format, ...)
         else
             size *= 2;
 
-        if ((p = (char*)realloc(p, size)) == NULL)
+        if ((q = (char*)realloc(p, size)) == NULL)
+        {
+            free(p);
             return 0;
+        }
+        else
+            p = q;
     }
     // unreachable
     return 0;
@@ -95,7 +100,7 @@ char* str_vprintf(const char* format, va_list ap)
 {
     int n;
     int size = 1024;
-    char *p;
+    char *p, *q;
 
     if ((p = (char*)malloc(size)) == NULL)
         return 0;
@@ -112,8 +117,13 @@ char* str_vprintf(const char* format, va_list ap)
         else
             size *= 2;
 
-        if ((p = (char*)realloc(p, size)) == NULL)
+        if ((q = (char*)realloc(p, size)) == NULL)
+        {
+            free(p);
             return 0;
+        }
+        else
+            p = q;
     }
     // unreachable
     return 0;

@@ -202,6 +202,7 @@ static void gen_guid(const char* module_name, const cimple::UUID& uuid)
     fprintf(os, "  0x%02x);\n", p[15]);
 
     printf("Created %s\n", fn);
+    fclose(os);
 }
 
 static void gen_register(const char* module_name, const cimple::UUID& uuid, 
@@ -289,6 +290,7 @@ static void gen_register(const char* module_name, const cimple::UUID& uuid,
     fputs("};\n};\n", os);
 
     printf("Created %s\n", fn);
+    fclose(os);
 }
 
 static void gen_module_file(const char* module_name, vector<string>& classes)

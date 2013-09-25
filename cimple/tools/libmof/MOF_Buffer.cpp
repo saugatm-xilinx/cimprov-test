@@ -45,9 +45,14 @@ void MOF_Buffer::reserve(size_t capacity)
 {
     if (capacity > _capacity)
     {
+        void *p;
         capacity = _round_capacity(capacity);
-        _data = (char*)realloc(_data, capacity);
-        _capacity = capacity;
+        p = realloc(_data, capacity);
+        if (p != NULL)
+        {
+            _data = (char*)p;
+            _capacity = capacity;
+        }
     }
 }
 

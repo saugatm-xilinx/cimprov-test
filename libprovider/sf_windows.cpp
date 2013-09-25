@@ -2940,14 +2940,14 @@ cleanup:
         String    createJobMethod("EFX_DiagnosticTest_CreateJob");
         String    deleteJobMethod("EFX_DiagnosticJob_Delete");
         String    startJobMethod("EFX_DiagnosticJob_Start");
-        int       rc;
+        int       rc = 0;
         long int  completionCode;
         uint64    jobId;
         Buffer    bufQuery;
 
         IWbemClassObject         *job = NULL;
         IWbemClassObject         *jobConf = NULL;
-        unsigned int              iterNum;
+        unsigned int              iterNum = 0;
         unsigned int              i;
         VARIANT                   argWait;
         bool                      job_created = false;

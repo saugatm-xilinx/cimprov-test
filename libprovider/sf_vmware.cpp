@@ -624,6 +624,7 @@ fail:
                           PROC_BUS_PATH, bus->d_name);
             if (rc < 0 || rc >= PATH_MAX_LEN)
             {
+                closedir(bus_dir);
                 nics.clear();
                 return -1;
             }

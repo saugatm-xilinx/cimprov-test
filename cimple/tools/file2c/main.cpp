@@ -101,6 +101,8 @@ int main(int argc, char** argv)
     printf("};\n");
     printf("\n");
 
+    fclose(is);
+
     return 0;
 }
 

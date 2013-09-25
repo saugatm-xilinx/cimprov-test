@@ -66,7 +66,10 @@ int REF_parse(
 void REF_error(
     const char* message)
 {
+#if 0
+    // WHAT IS THIS?!
     message = strdup(message);
+#endif
     ref_error_code = -1;
 }
 
