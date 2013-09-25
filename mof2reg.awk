@@ -4,9 +4,6 @@ BEGIN {
     {
         IMPLEMENTED[classes[i]] = 1;
     }
-    if_level = 0;
-    in_interop_if_level = 0;
-    in_root_if_level = 0;
 
     if (TARGET == "pegasus") 
     {
@@ -82,13 +79,8 @@ $1 == "class" && IMPLEMENTED[$2] {
 /ASSOCIATION_NWMI/ { association = 1; }
 /INDICATION_NWMI/ { indication = 1; }
 
-/#if/ { if_level++; } 
-/#endif/ {
-  if_level--;
-    if (in_interop_if_level > if_level)
-        in_interop = 0;
-    if (in_root_if_level > if_level)
-        in_root = 0;
-} 
-/#if.*defined\(INTEROPNS\)/ { in_interop = 1; in_interop_if_level = if_level; }
-/#if.*defined\(ROOTNS\)/ { in_root = 1; in_root_if_level = if_level; }
+
+/\/\/ IMPNS/ { in_interop = in_root = 0 }
+/\/\/ ROOT_OR_IMPNS/ { in_interop = 0; in_root = 1 }
+/\/\/ INTEROP_OR_IMPNS/ { in_interop = 1; in_root = 0 }
+

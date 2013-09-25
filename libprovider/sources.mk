@@ -146,7 +146,7 @@ libprovider_BUILD_DEPENDS = genmod
 
 $(eval $(call component,libprovider,SHARED_LIBRARIES))
 
-repository.reg : $(libcimobjects_DIR)/repository.mof.cpp $(libcimobjects_DIR)/classes $(TOP)/mof2reg.awk
+repository.reg : $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/classes $(TOP)/mof2reg.awk
 	$(AWK) -f $(TOP)/mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
                 -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
                 -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),root/cimv2)" \

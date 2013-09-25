@@ -4,6 +4,7 @@ CURL=curl --negotiate -u :
 BISON=bison
 FLEX=flex
 HG=hg
+M4=m4 -P
 
 override host_CXX := $(or $(CXX),$(CC),c++)
 override host_AR := $(or $(AR),ar)
