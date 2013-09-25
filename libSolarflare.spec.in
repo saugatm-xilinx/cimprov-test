@@ -38,7 +38,7 @@ make CONFIG=%{CONFIG} DESTDIR=$RPM_BUILD_ROOT install-aux
 
 
 %preun
-${PEGASUS_HOME}/bin/cimprovider -r -m %{PROVIDER_LIBRARY}_Module
+%{PEGASUS_HOME}/bin/cimprovider -r -m %{PROVIDER_LIBRARY}_module
 
 %clean
 rm -rf $RPM_BUILD_ROOT
