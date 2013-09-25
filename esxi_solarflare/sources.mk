@@ -5,6 +5,7 @@ ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_EXTRA_LIBDIR = $(libprovider_DIR)/esxi_libs/i386
 ESXI_EXTRA_LIBS = libssh2.a libssl.so.0.9.8 librt.so.1 libcrypto.so.0.9.8
+ESXI_EXTRA_LIBS += libcurl.a libutils.a libsfupdate.a
 
 esxi_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
 				                $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
