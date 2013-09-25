@@ -19,6 +19,7 @@ esxi_archive_SOURCES = esxi_bootstrap.sh \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
 					   $(ESXI_PROJECT_NAME)/solarflare.wsman \
 					   oem/descriptor-urls.xml	\
+					   oem/descriptor.xml	\
 					   oem/oem.mk \
 					   oem/solarflare-build.sh \
 					   oem/solarflare-pkg.sh \
