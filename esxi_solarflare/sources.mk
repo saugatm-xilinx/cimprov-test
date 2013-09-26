@@ -52,6 +52,8 @@ $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g; s!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
 
+ESXI_CONTENTS = $(patsubst $(TOP)/%,%,$(filter-out $(esxi_archive_DIR)/%,$(esxi_archive_DISTFILES)))
+
 $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "bin_PROGRAMS=lib$(PROVIDER_LIBRARY).so" >$@
 	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(ESXI_CONTENTS))" >>$@
