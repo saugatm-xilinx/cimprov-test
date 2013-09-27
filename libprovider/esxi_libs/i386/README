@@ -3,8 +3,8 @@ revision of v5-incoming repository on VMWare Workbench 2.1 with the
 following command:
 make -C build/gnu/ -j3 CC='gcc -fPIC' TARGET_CC="'gcc -fPIC'" SFUPDATE_NO_DEFAULT_IMAGES=1 SFUPDATE_NO_NETIF_FLAGS=1
 
-libcrypto.so.0.9.8, librt.so.1 and libssl.so.0.9.8 were taken from
-ESXi 5.0 host.
+libcrypto.so.0.9.8, librt.so.1, libz.so.1 and libssl.so.0.9.8 were taken
+from ESXi 5.0 host.
 
 libcurl.a was built from sources of 7.29.0 version of libcurl.
 

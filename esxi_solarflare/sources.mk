@@ -4,7 +4,7 @@ esxi_archive_DIR = esxi_solarflare
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_EXTRA_LIBDIR = $(libprovider_DIR)/esxi_libs/i386
-ESXI_EXTRA_LIBS = libssh2.a librt.so.1
+ESXI_EXTRA_LIBS = libssh2.a librt.so.1 libz.so.1
 ESXI_EXTRA_LIBS += libcurl.a libutils.a libsfupdate.a
 ifeq ($(ESXI_VERSION),5.5)
 LIBSSL_FILE = libssl.so.1.0.1
@@ -72,6 +72,7 @@ $(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libssh2.a " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/$(LIBSSL_FILE) " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/librt.so.1 " >>$@
+	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libz.so.1 " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/$(LIBCRYPTO_FILE) " >>$@
 	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
 	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace) root/cimv2" >>$@
