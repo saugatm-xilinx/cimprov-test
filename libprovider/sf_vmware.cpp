@@ -250,7 +250,10 @@ namespace solarflare
         int rc = 0;
 
         if (s == NULL || argc == NULL || argv == NULL || values == NULL)
+        {
+            CIMPLE_ERR(("%s(): incorrect arguments", __FUNCTION__));
             return -1;
+        }
 
         len = strlen(s);
         buf = new char[len + 1];
@@ -324,6 +327,8 @@ namespace solarflare
 
         return 0;
 fail:
+        CIMPLE_ERR(("%s(): failed to parse '%s'",
+                    __FUNCTION__, s));
         delete[] args;
         delete[] buf;
         return rc;
@@ -538,7 +543,11 @@ fail:
         // Obtain all available network ports.
         device_dir = opendir(DEV_PATH);
         if (device_dir == NULL)
+        {
+            CIMPLE_ERR(("Failed to open '%s', errno %d ('%s')",
+                        DEV_PATH, errno, strerror(errno)));
             return -1;
+        }
 
         for (device = readdir(device_dir);
              device != NULL;
@@ -552,6 +561,7 @@ fail:
 
             if (rc < 0 || rc >= PATH_MAX_LEN)
             {
+                CIMPLE_ERR(("Failed to format path to device"));
                 closedir(device_dir);
                 return -1;
             }
@@ -580,6 +590,9 @@ fail:
                 str = strrchr(drvinfo.bus_info, ':');
                 if (str == NULL)
                 {
+                    CIMPLE_ERR(("Invalid bus information for device %s: %s",
+                                tmp_dev.dev_name.c_str(),
+                                drvinfo.bus_info));
                     closedir(device_dir);
                     return -1;
                 }
@@ -610,7 +623,11 @@ fail:
 
         bus_dir = opendir(PROC_BUS_PATH);
         if (bus_dir == NULL)
+        {
+            CIMPLE_ERR(("Failed to open '%s', errno %d ('%s')",
+                        PROC_BUS_PATH, errno, strerror(errno)));
             return -1;
+        }
 
         // Filter out our NIC ports, group them by NICs.
 
@@ -624,6 +641,7 @@ fail:
                           PROC_BUS_PATH, bus->d_name);
             if (rc < 0 || rc >= PATH_MAX_LEN)
             {
+                CIMPLE_ERR(("Failed to format path to device"));
                 closedir(bus_dir);
                 nics.clear();
                 return -1;
@@ -644,6 +662,8 @@ fail:
                 cur_domain = strtol(bus->d_name, &str, 16);
                 if (str == NULL || *str != ':')
                 {
+                    CIMPLE_ERR(("Failed to get PCI domain from %s",
+                                bus->d_name));
                     closedir(device_dir);
                     closedir(bus_dir);
                     nics.clear();
@@ -701,6 +721,10 @@ fail:
                 
                 if (i == (int)devs.size())
                 {
+                    CIMPLE_ERR(("Failed to find device "
+                                "by PCI address %x:%x:%x.%x",
+                                cur_domain, cur_bus,
+                                cur_dev, cur_fn));
                     closedir(device_dir);
                     closedir(bus_dir);
                     nics.clear();
@@ -990,13 +1014,21 @@ fail:
                    mcdi_req->len);
 
             if (ioctl(fd, SIOCEFX, &ioc) < 0)
+            {
+                CIMPLE_ERR(("ioctl(SIOCEFX/EFX_MCDI_REQUEST) failed, "
+                            "errno %d ('%s')",
+                            errno, strerror(errno)));
                 return -1;
+            }
 
             memcpy(ptr, mcdi_req->payload, mcdi_req->len);
             ptr += mcdi_req->len;
             offset += mcdi_req->len;
             if (mcdi_req->len == 0)
+            {
+                CIMPLE_ERR(("MCDI request returned data of zero length"));
                 return -1;
+            }
         }
 
         return 0;
@@ -1027,12 +1059,17 @@ fail:
 
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
+        {
+            CIMPLE_ERR(("Failed to open '%s', errno %d('%s')",
+                        DEV_SFC_CONTROL, errno, strerror(errno)));
             return -1;
+        }
 
         if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
                            sizeof(partial_hdr),
                            ifname, port_number) < 0)
         {
+            CIMPLE_ERR(("Failed to get header from NVRAM"));
             close(fd);
             return -1;
         }
@@ -1040,6 +1077,9 @@ fail:
         if (CI_BSWAP_LE32(partial_hdr.magic) !=
                                     SIENA_MC_STATIC_CONFIG_MAGIC)
         {
+            CIMPLE_ERR(("Incorrect NVRAM header magic number %ld(%lx)",
+                        static_cast<long int>(partial_hdr.magic),
+                        static_cast<long int>(partial_hdr.magic)));
             close(fd);
             return -1;
         }
@@ -1051,6 +1091,7 @@ fail:
         if (readNVRAMBytes(fd, vpd, vpd_off, vpd_len,
                            ifname, port_number) < 0)
         {
+            CIMPLE_ERR(("Failed to read VPD from NVRAM"));
             close(fd);
             delete[] vpd;
             return -1;
@@ -1059,6 +1100,7 @@ fail:
         if ((rc = parseVPD(vpd, vpd_len, product_name,
                            product_number, serial_number)) < 0)
         {
+            CIMPLE_ERR(("Failed to parse VPD"));
             close(fd);
             delete[] vpd;
             return -1;
@@ -1094,7 +1136,12 @@ fail:
 
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
+        {
+            CIMPLE_ERR(("Failed to open '%s', errno %d ('%s')",
+                        DEV_SFC_CONTROL, errno,
+                        strerror(errno)));
             return -1;
+        }
 
         memset(&ioc, 0, sizeof(ioc));
         strncpy(ioc.if_name, ifName, sizeof(ioc.if_name));
@@ -1106,6 +1153,8 @@ fail:
 
         if (ioctl(fd, SIOCEFX, &ioc) < 0)
         {
+            CIMPLE_ERR(("ioctl(SIOCEFX) failed, errno %d ('%s')",
+                        errno, strerror(errno)));
             close(fd);
             return -1;
         }
@@ -1177,6 +1226,9 @@ fail:
         saved_stdout_fd = dup(STDOUT_FILENO);
         if (saved_stdout_fd < 0)
         {
+            CIMPLE_ERR(("%s(): failed to duplicate stdout fd, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1184,12 +1236,18 @@ fail:
         saved_stderr_fd = dup(STDERR_FILENO);
         if (saved_stderr_fd < 0)
         {
+            CIMPLE_ERR(("%s(): failed to duplicate stderr fd, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
 
         if (pipe(pipefds) < 0)
         {
+            CIMPLE_ERR(("%s(): failed to create a pipe, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1199,6 +1257,9 @@ fail:
 
         if (dup2(pipefds[1], STDOUT_FILENO) < 0)
         {
+            CIMPLE_ERR(("%s(): failed to dulplicate write end of pipe, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1207,6 +1268,9 @@ fail:
 
         if (dup2(pipefds[1], STDERR_FILENO) < 0)
         {
+            CIMPLE_ERR(("%s(): failed to dulplicate write end of pipe, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1228,10 +1292,20 @@ fail:
 
         if (restore_stdout > 0)
             if (dup2(saved_stdout_fd, STDOUT_FILENO) < 0 && rc == 0)
+            {
+                CIMPLE_ERR(("%s(): failed to restore stdout, "
+                            "errno %d ('%s')",
+                            __FUNCTION__, errno, strerror(errno)));
                 rc = -1;
+            }
         if (restore_stderr > 0)
             if (dup2(saved_stderr_fd, STDERR_FILENO) < 0 && rc == 0)
+            {
+                CIMPLE_ERR(("%s(): failed to restore stderr, "
+                            "errno %d ('%s')",
+                            __FUNCTION__, errno, strerror(errno)));
                 rc = -1;
+            }
         if (saved_stdout_fd >= 0)
             close(saved_stdout_fd);
         if (saved_stderr_fd >= 0)
@@ -1272,13 +1346,23 @@ fail:
         memset(&ifr, 0, sizeof(ifr));
         fd = open(dev_file, O_RDWR);
         if (fd < 0)
+        {
+            CIMPLE_ERR(("%s(): failed to open '%s', "
+                        "errno %d ('%s')",
+                        __FUNCTION__, dev_file,
+                        errno, strerror(errno)));
             return -1;
+        }
 
         strncpy(ifr.ifr_name, dev_name, sizeof(ifr.ifr_name));
         ifr.ifr_data = (char *)edata;
         ((struct ethtool_value *)edata)->cmd = cmd;
         if (ioctl(fd, SIOCETHTOOL, &ifr) < 0)
         {
+            CIMPLE_ERR(("%s(): ioctl(SIOCETHTOOL cmd=%u) failed, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, cmd,
+                        errno, strerror(errno)));
             close(fd);
             return -1;
         }
@@ -2020,20 +2104,33 @@ fail:
         int             rc = 0;
 
         if (uri == NULL || f == NULL)
+        {
+            CIMPLE_ERR(("%s(): incorrect arguments", __FUNCTION__));
             return -1;
+        }
 
         curl = curl_easy_init();
         if (curl == NULL)
+        {
+            CIMPLE_ERR(("curl_easy_init() failed, errno %d ('%s')",
+                        errno, strerror(errno)));
             return -1;
+        }
 
         if (curl_easy_setopt(curl, CURLOPT_URL, uri) != CURLE_OK)
         {
+            CIMPLE_ERR(("curl_easy_setopt(CURLOPT_URL) failed, "
+                        "errno %d ('%s')",
+                        errno, strerror(errno)));
             rc = -1;
             goto curl_fail;
         }
         if (curl_easy_setopt(curl, CURLOPT_WRITEDATA,
                              f) != CURLE_OK)
         {
+            CIMPLE_ERR(("curl_easy_setopt(CURLOPT_WRITEDATA) failed, "
+                        "errno %d ('%s')",
+                        errno, strerror(errno)));
             rc = -1;
             goto curl_fail;
         }
@@ -2043,6 +2140,9 @@ fail:
             if (curl_easy_setopt(curl, CURLOPT_PASSWORD,
                                  passwd) != CURLE_OK)
             {
+                CIMPLE_ERR(("curl_easy_setopt(CURLOPT_PASSWORD) failed, "
+                            "errno %d ('%s')",
+                            errno, strerror(errno)));
                 rc = -1;
                 goto curl_fail;
             }
@@ -2051,6 +2151,9 @@ fail:
         CURLcode rc_curl;
         if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
         {
+            CIMPLE_ERR(("curl_easy_perform() failed, "
+                        "errno %d ('%s')",
+                        errno, strerror(errno)));
             rc = -1;
             goto curl_fail;
         }
@@ -2091,7 +2194,10 @@ curl_fail:
 #endif
 
         if (((VMwareNIC *)owner)->ports.size() <= 0)
+        {
+            CIMPLE_ERR(("No ports found"));
             return -1;
+        }
 
         if (strcmp_start(fileName, FILE_PROTO) == 0)
         {
@@ -2101,6 +2207,7 @@ curl_fail:
                           fileName + strlen(FILE_PROTO));
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
+                CIMPLE_ERR(("Failed to format sfupdate command"));
                 return -1;
             }
         }
@@ -2111,11 +2218,17 @@ curl_fail:
 
             fd = mkstemp(tmp_file);
             if (fd < 0)
+            {
+                CIMPLE_ERR(("mkstemp('%s') failed, errno %d ('%s')",
+                            tmp_file, errno, strerror(errno)));
                 return -1;
+            }
 
             f = fdopen(fd, "w");
             if (f == NULL)
             {
+                CIMPLE_ERR(("fdopen() failed, errno %d ('%s')",
+                            errno, strerror(errno)));
                 close(fd);
                 return -1;
             }
@@ -2134,6 +2247,7 @@ curl_fail:
                           tmp_file);
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
+                CIMPLE_ERR(("Failed to format sfupdate command"));
                 unlink(tmp_file);
                 return -1;
             }
@@ -2610,7 +2724,8 @@ curl_fail:
             fd = open(DEV_SFC_CONTROL, O_RDWR);
             if (fd < 0)
                 CIMPLE_ERR(("Failed to open %s device for checking NIC "
-                            "sensors", DEV_SFC_CONTROL));
+                            "sensors, errno %d ('%s')",
+                            DEV_SFC_CONTROL, errno, strerror(errno)));
         }
         virtual ~VMwareSensorsAlertInfo()
         {
