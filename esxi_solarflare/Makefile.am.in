@@ -1,0 +1,20 @@
+bin_PROGRAMS=lib`'PROVIDER_LIBRARY`'.so
+lib`'PROVIDER_LIBRARY`'_so_SOURCES=m4_patsubst(`'SOURCES`', ` ', ` \\
+')
+
+lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS=`'CPPFLAGS`' -I$(srcdir)
+lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+=m4_patsubst(`'INCLUDES`', `-I', `-I$(srcdir)/')
+lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\"$(smash_namespace)\"
+lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+= -DSF_INTEROP_NS=\"$(sfcb_interop_namespace)\"
+lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE
+lib`'PROVIDER_LIBRARY`'_so_CXXFLAGS=$(CFLAGS) -Wno-unused -Wno-unused-parameter `'CXXFLAGS`'
+lib`'PROVIDER_LIBRARY`'_so_LDADD=m4_patsubst(`'LDADD`', `[^ ]+', `$(srcdir)/\&\\
+')
+lib`'PROVIDER_LIBRARY`'_so_LDFLAGS=-shared -L$(srcdir)
+NAMESPACES=$(smash_namespace) $(sfcb_interop_namespace) root/cimv2
+if ENABLE_SFCB
+dist_sfcb_interop_ns_DATA = libcimobjects/interop.mof
+dist_sfcb_ns_DATA = libcimobjects/namespace.mof
+dist_sfcb_root_ns_DATA = libcimobjects/root.mof
+dist_sfcb_reg_DATA = repository.reg
+endif

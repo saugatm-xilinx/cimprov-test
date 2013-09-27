@@ -44,33 +44,16 @@ $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g; s!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
 
-$(ESXI_SRC_PATH)/Makefile.am : $(MAKEFILE_LIST)
-	echo "bin_PROGRAMS=lib$(PROVIDER_LIBRARY).so" >$@
-	echo "lib$(PROVIDER_LIBRARY)_so_SOURCES=$(firstword $(ESXI_CONTENTS))" >>$@
-	for src in $(wordlist 2,$(words $(ESXI_CONTENTS)),$(ESXI_CONTENTS)); do \
-		echo "lib$(PROVIDER_LIBRARY)_so_SOURCES+=$${src}" >>$@; \
-	done
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS=$(CPPFLAGS) -I\$$(srcdir)" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+=$(patsubst -I%,-I\$$(srcdir)/%,$(libprovider_CPPFLAGS) $(libtoolstgt_CPPFLAGS) $(_libprovider_DEP_CPPFLAGS))" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\\\"\$$(smash_namespace)\\\"" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DSF_INTEROP_NS=\\\"\$$(sfcb_interop_namespace)\\\"" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_CXXFLAGS=\$$(CFLAGS) -Wno-unused -Wno-unused-parameter $(CXXFLAGS)" >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDADD=\$$(srcdir)/libprovider/esxi_libs/i386/libsfupdate.a " >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libutils.a " >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libcurl.a " >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libssh2.a " >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libssl.so.0.9.8 " >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/librt.so.1 " >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDADD+=\$$(srcdir)/libprovider/esxi_libs/i386/libcrypto.so.0.9.8 " >>$@
-	echo "lib$(PROVIDER_LIBRARY)_so_LDFLAGS=-shared -L\$$(srcdir)" >>$@
-	echo "NAMESPACES=\$$(smash_namespace) \$$(sfcb_interop_namespace) root/cimv2" >>$@
-	echo "if ENABLE_SFCB" >>$@
-	echo "dist_sfcb_interop_ns_DATA = libcimobjects/interop.mof" >>$@
-	echo "dist_sfcb_ns_DATA = libcimobjects/namespace.mof" >>$@
-	echo "dist_sfcb_root_ns_DATA = libcimobjects/root.mof" >>$@
-	echo "dist_sfcb_reg_DATA = repository.reg" >>$@
-	echo "endif" >>$@
+$(esxi_archive_DIR)/m4.defs : $(MAKEFILE_LIST)
+	echo "m4_define(\`PROVIDER_LIBRARY', \`$(PROVIDER_LIBRARY)')m4_dnl" >$@
+	echo "m4_define(\`SOURCES', \`$(ESXI_CONTENTS)')m4_dnl" >>$@
+	echo "m4_define(\`CPPFLAGS', \`$(target_CPPFLAGS)')m4_dnl" >>$@
+	echo "m4_define(\`CXXFLAGS', \`$(target_CXXFLAGS)')m4_dnl" >>$@
+	echo "m4_define(\`INCLUDES', \`$(foreach comp,$(esxi_archive_COMPONENTS),$($(comp)_CPPFLAGS) )')m4_dnl" >>$@
+	echo "m4_define(\`LDADD', \`$(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))')m4_dnl" >>$@
+
+$(ESXI_SRC_PATH)/Makefile.am : $(esxi_archive_DIR)/m4.defs $(esxi_archive_DIR)/Makefile.am.in 
+	$(M4) $^ >$@
 
 ifneq ($(ESXI_BUILD_HOST),)
 
