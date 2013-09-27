@@ -2235,11 +2235,11 @@ cleanup:
 
         curDriversVersion = VersionInfo(strDrvVersion.c_str());
 
+        Auto_Mutex guard(driversLock);
+
         if (driversFromScratch ||
             curDriversVersion != driversVersion)
         {
-            Auto_Mutex guard(driversLock);
-
             if (driversFillArray(savedDrivers) != 0)
             {
                 driversFromScratch = true;
