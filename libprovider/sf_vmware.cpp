@@ -50,6 +50,8 @@
 #include "sf_mcdi_sensors.h"
 #include "sf_alerts.h"
 
+#include <sys/syscall.h>
+
 // Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80
 
@@ -501,6 +503,95 @@ fail:
         #undef ESXI_PORT_NAME_PREF
     }
 
+    /// Linux directory entry structure
+    struct linux_dirent {
+        long           d_ino;     /// Inode number
+        off_t          d_off;     /// Offset to the next linux_dirent
+        unsigned short d_reclen;  /// Lenght of this linux_dirent
+        char           d_name[];  /// Name of the entry
+    };
+
+    ///
+    /// Get entries for a given directory.
+    ///
+    /// @param dirPath    Path to the directory
+    /// @param arr        Array of entries to be filled
+    ///
+    /// @return 0 on Success, -1 on Failure
+    ///
+    static int getDirContents(const char *dirPath, Array<String> &arr)
+    {
+#define INIT_BUF_SIZE 1024
+        
+        char   *buf = new char[INIT_BUF_SIZE];
+        size_t  bufSize = INIT_BUF_SIZE;
+        int     fd = -1;
+        int     numRead = 0;
+
+        unsigned int bufPos;
+
+        arr.clear();
+
+        fd = open(dirPath, O_RDONLY | O_DIRECTORY);
+        if (fd < 0)
+        {
+            CIMPLE_ERR(("Failed to open '%s' as a directory", dirPath));
+            delete[] buf;
+            return -1;
+        }
+
+        while (1)
+        {
+            numRead = syscall(SYS_getdents, fd, buf, bufSize);
+            if (numRead < 0)
+            {
+                delete[] buf;
+                if (errno == EINVAL)
+                {
+                    if (bufSize < INIT_BUF_SIZE * 8)
+                    {
+                        bufSize *= 2;
+                        buf = new char[bufSize];
+                        continue;
+                    }
+                    else
+                    {
+                        CIMPLE_ERR(("Too much space is required "
+                                    "for linux_dirent"));
+                        close(fd);
+                        arr.clear();
+                        return -1;
+                    }
+                }
+                else
+                {
+                    CIMPLE_ERR(("getdents() failed for directory '%s', "
+                                "errno %d ('%s')", dirPath, errno,
+                                strerror(errno)));
+                    close(fd);
+                    arr.clear();
+                    return -1;
+                }
+            }
+            else if (numRead == 0)
+                break;
+
+            for (bufPos = 0; bufPos < numRead; )
+            {
+                linux_dirent *d =
+                      reinterpret_cast<linux_dirent *>(buf + bufPos);
+
+                arr.append(String(d->d_name));
+                bufPos += d->d_reclen;
+            }
+        }
+
+        delete[] buf;
+        close(fd);
+        return 0;
+#undef INIT_BUF_SIZE
+    }
+
     ///
     /// Get descriptions for all Solarflare NICs on the machine.
     ///
@@ -510,10 +601,6 @@ fail:
     ///
     static int getNICs(NICDescrs &nics)
     {
-        DIR                 *bus_dir;
-        DIR                 *device_dir;
-        struct dirent       *bus;
-        struct dirent       *device;
         char                 device_path[PATH_MAX_LEN];
         char                 func_path[PATH_MAX_LEN];
         char                 pci_conf[PCI_CONF_LEN];
@@ -534,35 +621,34 @@ fail:
         int     k;
         int     fd;
 
+        unsigned int     l;
+        unsigned int     m;
+
         struct ifreq    ifr;
 
         char    *str;
 
         struct ethtool_drvinfo drvinfo;
 
-        // Obtain all available network ports.
-        device_dir = opendir(DEV_PATH);
-        if (device_dir == NULL)
-        {
-            CIMPLE_ERR(("Failed to open '%s', errno %d ('%s')",
-                        DEV_PATH, errno, strerror(errno)));
-            return -1;
-        }
+        Array<String> devDirList;
+        Array<String> busDirList;
 
-        for (device = readdir(device_dir);
-             device != NULL;
-             device = readdir(device_dir))
+        // Obtain all available network ports.
+        if (getDirContents(DEV_PATH, devDirList) < 0)
+            return -1;
+
+        for (l = 0; l < devDirList.size(); l++)
         {
-            if (!isPortName(device->d_name))
+            const char *devName = devDirList[l].c_str();
+            if (!isPortName(devName))
                 continue;
 
             rc = snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                          DEV_PATH, device->d_name);
+                          DEV_PATH, devName);
 
             if (rc < 0 || rc >= PATH_MAX_LEN)
             {
                 CIMPLE_ERR(("Failed to format path to device"));
-                closedir(device_dir);
                 return -1;
             }
 
@@ -574,14 +660,14 @@ fail:
             memset(&drvinfo, 0, sizeof(drvinfo));
             drvinfo.cmd = ETHTOOL_GDRVINFO;
             ifr.ifr_data = (char *)&drvinfo;
-            strcpy(ifr.ifr_name, device->d_name);
+            strcpy(ifr.ifr_name, devName);
             if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
             {
                 DeviceDescr tmp_dev;
 
                 close(fd);
 
-                tmp_dev.dev_name = device->d_name;
+                tmp_dev.dev_name = devName;
                 str = strchr(drvinfo.bus_info, '.');
                 if (str == NULL)
                     continue;
@@ -593,7 +679,6 @@ fail:
                     CIMPLE_ERR(("Invalid bus information for device %s: %s",
                                 tmp_dev.dev_name.c_str(),
                                 drvinfo.bus_info));
-                    closedir(device_dir);
                     return -1;
                 }
                 tmp_dev.pci_dev_id = strtol(str + 1, NULL, 16);
@@ -619,74 +704,63 @@ fail:
                 close(fd);
         }
 
-        closedir(device_dir);
-
-        bus_dir = opendir(PROC_BUS_PATH);
-        if (bus_dir == NULL)
-        {
-            CIMPLE_ERR(("Failed to open '%s', errno %d ('%s')",
-                        PROC_BUS_PATH, errno, strerror(errno)));
+        if (getDirContents(PROC_BUS_PATH, busDirList) < 0)
             return -1;
-        }
 
         // Filter out our NIC ports, group them by NICs.
 
-        for (bus = readdir(bus_dir);
-             bus != NULL;
-             bus = readdir(bus_dir))
+        for (m = 0; m < busDirList.size(); m++)
         {
-            if (bus->d_name[0] == '.')
+            const char *busName = busDirList[m].c_str();
+
+            if (busName[0] == '.')
                 continue;
             rc = snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                          PROC_BUS_PATH, bus->d_name);
+                          PROC_BUS_PATH, busName);
             if (rc < 0 || rc >= PATH_MAX_LEN)
             {
                 CIMPLE_ERR(("Failed to format path to device"));
-                closedir(bus_dir);
                 nics.clear();
                 return -1;
             }
 
-            device_dir = opendir(device_path);
-            if (device_dir == NULL)
+            if (getDirContents(device_path, devDirList) < 0)
                 continue;
 
-            str = strchr(bus->d_name, ':');
+            str = strchr(busName, ':');
             if (str == NULL)
             {
                 cur_domain = 0;
-                cur_bus = strtol(bus->d_name, NULL, 16);
+                cur_bus = strtol(busName, NULL, 16);
             }
             else
             {
-                cur_domain = strtol(bus->d_name, &str, 16);
+                cur_domain = strtol(busName, &str, 16);
                 if (str == NULL || *str != ':')
                 {
                     CIMPLE_ERR(("Failed to get PCI domain from %s",
-                                bus->d_name));
-                    closedir(device_dir);
-                    closedir(bus_dir);
+                                busName));
                     nics.clear();
                     return -1;
                 }
                 cur_bus = strtol(str + 1, NULL, 16);
             }
 
-            for (device = readdir(device_dir);
-                 device != NULL;
-                 device = readdir(device_dir))
+            for (l = 0; l < devDirList.size(); l++)
             {
                 NICDescr  tmp_nic;
                 PortDescr tmp_port;
 
-                if (device->d_name[0] == '.')
+                const char *devName = devDirList[l].c_str();
+
+                if (devName[0] == '.')
                     continue;
 
                 if (snprintf(func_path, PATH_MAX_LEN, "%s/%s",
-                             device_path, device->d_name) >= PATH_MAX_LEN)
+                             device_path, devName) >= PATH_MAX_LEN)
                     continue;
 
-                cur_dev = strtol(device->d_name, &str, 16);
+                cur_dev = strtol(devName, &str, 16);
                 if (str == NULL || *str != '.')
                     continue;
                 cur_fn = strtol(str + 1, NULL, 16);
@@ -725,8 +799,6 @@ fail:
                                 "by PCI address %x:%x:%x.%x",
                                 cur_domain, cur_bus,
                                 cur_dev, cur_fn));
-                    closedir(device_dir);
-                    closedir(bus_dir);
                     nics.clear();
                     return -1;
                 }
@@ -760,11 +832,7 @@ fail:
                 tmp_port.dev_name = devs[i].dev_name;
                 nics[j].ports.append(tmp_port);
             }
-
-            closedir(device_dir);
         }
-
-        closedir(bus_dir);
 
         // Sort ports in ascending order in relation to PCI function.
 
@@ -2294,28 +2362,29 @@ curl_fail:
 
     VersionInfo VMwareDriver::version() const
     {
-        DIR                     *device_dir;
-        struct dirent           *device;
         struct ethtool_drvinfo   drvinfo;
         struct ifreq             ifr;
         int                      fd;
         char                     device_path[PATH_MAX_LEN];
 
-        device_dir = opendir(DEV_PATH);
-        if (device_dir == NULL)
+        Array<String> devDirList;
+
+        unsigned int i;
+
+        if (getDirContents(DEV_PATH, devDirList) < 0)
             return VersionInfo(DEFAULT_VERSION_STR);
 
-        for (device = readdir(device_dir);
-             device != NULL;
-             device = readdir(device_dir))
+        for (i = 0; i < devDirList.size(); i++)
         {
-            if (device->d_name[0] == '.')
+            const char *devName = devDirList[i].c_str();
+
+            if (devName[0] == '.')
                 continue;
-            if (strlen(device->d_name) > IFNAMSIZ)
+            if (strlen(devName) > IFNAMSIZ)
                 continue;
 
             if (snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                         DEV_PATH, device->d_name) >= PATH_MAX_LEN)
+                         DEV_PATH, devName) >= PATH_MAX_LEN)
                 continue;
             fd = open(device_path, O_RDWR);
             if (fd < 0)
@@ -2325,23 +2394,18 @@ curl_fail:
             memset(&drvinfo, 0, sizeof(drvinfo));
             drvinfo.cmd = ETHTOOL_GDRVINFO;
             ifr.ifr_data = (char *)&drvinfo;
-            strcpy(ifr.ifr_name, device->d_name);
+            strcpy(ifr.ifr_name, devName);
 
             if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
             {
                 close(fd);
 
                 if (strcmp(drvinfo.driver, "sfc") == 0)
-                {
-                    closedir(device_dir);
                     return VersionInfo(drvinfo.version); 
-                }
             }
             else
                 close(fd);
         }
-
-        closedir(device_dir);
 
         // We failed to get it via ethtool (possible reason: no
         // Solarflare interfaces are presented) - we try to get it
