@@ -11,7 +11,7 @@ sles10_archive_GENERATED += lib$(PROVIDER_LIBRARY).spec
 sles10_archive_GENERATED += $(libcimobjects_DIR)/namespace.mof
 sles10_archive_SOURCES = $(sles10_archive_GENERATED)
 
-$(sles10_archive_TARGET) : TAR_TRANSFORM = !^$(sles10_archive_DIR)/!! !^!$*/!
+$(sles10_archive_TARGET) : TAR_TRANSFORM = !^$(sles10_archive_DIR)/$(libcimobjects_DIR)/!$(libcimobjects_DIR)/! !^!$*/!
 
 $(eval $(call archive_component,sles10_archive))
 
