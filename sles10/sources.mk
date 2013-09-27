@@ -15,6 +15,8 @@ $(sles10_archive_TARGET) : TAR_TRANSFORM = !^$(sles10_archive_DIR)/!! !^!$*/!
 
 $(eval $(call archive_component,sles10_archive))
 
+sles10_archive_CPPFLAGS = $(foreach comp,$(sles10_archive_COMPONENTS),$($(comp)_CPPFLAGS) )
+
 $(sles10_archive_DIR)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/namespace.mof \
 	$(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS))
 	mkdir -p $(dir $@)
@@ -44,7 +46,7 @@ $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "PEGASUS_PLATFORM=$(CIMPLE_PLATFORM)" >>$@
 	echo "PROVIDER_LIBPATH?=$(PEGASUS_HOME)/lib" >>$@
 	echo "TARGET=lib$(PROVIDER_LIBRARY).so" >>$@
-	echo "SOURCES=$(sles10_libprov_SOURCES)" >>$@
+	echo "SOURCES=$(filter %.cpp,$(sles10_archive_DISTFILES))" >>$@
 	echo "INCLUDES=$(sles10_libprov_INCLUDES) . \$$(PEGASUS_ROOT)/src " >>$@
 	echo "CPPFLAGS=$(sles10_libprov_CPPFLAGS)" >>$@
 	echo "CPPFLAGS += -I. -I\$$(PEGASUS_ROOT)/src" >>$@
@@ -53,8 +55,8 @@ $(sles10_archive_DIR)/Makefile : $(MAKEFILE_LIST)
 	echo "CPPFLAGS += -DSF_INTEROP_NS=\\\"$(INTEROP_NAMESPACE)\\\"" >>$@
 	echo "CPPFLAGS += -DCIMPLE_PEGASUS_MODULE" >>$@
 	echo "CPPFLAGS += -DSLES10_BUILD_HOST" >>$@
-	echo "CXXFLAGS = $(host_CXXFLAGS)" >>$@
-	echo "SYSLIBRARIES = $(host_SYSLIBRARIES)" >>$@
+	echo "CXXFLAGS = $(target_CXXFLAGS)" >>$@
+	echo "SYSLIBRARIES = $(target_SYSLIBRARIES)" >>$@
 	echo "lib$(PROVIDER_LIBRARY).so : \$$(patsubst %.cpp,%.o,\$$(SOURCES))" >>$@
 	echo "lib$(PROVIDER_LIBRARY).so : %.so:" >>$@
 	echo "		\$$(CXX) -shared -o \$$@ \$$(LDFLAGS) \$$(CXXFLAGS) \$$(filter %.o,\$$^) \\" >>$@

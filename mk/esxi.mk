@@ -5,3 +5,6 @@ CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
 CIM_SCHEMA_ROOTFILE=$(CIM_SCHEMA_DIR)/DMTF/cimv$(CIM_SCHEMA_VERSION_MAJOR)$(CIM_SCHEMA_VERSION_MINOR).mof
 override DIST_IS_SPECIAL = 1
 override PROVIDER_TARBALL = $(esxi_archive_TARGET)
+override target_CPPFLAGS = 
+override target_CXXFLAGS = -Wno-unused -Wno-unused-parameter
+override target_LDFLAGS = 

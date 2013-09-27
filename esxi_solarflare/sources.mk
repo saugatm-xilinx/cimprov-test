@@ -59,6 +59,7 @@ $(esxi_archive_DIR)/m4.defs : $(MAKEFILE_LIST)
 	echo "m4_define(\`SOURCES', \`$(ESXI_CONTENTS)')m4_dnl" >>$@
 	echo "m4_define(\`CPPFLAGS', \`$(target_CPPFLAGS)')m4_dnl" >>$@
 	echo "m4_define(\`CXXFLAGS', \`$(target_CXXFLAGS)')m4_dnl" >>$@
+	echo "m4_define(\`LDFLAGS', \`$(target_LDFLAGS)')m4_dnl" >>$@
 	echo "m4_define(\`INCLUDES', \`$(foreach comp,$(esxi_archive_COMPONENTS),$($(comp)_CPPFLAGS) )')m4_dnl" >>$@
 	echo "m4_define(\`LDADD', \`$(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))')m4_dnl" >>$@
 
