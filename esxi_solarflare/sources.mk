@@ -4,8 +4,16 @@ esxi_archive_DIR = esxi_solarflare
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_EXTRA_LIBDIR = $(libprovider_DIR)/esxi_libs/i386
-ESXI_EXTRA_LIBS = libssh2.a libssl.so.0.9.8 librt.so.1 libcrypto.so.0.9.8
+ESXI_EXTRA_LIBS = libssh2.a librt.so.1
 ESXI_EXTRA_LIBS += libcurl.a libutils.a libsfupdate.a
+ifeq ($(ESXI_VERSION),5.5)
+LIBSSL_FILE = libssl.so.1.0.1
+LIBCRYPTO_FILE = libcrypto.so.1.0.1
+else
+LIBSSL_FILE = libssl.so.0.9.8
+LIBCRYPTO_FILE = libcrypto.so.0.9.8
+endif
+ESXI_EXTRA_LIBS += $(LIBSSL_FILE) $(LIBCRYPTO_FILE)
 
 esxi_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
 				                $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
@@ -43,6 +51,8 @@ $(ESXI_SRC_PATH)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/names
 $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	
 	$(SED) 's!$(IMP_NAMESPACE)!@smash_namespace@!g; s!$(INTEROP_NAMESPACE)!@sfcb_interop_namespace@!g' <$< >$@
+
+ESXI_CONTENTS = $(patsubst $(TOP)/%,%,$(filter-out $(esxi_archive_DIR)/%,$(esxi_archive_DISTFILES)))
 
 $(esxi_archive_DIR)/m4.defs : $(MAKEFILE_LIST)
 	echo "m4_define(\`PROVIDER_LIBRARY', \`$(PROVIDER_LIBRARY)')m4_dnl" >$@
