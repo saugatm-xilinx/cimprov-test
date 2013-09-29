@@ -850,6 +850,10 @@ namespace solarflare
         item->ElementSoftwareStatus.value.append(SF_SystemSoftwareIdentity::_ElementSoftwareStatus::enum_Next);
         item->ElementSoftwareStatus.value.append(SF_SystemSoftwareIdentity::_ElementSoftwareStatus::enum_Default);
         item->ElementSoftwareStatus.value.append(SF_SystemSoftwareIdentity::_ElementSoftwareStatus::enum_Installed);
+
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        item->Antecedent->__name_space = CIMHelper::solarflareNS;
+#endif 
         return item;
     }
 
