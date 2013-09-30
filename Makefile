@@ -29,6 +29,7 @@ else ifeq ($(CIM_SERVER),esxi)
 include $(TOP)/mk/esxi.mk
 else ifeq ($(CIM_SERVER),pegasus)
 include $(TOP)/pegasus/sources.mk
+ifeq ($(CIM_INTERFACE),pegasus)
 include $(TOP)/cimple/pegasus/sources.mk
 
 PEGASUS_TOOLS_DEPS = libtoolstgt libcimplepeg 
@@ -37,6 +38,7 @@ ifeq ($(SLES10_BUILD_HOST),)
 include $(TOP)/cimple/tools/regview/sources.mk
 include $(TOP)/cimple/tools/ciminvoke/sources.mk
 include $(TOP)/cimple/tools/cimlisten/sources.mk
+endif
 endif
 else ifeq ($(CIM_SERVER),wmi)
 # do nothing

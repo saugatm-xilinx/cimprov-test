@@ -11,7 +11,7 @@ sles10_archive_GENERATED += Makefile
 sles10_archive_GENERATED += $(libcimobjects_DIR)/namespace.mof
 sles10_archive_SOURCES = $(sles10_archive_GENERATED)
 
-$(sles10_archive_TARGET) : TAR_TRANSFORM = !^$(sles10_archive_DIR)/$(libcimobjects_DIR)/!$(libcimobjects_DIR)/! !^!$*/!
+$(sles10_archive_TARGET) : TAR_TRANSFORM = !^Makefile$$!Makefile.orig! !^$(sles10_archive_DIR)/$(libcimobjects_DIR)/!$(libcimobjects_DIR)/! !^$(sles10_archive_DIR)/Makefile$$!Makefile! !^!$*/!
 
 $(eval $(call archive_component,sles10_archive))
 

@@ -9,8 +9,8 @@ URL: http://solarflare.com
 Source0: __PROVIDER_TARBALL__
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-__PROVIDER_RPM_BUILD_REQUIRES__
-__PROVIDER_REQUIRES__
+m4_ifdef([__PROVIDER_RPM_BUILD_REQUIRES__], [BuildRequires: __PROVIDER_RPM_BUILD_REQUIRES__])
+m4_ifdef([__PROVIDER_RPM_REQUIRES__], [Requires: __PROVIDER_REQUIRES__])
 
 %description
 
@@ -31,14 +31,14 @@ make CONFIG=__CONFIG__ DESTDIR=$RPM_BUILD_ROOT install
 make CONFIG=__CONFIG__ DESTDIR=$RPM_BUILD_ROOT install-aux
 
 %post
-__PEGASUS_HOME__/bin/cimmof -n __IMP_NAMESPACE__ -uc -aE __PROVIDER_ROOT__/mof/schema.mof
-__PEGASUS_HOME__/bin/cimmof -n __IMP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/namespace.mof
-__PEGASUS_HOME__/bin/cimmof -n __INTEROP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/interop.mof
-__PEGASUS_HOME__/bin/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/repository.reg
+__PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc -aE __PROVIDER_ROOT__/mof/schema.mof
+__PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/namespace.mof
+__PEGASUS_BINPATH__/bin/cimmof -n __INTEROP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/interop.mof
+__PEGASUS_BINPATH__/bin/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/repository.reg
 
 
 %preun
-__PEGASUS_HOME__/bin/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
+__PEGASUS_BINPATH__/bin/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
 
 %clean
 rm -rf $RPM_BUILD_ROOT
