@@ -14,13 +14,13 @@ esxi_archive_EXTRA_DISTFILES += $(esxi_archive_LIBS)
 
 esxi_archive_GENERATED = $(ESXI_PROJECT_NAME)/$(libcimobjects_DIR)/namespace.mof \
 						 $(ESXI_PROJECT_NAME)/repository.reg.in \
-						 $(ESXI_PROJECT_NAME)/Makefile.am
+						 $(ESXI_PROJECT_NAME)/Makefile.am \
+					 	 oem/descriptor.xml
 
 esxi_archive_SOURCES = esxi_bootstrap.sh \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
 					   $(ESXI_PROJECT_NAME)/solarflare.wsman \
 					   oem/descriptor-urls.xml	\
-					   oem/descriptor.xml	\
 					   oem/oem.mk \
 					   oem/solarflare-build.sh \
 					   oem/solarflare-pkg.sh \
@@ -50,6 +50,9 @@ ESXI_CONTENTS = $(patsubst $(TOP)/%,%,$(filter-out $(esxi_archive_DIR)/%,$(esxi_
 esxi_archive_CPPFLAGS = $(foreach comp,$(esxi_archive_COMPONENTS),$($(comp)_CPPFLAGS) )
 
 $(ESXI_SRC_PATH)/Makefile.am : m4.defs $(esxi_archive_DIR)/Makefile.am.in
+	$(M4) $^ >$@
+
+$(esxi_archive_DIR)/oem/descriptor.xml : m4.defs $(esxi_archive_DIR)/oem/descriptor.xml.in
 	$(M4) $^ >$@
 
 ifneq ($(ESXI_BUILD_HOST),)

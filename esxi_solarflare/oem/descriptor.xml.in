@@ -3,16 +3,16 @@
    <!-- The VIB package name must be 35 or less characters and must -->
    <!-- only contain [0-9a-zA-Z], -, _, and .  Also it is advised -->
    <!-- that vendor be left out as there is a separate vendor field. -->
-   <name>solarflare</name>
+   <name>m4_translit(__PROVIDER_LIBRARY__, [A-Z], [a-z])</name>
 
    <!-- The VIB version should be of the form: ver-rel, where -->
    <!-- ver and rel are both strings that must start with digits, -->
    <!-- and can end with a combination of digits, period, and letters.
         The entire string should be 35 chars or less.  -->
-   <version>1.0-1.0</version>
+   <version>__PROVIDER_VERSION__-__PROVIDER_REVISION__</version>
 
    <!-- Vendor has the same formatting restrictions as the name field -->
-   <vendor>Solarflare</vendor>
+   <vendor>__PROVIDER_LIBRARY__</vendor>
 
    <!-- A one-line summary of the VIB package contents. 80 chars max. -->
    <summary>Solarflare NIC CIM Provider</summary>
