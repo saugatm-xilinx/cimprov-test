@@ -33,8 +33,8 @@ define M4_DEFINE
 endef
 
 m4.defs : $(MAKEFILE_LIST)
+	@echo Producing M4 defs from make var
 	@echo "m4_changequote([,])m4_dnl" >$@
-	$(info Producing M4 defs from make var)
 	$(foreach var,$(filter-out M4_DEFINE,$(.VARIABLES)), $(call M4_DEFINE,$(var)))
 
 lib$(PROVIDER_LIBRARY).spec : m4.defs lib$(PROVIDER_LIBRARY).spec.in
