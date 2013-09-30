@@ -15,9 +15,11 @@ LIBCRYPTO_FILE = libcrypto.so.0.9.8
 endif
 ESXI_EXTRA_LIBS += $(LIBSSL_FILE) $(LIBCRYPTO_FILE)
 
+esxi_archive_LIBS = $(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))
+
 esxi_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
 				                $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
-esxi_archive_EXTRA_DISTFILES += $(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))
+esxi_archive_EXTRA_DISTFILES += $(esxi_archive_LIBS)
 
 esxi_archive_GENERATED = $(ESXI_PROJECT_NAME)/$(libcimobjects_DIR)/namespace.mof \
 						 $(ESXI_PROJECT_NAME)/repository.reg.in \
@@ -54,16 +56,9 @@ $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 
 ESXI_CONTENTS = $(patsubst $(TOP)/%,%,$(filter-out $(esxi_archive_DIR)/%,$(esxi_archive_DISTFILES)))
 
-$(esxi_archive_DIR)/m4.defs : $(MAKEFILE_LIST)
-	echo "m4_define(\`PROVIDER_LIBRARY', \`$(PROVIDER_LIBRARY)')m4_dnl" >$@
-	echo "m4_define(\`SOURCES', \`$(ESXI_CONTENTS)')m4_dnl" >>$@
-	echo "m4_define(\`CPPFLAGS', \`$(target_CPPFLAGS)')m4_dnl" >>$@
-	echo "m4_define(\`CXXFLAGS', \`$(target_CXXFLAGS)')m4_dnl" >>$@
-	echo "m4_define(\`LDFLAGS', \`$(target_LDFLAGS)')m4_dnl" >>$@
-	echo "m4_define(\`INCLUDES', \`$(foreach comp,$(esxi_archive_COMPONENTS),$($(comp)_CPPFLAGS) )')m4_dnl" >>$@
-	echo "m4_define(\`LDADD', \`$(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))')m4_dnl" >>$@
+esxi_archive_CPPFLAGS = $(foreach comp,$(esxi_archive_COMPONENTS),$($(comp)_CPPFLAGS) )
 
-$(ESXI_SRC_PATH)/Makefile.am : $(esxi_archive_DIR)/m4.defs $(esxi_archive_DIR)/Makefile.am.in 
+$(ESXI_SRC_PATH)/Makefile.am : m4.defs $(esxi_archive_DIR)/Makefile.am.in
 	$(M4) $^ >$@
 
 ifneq ($(ESXI_BUILD_HOST),)

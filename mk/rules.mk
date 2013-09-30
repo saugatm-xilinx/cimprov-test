@@ -27,28 +27,18 @@ $(PROVIDER_TARBALL) : $(PROVIDER_DIST_FILES)
 endif
 endif
 
-define subst_spec
-$(SED) 's!%{PROVIDER_LIBRARY}!$(PROVIDER_LIBRARY)!g; \
-		s!%{PROVIDER_VERSION}!$(PROVIDER_VERSION)!g; \
-		s!%{PROVIDER_REVISION}!$(PROVIDER_REVISION)!g; \
-		s!%{PROVIDER_LIBPATH}!$(PROVIDER_LIBPATH)!g; \
-		s!%{PROVIDER_PACKAGE}!$(PROVIDER_PACKAGE)!g; \
-		s!%{PROVIDER_TARBALL_DIR}!$(PROVIDER_TARBALL_DIR)!g; \
-		s!%{PROVIDER_TARBALL}!$(PROVIDER_TARBALL)!g; \
-		s!%{PROVIDER_SO}!$(libprovider_TARGET)!g; \
-		s!%{PROVIDER_ROOT}!$(PROVIDER_ROOT)!g; \
-		s!%{PROVIDER_TARBALL_DIR}!$(PROVIDER_TARBALL_DIR)!g; \
-		s!%{IMP_NAMESPACE}!$(IMP_NAMESPACE)!g; \
-		s!%{INTEROP_NAMESPACE}!$(INTEROP_NAMESPACE)!g; \
-		s!%{INTEROP_CLASSES}!$(INTEROP_CLASSES)!g; \
-		s!%{CONFIG}!$(CONFIG)!g; \
-		s!%{BUILD_REQUIRES}!$(PROVIDER_RPM_BUILD_REQUIRES)!g; \
-		s!%{REQUIRES}!$(PROVIDER_RPM_REQUIRES)!g; \
-		s!%{PEGASUS_HOME}!$(PEGASUS_HOME)!g' $< >$@
+define M4_DEFINE
+	@echo 'm4_define([__$(1)__], [[$(subst ],,$(subst [,,$(subst #,,$(subst ','\'',$(strip $($(1)))))))]])m4_dnl' >>$@
+
 endef
 
-lib$(PROVIDER_LIBRARY).spec : lib$(PROVIDER_LIBRARY).spec.in $(MAKEFILE_LIST)
-	$(subst_spec)
+m4.defs : $(MAKEFILE_LIST)
+	@echo "m4_changequote([,])m4_dnl" >$@
+	$(info Producing M4 defs from make var)
+	$(foreach var,$(filter-out M4_DEFINE,$(.VARIABLES)), $(call M4_DEFINE,$(var)))
+
+lib$(PROVIDER_LIBRARY).spec : m4.defs lib$(PROVIDER_LIBRARY).spec.in
+	$(M4) $^ >$@
 
 %.d: %.cpp
 	@echo Producing $@

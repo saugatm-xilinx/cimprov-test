@@ -1,20 +1,20 @@
-bin_PROGRAMS=lib`'PROVIDER_LIBRARY`'.so
-lib`'PROVIDER_LIBRARY`'_so_SOURCES=m4_patsubst(`'SOURCES`', ` ', ` \\
-')
+m4_define([TARGET], [lib[]__PROVIDER_LIBRARY__[].so])m4_dnl
+m4_define([PREFIX], [m4_translit(TARGET, [.], [_])_])m4_dnl
+bin_PROGRAMS = TARGET
+PREFIX[SOURCES] = m4_patsubst(__ESXI_CONTENTS__, [ ], [ \\
+])
 
+PREFIX[CPPFLAGS] = __target_CPPFLAGS__ -I$(srcdir)
+PREFIX[CPPFLAGS] += m4_patsubst(__esxi_archive_CPPFLAGS__, [-I], [-I$(srcdir)/])
+PREFIX[CPPFLAGS] += -DSF_IMPLEMENTATION_NS=\"$(smash_namespace)\"
+PREFIX[CPPFLAGS] += -DSF_INTEROP_NS=\"$(sfcb_interop_namespace)\"
+PREFIX[CPPFLAGS] += -DCIMPLE_CMPI_MODULE
+PREFIX[CXXFLAGS] = $(CFLAGS) __target_CXXFLAGS__
+PREFIX[LDADD] = m4_patsubst(m4_patsubst(__esxi_archive_LIBS__, [[^ ]+], [$(srcdir)/\&]), [ ], [ \\
+])
 
-lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS=`'CPPFLAGS`' -I$(srcdir)
-lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+=m4_patsubst(`'INCLUDES`', `-I', `-I$(srcdir)/')
-lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+= -DSF_IMPLEMENTATION_NS=\"$(smash_namespace)\"
-lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+= -DSF_INTEROP_NS=\"$(sfcb_interop_namespace)\"
-lib`'PROVIDER_LIBRARY`'_so_CPPFLAGS+= -DCIMPLE_CMPI_MODULE
-lib`'PROVIDER_LIBRARY`'_so_CXXFLAGS=$(CFLAGS) `'CXXFLAGS`'
-lib`'PROVIDER_LIBRARY`'_so_LDADD=m4_patsubst(`'LDADD`', `[^ ]+', `$(srcdir)/\&\\
-')
-#
-
-lib`'PROVIDER_LIBRARY`'_so_LDFLAGS=-shared -L$(srcdir) `'LDFLAGS`'
-NAMESPACES=$(smash_namespace) $(sfcb_interop_namespace) root/cimv2
+PREFIX[LDFLAGS] = -shared -L$(srcdir) __target_LDFLAGS__
+NAMESPACES = $(smash_namespace) $(sfcb_interop_namespace) root/cimv2
 if ENABLE_SFCB
 dist_sfcb_interop_ns_DATA = libcimobjects/interop.mof
 dist_sfcb_ns_DATA = libcimobjects/namespace.mof

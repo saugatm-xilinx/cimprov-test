@@ -1,0 +1,47 @@
+m4_define([IMPORT], [[$1] = __$1__[]])m4_dnl
+IMPORT([PEGASUS_ROOT])
+IMPORT([PEGASUS_HOME])
+IMPORT([PROVIDER_ROOT])
+IMPORT([PEGASUS_BINPATH])
+[PEGASUS_PLATFORM] = __CIMPLE_PLATFORM__
+[PROVIDER_LIBPATH] ?= $(PEGASUS_HOME)/lib
+[TARGET] = lib[]__PROVIDER_LIBRARY__[].so
+[SOURCES] = __sles10_archive_CPP_DISTFILES__
+[CPPFLAGS] = __libsles10_archive_CPPFLAGS
+[CPPFLAGS] += -I. -I$(PEGASUS_ROOT)/src
+[CPPFLAGS] += -DPEGASUS_PLATFORM_$(PEGASUS_PLATFORM)
+[CPPFLAGS] += -DSF_IMPLEMENTATION_NS=\"__IMP_NAMESPACE__\"
+[CPPFLAGS] += -DSF_INTEROP_NS=\"__INTEROP_NAMESPACE__\"
+[CPPFLAGS] += -DCIMPLE_PEGASUS_MODULE
+[CPPFLAGS] += -DSLES10_BUILD_HOST
+[CXXFLAGS] = __target_CXXFLAGS__
+[LDFLAGS] = __target_LDFLAGS__
+[SYSLIBRARIES] = __target_SYSLIBRARIES__
+IMPORT([RUNASROOT])
+MOFPATH=$(PROVIDER_ROOT)/mof
+
+$(TARGET) : $(patsubst %.cpp,%.o,$(SOURCES))
+$(TARGET) : %.so:
+		$(CXX) -shared -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) $(addprefix -l,$(SYSLIBRARIES))
+
+install:
+		strip $(TARGET)
+		mkdir -p $(DESTDIR)/$(PROVIDER_LIBPATH)
+		cp $(TARGET) $(DESTDIR)/$(PROVIDER_LIBPATH)
+
+register: install
+    $(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n __IMP_NAMESPACE__ __CIMOBJECTS__/schema.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n __IMP_NAMESPACE__ __CIMOBJECTS__/namespace.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n __INTEROP_NAMESPACE__ __CIMOBJECTS__/interop.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n __INTEROP_NAMESPACE__ repository.reg
+
+unregister: 
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
+ifneq ($(PROVIDER_ROOT),)
+install-aux : 
+		mkdir -p $(DESTDIR)/$(MOFPATH)
+		cp libcimobjects/namespace.mof $(DESTDIR)/$(MOFPATH)
+		cp libcimobjects/interop.mof $(DESTDIR)/$(MOFPATH)
+		cp libcimobjects/schema.mof (DESTDIR)/$(MOFPATH)
+		cp repository.reg (DESTDIR)/$(MOFPATH)
+endif

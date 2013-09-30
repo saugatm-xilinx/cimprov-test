@@ -115,7 +115,6 @@ COMPONENTS += $(1)
 
 endef
 
-
 ifeq ($(MAKECMDGOALS),distname)
 _DO_NOT_GENERATE := 1
 endif

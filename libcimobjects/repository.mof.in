@@ -1,12 +1,31 @@
-m4_define(`WMIONLY', `m4_ifelse(TARGET_CIM_SERVER, `wmi', `$1')')m4_dnl
-m4_ifdef(`IMPNS', `m4_define(`ROOT_OR_IMPNS')')m4_dnl
-m4_ifdef(`ROOTNS', `m4_define(`ROOT_OR_IMPNS')')m4_dnl
-m4_ifdef(`IMPNS', `m4_define(`INTEROP_OR_IMPNS')')m4_dnl
-m4_ifdef(`INTEROPNS', `m4_define(`INTEROP_OR_IMPNS')')m4_dnl
-m4_define(`SECTION', `m4_ifdef(`$1NS', `// `$1NS'
-$2')')
+m4_changequote([[,]])m4_dnl
+m4_ifelse(TARGET_CIM_SERVER, [[wmi]],
+[[m4_define([[INSTANCE]], [[ [dynamic, provider("PROVIDER_LIBRARY")] ]])m4_dnl
+m4_define([[ASSOCIATION]], [[INSTANCE]])m4_dnl
+m4_define([[INDICATION]], [[ [dynamic, provider("PROVIDER_LIBRARY"), Indication] ]])m4_dnl
+m4_define([[INSTANCE_NWMI]], [[]])m4_dnl
+m4_define([[ASSOCIATION_NWMI]], [[]])m4_dnl
+m4_define([[INDICATION_NWMI]], [[]])m4_dnl
+]], [[m4_define([[INSTANCE]], [[]])m4_dnl
+m4_define([[ASSOCIATION]], [[ [Association] ]])m4_dnl
+m4_define([[INDICATION]], [[ [Indication] ]])m4_dnl
+m4_define([[INSTANCE_NWMI]], [[]])m4_dnl
+m4_define([[ASSOCIATION_NWMI]], [[ [Association] ]])m4_dnl
+m4_define([[INDICATION_NWMI]], [[ [Indication] ]])m4_dnl
+]])m4_dnl
+m4_define([[WMIONLY]], [[m4_ifelse(TARGET_CIM_SERVER, [[wmi]], [[$1]])]])m4_dnl
+m4_ifdef([[IMPNS]], [[m4_define([[ROOT_OR_IMPNS]])]])m4_dnl
+m4_ifdef([[ROOTNS]], [[m4_define([[ROOT_OR_IMPNS]])]])m4_dnl
+m4_ifdef([[IMPNS]], [[m4_define([[INTEROP_OR_IMPNS]])]])m4_dnl
+m4_ifdef([[INTEROPNS]], [[m4_define([[INTEROP_OR_IMPNS]])]])m4_dnl
+m4_define([[SECTION]], [[m4_ifdef([[$1NS]], [[// [[$1NS]]
+$2]])]])m4_dnl
+m4_define([[IMP_SECTION]], [[SECTION([[IMP]], [[$1]])]])m4_dnl
+m4_define([[ROOT_SECTION]], [[SECTION([[ROOT_OR_IMP]], [[$1]])]])m4_dnl
+m4_define([[INTEROP_SECTION]], [[SECTION([[INTEROP_OR_IMP]], [[$1]])]])m4_dnl
+m4_define([[WMIONLYKEY]], [[WMIONLY([[, Key]])]])m4_dnl
 
-SECTION(`IMP', `
+IMP_SECTION([[
 INSTANCE
 class SF_SoftwareIdentity : CIM_SoftwareIdentity {
 };
@@ -14,69 +33,61 @@ class SF_SoftwareIdentity : CIM_SoftwareIdentity {
 INSTANCE
 class SF_ConcreteJob : CIM_ConcreteJob {
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION
 class SF_InstalledSoftwareIdentity : CIM_InstalledSoftwareIdentity {
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION_NWMI
 class SF_ElementSoftwareIdentity : CIM_ElementSoftwareIdentity {
-WMIONLY(`
+WMIONLY([[
     [Override ( "Antecedent" ), Key]
    CIM_SoftwareIdentity REF Antecedent;
-')
+]])
       [Override("Dependent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
       ]
    CIM_ManagedSystemElement REF Dependent;
 };
 
 ASSOCIATION
 class SF_SystemSoftwareIdentity : SF_ElementSoftwareIdentity {
-WMIONLY(`
+WMIONLY([[
     [Override ( "Antecedent" ), Key]
    CIM_SoftwareIdentity REF Antecedent;
-')
+]])
       [Override("Dependent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
       ]
    CIM_System REF Dependent;
 };
-')
+]])
 
-SECTION(`IMP', `
+IMP_SECTION([[
 ASSOCIATION
 class SF_ControllerSoftwareIdentity : SF_ElementSoftwareIdentity {
-WMIONLY(`
+WMIONLY([[
     [Override ( "Antecedent" ), Key]
    CIM_SoftwareIdentity REF Antecedent;
-')
+]])
       [Override("Dependent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
       ]
    CIM_PortController REF Dependent;
 };
 
 ASSOCIATION
 class SF_DiagElementSoftwareIdentity : SF_ElementSoftwareIdentity {
-WMIONLY(`
+WMIONLY([[
     [Override ( "Antecedent" ), Key]
    CIM_SoftwareIdentity REF Antecedent;
-')
+]])
       [Override("Dependent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
       ]
    CIM_DiagnosticTest REF Dependent;
 };
@@ -84,15 +95,11 @@ WMIONLY(`
 ASSOCIATION_NWMI
 class SF_OrderedComponent : CIM_OrderedComponent {
       [Override("GroupComponent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_ManagedSystemElement REF GroupComponent;
       [Override("PartComponent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_ManagedSystemElement REF PartComponent;
 };
@@ -100,15 +107,11 @@ WMIONLY(`
 ASSOCIATION
 class SF_BundleComponent : SF_OrderedComponent {
       [Override("GroupComponent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_SoftwareIdentity REF GroupComponent;
       [Override("PartComponent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_SoftwareIdentity REF PartComponent;
 };
@@ -119,42 +122,42 @@ class SF_ComputerSystem : CIM_ComputerSystem {
 
 INSTANCE_NWMI
 class SF_Card : CIM_Card {
-WMIONLY(`
+WMIONLY([[
     [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("Tag")] string Tag;
-')
+]])
 };
 
 INSTANCE
 class SF_NICCard : SF_Card {
-WMIONLY(`
+WMIONLY([[
     [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("Tag")] string Tag;
-')
+]])
 };
 
 INSTANCE
 class SF_PhysicalConnector : CIM_PhysicalConnector {
-WMIONLY(`
+WMIONLY([[
     [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("Tag")] string Tag;
-')
+]])
 };
 
 ASSOCIATION_NWMI
 class SF_ConnectorOnPackage : CIM_ConnectorOnPackage {
-WMIONLY(`
+WMIONLY([[
   [Override("GroupComponent"),Key] CIM_PhysicalPackage Ref GroupComponent;
   [Override("PartComponent"),Key] CIM_PhysicalConnector Ref PartComponent;
-')
+]])
 };
 
 ASSOCIATION
 class SF_ConnectorOnNIC : SF_ConnectorOnPackage {
-WMIONLY(`
+WMIONLY([[
   [Override("GroupComponent"),Key] CIM_PhysicalPackage Ref GroupComponent;
   [Override("PartComponent"),Key] CIM_PhysicalConnector Ref PartComponent;
-')
+]])
 };
 
 INSTANCE
@@ -172,78 +175,78 @@ class SF_PortController : CIM_PortController {
     [Key,Read,Override("SystemCreationClassName")] string SystemCreationClassName;
     [Key,Read,Override("SystemName")] string SystemName;
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION
 class SF_SystemDevice : CIM_SystemDevice {
-WMIONLY(`
+WMIONLY([[
   [Override("GroupComponent"),Key] CIM_System Ref GroupComponent;
   [Override("PartComponent"),Key] CIM_LogicalDevice Ref PartComponent;
-')
+]])
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION_NWMI
 class SF_ServiceAffectsElement : CIM_ServiceAffectsElement {
 };
-')
+]])
 
-SECTION(`IMP', `
+IMP_SECTION([[
 ASSOCIATION_NWMI
 class SF_Realizes : CIM_Realizes {
-WMIONLY(`
+WMIONLY([[
   [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
   [Override("Dependent"),Key] CIM_LogicalDevice Ref Dependent;
-')
+]])
 };
 
 ASSOCIATION
 class SF_ConnectorRealizesPort : SF_Realizes {
-WMIONLY(`
+WMIONLY([[
   [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
   [Override("Dependent"),Key] CIM_LogicalDevice Ref Dependent;
-')
+]])
 };
 
 ASSOCIATION
 class SF_ConnectorRealizesController : SF_Realizes {
-WMIONLY(`
+WMIONLY([[
   [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
   [Override("Dependent"),Key] CIM_LogicalDevice Ref Dependent;
-')
+]])
 };
 
 ASSOCIATION
 class SF_CardRealizesController : SF_Realizes {
-WMIONLY(`
+WMIONLY([[
   [Override("Antecedent"),Key] CIM_PhysicalElement Ref Antecedent;
   [Override("Dependent"),Key] CIM_LogicalDevice Ref Dependent;
-')
+]])
 };
 
 INSTANCE
 class SF_LANEndpoint : CIM_LANEndpoint {
-WMIONLY(`
+WMIONLY([[
     [Read,Key : DisableOverride,Override("Name")] string Name;
-')
+]])
 };
 
 ASSOCIATION_NWMI
 class SF_DeviceSAPImplementation : CIM_DeviceSAPImplementation {
-WMIONLY(`
+WMIONLY([[
   [Override("Antecedent"),Key] CIM_LogicalDevice Ref Antecedent;
   [Override("Dependent"),Key] CIM_ServiceAccessPoint Ref Dependent;
-')
+]])
 };
 
 ASSOCIATION
 class SF_NICSAPImplementation : SF_DeviceSAPImplementation {
-WMIONLY(`
+WMIONLY([[
   [Override("Antecedent"),Key] CIM_LogicalDevice Ref Antecedent;
   [Override("Dependent"),Key] CIM_ServiceAccessPoint Ref Dependent;
-')
+]])
 };
 
 INSTANCE
@@ -271,63 +274,59 @@ class SF_ServiceAffectsController : SF_ServiceAffectsElement {
       [Override("AffectedElement")]
    CIM_PortController REF AffectedElement;
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION
 class SF_ServiceAffectsSystem : SF_ServiceAffectsElement {
       [Override("AffectedElement")]
    CIM_ComputerSystem REF AffectedElement;
 };
-')
+]])
 
-SECTION(`IMP', `
+IMP_SECTION([[
 ASSOCIATION
 class SF_ServiceAffectsSoftware : SF_ServiceAffectsElement {
       [Override("AffectedElement")]
    CIM_SoftwareIdentity REF AffectedElement;
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION
 class SF_HostedService : CIM_HostedService {
-WMIONLY(`
+WMIONLY([[
     [read,Override("Antecedent"),Key] CIM_System Ref Antecedent;
     [read,Override("Dependent"),Key] CIM_Service Ref Dependent;
-')
+]])
 };
-')
+]])
 
-SECTION(`IMP', `
+IMP_SECTION([[
 ASSOCIATION
 class SF_ControlledBy : CIM_ControlledBy {
       [Override("Dependent")
-WMIONLY(`
-       ,Key
-')
+      WMIONLYKEY
 ]
    CIM_EthernetPort REF Dependent;
       [Override("Antecedent")
-WMIONLY(`
-       ,Key
-')
+      WMIONLYKEY
 ]
    CIM_PortController REF Antecedent;
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION
 class SF_HostedAccessPoint : CIM_HostedAccessPoint {
-WMIONLY(`
+WMIONLY([[
   [read, Override("Antecedent"), Key] CIM_System Ref Antecedent;
   [read, Override("Dependent"), Key] CIM_ServiceAccessPoint Ref Dependent;
-')
+]])
 };
-')
+]])
 
-SECTION(`IMP', `
+IMP_SECTION([[
 INSTANCE
 class SF_EnabledLogicalElementCapabilities : CIM_EnabledLogicalElementCapabilities {
 };
@@ -367,57 +366,51 @@ class SF_LogEntry : CIM_LogEntry {
 ASSOCIATION
 class SF_LogManagesRecord : CIM_LogManagesRecord {
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION_NWMI
 class SF_UseOfLog : CIM_UseOfLog {
-WMIONLY(`
+WMIONLY([[
       [Override ( "Antecedent" ), Key]
    CIM_Log REF Antecedent;
-')
+]])
       [Override("Dependent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_ManagedSystemElement REF Dependent;
 };
 
 ASSOCIATION
 class SF_SystemUseOfLog : SF_UseOfLog {
-WMIONLY(`
+WMIONLY([[
       [Override ( "Antecedent" ), Key]
    CIM_Log REF Antecedent;
-')
+]])
       [Override("Dependent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_ComputerSystem REF Dependent;
 };
-')
+]])
 
-SECTION(`IMP', `
+IMP_SECTION([[
 ASSOCIATION
 class SF_DiagnosticUseOfLog : SF_UseOfLog {
-WMIONLY(`
+WMIONLY([[
       [Override ( "Antecedent" ), Key]
    CIM_Log REF Antecedent;
-')
+]])
 
       [Override("Dependent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_DiagnosticTest REF Dependent;
 };
 
 INSTANCE
 class SF_DiagnosticTest : CIM_DiagnosticTest {
-WMIONLY(`
+WMIONLY([[
 // On Windows [implemented] qualifier should be specified for
 // actually implemented method, so we have to copy this method
 // definition from DMTF schema here.
@@ -444,7 +437,7 @@ WMIONLY(`
          [IN ( false ), OUT, Description ( 
              "Returns a reference to the resulting Job." )]
       CIM_ConcreteJob REF Job);
-')
+]])
 };
 
 INSTANCE
@@ -453,13 +446,13 @@ class SF_DiagnosticServiceCapabilities : CIM_DiagnosticServiceCapabilities {
 
 ASSOCIATION
 class SF_RecordAppliesToElement : CIM_RecordAppliesToElement {
-WMIONLY(`
+WMIONLY([[
     [Override ( "Antecedent" ), Key]
     CIM_RecordForLog REF Antecedent;
 
     [Override ( "Dependent" ), Key]
     CIM_ManagedSystemElement REF Dependent;
-')
+]])
 };
 
 ASSOCIATION
@@ -487,9 +480,9 @@ class SF_DiagnosticSettingData : CIM_DiagnosticSettingData {
 ASSOCIATION
 class SF_ElementSettingData : CIM_ElementSettingData {
 };
-')
+]])
 
-SECTION(`INTEROP_OR_IMP', `
+INTEROP_SECTION([[
 INSTANCE
 class SF_RegisteredProfile : CIM_RegisteredProfile {
 };
@@ -502,30 +495,30 @@ class SF_ElementConformsToProfile : CIM_ElementConformsToProfile {
 
 ASSOCIATION
 class SF_ReferencedProfile : CIM_ReferencedProfile {
-WMIONLY(`
+WMIONLY([[
     [Override ( "Antecedent" ), Key]
     CIM_RegisteredProfile REF Antecedent;
 
     [Override ( "Dependent" ),  Key]
    CIM_RegisteredProfile REF Dependent;
-')
+]])
 };
-')
+]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION
 class SF_ComputerSystemPackage : CIM_ComputerSystemPackage {
-WMIONLY(`
+WMIONLY([[
   [Override("Antecedent"),Key] CIM_PhysicalPackage Ref Antecedent;
   [Override("Dependent"),Key] CIM_UnitaryComputerSystem Ref Dependent;
-')
+]])
 };
-')
+]])
 
-m4_ifelse(TARGET_CIM_SERVER, `pegasus',
-`m4_ifdef(`INBUILD', 
-`SECTION(`IMP',
-`INSTANCE
+m4_ifelse(TARGET_CIM_SERVER, [[pegasus]],
+[[m4_ifdef([[INBUILD]], 
+[[SECTION([[IMP]],
+[[INSTANCE
 class IBMPSG_ComputerSystem : CIM_UnitaryComputerSystem
 {
 string Model;
@@ -595,10 +588,10 @@ INSTANCE
 class PG_RegisteredProfile : CIM_RegisteredProfile
 {
 };
-')')')
+]])]])]])
 
-m4_ifelse(TARGET_CIM_SERVER, `esxi', `
-SECTION(`IMP', `
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
+IMP_SECTION([[
 INSTANCE
 class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
 {
@@ -630,22 +623,18 @@ INSTANCE
 class OMC_Chassis : CIM_Chassis
 {
 };
-')')
+]])]])
 
-SECTION(`ROOT_OR_IMP', `
+ROOT_SECTION([[
 ASSOCIATION_NWMI
 class SF_Container : CIM_Container
 {
       [Override("GroupComponent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_Chassis REF GroupComponent;
       [Override("PartComponent")
-WMIONLY(`
-       , Key
-')
+      WMIONLYKEY
 ]
    CIM_Card REF PartComponent;
 };
@@ -654,9 +643,9 @@ ASSOCIATION
 class SF_ChassisContainsCard : SF_Container
 {
 };
-')
+]])
 
-SECTION(`IMP', `
+IMP_SECTION([[
 INDICATION_NWMI
 class SF_InstCreation : CIM_InstCreation
 {
@@ -701,4 +690,4 @@ INDICATION
 class SF_Alert : SF_AlertIndication
 {
 };
-')
+]])

@@ -1,44 +1,44 @@
-Name: %{PROVIDER_PACKAGE}
-Version: %{PROVIDER_VERSION}.%{PROVIDER_REVISION}
+Name: __PROVIDER_PACKAGE__
+Version: __PROVIDER_VERSION__.__PROVIDER_REVISION__
 Release:        %{RELEASE_TAG}
 Summary: CIM provider for Solarflare NIC management
 
 Group: Applications/System
 License: GPL
 URL: http://solarflare.com
-Source0: %{PROVIDER_TARBALL}
+Source0: __PROVIDER_TARBALL__
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-%{BUILD_REQUIRES}
-%{REQUIRES}
+__PROVIDER_RPM_BUILD_REQUIRES__
+__PROVIDER_REQUIRES__
 
 %description
 
-Prefix: %{PROVIDER_LIBPATH}
-Prefix: %{PROVIDER_ROOT}/mof
+Prefix: __PROVIDER_LIBPATH__
+Prefix: __PROVIDER_ROOT__/mof
 
 %prep
-%setup -q -n %{PROVIDER_TARBALL_DIR}
+%setup -q -n __PROVIDER_TARBALL_DIR__
 
 
 %build
-make CONFIG=%{CONFIG} %{?_smp_mflags}
-make CONFIG=%{CONFIG} %{?_smp_mflags} registration
+make CONFIG=__CONFIG__ %{?_smp_mflags}
+make CONFIG=__CONFIG__ %{?_smp_mflags} registration
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make CONFIG=%{CONFIG} DESTDIR=$RPM_BUILD_ROOT install
-make CONFIG=%{CONFIG} DESTDIR=$RPM_BUILD_ROOT install-aux
+make CONFIG=__CONFIG__ DESTDIR=$RPM_BUILD_ROOT install
+make CONFIG=__CONFIG__ DESTDIR=$RPM_BUILD_ROOT install-aux
 
 %post
-%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} -uc -aE %{PROVIDER_ROOT}/mof/schema.mof
-%{PEGASUS_HOME}/bin/cimmof -n %{IMP_NAMESPACE} -uc %{PROVIDER_ROOT}/mof/namespace.mof
-%{PEGASUS_HOME}/bin/cimmof -n %{INTEROP_NAMESPACE} -uc %{PROVIDER_ROOT}/mof/interop.mof
-%{PEGASUS_HOME}/bin/cimmof -n %{INTEROP_NAMESPACE} %{PROVIDER_ROOT}/mof/repository.reg
+__PEGASUS_HOME__/bin/cimmof -n __IMP_NAMESPACE__ -uc -aE __PROVIDER_ROOT__/mof/schema.mof
+__PEGASUS_HOME__/bin/cimmof -n __IMP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/namespace.mof
+__PEGASUS_HOME__/bin/cimmof -n __INTEROP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/interop.mof
+__PEGASUS_HOME__/bin/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/repository.reg
 
 
 %preun
-%{PEGASUS_HOME}/bin/cimprovider -r -m %{PROVIDER_LIBRARY}_Module
+__PEGASUS_HOME__/bin/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -46,11 +46,11 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%{PROVIDER_LIBPATH}/%{PROVIDER_SO}
-%attr(444,root,root) %{PROVIDER_ROOT}/mof/namespace.mof
-%attr(444,root,root) %{PROVIDER_ROOT}/mof/interop.mof
-%attr(444,root,root) %{PROVIDER_ROOT}/mof/schema.mof
-%attr(444,root,root) %{PROVIDER_ROOT}/mof/repository.reg
+__PROVIDER_LIBPATH__/__libprovider_TARGET__
+%attr(444,root,root) __PROVIDER_ROOT__/mof/namespace.mof
+%attr(444,root,root) __PROVIDER_ROOT__/mof/interop.mof
+%attr(444,root,root) __PROVIDER_ROOT__/mof/schema.mof
+%attr(444,root,root) __PROVIDER_ROOT__/mof/repository.reg
 %doc
 
 %changelog
