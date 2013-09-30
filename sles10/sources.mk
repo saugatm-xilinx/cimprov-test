@@ -22,9 +22,6 @@ $(sles10_archive_DIR)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/
 	mkdir -p $(dir $@)
 	cat $^ >$@
 
-sles10_export_vars := PEGASUS_ROOT PEGASUS_HOME PROVIDER_ROOT CIMPLE_PLATFORM \
-					  PROVIDER_LIBRARY IMP_NAMESPACE INTEROP_NAMESPACE RUNASROOT
-
 sles10_archive_CPP_DISTFILES = $(filter %.cpp,$(sles10_archive_DISTFILES))
 
 
