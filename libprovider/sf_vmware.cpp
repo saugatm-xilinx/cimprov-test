@@ -50,6 +50,8 @@
 #include "sf_mcdi_sensors.h"
 #include "sf_alerts.h"
 
+#include <sys/syscall.h>
+
 // Size of block to be read from NIC NVRAM at once
 #define CHUNK_LEN 0x80
 
@@ -250,7 +252,10 @@ namespace solarflare
         int rc = 0;
 
         if (s == NULL || argc == NULL || argv == NULL || values == NULL)
+        {
+            CIMPLE_ERR(("%s(): incorrect arguments", __FUNCTION__));
             return -1;
+        }
 
         len = strlen(s);
         buf = new char[len + 1];
@@ -324,6 +329,8 @@ namespace solarflare
 
         return 0;
 fail:
+        CIMPLE_ERR(("%s(): failed to parse '%s'",
+                    __FUNCTION__, s));
         delete[] args;
         delete[] buf;
         return rc;
@@ -496,6 +503,95 @@ fail:
         #undef ESXI_PORT_NAME_PREF
     }
 
+    /// Linux directory entry structure
+    struct linux_dirent {
+        long           d_ino;     /// Inode number
+        off_t          d_off;     /// Offset to the next linux_dirent
+        unsigned short d_reclen;  /// Lenght of this linux_dirent
+        char           d_name[];  /// Name of the entry
+    };
+
+    ///
+    /// Get entries for a given directory.
+    ///
+    /// @param dirPath    Path to the directory
+    /// @param arr        Array of entries to be filled
+    ///
+    /// @return 0 on Success, -1 on Failure
+    ///
+    static int getDirContents(const char *dirPath, Array<String> &arr)
+    {
+#define INIT_BUF_SIZE 1024
+        
+        char   *buf = new char[INIT_BUF_SIZE];
+        size_t  bufSize = INIT_BUF_SIZE;
+        int     fd = -1;
+        int     numRead = 0;
+
+        unsigned int bufPos;
+
+        arr.clear();
+
+        fd = open(dirPath, O_RDONLY | O_DIRECTORY);
+        if (fd < 0)
+        {
+            CIMPLE_ERR(("Failed to open '%s' as a directory", dirPath));
+            delete[] buf;
+            return -1;
+        }
+
+        while (1)
+        {
+            numRead = syscall(SYS_getdents, fd, buf, bufSize);
+            if (numRead < 0)
+            {
+                delete[] buf;
+                if (errno == EINVAL)
+                {
+                    if (bufSize < INIT_BUF_SIZE * 8)
+                    {
+                        bufSize *= 2;
+                        buf = new char[bufSize];
+                        continue;
+                    }
+                    else
+                    {
+                        CIMPLE_ERR(("Too much space is required "
+                                    "for linux_dirent"));
+                        close(fd);
+                        arr.clear();
+                        return -1;
+                    }
+                }
+                else
+                {
+                    CIMPLE_ERR(("getdents() failed for directory '%s', "
+                                "errno %d ('%s')", dirPath, errno,
+                                strerror(errno)));
+                    close(fd);
+                    arr.clear();
+                    return -1;
+                }
+            }
+            else if (numRead == 0)
+                break;
+
+            for (bufPos = 0; bufPos < numRead; )
+            {
+                linux_dirent *d =
+                      reinterpret_cast<linux_dirent *>(buf + bufPos);
+
+                arr.append(String(d->d_name));
+                bufPos += d->d_reclen;
+            }
+        }
+
+        delete[] buf;
+        close(fd);
+        return 0;
+#undef INIT_BUF_SIZE
+    }
+
     ///
     /// Get descriptions for all Solarflare NICs on the machine.
     ///
@@ -505,10 +601,6 @@ fail:
     ///
     static int getNICs(NICDescrs &nics)
     {
-        DIR                 *bus_dir;
-        DIR                 *device_dir;
-        struct dirent       *bus;
-        struct dirent       *device;
         char                 device_path[PATH_MAX_LEN];
         char                 func_path[PATH_MAX_LEN];
         char                 pci_conf[PCI_CONF_LEN];
@@ -529,30 +621,34 @@ fail:
         int     k;
         int     fd;
 
+        unsigned int     l;
+        unsigned int     m;
+
         struct ifreq    ifr;
 
         char    *str;
 
         struct ethtool_drvinfo drvinfo;
 
+        Array<String> devDirList;
+        Array<String> busDirList;
+
         // Obtain all available network ports.
-        device_dir = opendir(DEV_PATH);
-        if (device_dir == NULL)
+        if (getDirContents(DEV_PATH, devDirList) < 0)
             return -1;
 
-        for (device = readdir(device_dir);
-             device != NULL;
-             device = readdir(device_dir))
+        for (l = 0; l < devDirList.size(); l++)
         {
-            if (!isPortName(device->d_name))
+            const char *devName = devDirList[l].c_str();
+            if (!isPortName(devName))
                 continue;
 
             rc = snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                          DEV_PATH, device->d_name);
+                          DEV_PATH, devName);
 
             if (rc < 0 || rc >= PATH_MAX_LEN)
             {
-                closedir(device_dir);
+                CIMPLE_ERR(("Failed to format path to device"));
                 return -1;
             }
 
@@ -564,14 +660,14 @@ fail:
             memset(&drvinfo, 0, sizeof(drvinfo));
             drvinfo.cmd = ETHTOOL_GDRVINFO;
             ifr.ifr_data = (char *)&drvinfo;
-            strcpy(ifr.ifr_name, device->d_name);
+            strcpy(ifr.ifr_name, devName);
             if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
             {
                 DeviceDescr tmp_dev;
 
                 close(fd);
 
-                tmp_dev.dev_name = device->d_name;
+                tmp_dev.dev_name = devName;
                 str = strchr(drvinfo.bus_info, '.');
                 if (str == NULL)
                     continue;
@@ -580,7 +676,9 @@ fail:
                 str = strrchr(drvinfo.bus_info, ':');
                 if (str == NULL)
                 {
-                    closedir(device_dir);
+                    CIMPLE_ERR(("Invalid bus information for device %s: %s",
+                                tmp_dev.dev_name.c_str(),
+                                drvinfo.bus_info));
                     return -1;
                 }
                 tmp_dev.pci_dev_id = strtol(str + 1, NULL, 16);
@@ -606,67 +704,63 @@ fail:
                 close(fd);
         }
 
-        closedir(device_dir);
-
-        bus_dir = opendir(PROC_BUS_PATH);
-        if (bus_dir == NULL)
+        if (getDirContents(PROC_BUS_PATH, busDirList) < 0)
             return -1;
 
         // Filter out our NIC ports, group them by NICs.
 
-        for (bus = readdir(bus_dir);
-             bus != NULL;
-             bus = readdir(bus_dir))
+        for (m = 0; m < busDirList.size(); m++)
         {
-            if (bus->d_name[0] == '.')
+            const char *busName = busDirList[m].c_str();
+
+            if (busName[0] == '.')
                 continue;
             rc = snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                          PROC_BUS_PATH, bus->d_name);
+                          PROC_BUS_PATH, busName);
             if (rc < 0 || rc >= PATH_MAX_LEN)
             {
-                closedir(bus_dir);
+                CIMPLE_ERR(("Failed to format path to device"));
                 nics.clear();
                 return -1;
             }
 
-            device_dir = opendir(device_path);
-            if (device_dir == NULL)
+            if (getDirContents(device_path, devDirList) < 0)
                 continue;
 
-            str = strchr(bus->d_name, ':');
+            str = strchr(busName, ':');
             if (str == NULL)
             {
                 cur_domain = 0;
-                cur_bus = strtol(bus->d_name, NULL, 16);
+                cur_bus = strtol(busName, NULL, 16);
             }
             else
             {
-                cur_domain = strtol(bus->d_name, &str, 16);
+                cur_domain = strtol(busName, &str, 16);
                 if (str == NULL || *str != ':')
                 {
-                    closedir(device_dir);
-                    closedir(bus_dir);
+                    CIMPLE_ERR(("Failed to get PCI domain from %s",
+                                busName));
                     nics.clear();
                     return -1;
                 }
                 cur_bus = strtol(str + 1, NULL, 16);
             }
 
-            for (device = readdir(device_dir);
-                 device != NULL;
-                 device = readdir(device_dir))
+            for (l = 0; l < devDirList.size(); l++)
             {
                 NICDescr  tmp_nic;
                 PortDescr tmp_port;
 
-                if (device->d_name[0] == '.')
+                const char *devName = devDirList[l].c_str();
+
+                if (devName[0] == '.')
                     continue;
 
                 if (snprintf(func_path, PATH_MAX_LEN, "%s/%s",
-                             device_path, device->d_name) >= PATH_MAX_LEN)
+                             device_path, devName) >= PATH_MAX_LEN)
                     continue;
 
-                cur_dev = strtol(device->d_name, &str, 16);
+                cur_dev = strtol(devName, &str, 16);
                 if (str == NULL || *str != '.')
                     continue;
                 cur_fn = strtol(str + 1, NULL, 16);
@@ -701,8 +795,10 @@ fail:
                 
                 if (i == (int)devs.size())
                 {
-                    closedir(device_dir);
-                    closedir(bus_dir);
+                    CIMPLE_ERR(("Failed to find device "
+                                "by PCI address %x:%x:%x.%x",
+                                cur_domain, cur_bus,
+                                cur_dev, cur_fn));
                     nics.clear();
                     return -1;
                 }
@@ -736,11 +832,7 @@ fail:
                 tmp_port.dev_name = devs[i].dev_name;
                 nics[j].ports.append(tmp_port);
             }
-
-            closedir(device_dir);
         }
-
-        closedir(bus_dir);
 
         // Sort ports in ascending order in relation to PCI function.
 
@@ -990,13 +1082,21 @@ fail:
                    mcdi_req->len);
 
             if (ioctl(fd, SIOCEFX, &ioc) < 0)
+            {
+                CIMPLE_ERR(("ioctl(SIOCEFX/EFX_MCDI_REQUEST) failed, "
+                            "errno %d ('%s')",
+                            errno, strerror(errno)));
                 return -1;
+            }
 
             memcpy(ptr, mcdi_req->payload, mcdi_req->len);
             ptr += mcdi_req->len;
             offset += mcdi_req->len;
             if (mcdi_req->len == 0)
+            {
+                CIMPLE_ERR(("MCDI request returned data of zero length"));
                 return -1;
+            }
         }
 
         return 0;
@@ -1027,12 +1127,17 @@ fail:
 
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
+        {
+            CIMPLE_ERR(("Failed to open '%s', errno %d('%s')",
+                        DEV_SFC_CONTROL, errno, strerror(errno)));
             return -1;
+        }
 
         if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
                            sizeof(partial_hdr),
                            ifname, port_number) < 0)
         {
+            CIMPLE_ERR(("Failed to get header from NVRAM"));
             close(fd);
             return -1;
         }
@@ -1040,6 +1145,9 @@ fail:
         if (CI_BSWAP_LE32(partial_hdr.magic) !=
                                     SIENA_MC_STATIC_CONFIG_MAGIC)
         {
+            CIMPLE_ERR(("Incorrect NVRAM header magic number %ld(%lx)",
+                        static_cast<long int>(partial_hdr.magic),
+                        static_cast<long int>(partial_hdr.magic)));
             close(fd);
             return -1;
         }
@@ -1051,6 +1159,7 @@ fail:
         if (readNVRAMBytes(fd, vpd, vpd_off, vpd_len,
                            ifname, port_number) < 0)
         {
+            CIMPLE_ERR(("Failed to read VPD from NVRAM"));
             close(fd);
             delete[] vpd;
             return -1;
@@ -1059,6 +1168,7 @@ fail:
         if ((rc = parseVPD(vpd, vpd_len, product_name,
                            product_number, serial_number)) < 0)
         {
+            CIMPLE_ERR(("Failed to parse VPD"));
             close(fd);
             delete[] vpd;
             return -1;
@@ -1094,7 +1204,12 @@ fail:
 
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
+        {
+            CIMPLE_ERR(("Failed to open '%s', errno %d ('%s')",
+                        DEV_SFC_CONTROL, errno,
+                        strerror(errno)));
             return -1;
+        }
 
         memset(&ioc, 0, sizeof(ioc));
         strncpy(ioc.if_name, ifName, sizeof(ioc.if_name));
@@ -1106,6 +1221,8 @@ fail:
 
         if (ioctl(fd, SIOCEFX, &ioc) < 0)
         {
+            CIMPLE_ERR(("ioctl(SIOCEFX) failed, errno %d ('%s')",
+                        errno, strerror(errno)));
             close(fd);
             return -1;
         }
@@ -1177,6 +1294,9 @@ fail:
         saved_stdout_fd = dup(STDOUT_FILENO);
         if (saved_stdout_fd < 0)
         {
+            CIMPLE_ERR(("%s(): failed to duplicate stdout fd, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1184,12 +1304,18 @@ fail:
         saved_stderr_fd = dup(STDERR_FILENO);
         if (saved_stderr_fd < 0)
         {
+            CIMPLE_ERR(("%s(): failed to duplicate stderr fd, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
 
         if (pipe(pipefds) < 0)
         {
+            CIMPLE_ERR(("%s(): failed to create a pipe, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1199,6 +1325,9 @@ fail:
 
         if (dup2(pipefds[1], STDOUT_FILENO) < 0)
         {
+            CIMPLE_ERR(("%s(): failed to dulplicate write end of pipe, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1207,6 +1336,9 @@ fail:
 
         if (dup2(pipefds[1], STDERR_FILENO) < 0)
         {
+            CIMPLE_ERR(("%s(): failed to dulplicate write end of pipe, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, errno, strerror(errno)));
             rc = -1;
             goto fail;
         }
@@ -1228,10 +1360,20 @@ fail:
 
         if (restore_stdout > 0)
             if (dup2(saved_stdout_fd, STDOUT_FILENO) < 0 && rc == 0)
+            {
+                CIMPLE_ERR(("%s(): failed to restore stdout, "
+                            "errno %d ('%s')",
+                            __FUNCTION__, errno, strerror(errno)));
                 rc = -1;
+            }
         if (restore_stderr > 0)
             if (dup2(saved_stderr_fd, STDERR_FILENO) < 0 && rc == 0)
+            {
+                CIMPLE_ERR(("%s(): failed to restore stderr, "
+                            "errno %d ('%s')",
+                            __FUNCTION__, errno, strerror(errno)));
                 rc = -1;
+            }
         if (saved_stdout_fd >= 0)
             close(saved_stdout_fd);
         if (saved_stderr_fd >= 0)
@@ -1272,13 +1414,23 @@ fail:
         memset(&ifr, 0, sizeof(ifr));
         fd = open(dev_file, O_RDWR);
         if (fd < 0)
+        {
+            CIMPLE_ERR(("%s(): failed to open '%s', "
+                        "errno %d ('%s')",
+                        __FUNCTION__, dev_file,
+                        errno, strerror(errno)));
             return -1;
+        }
 
         strncpy(ifr.ifr_name, dev_name, sizeof(ifr.ifr_name));
         ifr.ifr_data = (char *)edata;
         ((struct ethtool_value *)edata)->cmd = cmd;
         if (ioctl(fd, SIOCETHTOOL, &ifr) < 0)
         {
+            CIMPLE_ERR(("%s(): ioctl(SIOCETHTOOL cmd=%u) failed, "
+                        "errno %d ('%s')",
+                        __FUNCTION__, cmd,
+                        errno, strerror(errno)));
             close(fd);
             return -1;
         }
@@ -2005,7 +2157,7 @@ fail:
     }
 
     ///
-    /// Get data via TFTP or SFTP protocol.
+    /// Get data via TFTP or SFTP (currently not supported) protocol.
     ///
     /// @param uri         Data URI
     /// @param passwd      Password (NULL if not required)
@@ -2020,20 +2172,33 @@ fail:
         int             rc = 0;
 
         if (uri == NULL || f == NULL)
+        {
+            CIMPLE_ERR(("%s(): incorrect arguments", __FUNCTION__));
             return -1;
+        }
 
         curl = curl_easy_init();
         if (curl == NULL)
+        {
+            CIMPLE_ERR(("curl_easy_init() failed, errno %d ('%s')",
+                        errno, strerror(errno)));
             return -1;
+        }
 
         if (curl_easy_setopt(curl, CURLOPT_URL, uri) != CURLE_OK)
         {
+            CIMPLE_ERR(("curl_easy_setopt(CURLOPT_URL) failed, "
+                        "errno %d ('%s')",
+                        errno, strerror(errno)));
             rc = -1;
             goto curl_fail;
         }
         if (curl_easy_setopt(curl, CURLOPT_WRITEDATA,
                              f) != CURLE_OK)
         {
+            CIMPLE_ERR(("curl_easy_setopt(CURLOPT_WRITEDATA) failed, "
+                        "errno %d ('%s')",
+                        errno, strerror(errno)));
             rc = -1;
             goto curl_fail;
         }
@@ -2043,6 +2208,9 @@ fail:
             if (curl_easy_setopt(curl, CURLOPT_PASSWORD,
                                  passwd) != CURLE_OK)
             {
+                CIMPLE_ERR(("curl_easy_setopt(CURLOPT_PASSWORD) failed, "
+                            "errno %d ('%s')",
+                            errno, strerror(errno)));
                 rc = -1;
                 goto curl_fail;
             }
@@ -2051,6 +2219,9 @@ fail:
         CURLcode rc_curl;
         if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
         {
+            CIMPLE_ERR(("curl_easy_perform() failed, "
+                        "errno %d ('%s')",
+                        errno, strerror(errno)));
             rc = -1;
             goto curl_fail;
         }
@@ -2073,7 +2244,6 @@ curl_fail:
     {
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
-#define SFTP_PROTO "sftp://"
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
@@ -2091,7 +2261,10 @@ curl_fail:
 #endif
 
         if (((VMwareNIC *)owner)->ports.size() <= 0)
+        {
+            CIMPLE_ERR(("No ports found"));
             return -1;
+        }
 
         if (strcmp_start(fileName, FILE_PROTO) == 0)
         {
@@ -2101,21 +2274,27 @@ curl_fail:
                           fileName + strlen(FILE_PROTO));
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
+                CIMPLE_ERR(("Failed to format sfupdate command"));
                 return -1;
             }
         }
-        else if (strcmp_start(fileName, TFTP_PROTO) == 0 ||
-                 strcmp_start(fileName, SFTP_PROTO) == 0)
+        else if (strcmp_start(fileName, TFTP_PROTO) == 0)
         {
             FILE *f;
 
             fd = mkstemp(tmp_file);
             if (fd < 0)
+            {
+                CIMPLE_ERR(("mkstemp('%s') failed, errno %d ('%s')",
+                            tmp_file, errno, strerror(errno)));
                 return -1;
+            }
 
             f = fdopen(fd, "w");
             if (f == NULL)
             {
+                CIMPLE_ERR(("fdopen() failed, errno %d ('%s')",
+                            errno, strerror(errno)));
                 close(fd);
                 return -1;
             }
@@ -2134,6 +2313,7 @@ curl_fail:
                           tmp_file);
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
+                CIMPLE_ERR(("Failed to format sfupdate command"));
                 unlink(tmp_file);
                 return -1;
             }
@@ -2161,7 +2341,6 @@ curl_fail:
         return 0;
 #undef FILE_PROTO
 #undef TFTP_PROTO
-#undef SFTP_PROTO
     }
 
     class VMwareDriver : public Driver {
@@ -2180,28 +2359,29 @@ curl_fail:
 
     VersionInfo VMwareDriver::version() const
     {
-        DIR                     *device_dir;
-        struct dirent           *device;
         struct ethtool_drvinfo   drvinfo;
         struct ifreq             ifr;
         int                      fd;
         char                     device_path[PATH_MAX_LEN];
 
-        device_dir = opendir(DEV_PATH);
-        if (device_dir == NULL)
+        Array<String> devDirList;
+
+        unsigned int i;
+
+        if (getDirContents(DEV_PATH, devDirList) < 0)
             return VersionInfo(DEFAULT_VERSION_STR);
 
-        for (device = readdir(device_dir);
-             device != NULL;
-             device = readdir(device_dir))
+        for (i = 0; i < devDirList.size(); i++)
         {
-            if (device->d_name[0] == '.')
+            const char *devName = devDirList[i].c_str();
+
+            if (devName[0] == '.')
                 continue;
-            if (strlen(device->d_name) > IFNAMSIZ)
+            if (strlen(devName) > IFNAMSIZ)
                 continue;
 
             if (snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                         DEV_PATH, device->d_name) >= PATH_MAX_LEN)
+                         DEV_PATH, devName) >= PATH_MAX_LEN)
                 continue;
             fd = open(device_path, O_RDWR);
             if (fd < 0)
@@ -2211,23 +2391,18 @@ curl_fail:
             memset(&drvinfo, 0, sizeof(drvinfo));
             drvinfo.cmd = ETHTOOL_GDRVINFO;
             ifr.ifr_data = (char *)&drvinfo;
-            strcpy(ifr.ifr_name, device->d_name);
+            strcpy(ifr.ifr_name, devName);
 
             if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
             {
                 close(fd);
 
                 if (strcmp(drvinfo.driver, "sfc") == 0)
-                {
-                    closedir(device_dir);
                     return VersionInfo(drvinfo.version); 
-                }
             }
             else
                 close(fd);
         }
-
-        closedir(device_dir);
 
         // We failed to get it via ethtool (possible reason: no
         // Solarflare interfaces are presented) - we try to get it
@@ -2610,7 +2785,8 @@ curl_fail:
             fd = open(DEV_SFC_CONTROL, O_RDWR);
             if (fd < 0)
                 CIMPLE_ERR(("Failed to open %s device for checking NIC "
-                            "sensors", DEV_SFC_CONTROL));
+                            "sensors, errno %d ('%s')",
+                            DEV_SFC_CONTROL, errno, strerror(errno)));
         }
         virtual ~VMwareSensorsAlertInfo()
         {
