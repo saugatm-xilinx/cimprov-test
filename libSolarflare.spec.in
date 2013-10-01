@@ -33,12 +33,12 @@ make CONFIG=__CONFIG__ DESTDIR=$RPM_BUILD_ROOT install-aux
 %post
 __PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc -aE __PROVIDER_ROOT__/mof/schema.mof
 __PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/namespace.mof
-__PEGASUS_BINPATH__/bin/cimmof -n __INTEROP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/interop.mof
-__PEGASUS_BINPATH__/bin/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/repository.reg
+__PEGASUS_BINPATH__/cimmof -n __INTEROP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/interop.mof
+__PEGASUS_BINPATH__/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/repository.reg
 
 
 %preun
-__PEGASUS_BINPATH__/bin/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
+__PEGASUS_BINPATH__/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
 
 %clean
 rm -rf $RPM_BUILD_ROOT
