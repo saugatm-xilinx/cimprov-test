@@ -1,6 +1,8 @@
 #!/bin/bash
 
 RUNDIR="$(pwd -P)"
+PYWBEM_PACK_URL="http://downloads.sourceforge.net/pywbem/pywbem-0.7.0.tar.gz"
+PYWBEM_PACK_PATH=${PYWBEM_PACK_PATH}
 
 pushd `dirname \`which $0\`` >/dev/null
 TESTSUITE_DIR="$(pwd -P)"
@@ -17,7 +19,11 @@ exit_cleanup()
 }
 
 cd "${TMPDIR}"
-wget http://downloads.sourceforge.net/pywbem/pywbem-0.7.0.tar.gz || exit_cleanup
+if [ -z "${PYWBEM_PACK_PATH}" ]; then
+    wget ${PYWBEM_PACK_URL} || exit_cleanup
+else
+    cp ${PYWBEM_PACK_PATH} . || exit_cleanup
+fi
 tar -xzf pywbem-0.7.0.tar.gz || exit_cleanup
 
 cd pywbem-0.7.0
