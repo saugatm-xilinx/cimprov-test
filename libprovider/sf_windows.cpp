@@ -1992,7 +1992,8 @@ cleanup:
            DWORD len = sizeof(path);
            RegGetValue(
               HKEY_LOCAL_MACHINE,
-              _T("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"),
+              _T("Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\" 
+                 PROVIDER_LIBRARY),
               _T("UninstallString"),
               RRF_RT_REG_SZ,
               NULL,

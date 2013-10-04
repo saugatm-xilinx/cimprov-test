@@ -196,8 +196,8 @@ $(libprovider_DIR)/resource.o : WINDRES_CPPFLAGS = -DPROVIDER_LIBRARY='\"$(PROVI
 												   -DPROVIDER_REVISION_NO=0 -DPROVIDER_BUILD_NO=0
 
 ifeq ($(CIM_INTERFACE),wmi)
-$(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/namespace.mof $(MAKEFILE_LIST)
-	tac $< | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
+$(libprovider_DIR)/unregister.mof : $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(MAKEFILE_LIST)
+	tac $(filter %.mof,$^) | $(AWK) '$$1 == "class" { print "#pragma deleteclass(\"" $$2 "\", fail)" }' >$@
 endif
 
 .PHONY : msi InstallShieldProject

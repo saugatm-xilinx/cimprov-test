@@ -414,7 +414,12 @@ WMIONLY([[
 // On Windows [implemented] qualifier should be specified for
 // actually implemented method, so we have to copy this method
 // definition from DMTF schema here.
-   [implemented]
+   [implemented, 
+       ValueMap { "0", "1", "2", "3", "4", "5", "6", "..", 
+          "0x1000..0x7FFF", "0x8000.." }, 
+       Values { "Success", "Not Supported", "Unknown", "Timeout", 
+          "Failed", "Invalid Parameter", "Busy", "DMTF Reserved", 
+          "Method Reserved", "Vendor Specific" }]
    uint32 RunDiagnosticService(
          [IN, Description ( 
              "Specifies the element upon which the "
@@ -423,14 +428,14 @@ WMIONLY([[
          [IN, Description ( 
              "A string containing an encoding of the "
              "DiagnosticSettingData instance to be applied to "
-             "the diagnostic. If null, the diagnostics "
+             "the diagnostic. If null, the diagnostic\'s "
              "defaults are used." ), 
           EmbeddedInstance ( "CIM_DiagnosticSettingData" )]
       string DiagnosticSettings, 
          [IN, Description ( 
              "A string containing an encoding of the "
              "JobSettingData instance to be applied to the "
-             "resulting job. If null, the jobs defaults are "
+             "resulting job. If null, the job\'s defaults are "
              "used." ), 
           EmbeddedInstance ( "CIM_JobSettingData" )]
       string JobSettings, 
