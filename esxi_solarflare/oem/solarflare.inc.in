@@ -1,14 +1,14 @@
 # defines values for descriptor.xml and bulletin.xml
 
-DESC_NAME := solarflare
+DESC_NAME := m4_translit(__PROVIDER_LIBRARY__, [A-Z], [a-z])
 DESC_ESX_VERSION := 5.0.0
 DESC_VENDOR_EMAIL := none@vmware.com
-DESC_VERSION := 1.0-1.0
-DESC_VENDOR := Solarflare
+DESC_VERSION := __PROVIDER_VERSION__-__PROVIDER_REVISION__
+DESC_VENDOR := __PROVIDER_LIBRARY__
 DESC_SUMMARY := Solarflare NIC CIM Provider
 
 DESC_DESCRIPTION := Sample solarflare provider for ESX Server
-DESC_RELEASE_DATE := 2010-09-25T12:44:41-07:00
+DESC_RELEASE_DATE := m4_esyscmd([date +%Y-%m-%dT%H:%M:%S%:z])
 
 # The next five definitions name files, rather than final values.
 # The format of each file is a series of lines, each one formatted as

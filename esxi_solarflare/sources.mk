@@ -55,6 +55,9 @@ $(ESXI_SRC_PATH)/Makefile.am : m4.defs $(esxi_archive_DIR)/Makefile.am.in
 $(esxi_archive_DIR)/oem/descriptor.xml : m4.defs $(esxi_archive_DIR)/oem/descriptor.xml.in
 	$(M4) $^ >$@
 
+$(esxi_archive_DIR)/oem/solarflare.inc : m4.defs $(esxi_archive_DIR)/oem/solarflare.inc.in
+	$(M4) $^ >$@
+
 ifneq ($(ESXI_BUILD_HOST),)
 
 ifneq ($(ESXI_GATEWAY),)
