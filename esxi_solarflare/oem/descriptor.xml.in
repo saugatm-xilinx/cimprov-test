@@ -15,9 +15,9 @@
    <vendor>__PROVIDER_LIBRARY__</vendor>
 
    <!-- A one-line summary of the VIB package contents. 80 chars max. -->
-   <summary>Solarflare NIC CIM Provider</summary>
+   <summary>__PROVIDER_DESCRIPTION__</summary>
 
-   <description>Solarflare NIC CIM provider for ESXi Server</description>
+   <description>__PROVIDER_DESCRIPTION__ for ESXi Server</description>
 
    <!-- Used for specifying KB article URLs.  key is a short friendly -->
    <!-- identifier, no more than 20 characters long, to display instead -->

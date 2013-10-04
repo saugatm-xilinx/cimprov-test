@@ -49,7 +49,7 @@
 
 #define EFX_MAX_MTU 9216
 
-#define WIN_REG_PATH "SOFTWARE\\Solarflare Communications\\CIM provider\\"
+#define WIN_REG_PATH "SOFTWARE\\" PROVIDER_VENDOR "\\" PROVIDER_DESCRIPTION "\\"
 
 /// Job states in EFX_DiagnosticJob
 enum {
@@ -2167,7 +2167,7 @@ cleanup:
 
         rc = wmiEnumInstancesQuery(ctxRef.getCIMWMIConn(), 
                                    "SELECT * FROM Win32_PnPSignedDriver "
-                                   "WHERE Manufacturer='Solarflare'",
+                                   "WHERE Manufacturer='" PROVIDER_LIBRARY "'",
                                    drivers);
         if (rc < 0)
             return -1;

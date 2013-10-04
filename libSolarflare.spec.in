@@ -1,7 +1,7 @@
 Name: __PROVIDER_PACKAGE__
 Version: __PROVIDER_VERSION__.__PROVIDER_REVISION__
 Release:        %{RELEASE_TAG}
-Summary: CIM provider for Solarflare NIC management
+Summary: __PROVIDER_DESCRIPTION__
 
 Group: Applications/System
 License: GPL

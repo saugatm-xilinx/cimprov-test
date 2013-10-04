@@ -8,7 +8,7 @@
 Name "${PROVIDERNAME}"
 OutFile "${INSTALLERNAME}"
 
-InstallDir "$PROGRAMFILES\Solarflare Communications\Solarflare CIM provider"
+InstallDir "$PROGRAMFILES\${VENDORNAME}\${PROVIDERDESC}"
 
 !insertmacro MUI_PAGE_LICENSE "${TOP}/sf-license.txt"
 !insertmacro MUI_PAGE_COMPONENTS
@@ -78,7 +78,7 @@ SectionEnd
 
 Section
 WriteUninstaller $INSTDIR\uninstall.exe
-WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "DisplayName" "Solarflare CIM"
+WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "DisplayName" "${PROVIDERDESC}"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "UninstallString" "$INSTDIR\uninstall.exe"
 WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}" "InstallLocation" "$INSTDIR"
 SectionEnd
@@ -93,10 +93,10 @@ RMDir /r '${PegasusRoot}\repository\root#solarflare'
 Delete $INSTDIR\repository.reg
 Delete $INSTDIR\interop.mof
 !else
-!insertmacro SilentExecNofail wmic `path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-!insertmacro SilentExecNofail wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-!insertmacro SilentExecNofail wmic `path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete`
-!insertmacro SilentExecNofail wmic 'path __Win32Provider.Name="Solarflare" delete'
+!insertmacro SilentExecNofail wmic `path __InstanceProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
+!insertmacro SilentExecNofail wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
+!insertmacro SilentExecNofail wmic `path __EventProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
+!insertmacro SilentExecNofail wmic 'path __Win32Provider.Name="${PROVIDERNAME}" delete'
 !insertmacro SilentExecNofail mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\unregister.mof"'
 Delete $INSTDIR\unregister.mof
 Delete $INSTDIR\register.mof
@@ -118,6 +118,7 @@ SectionEnd
 
 Section uninstall
 
+DeleteRegKey HKLM "Software\${VENDORNAME}\${PROVIDERDESC}"
 DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROVIDERNAME}"
 Delete $INSTDIR\uninstall.exe
 RmDir $INSTDIR

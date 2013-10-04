@@ -12,8 +12,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "CompanyName",      "Solarflare\0"
-            VALUE "FileDescription",  "Solarflare CIM provider\0"
+            VALUE "CompanyName",      PROVIDER_VENDOR
+            VALUE "FileDescription",  PROVIDER_DESCRIPTION
             VALUE "FileVersion",      PROVIDER_VERSION
             VALUE "InternalName",     PROVIDER_LIBRARY
 /*
@@ -22,7 +22,7 @@ BEGIN
             VALUE "LegalTrademarks2", VER_LEGALTRADEMARKS2_STR
             VALUE "OriginalFilename", VER_ORIGINALFILENAME_STR
 */
-            VALUE "ProductName",      "Solarflare CIM provider\0"
+            VALUE "ProductName",      PROVIDER_DESCRIPTION
             VALUE "ProductVersion",   PROVIDER_VERSION
         END
     END

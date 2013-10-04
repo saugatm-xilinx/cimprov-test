@@ -1248,7 +1248,7 @@ namespace solarflare
     public:
         LinuxManagementPackage() :
             ManagementPackage("CIM Provider RPM", "sfcprovider"),
-            providerLibrary(this, "CIM Provider library", "libSolarflare.so",
+            providerLibrary(this, "CIM Provider library", PROVIDER_LIBNAME,
                             SF_LIBPROV_VERSION) {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const

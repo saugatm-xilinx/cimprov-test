@@ -2489,7 +2489,7 @@ curl_fail:
         VMwareManagementPackage() :
             ManagementPackage("CIM Provider VIB", "sfcprovider"),
             providerLibrary(this, "CIM Provider library",
-                            "libSolarflare.so", SF_LIBPROV_VERSION) {}
+                            PROVIDER_LIBNAME, SF_LIBPROV_VERSION) {}
         virtual PkgType type() const { return VSphereBundle; }
         virtual VersionInfo version() const
         {

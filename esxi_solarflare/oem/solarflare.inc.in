@@ -5,9 +5,9 @@ DESC_ESX_VERSION := 5.0.0
 DESC_VENDOR_EMAIL := none@vmware.com
 DESC_VERSION := __PROVIDER_VERSION__-__PROVIDER_REVISION__
 DESC_VENDOR := __PROVIDER_LIBRARY__
-DESC_SUMMARY := Solarflare NIC CIM Provider
+DESC_SUMMARY := __PROVIDER_DESCRIPTION__
 
-DESC_DESCRIPTION := Sample solarflare provider for ESX Server
+DESC_DESCRIPTION := __PROVIDER_DESCRIPTION__ for ESX Server
 DESC_RELEASE_DATE := m4_esyscmd([date +%Y-%m-%dT%H:%M:%S%:z])
 
 # The next five definitions name files, rather than final values.
