@@ -349,7 +349,10 @@ def assoc_traversal(cli, class_list, is_assoc,
             continue
         
         logger.info("Checking association class " + cl)
-        inst_list = cli.EnumerateInstances(cl)
+        try:
+            inst_list = cli.EnumerateInstances(cl)
+        except Exception, e:
+            logger.error("Failed to enumerate instances of %s class:\n%s", cl, e)
         for inst in inst_list:
             ref = [{}, {}]
             num = 0
