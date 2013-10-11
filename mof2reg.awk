@@ -74,11 +74,8 @@ $1 == "class" && IMPLEMENTED[$2] {
     next;
 }
 
-/ASSOCIATION/ { association = 1; }
-/INDICATION/ { indication = 1; }
-/ASSOCIATION_NWMI/ { association = 1; }
-/INDICATION_NWMI/ { indication = 1; }
-
+tolower($1) ~ /\[.*association.*\]/ { association = 1; }
+tolower($1) ~ /\[.*indication.*\]/ { indication = 1; }
 
 /\/\/ IMPNS/ { in_interop = in_root = 0 }
 /\/\/ ROOT_OR_IMPNS/ { in_interop = 0; in_root = 1 }
