@@ -36,7 +36,7 @@ PROVIDER_TARBALL = $(PROVIDER_TARBALL_DIR).tar.gz
 
 ifeq ($(MAKECMDGOALS), dist)
 ifeq ($(DIST_IS_SPECIAL),)
-PROVIDER_DIST_FILES := $(shell $(HG) manifest)
+PROVIDER_DIST_FILES := $(addprefix $(TOP)/,$(shell $(HG) manifest))
 PROVIDER_DIST_FILES += $(CIM_SCHEMA_ZIP)
 PROVIDER_DIST_FILES += lib$(PROVIDER_LIBRARY).spec
 endif
