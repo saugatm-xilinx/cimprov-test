@@ -15,7 +15,8 @@ esxi_archive_EXTRA_DISTFILES += $(esxi_archive_LIBS)
 esxi_archive_GENERATED = $(ESXI_PROJECT_NAME)/$(libcimobjects_DIR)/namespace.mof \
 						 $(ESXI_PROJECT_NAME)/repository.reg.in \
 						 $(ESXI_PROJECT_NAME)/Makefile.am \
-					 	 oem/descriptor.xml
+					 	 oem/descriptor.xml \
+					 	 oem/bulletin.xml
 
 esxi_archive_SOURCES = esxi_bootstrap.sh \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
@@ -55,6 +56,9 @@ $(ESXI_SRC_PATH)/Makefile.am : m4.defs $(esxi_archive_DIR)/Makefile.am.in
 $(esxi_archive_DIR)/oem/descriptor.xml : m4.defs $(esxi_archive_DIR)/oem/descriptor.xml.in
 	$(M4) $^ >$@
 
+$(esxi_archive_DIR)/oem/bulletin.xml : m4.defs $(esxi_archive_DIR)/oem/bulletin.xml.in
+	$(M4) $^ >$@
+
 $(esxi_archive_DIR)/oem/solarflare.inc : m4.defs $(esxi_archive_DIR)/oem/solarflare.inc.in
 	$(M4) $^ >$@
 
@@ -74,7 +78,7 @@ ESXI_BUILD_RSH=$(ESXI_CONNECT) ssh $(ESXI_BUILD_HOST) #-oBatchMode=yes
 ESXI_BUILD_RCP=scp #-oBatchMode=yes 
 ESXI_COPYTO=$(or $(ESXI_GATEWAY),$(ESXI_BUILD_HOST))
 
-esxi_vib_TARGET = vmware-esx-provider-solarflare.vib
+esxi_vib_TARGET = vmware-esx-$(PROVIDER_NAME).vib
 esxi_vib_DIR = esxi_solarflare
 
 $(esxi_vib_TARGET) : $(esxi_archive_TARGET)

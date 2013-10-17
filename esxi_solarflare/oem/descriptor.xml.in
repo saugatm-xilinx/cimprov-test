@@ -3,7 +3,7 @@
    <!-- The VIB package name must be 35 or less characters and must -->
    <!-- only contain [0-9a-zA-Z], -, _, and .  Also it is advised -->
    <!-- that vendor be left out as there is a separate vendor field. -->
-   <name>m4_translit(__PROVIDER_LIBRARY__, [A-Z], [a-z])</name>
+   <name>__PROVIDER_NAME__</name>
 
    <!-- The VIB version should be of the form: ver-rel, where -->
    <!-- ver and rel are both strings that must start with digits, -->
@@ -12,7 +12,7 @@
    <version>__PROVIDER_VERSION__-__PROVIDER_REVISION__</version>
 
    <!-- Vendor has the same formatting restrictions as the name field -->
-   <vendor>__PROVIDER_LIBRARY__</vendor>
+   <vendor>__PROVIDER_VENDOR_SHORT__</vendor>
 
    <!-- A one-line summary of the VIB package contents. 80 chars max. -->
    <summary>__PROVIDER_DESCRIPTION__</summary>
