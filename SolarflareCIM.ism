@@ -1017,23 +1017,15 @@
 		<col def="S0">Target</col>
 		<col def="I4">ExtendedType</col>
 		<col def="S255">ISComments</col>
-		<row><td>CleanupCIMNamespace</td><td>98</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]unregister.mof"</td><td/><td/></row>
-		<row><td>CompileCIMSchema</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]schema.mof"</td><td/><td/></row>
-		<row><td>CompileSFSchema</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]namespace.mof"</td><td/><td/></row>
 		<row><td>ISPreventDowngrade</td><td>19</td><td/><td>[IS_PREVENT_DOWNGRADE_EXIT]</td><td/><td>Exits install when a newer version of this product is found</td></row>
 		<row><td>ISPrint</td><td>1</td><td>SetAllUsers.dll</td><td>PrintScrollableText</td><td/><td>Prints the contents of a ScrollableText control on a dialog.</td></row>
 		<row><td>ISSelfRegisterCosting</td><td>1</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterCosting</td><td/><td/></row>
 		<row><td>ISSelfRegisterFiles</td><td>3073</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterFiles</td><td/><td/></row>
 		<row><td>ISSelfRegisterFinalize</td><td>1</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterFinalize</td><td/><td/></row>
 		<row><td>ISUnSelfRegisterFiles</td><td>3073</td><td>ISSELFREG.DLL</td><td>ISUnSelfRegisterFiles</td><td/><td/></row>
-		<row><td>RegisterCIMProvider</td><td>3618</td><td>WBEM</td><td>mofcomp.exe -N:\\.\root\cimv2 "[INSTALLDIR]register.mof"</td><td/><td/></row>
 		<row><td>SetARPINSTALLLOCATION</td><td>51</td><td>ARPINSTALLLOCATION</td><td>[INSTALLDIR]</td><td/><td/></row>
 		<row><td>SetAllUsersProfileNT</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%SystemRoot]\Profiles\All Users</td><td/><td/></row>
 		<row><td>ShowMsiLog</td><td>226</td><td>SystemFolder</td><td>[SystemFolder]notepad.exe "[MsiLogFileLocation]"</td><td/><td>Shows Property-driven MSI Log</td></row>
-		<row><td>UnregisterCIMEventProvider</td><td>98</td><td>WBEM</td><td>wmic.exe path __EventProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete</td><td/><td/></row>
-		<row><td>UnregisterCIMInstanceProvider</td><td>98</td><td>WBEM</td><td>wmic.exe path __InstanceProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete</td><td/><td/></row>
-		<row><td>UnregisterCIMMethodProvider</td><td>98</td><td>WBEM</td><td>wmic.exe path __MethodProviderRegistration.Provider="__Win32Provider.Name='Solarflare'" delete</td><td/><td/></row>
-		<row><td>UnregisterCIMProvider</td><td>98</td><td>WBEM</td><td>wmic.exe path __Win32Provider.Name="Solarflare" delete</td><td/><td/></row>
 		<row><td>setAllUsersProfile2K</td><td>51</td><td>ALLUSERSPROFILE</td><td>[%ALLUSERSPROFILE]</td><td/><td/></row>
 		<row><td>setUserProfileNT</td><td>51</td><td>USERPROFILE</td><td>[%USERPROFILE]</td><td/><td/></row>
 	</table>
@@ -1841,8 +1833,8 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
-		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\register.mof</td><td>1</td><td/></row>
 		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>NAMESP~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\namespace.mof</td><td>1</td><td/></row>
+		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\register.mof</td><td>1</td><td/></row>
 		<row><td>schema.mof</td><td>AllOtherFiles</td><td>schema.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\schema.mof</td><td>1</td><td/></row>
 		<row><td>solarflare.dll</td><td>Provider</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\Solarflare.dll</td><td>1</td><td/></row>
 		<row><td>unregister.mof</td><td>AllOtherFiles</td><td>UNREGI~1.MOF|unregister.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\unregister.mof</td><td>1</td><td/></row>
@@ -2109,6 +2101,8 @@
 		<col key="yes" def="s38">Feature_</col>
 		<col key="yes" def="s255">ISMergeModule_</col>
 		<col key="yes" def="i2">Language_</col>
+		<row><td>SolarflareCIM_Files</td><td>AgentExtensionActions.500EAE1C_2265_418D_A61F_E05A707993E7</td><td>0</td></row>
+		<row><td>SolarflareCIM_Files</td><td>MofcompActions.547C87C4_AEDD_459D_93F6_A8452C250D61</td><td>0</td></row>
 	</table>
 
 	<table name="ISFeatureSetupPrerequisites">
@@ -2231,6 +2225,8 @@
 		<col def="s255">Name</col>
 		<col def="S255">Destination</col>
 		<col def="I4">ISAttributes</col>
+		<row><td>AgentExtensionActions.500EAE1C_2265_418D_A61F_E05A707993E7</td><td>0</td><td>Agent Extension Utility Actions</td><td/><td/></row>
+		<row><td>MofcompActions.547C87C4_AEDD_459D_93F6_A8452C250D61</td><td>0</td><td>Managed Object Format Compiler Actions</td><td/><td/></row>
 	</table>
 
 	<table name="ISMergeModuleCfgValues">
@@ -2322,7 +2318,7 @@
 		<row><td>ISProductFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectFolder</td><td/><td/><td>1</td></row>
-		<row><td>PATH_TO_ADMINISTRATOR_FILES</td><td>C:\cygwin\home\Administrator</td><td/><td>2</td></row>
+		<row><td>PATH_TO_ADMINISTRATOR_FILES</td><td>C:\Documents and Settings\artem\Desktop\CIM</td><td/><td>2</td></row>
 		<row><td>ProgramFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>SystemFolder</td><td/><td/><td>1</td></row>
 		<row><td>WindowsFolder</td><td/><td/><td>1</td></row>
@@ -3749,6 +3745,7 @@
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>-224316768</td></row>
 		<row><td>ID_STRING1</td><td>1033</td><td>http://www.SolarflareCommunications.com</td><td>0</td><td/><td>-1272849587</td></row>
 		<row><td>ID_STRING2</td><td>1033</td><td>Provider</td><td>0</td><td/><td>-1272882259</td></row>
+		<row><td>ID_STRING3</td><td>1033</td><td>NewFeature1</td><td>0</td><td/><td>-1792978642</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>-224316768</td></row>
 	</table>
 
@@ -3889,9 +3886,6 @@
 		<row><td>AppSearch</td><td/><td>400</td><td>AppSearch</td><td/></row>
 		<row><td>BindImage</td><td/><td>4300</td><td>BindImage</td><td/></row>
 		<row><td>CCPSearch</td><td>CCP_TEST</td><td>500</td><td>CCPSearch</td><td/></row>
-		<row><td>CleanupCIMNamespace</td><td>Installed</td><td>1746</td><td/><td/></row>
-		<row><td>CompileCIMSchema</td><td>NOT Installed</td><td>6050</td><td/><td/></row>
-		<row><td>CompileSFSchema</td><td>NOT REMOVE</td><td>6075</td><td/><td/></row>
 		<row><td>CostFinalize</td><td/><td>1000</td><td>CostFinalize</td><td/></row>
 		<row><td>CostInitialize</td><td/><td>800</td><td>CostInitialize</td><td/></row>
 		<row><td>CreateFolders</td><td/><td>3700</td><td>CreateFolders</td><td/></row>
@@ -3924,7 +3918,6 @@
 		<row><td>PublishFeatures</td><td/><td>6300</td><td>PublishFeatures</td><td/></row>
 		<row><td>PublishProduct</td><td/><td>6400</td><td>PublishProduct</td><td/></row>
 		<row><td>RMCCPSearch</td><td>Not CCP_SUCCESS And CCP_TEST</td><td>600</td><td>RMCCPSearch</td><td/></row>
-		<row><td>RegisterCIMProvider</td><td>NOT REMOVE</td><td>6087</td><td/><td/></row>
 		<row><td>RegisterClassInfo</td><td/><td>4600</td><td>RegisterClassInfo</td><td/></row>
 		<row><td>RegisterComPlus</td><td/><td>5700</td><td>RegisterComPlus</td><td/></row>
 		<row><td>RegisterExtensionInfo</td><td/><td>4700</td><td>RegisterExtensionInfo</td><td/></row>
@@ -3954,10 +3947,6 @@
 		<row><td>StopServices</td><td>VersionNT</td><td>1900</td><td>StopServices</td><td/></row>
 		<row><td>UnpublishComponents</td><td/><td>1700</td><td>UnpublishComponents</td><td/></row>
 		<row><td>UnpublishFeatures</td><td/><td>1800</td><td>UnpublishFeatures</td><td/></row>
-		<row><td>UnregisterCIMEventProvider</td><td/><td>1740</td><td/><td/></row>
-		<row><td>UnregisterCIMInstanceProvider</td><td>Installed</td><td>1737</td><td/><td/></row>
-		<row><td>UnregisterCIMMethodProvider</td><td>Installed</td><td>1743</td><td/><td/></row>
-		<row><td>UnregisterCIMProvider</td><td>Installed</td><td>1725</td><td/><td/></row>
 		<row><td>UnregisterClassInfo</td><td/><td>2700</td><td>UnregisterClassInfo</td><td/></row>
 		<row><td>UnregisterComPlus</td><td/><td>2100</td><td>UnregisterComPlus</td><td/></row>
 		<row><td>UnregisterExtensionInfo</td><td/><td>2800</td><td>UnregisterExtensionInfo</td><td/></row>
@@ -4090,6 +4079,20 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="S255">Cabinet</col>
 		<col def="S32">VolumeLabel</col>
 		<col def="S32">Source</col>
+	</table>
+
+	<table name="Mofcomp">
+		<col key="yes" def="s72">FileKey</col>
+		<col def="s72">Component_</col>
+		<col def="s72">FileName</col>
+		<col def="s72">DirProperty</col>
+		<col def="s72">Namespace</col>
+		<col def="i2">Options</col>
+		<col def="i2">Sequence</col>
+		<row><td>NAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>2</td><td>200</td></row>
+		<row><td>REGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>2</td><td>300</td></row>
+		<row><td>SCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>2</td><td>100</td></row>
+		<row><td>UNREGISTERMOF</td><td>AllOtherFiles</td><td>unregister.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>4</td><td>100</td></row>
 	</table>
 
 	<table name="MoveFile">
@@ -5483,6 +5486,13 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<row><td>Media</td><td>LastSequence</td><td>N</td><td>0</td><td>32767</td><td/><td/><td/><td/><td>File sequence number for the last file for this media.</td></row>
 		<row><td>Media</td><td>Source</td><td>Y</td><td/><td/><td/><td/><td>Property</td><td/><td>The property defining the location of the cabinet file.</td></row>
 		<row><td>Media</td><td>VolumeLabel</td><td>Y</td><td/><td/><td/><td/><td>Text</td><td/><td>The label attributed to the volume.</td></row>
+		<row><td>Mofcomp</td><td>Component_</td><td>N</td><td/><td/><td/><td/><td>Text</td><td/><td/></row>
+		<row><td>Mofcomp</td><td>DirProperty</td><td>N</td><td/><td/><td/><td/><td>Text</td><td/><td/></row>
+		<row><td>Mofcomp</td><td>FileKey</td><td>N</td><td/><td/><td/><td/><td>Text</td><td/><td/></row>
+		<row><td>Mofcomp</td><td>FileName</td><td>N</td><td/><td/><td/><td/><td>Text</td><td/><td/></row>
+		<row><td>Mofcomp</td><td>Namespace</td><td>N</td><td/><td/><td/><td/><td>Text</td><td/><td/></row>
+		<row><td>Mofcomp</td><td>Options</td><td>N</td><td/><td/><td/><td/><td/><td/><td/></row>
+		<row><td>Mofcomp</td><td>Sequence</td><td>N</td><td/><td/><td/><td/><td/><td/><td/></row>
 		<row><td>MoveFile</td><td>Component_</td><td>N</td><td/><td/><td>Component</td><td>1</td><td>Identifier</td><td/><td>If this component is not "selected" for installation or removal, no action will be taken on the associated MoveFile entry</td></row>
 		<row><td>MoveFile</td><td>DestFolder</td><td>N</td><td/><td/><td/><td/><td>Identifier</td><td/><td>Name of a property whose value is assumed to resolve to the full path to the destination directory</td></row>
 		<row><td>MoveFile</td><td>DestName</td><td>Y</td><td/><td/><td/><td/><td>Text</td><td/><td>Name to be given to the original file after it is moved or copied.  If blank, the destination file will be given the same name as the source file</td></row>
