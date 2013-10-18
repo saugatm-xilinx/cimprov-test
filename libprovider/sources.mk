@@ -223,7 +223,8 @@ $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSI
 
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
 					$(libcimobjects_DIR)/namespace.mof $(libprovider_DIR)/register.mof \
-					$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof
+					$(libcimobjects_DIR)/schema.mof $(libprovider_DIR)/unregister.mof \
+					sf-license.rtf
 	$(target_STRIP) $(libprovider_TARGET)
 	lcab -n $^ $@
 
