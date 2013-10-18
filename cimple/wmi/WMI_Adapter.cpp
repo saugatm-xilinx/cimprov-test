@@ -1509,7 +1509,7 @@ int cimple_wmi_adapter(
 
     CIMPLE_ENTER;
 
-    long function = (long)arg1;
+    long function = (long)(intptr_t)arg1;
 
     // Dispatch operation:
 
