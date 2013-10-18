@@ -3743,6 +3743,7 @@
 		<row><td>IDS__TargetReq_DESC_PROCESSOR</td><td>1033</td><td>The processor is not adequate for running [ProductName].</td><td>0</td><td/><td>-224316768</td></row>
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>-224316768</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>-224316768</td></row>
+		<row><td>ID_CIM_SERVER_IS_NOT_RUNNING</td><td>1033</td><td>IBM CIMOM is not installed or not running</td><td>0</td><td/><td>-1792979633</td></row>
 		<row><td>ID_STRING1</td><td>1033</td><td>http://www.SolarflareCommunications.com</td><td>0</td><td/><td>-1272849587</td></row>
 		<row><td>ID_STRING2</td><td>1033</td><td>Provider</td><td>0</td><td/><td>-1272882259</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>NewFeature1</td><td>0</td><td/><td>-1792978642</td></row>
@@ -4041,6 +4042,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col key="yes" def="s255">Condition</col>
 		<col def="l255">Description</col>
 		<row><td>(Not Version9X) And (Not VersionNT=400) And (Not VersionNT=500) And (Not VersionNT=501) And (Not (VersionNT=600 And (MsiNTProductType=1))) And (Not (VersionNT=601 And (MsiNTProductType=1)))</td><td>##IDPROP_EXPRESS_LAUNCH_CONDITION_OS##</td></row>
+		<row><td>CIM_SERVER_IS_RUNNING=1</td><td>##ID_CIM_SERVER_IS_NOT_RUNNING##</td></row>
 	</table>
 
 	<table name="ListBox">
@@ -4431,6 +4433,10 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="S0">Value</col>
 		<col def="s72">Component_</col>
 		<col def="I4">ISAttributes</col>
+		<row><td>Registry2</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>Uninstall</td><td>msiexec.exe /X [ProductCode]</td><td>Provider</td><td>0</td></row>
+		<row><td>Registry3</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>InstallLocation</td><td>[SystemFolder]\wbem\Solarflare.dll</td><td>Provider</td><td>0</td></row>
+		<row><td>Registry4</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>Version</td><td>[ProductVersion]</td><td>Provider</td><td>0</td></row>
+		<row><td>Registry5</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>ProductCode</td><td>[ProductCode]</td><td>Provider</td><td>0</td></row>
 		<row><td>_AD20AE10EFE1A8766731EAE1AAE4BDCE</td><td>0</td><td>CLSID\{E0883443-7EC0-1251-84ED-F96921AB5923}\InprocServer32</td><td>ThreadingModel</td><td>Both</td><td>Provider</td><td>0</td></row>
 	</table>
 
