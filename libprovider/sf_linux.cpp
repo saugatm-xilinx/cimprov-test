@@ -266,7 +266,7 @@ namespace solarflare
         unsigned char    vpdPCIReadByte(unsigned addr);
     public:
         int     vpdAccessInit(const char *sysfsDevicePath,
-                              PCIAddress& pciAddr);
+                              const PCIAddress& pciAddr);
         void    vpdAccessFini();
         int     vpdRead(char *buf, int size);
     };
@@ -352,8 +352,8 @@ namespace solarflare
         type = PCI;
         pci_init(acc);
         pci_scan_bus(acc);
-        dev = pci_get_dev(acc, pciAddr.domain, pciAddr.bus,
-                          pciAddr.device, 0);
+        dev = pci_get_dev(acc, pciAddr.domain(), pciAddr.bus(),
+                          pciAddr.device(), 0);
         if (dev == NULL)
             return -1;
 
