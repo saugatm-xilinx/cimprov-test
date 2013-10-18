@@ -1,11 +1,14 @@
 #include "sf_platform.h"
 #include "sf_provider.h"
 #include "sf_logging.h"
+
+#include <cimple.h>
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
 #include <cimple/log.h>
-#include <cimple.h>
+#include <cimple/Mutex.h>
+#include <cimple/Auto_Mutex.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +28,11 @@
 
 #include <linux/if.h>
 #include <linux/if_arp.h>
+
+extern "C" {
+#include <pci/pci.h>
+#include <linux/pci.h>
+}
 
 // SLES 10 has broken ethtool.h
 #ifdef SLES10_BUILD_HOST
@@ -68,6 +76,9 @@
 
 namespace solarflare
 {
+    using cimple::Mutex;
+    using cimple::Auto_Mutex;
+
     ///
     /// Get device attribute from sysfs file.
     ///
@@ -229,9 +240,168 @@ namespace solarflare
         return edata.data == 1 ? true : false;
     }
 
+
     /// Forward declaration
     static int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
                                        const Port *port);
+
+    ///
+    /// VPD access data and methods.
+    ///
+    class LinuxVPDHelper {
+        /// Describes method of getting VPD.
+        enum VPDAccessType {
+            Unknown,
+            Sysfs,
+            PCI,
+        } type;
+
+        int                     fd;     ///< Descriptor for VPD node in sysfs
+        int                     cap;    ///< PCI VPD capability address
+        unsigned                addr;   ///< Current PCI address for reading
+        struct pci_dev         *dev;    ///< Pointer to PCI device data
+        struct pci_access      *acc;    ///< Pointer to PCI access data
+
+        int              vpdPCIFindCap();
+        unsigned char    vpdPCIReadByte(unsigned addr);
+    public:
+        int     vpdAccessInit(const char *sysfsDevicePath,
+                              PCIAddress& pciAddr);
+        void    vpdAccessFini();
+        int     vpdRead(char *buf, int size);
+    };
+
+    ///
+    /// Find out PCI VPD capability address.
+    ///
+    /// @return Address or zero on error
+    ///
+    int LinuxVPDHelper::vpdPCIFindCap()
+    {
+        unsigned short  status;
+        unsigned char   pos;
+        unsigned char   id;
+        int             iter;
+
+        status = pci_read_word(dev, PCI_STATUS);
+        if (!(status & PCI_STATUS_CAP_LIST))
+            return 0;
+        pos = PCI_CAPABILITY_LIST;
+
+        for (iter = 0; iter < ((0x100 - 0x40) / 4); iter++) {
+            pos = pci_read_byte(dev, pos);
+            if (pos < 0x40)
+                break;
+            pos &= ~3;
+            id = pci_read_byte(dev, pos + PCI_CAP_LIST_ID);
+            if (id == 0xff)
+                break;
+            if (id == PCI_CAP_ID_VPD)
+                return pos;
+            pos += PCI_CAP_LIST_NEXT;
+        }
+
+        return 0;
+    }
+
+    ///
+    /// Read VPD byte via libpci.
+    ///
+    /// @param addr     PCI address
+    ///
+    /// @return VPD byte
+    ///
+    unsigned char LinuxVPDHelper::vpdPCIReadByte(unsigned addr)
+    {
+        pci_write_word(dev, cap + 2, addr & 0x7fff);
+        while ((pci_read_word(dev, cap + 2) & 0x8000) == 0)
+            usleep(1);
+        return pci_read_byte(dev, cap + 4);
+    }
+
+    ///
+    /// Find out and provide VPD access.
+    ///
+    /// @param sysfsDevicePath  Path to NIC device in sysfs
+    /// @param pciAddr          PCI address of NIC device
+    ///
+    /// @return zero on success, -1 on error
+    ///
+    int LinuxVPDHelper::vpdAccessInit(const char *sysfsDevicePath,
+                                      const PCIAddress& pciAddr)
+    {
+        String path(sysfsDevicePath);
+        
+        path.append("/vpd");
+
+        fd = open(path.c_str(), O_RDONLY);
+        if (fd >= 0)
+        {
+            type = Sysfs;
+            return 0;
+        }
+
+        addr = 0;
+        acc = pci_alloc();
+        if (acc == NULL)
+        {
+            type = Unknown;
+            return -1;
+        }
+
+        type = PCI;
+        pci_init(acc);
+        pci_scan_bus(acc);
+        dev = pci_get_dev(acc, pciAddr.domain, pciAddr.bus,
+                          pciAddr.device, 0);
+        if (dev == NULL)
+            return -1;
+
+        cap = vpdPCIFindCap();
+        if (cap == 0)
+            return -1;
+
+        return 0;
+    }
+    
+    ///
+    /// Read chunk of VPD.
+    ///
+    /// @param buf      Location for VPD data
+    /// @param size     Size of chunk in bytes
+    ///
+    /// @return number of read bytes or -1 on error
+    ///
+    int LinuxVPDHelper::vpdRead(char *buf, int size)
+    {
+        if (type == Sysfs)
+            return read(fd, buf, size);
+        else if (type == PCI)
+        {
+            int i;
+
+            for (i = 0; i < size; i++)
+            {
+                buf[i] = vpdPCIReadByte(addr);
+                addr++;
+            }
+
+            return size;
+        }
+
+        return -1;
+    }
+
+    ///
+    /// Close and cleanup VPD access data.
+    ///
+    void LinuxVPDHelper::vpdAccessFini()
+    {
+        if (type == Sysfs)
+            close(fd);
+        else if (type == PCI)
+            pci_cleanup(acc);
+    }
 
     class LinuxPort : public Port {
         const NIC *owner;
@@ -909,26 +1079,40 @@ namespace solarflare
 
         virtual PCIAddress pciAddress() const;
 
+        unsigned deviceId() const
+        {
+            char        buf[BUF_MAX_LEN];
+
+            if (linuxDeviceGetAttr(sysfsPath.c_str(), "device",
+                            buf, sizeof(buf)) < 0)
+                return 0;
+            else
+                return strtoul(buf, NULL, 16);
+        }
+
         bool tempAlarm() const;
         bool voltAlarm() const;
     };
 
     VitalProductData LinuxNIC::vitalProductData() const
     {
-        char    path[SYS_PATH_MAX_LEN];
-        int     fd;
-        ssize_t size;
-        String  sno;
-        String  pno;
+        LinuxVPDHelper  vpdHlpr;
+        ssize_t         size;
+        String          sno;
+        String          pno;
 
-        unsigned        deviceId = pciAddress().device();
+        PCIAddress      pciAddr = pciAddress();
         const char     *modelId;
 
-        sprintf(path, "%s/vpd", sysfsPath.c_str());
+        static Mutex  lock(false);
+        Auto_Mutex    auto_lock(lock);
 
-        fd = open(path, O_RDONLY);
-        if (fd < 0)
+        if (vpdHlpr.vpdAccessInit(sysfsPath.c_str(),
+                                  pciAddr) < 0)
+        {
+            vpdHlpr.vpdAccessFini();
             return VitalProductData("", "", "", "", "", "");
+        }
 
         while (true)
         {
@@ -941,10 +1125,10 @@ namespace solarflare
             bool is_sn          = false;
 
             // Read header
-            size = read(fd, buf, 3);
+            size = vpdHlpr.vpdRead(buf, 3);
             if (size <= 0)
             {
-                close(fd);
+                vpdHlpr.vpdAccessFini();
                 break;
             }
 
@@ -962,7 +1146,7 @@ namespace solarflare
                     out = true;
                     break;
                 case VPD_TAG_ID:
-                    size = read(fd, buf, field_len);
+                    size = vpdHlpr.vpdRead(buf, field_len);
                     if (size != field_len)
                     {
                         out = true;
@@ -985,7 +1169,7 @@ namespace solarflare
                 else if (buf[0] == 'P')
                     is_pn = true;
             }
-            size = read(fd, buf, field_len);
+            size = vpdHlpr.vpdRead(buf, field_len);
             if (size != field_len)
                 break;
 
@@ -996,9 +1180,9 @@ namespace solarflare
                 pno = String(buf);
         }
 
-        close(fd);
+        vpdHlpr.vpdAccessFini();
 
-        switch (deviceId)
+        switch (deviceId())
         {
             case 0x0703: modelId = "SFC4000 rev A net"; break;
             case 0x0710: modelId = "SFC4000 rev B"; break;
@@ -1050,13 +1234,9 @@ namespace solarflare
 
         domain = strtoul(addr, &ptr, 16);
         ptr++;
-        bus = strtoul(ptr, NULL, 16);
-
-        if (linuxDeviceGetAttr(sysfsPath.c_str(), "device",
-                            buf, sizeof(buf)) < 0)
-            deviceId = 0;
-        else
-            deviceId = strtoul(buf, NULL, 16);
+        bus = strtoul(ptr, &ptr, 16);
+        ptr++;
+        deviceId = strtoul(ptr, NULL, 16);
 
         return PCIAddress(domain, bus, deviceId);
     }

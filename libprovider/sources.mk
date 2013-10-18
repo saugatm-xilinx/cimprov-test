@@ -109,6 +109,10 @@ NEED_ASSOC_IN_ROOT_CIMV2=1
 libprovider_CPPFLAGS += -DNEED_ASSOC_IN_ROOT_CIMV2=$(NEED_ASSOC_IN_ROOT_CIMV2)
 endif
 
+ifeq ($(PROVIDER_PLATFORM), linux)
+libprovider_SYSLIBRARIES += pci
+endif
+
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 CI_INCLUDES = libprovider/v5_import libprovider/v5_import/ci libprovider/v5_import/ci/app \
 	      libprovider/v5_import/ci/app/platform \
