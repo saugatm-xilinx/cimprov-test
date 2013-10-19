@@ -65,9 +65,6 @@ extern "C" {
 #define SYS_PATH_MAX_LEN                1024
 #define BUF_MAX_LEN                     256
 
-#define BOOT_ROM_VERSION_MAX_OFFSET     0x600
-#define BOOT_ROM_VERSION_PREFIX         "Solarflare Boot Manager (v"
-
 #define VPD_TAG_ID                      0x82
 #define VPD_TAG_R                       0x90
 #define VPD_TAG_W                       0x91
@@ -824,105 +821,6 @@ namespace solarflare
 
         return VersionInfo("");
     }
-
-#if 0
-    VersionInfo LinuxBootROM::version() const
-    {
-        FILE        *mtd_list;
-        char         line[BUF_MAX_LEN];
-        char         dev_path[BUF_MAX_LEN];
-        char         buf[BOOT_ROM_VERSION_MAX_OFFSET + 1];
-        char        *dev_name = NULL;
-        int          read_bytes;
-        int          offset;
-        int          fd;
-        int          i;
-        const char   prefix[] = BOOT_ROM_VERSION_PREFIX;
-
-        if (!boundIface)
-            return VersionInfo("");
-
-        String  ifname = boundIface->ifName();
-
-        mtd_list = fopen("/proc/mtd", "r");
-        if (!mtd_list)
-        {
-            LINUX_LOG_ERR("Failed to open /proc/mtd");
-            return VersionInfo("");
-        }
-
-        fgets(line, sizeof(line), mtd_list);
-        while (fgets(line, sizeof(line), mtd_list))
-        {
-            char *p;
-
-            p = strchr(line, ':');
-            if (!p)
-                break;
-
-            *p++ = 0;
-            if (!strstr(p, ifname.c_str()) ||
-                !strstr(p, "sfc_exp_rom"))
-                continue;
-
-            dev_name = line;
-            break;
-        }
-        fclose(mtd_list);
-
-        if (!dev_name)
-            return VersionInfo("");
-
-        sprintf(dev_path, "/dev/%sro", dev_name);
-
-        fd = open(dev_path, O_RDONLY);
-        if (fd < 0)
-        {
-            LINUX_LOG_ERR("Failed to open file %s: %s",
-                            dev_path, strerror(errno));
-            return VersionInfo("");
-        }
-
-        read_bytes = read(fd, buf, BOOT_ROM_VERSION_MAX_OFFSET);
-        close(fd);
-
-        if (read_bytes < 0)
-        {
-            LINUX_LOG_ERR("Failed to read file %s: %s",
-                            dev_path, strerror(errno));
-            return VersionInfo("");
-        }
-
-        if (read_bytes != BOOT_ROM_VERSION_MAX_OFFSET)
-            return VersionInfo("");
-
-        offset = 0;
-        while (offset < read_bytes - (int)sizeof(prefix))
-        {
-            if (memcmp(&buf[offset], prefix, sizeof(prefix) - 1) == 0)
-            {
-                offset += sizeof(prefix) - 1;
-                break;
-            }
-            offset++;
-        }
-
-        if (offset == BOOT_ROM_VERSION_MAX_OFFSET - sizeof (prefix))
-            return VersionInfo("");
-
-        i = 0;
-        while ((offset + i < BOOT_ROM_VERSION_MAX_OFFSET) &&
-                (buf[offset + i] != ')'))
-            i++;
-
-        if (offset + i == BOOT_ROM_VERSION_MAX_OFFSET)
-            return VersionInfo("");
-
-        buf[offset + i] = '\0';
-
-        return VersionInfo(buf + offset);
-    }
-#endif
 
     class LinuxDiagnostic : public Diagnostic {
         bool online;
