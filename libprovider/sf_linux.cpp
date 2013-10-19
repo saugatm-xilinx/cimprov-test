@@ -52,6 +52,7 @@ extern "C" {
 #include <linux/sockios.h>
 
 #include "sf_mcdi_sensors.h"
+#include "sf_mtd.h"
 #include "sf_alerts.h"
 
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
@@ -787,6 +788,21 @@ namespace solarflare
 
     VersionInfo LinuxBootROM::version() const
     {
+        VersionInfo ver;
+
+        if (!boundIface)
+            return VersionInfo("");
+
+        if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
+                                 ver) == 0)
+            return ver;
+
+        return VersionInfo("");
+    }
+
+#if 0
+    VersionInfo LinuxBootROM::version() const
+    {
         FILE        *mtd_list;
         char         line[BUF_MAX_LEN];
         char         dev_path[BUF_MAX_LEN];
@@ -881,6 +897,7 @@ namespace solarflare
 
         return VersionInfo(buf + offset);
     }
+#endif
 
     class LinuxDiagnostic : public Diagnostic {
         bool online;

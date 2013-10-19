@@ -78,6 +78,7 @@ libprovider_GENERATED = module.cpp
 
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 libprovider_SOURCES += sf_mcdi_sensors.cpp
+libprovider_SOURCES += sf_mtd.cpp
 endif
 
 ifeq ($(PROVIDER_PLATFORM),windows)
