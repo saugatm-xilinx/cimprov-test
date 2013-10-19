@@ -436,6 +436,7 @@ namespace solarflare
                         __FUNCTION__,
                         static_cast<long int>(rc),
                         static_cast<long int>(cur_nv_part_size)));
+            delete[] configBuf;
             mtd_close();
             return -1;
         }
@@ -446,6 +447,7 @@ namespace solarflare
 
         ver = VersionInfo(item->version_w, item->version_x,
                           item->version_y, item->version_z);
+        delete[] configBuf;
         return 0;
     }
 }

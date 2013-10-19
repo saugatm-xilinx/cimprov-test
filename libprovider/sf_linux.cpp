@@ -29,6 +29,8 @@
 #include <linux/if.h>
 #include <linux/if_arp.h>
 
+#include "sf_siocefx_nvram.h"
+
 extern "C" {
 #include <pci/pci.h>
 #include <linux/pci.h>
@@ -789,6 +791,8 @@ namespace solarflare
     VersionInfo LinuxBootROM::version() const
     {
         VersionInfo ver;
+        int         s;
+        int         port_index;
 
         if (!boundIface)
             return VersionInfo("");
@@ -796,6 +800,27 @@ namespace solarflare
         if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
                                  ver) == 0)
             return ver;
+
+        if (boundIface->port() == NULL)
+            return VersionInfo("");
+
+        s = socket(PF_INET, SOCK_STREAM, 0);
+        if (s < 0)
+        {
+            CIMPLE_ERR(("Failed to open a socket"));
+            return VersionInfo("");
+        }
+
+        port_index = boundIface->port()->elementId();
+
+        if (siocEFXGetBootROMVersion(boundIface->ifName().c_str(),
+                                     port_index, s, true,
+                                     ver) == 0)
+        {
+            close(s);
+            return ver;
+        }
+        close(s);
 
         return VersionInfo("");
     }
