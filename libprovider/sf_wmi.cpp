@@ -1,3 +1,13 @@
+/***************************************************************************//*! \file liprovider/sf_wmi.cpp
+** <L5_PRIVATE L5_SOURCE>
+** \author  OktetLabs
+**  \brief  CIM Provider
+**   \date  2013/10/02
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
 #include <wbemprov.h>
 #include <cimple/wmi/BString.h>
 #include <cimple/wmi/utils.h>

@@ -1,3 +1,13 @@
+/***************************************************************************//*! \file liprovider/sf_mcdi_sensors.h
+** <L5_PRIVATE L5_SOURCE>
+** \author  OktetLabs
+**  \brief  CIM Provider
+**   \date  2013/10/02
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
 #ifndef SOLARFLARE_SF_MCDI_SENSORS_H
 #define SOLARFLARE_SF_MCDI_SENSORS_H 1
 

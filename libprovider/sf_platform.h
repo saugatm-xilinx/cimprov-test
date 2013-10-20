@@ -1,3 +1,13 @@
+/***************************************************************************//*! \file liprovider/sf_platform.h
+** <L5_PRIVATE L5_SOURCE>
+** \author  OktetLabs
+**  \brief  CIM Provider
+**   \date  2013/10/02
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
 #ifndef SOLARFLARE_SF_PLATFORM_H
 #define SOLARFLARE_SF_PLATFORM_H 1
 
