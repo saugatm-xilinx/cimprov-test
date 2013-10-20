@@ -58,7 +58,7 @@ def test_function(param = {}):
     def_param = {"enum": [False, True],
                  "assoc": [False, True],
                  "refer": [False, True],
-                 "count": [1, 10]}
+                 "count": [1]}
     
     for par_name in def_param:
         if param.get(par_name) != None:
