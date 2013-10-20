@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./mk/rules.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 ifeq ($(USE_EXISITING_SCHEMA),)
 $(CIM_SCHEMA_ZIP):
 	$(CURL) $(CIM_SCHEMA_REPOSITORY)/$(CIM_SCHEMA_ZIP) -o $@

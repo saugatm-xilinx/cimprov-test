@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./libcimobjects/sources.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 libcimobjects_PURPOSE = target
 libcimobjects_TARGET = libcimobjects.a
 libcimobjects_DIR = libcimobjects

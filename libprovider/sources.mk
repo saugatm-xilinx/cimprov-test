@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./libprovider/sources.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 libprovider_PURPOSE = target
 libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_AvailableDiagnosticService_Provider.cpp \

@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./mk/pegasus-win.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 override CIM_SCHEMA_VERSION_MINOR=28
 override CIM_SCHEMA_VERSION_EXPERIMENTAL=
 override CIM_SERVER = pegasus

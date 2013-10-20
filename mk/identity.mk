@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./mk/identity.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 PROVIDER_LIBRARY=Solarflare
 PROVIDER_NAME=solarflare-cim-provider
 PROVIDER_VERSION_MAJOR=1
