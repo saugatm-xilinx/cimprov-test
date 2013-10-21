@@ -1,3 +1,13 @@
+/***************************************************************************//*! \file liprovider/sf_mcdi_sensors.cpp
+** <L5_PRIVATE L5_SOURCE>
+** \author  OktetLabs
+**  \brief  CIM Provider
+**   \date  2013/10/02
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
 #include <cstdio>
 #include <cstdlib>
 #include <stdint.h>
@@ -7,17 +17,7 @@
 
 #include "efx_ioctl.h"
 #include "ci/mgmt/mc_driver_pcol.h"
-#include "ci/tools/byteorder.h"
-#include "ci/tools/bitfield.h"
-
-// These macros are used for setting proper value
-// for SIOCEFX ioctl.
-#define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
-    CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
-                        CI_DWORD_0, (_val))
-
-#define PAYLOAD_DWORD(_payload, _ofst) \
-    CI_DWORD_FIELD((_payload).dword[_ofst], CI_DWORD_0)
+#include "sf_siocefx_common.h"
 
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
@@ -29,13 +29,6 @@ namespace solarflare
 {
     using cimple::String;
     using cimple::Array;
-
-    /// Auxiliary type for MCDI data processing.
-    typedef union {
-        uint8_t     u8[MCDI_CTL_SDU_LEN_MAX];
-        uint16_t    u16[MCDI_CTL_SDU_LEN_MAX / 2];
-        ci_dword_t  dword[MCDI_CTL_SDU_LEN_MAX / 4];
-    } payload_t;
 
 #define MCDI_SENSOR_TYPE_CHECK(_name) \
     case MC_CMD_ ## _name: return _name

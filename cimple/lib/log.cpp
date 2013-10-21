@@ -604,17 +604,29 @@ static void _initialize(const char* name)
    
     const char* home = getenv(cimple_home_envvar.c_str());
 
+    static bool no_cimple_home_logged = false;
+    static bool no_home_logged = false;
+    static bool no_reading_logged = false;
+
     if (!home)
     {
-        LOG_ERR(("No CIMPLE_HOME env var defined. Looking for %s",
-            cimple_home_envvar.c_str()));
+        if (!no_cimple_home_logged)
+            LOG_ERR(("No CIMPLE_HOME env var defined. Looking for %s",
+                     cimple_home_envvar.c_str()));
+        no_cimple_home_logged = true;
         home = getenv("HOME");
         if (!home)
         {
-            LOG_ERR(("No HOME env var defined as well"));
+            if (!no_home_logged)
+                LOG_ERR(("No HOME env var defined as well"));
+            no_home_logged = true;
             return;
         }
+        else
+           no_home_logged = false;
     }
+    else
+        no_cimple_home_logged = false;
     LOG_DIAG(("CIMPLE home %s from env var %s",
         home,cimple_home_envvar.c_str()));
 
@@ -626,19 +638,28 @@ static void _initialize(const char* name)
     f = fopen(conf_path, "r");
     if (f == NULL)
     {
-        LOG_ERR(("Failed to open config file '%s' for reading",
-                 conf_path));
+        if (!no_reading_logged)
+            LOG_ERR(("Failed to open config file '%s' for reading",
+                     conf_path));
+        no_reading_logged = true;
         return;
     }
+    else
+        no_reading_logged = false;
     fclose(f);
 
     // WARNING: errors here are not really caught since the only way
     // to display is the log and these represent a log error.
+    static bool conf_input_logged = false;
     if (_read_config(conf_path) == -2)
     {
-        LOG_ERR(("Config file input error. %s", conf_path));
+        if (!conf_input_logged)
+            LOG_ERR(("Config file input error. %s", conf_path));
+        conf_input_logged = true;
         return;
     }
+    else
+        conf_input_logged = false;
 
     // Create $HOME/.cimple directory.
 
@@ -680,13 +701,18 @@ static void _initialize(const char* name)
     // keep trying to initialize.
     // TODO: This should probably mark logging disabled and get out
     // after setting initialize. Otherwise we keep retrying.
+    static bool lock_fail_logged = false;
     if (!_file_lock->okay())
     {
       delete _file_lock;
       _file_lock = 0;
-      LOG_ERR(("Log file lock create error %s", lock_file_path));
+      if (!lock_fail_logged)
+          LOG_ERR(("Log file lock create error %s", lock_file_path));
+      lock_fail_logged = true;
       return;
     }
+    else
+        lock_fail_logged = false;
 
     LOG_DIAG(("Log lock ok file at %s", lock_file_path));
 
@@ -705,13 +731,18 @@ static void _initialize(const char* name)
     _log_file_handle = fopen(log_file_path, "a");
 
     // If cannot create log file, 
+    static bool log_file_fail_logged = false;
     if (!_log_file_handle)
     {
         delete _file_lock;
         _file_lock = 0;
-        LOG_ERR(("Log file open error %s", log_file_path));
+        if (!log_file_fail_logged)
+            LOG_ERR(("Log file open error %s", log_file_path));
+        log_file_fail_logged = true;
         return;
     }
+    else
+        log_file_fail_logged = false;
     _initialized = true;
     LOG_DIAG(("log file initialized"));
 }

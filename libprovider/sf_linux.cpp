@@ -1,3 +1,13 @@
+/***************************************************************************//*! \file liprovider/sf_linux.cpp
+** <L5_PRIVATE L5_SOURCE>
+** \author  OktetLabs
+**  \brief  CIM Provider
+**   \date  2013/10/02
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
 #include "sf_platform.h"
 #include "sf_provider.h"
 #include "sf_logging.h"
@@ -29,6 +39,8 @@
 #include <linux/if.h>
 #include <linux/if_arp.h>
 
+#include "sf_siocefx_nvram.h"
+
 extern "C" {
 #include <pci/pci.h>
 #include <linux/pci.h>
@@ -52,6 +64,7 @@ extern "C" {
 #include <linux/sockios.h>
 
 #include "sf_mcdi_sensors.h"
+#include "sf_mtd.h"
 #include "sf_alerts.h"
 
 #define SYS_PCI_DEVICE_PATH             "/sys/bus/pci/devices"
@@ -61,9 +74,6 @@ extern "C" {
 #define VENDOR_SF_VALUE                 "0x1924"
 #define SYS_PATH_MAX_LEN                1024
 #define BUF_MAX_LEN                     256
-
-#define BOOT_ROM_VERSION_MAX_OFFSET     0x600
-#define BOOT_ROM_VERSION_PREFIX         "Solarflare Boot Manager (v"
 
 #define VPD_TAG_ID                      0x82
 #define VPD_TAG_R                       0x90
@@ -787,99 +797,41 @@ namespace solarflare
 
     VersionInfo LinuxBootROM::version() const
     {
-        FILE        *mtd_list;
-        char         line[BUF_MAX_LEN];
-        char         dev_path[BUF_MAX_LEN];
-        char         buf[BOOT_ROM_VERSION_MAX_OFFSET + 1];
-        char        *dev_name = NULL;
-        int          read_bytes;
-        int          offset;
-        int          fd;
-        int          i;
-        const char   prefix[] = BOOT_ROM_VERSION_PREFIX;
+        VersionInfo ver;
+        int         s;
+        int         port_index;
 
         if (!boundIface)
             return VersionInfo("");
 
-        String  ifname = boundIface->ifName();
+        if (boundIface->port() == NULL)
+            return VersionInfo("");
 
-        mtd_list = fopen("/proc/mtd", "r");
-        if (!mtd_list)
+        // Try SIOCEFX/MCDI_REQUEST firstly - it may be faster
+        s = socket(PF_INET, SOCK_STREAM, 0);
+        if (s < 0)
         {
-            LINUX_LOG_ERR("Failed to open /proc/mtd");
+            CIMPLE_ERR(("Failed to open a socket"));
             return VersionInfo("");
         }
 
-        fgets(line, sizeof(line), mtd_list);
-        while (fgets(line, sizeof(line), mtd_list))
+        port_index = boundIface->port()->elementId();
+
+        if (siocEFXGetBootROMVersion(boundIface->ifName().c_str(),
+                                     port_index, s, true,
+                                     ver) == 0)
         {
-            char *p;
-
-            p = strchr(line, ':');
-            if (!p)
-                break;
-
-            *p++ = 0;
-            if (!strstr(p, ifname.c_str()) ||
-                !strstr(p, "sfc_exp_rom"))
-                continue;
-
-            dev_name = line;
-            break;
+            close(s);
+            return ver;
         }
-        fclose(mtd_list);
+        close(s);
 
-        if (!dev_name)
-            return VersionInfo("");
+        // On failure try MTD using mtdchar or mtdblock module
+        if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
+                                 ver) == 0)
+            return ver;
 
-        sprintf(dev_path, "/dev/%sro", dev_name);
-
-        fd = open(dev_path, O_RDONLY);
-        if (fd < 0)
-        {
-            LINUX_LOG_ERR("Failed to open file %s: %s",
-                            dev_path, strerror(errno));
-            return VersionInfo("");
-        }
-
-        read_bytes = read(fd, buf, BOOT_ROM_VERSION_MAX_OFFSET);
-        close(fd);
-
-        if (read_bytes < 0)
-        {
-            LINUX_LOG_ERR("Failed to read file %s: %s",
-                            dev_path, strerror(errno));
-            return VersionInfo("");
-        }
-
-        if (read_bytes != BOOT_ROM_VERSION_MAX_OFFSET)
-            return VersionInfo("");
-
-        offset = 0;
-        while (offset < read_bytes - (int)sizeof(prefix))
-        {
-            if (memcmp(&buf[offset], prefix, sizeof(prefix) - 1) == 0)
-            {
-                offset += sizeof(prefix) - 1;
-                break;
-            }
-            offset++;
-        }
-
-        if (offset == BOOT_ROM_VERSION_MAX_OFFSET - sizeof (prefix))
-            return VersionInfo("");
-
-        i = 0;
-        while ((offset + i < BOOT_ROM_VERSION_MAX_OFFSET) &&
-                (buf[offset + i] != ')'))
-            i++;
-
-        if (offset + i == BOOT_ROM_VERSION_MAX_OFFSET)
-            return VersionInfo("");
-
-        buf[offset + i] = '\0';
-
-        return VersionInfo(buf + offset);
+        return VersionInfo("");
     }
 
     class LinuxDiagnostic : public Diagnostic {

@@ -1,3 +1,13 @@
+/***************************************************************************//*! \file liprovider/sf_port_helpers.cpp
+** <L5_PRIVATE L5_SOURCE>
+** \author  OktetLabs
+**  \brief  CIM Provider
+**   \date  2013/10/02
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
 #include "sf_provider.h"
 #include "SF_PhysicalConnector.h"
 #include "SF_NICCard.h"

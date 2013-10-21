@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./sles10/sources.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 sles10_archive_TARGET = $(PROVIDER_TARBALL_DIR).tar.gz
 sles10_archive_DIR = sles10
 

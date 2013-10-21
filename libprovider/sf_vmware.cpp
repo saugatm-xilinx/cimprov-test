@@ -1,3 +1,13 @@
+/***************************************************************************//*! \file liprovider/sf_vmware.cpp
+** <L5_PRIVATE L5_SOURCE>
+** \author  OktetLabs
+**  \brief  CIM Provider
+**   \date  2013/10/02
+**    \cop  (c) Solarflare Communications Inc.
+** </L5_PRIVATE>
+*//*
+\**************************************************************************/
+
 #include "sf_platform.h"
 #include "sf_provider.h"
 #include <cimple/Buffer.h>
@@ -9,11 +19,12 @@
 #include "CIM_SoftwareIdentity.h"
 
 #include "efx_ioctl.h"
-#include "ci/tools/byteorder.h"
-#include "ci/tools/bitfield.h"
 #include "ci/mgmt/mc_flash_layout.h"
 #include "efx_regs_mcdi.h"
+#include "ci/tools/byteorder.h"
+#include "ci/tools/bitfield.h"
 #include "image.h"
+#include "sf_siocefx_nvram.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,17 +62,6 @@
 #include "sf_alerts.h"
 
 #include <sys/syscall.h>
-
-// Size of block to be read from NIC NVRAM at once
-#define CHUNK_LEN 0x80
-
-// These macros are used for setting proper value
-// for SIOCEFX ioctl.
-#define SET_PAYLOAD_DWORD(_payload, _ofst, _val) \
-CI_POPULATE_DWORD_1((_payload).dword[_ofst], \
-                    CI_DWORD_0, (_val))
-#define PAYLOAD_DWORD(_payload, _ofst) \
-  CI_DWORD_FIELD((_payload).dword[_ofst], CI_DWORD_0)
 
 // Common paths for obtaining information about devices
 #define PROC_BUS_PATH       "/proc/bus/pci/"
@@ -396,15 +396,6 @@ fail:
         return i;
 #undef _MAX_FDS
     }
-
-    ///
-    /// Auxiliary type for MCDI data processing.
-    ///
-    typedef union {
-        uint8_t     u8[MCDI_CTL_SDU_LEN_MAX];
-        uint16_t    u16[MCDI_CTL_SDU_LEN_MAX/2];
-        ci_dword_t  dword[MCDI_CTL_SDU_LEN_MAX/4];
-    } payload_t;
 
     ///
     /// Description of Ethernet port.
@@ -1031,78 +1022,6 @@ fail:
     }
 
     ///
-    /// Read NVRAM data from NIC.
-    ///
-    /// @param fd        File descriptor to be used for ioctl()
-    /// @param data      Where to save obtained data
-    /// @param offset    Offset of data to be read
-    /// @param len       Length of data to be read
-    /// @param ifname    Interface name
-    /// @param type      This value is determined by port number
-    ///
-    /// @return 0 on success or error code
-    ///
-    static int readNVRAMBytes(int fd, uint8_t *data, unsigned int offset,
-                              unsigned int len,
-                              const char *ifname, int port_number)
-    {
-        unsigned int    end = offset + len;
-        unsigned int    chunk;
-        uint8_t        *ptr = data;
-
-        struct efx_mcdi_request *mcdi_req;
-        struct efx_ioctl         ioc;
-        payload_t                payload;
-        uint32_t                 type;
-
-        if (port_number == 0)
-            type = MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0;
-        else
-            type = MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT1;
-
-        for ( ; offset < end; )
-        {
-            chunk = end - offset;
-            if (chunk > CHUNK_LEN)
-                chunk = CHUNK_LEN;
-
-            memset(&ioc, 0, sizeof(ioc));
-            strncpy(ioc.if_name, ifname, sizeof(ioc.if_name));
-            ioc.cmd = EFX_MCDI_REQUEST;
-
-            mcdi_req = &ioc.u.mcdi_request;
-            mcdi_req->cmd = MC_CMD_NVRAM_READ;
-            mcdi_req->len = 12;
-            
-            memset(&payload, 0, sizeof(payload));
-            SET_PAYLOAD_DWORD(payload, 0, type);
-            SET_PAYLOAD_DWORD(payload, 1, offset);
-            SET_PAYLOAD_DWORD(payload, 2, chunk);
-            memcpy(mcdi_req->payload, payload.u8,
-                   mcdi_req->len);
-
-            if (ioctl(fd, SIOCEFX, &ioc) < 0)
-            {
-                CIMPLE_ERR(("ioctl(SIOCEFX/EFX_MCDI_REQUEST) failed, "
-                            "errno %d ('%s')",
-                            errno, strerror(errno)));
-                return -1;
-            }
-
-            memcpy(ptr, mcdi_req->payload, mcdi_req->len);
-            ptr += mcdi_req->len;
-            offset += mcdi_req->len;
-            if (mcdi_req->len == 0)
-            {
-                CIMPLE_ERR(("MCDI request returned data of zero length"));
-                return -1;
-            }
-        }
-
-        return 0;
-    }
-
-    ///
     /// Get VPD.
     ///
     /// @param ifname            Interface name
@@ -1122,6 +1041,7 @@ fail:
         uint8_t  *vpd;
         int       vpd_off;
         int       vpd_len;
+        uint32_t  nvram_type;
 
         siena_mc_static_config_hdr_t partial_hdr;
 
@@ -1133,9 +1053,13 @@ fail:
             return -1;
         }
 
-        if (readNVRAMBytes(fd, (uint8_t *)&partial_hdr, 0,
-                           sizeof(partial_hdr),
-                           ifname, port_number) < 0)
+        nvram_type = port_number == 0 ?
+                        MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0 :
+                                MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT1;
+
+        if (siocEFXReadNVRAM(fd, false, (uint8_t *)&partial_hdr, 0,
+                             sizeof(partial_hdr),
+                             ifname, nvram_type) < 0)
         {
             CIMPLE_ERR(("Failed to get header from NVRAM"));
             close(fd);
@@ -1156,8 +1080,8 @@ fail:
         vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
 
         vpd = new uint8_t[vpd_len];
-        if (readNVRAMBytes(fd, vpd, vpd_off, vpd_len,
-                           ifname, port_number) < 0)
+        if (siocEFXReadNVRAM(fd, false, vpd, vpd_off, vpd_len,
+                             ifname, nvram_type) < 0)
         {
             CIMPLE_ERR(("Failed to read VPD from NVRAM"));
             close(fd);

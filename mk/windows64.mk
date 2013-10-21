@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./mk/windows64.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 override target_CXX = x86_64-w64-mingw32-g++
 override target_AR = x86_64-w64-mingw32-ar 
 override target_CPPFLAGS = -I$(TOP) -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\" -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\" 

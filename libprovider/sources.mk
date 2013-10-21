@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./libprovider/sources.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 libprovider_PURPOSE = target
 libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_AvailableDiagnosticService_Provider.cpp \
@@ -78,6 +89,8 @@ libprovider_GENERATED = module.cpp
 
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 libprovider_SOURCES += sf_mcdi_sensors.cpp
+libprovider_SOURCES += sf_mtd.cpp
+libprovider_SOURCES += sf_siocefx_nvram.cpp
 endif
 
 ifeq ($(PROVIDER_PLATFORM),windows)

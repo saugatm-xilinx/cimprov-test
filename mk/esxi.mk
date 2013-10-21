@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./mk/esxi.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 CIM_INTERFACE=cmpi
 override CIM_SCHEMA_VERSION_MINOR = 17
 CIM_SCHEMA_ADDON_MOFS = DMTF/System/CIM_RecordLogCapabilities.mof

@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./mk/vars.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 include $(TOP)/mk/identity.mk
 
 PROVIDER_BITNESS ?= $(BITNESS)
@@ -66,4 +77,8 @@ override host_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
 endif
 
 override host_SYSLIBRARIES += pthread
+
+ifeq ($(PROVIDER_PLATFORM), linux)
+override host_SYSLIBRARIES += pci
+endif
 

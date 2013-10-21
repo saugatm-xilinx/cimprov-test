@@ -1,3 +1,14 @@
+##########################################################################
+#//#! \file ./mk/ibm.mk
+## <L5_PRIVATE L5_SOURCE>
+## \author  OktetLabs
+##  \brief  CIM Provider
+##   \date  2013/10/02
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 override CIM_SERVER=pegasus
 override CIM_INTERFACE=cmpi
 override CIMPLE_PLATFORM=$(HOST_CIMPLE_PLATFORM)
