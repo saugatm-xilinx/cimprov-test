@@ -118,8 +118,8 @@ endif
 
 ifneq ($(CIM_SERVER),esxi)
 install : all
-	mkdir -p $(DESTDIR)$(PROVIDER_LIBPATH)
-	cp lib$(PROVIDER_LIBRARY).so $(DESTDIR)$(PROVIDER_LIBPATH)
+	$(RUNASROOT) mkdir -p $(DESTDIR)$(PROVIDER_LIBPATH)
+	$(RUNASROOT) cp lib$(PROVIDER_LIBRARY).so $(DESTDIR)$(PROVIDER_LIBPATH)
 endif
 
 ifneq ($(PROVIDER_ROOT),)
