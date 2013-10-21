@@ -604,17 +604,28 @@ static void _initialize(const char* name)
    
     const char* home = getenv(cimple_home_envvar.c_str());
 
+    static bool no_cimple_home_logged = false;
+    static bool no_home_logged = false;
+
     if (!home)
     {
-        LOG_ERR(("No CIMPLE_HOME env var defined. Looking for %s",
-            cimple_home_envvar.c_str()));
+        if (!no_cimple_home_logged)
+            LOG_ERR(("No CIMPLE_HOME env var defined. Looking for %s",
+                     cimple_home_envvar.c_str()));
+        no_cimple_home_logged = true;
         home = getenv("HOME");
         if (!home)
         {
-            LOG_ERR(("No HOME env var defined as well"));
+            if (!no_home_logged)
+                LOG_ERR(("No HOME env var defined as well"));
+            no_home_logged = true;
             return;
         }
+        else
+           no_home_logged = false;
     }
+    else
+        no_cimple_home_logged = false;
     LOG_DIAG(("CIMPLE home %s from env var %s",
         home,cimple_home_envvar.c_str()));
 
