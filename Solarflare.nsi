@@ -66,6 +66,9 @@ File repository.reg
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\schema.mof"'
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\namespace.mof"'
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\interop.mof"'
+!if ${NEED_ASSOC_IN_ROOT_CIMV2} == 1
+!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${ROOT_NAMESPACE} "$INSTDIR\interop.mof"'
+!endif
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\repository.reg"'
 !else
 File libprovider/register.mof

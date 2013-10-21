@@ -123,7 +123,9 @@ install : all
 endif
 
 ifneq ($(PROVIDER_ROOT),)
-install-aux : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof
+install-aux : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
+			  $(libcimobjects_DIR)/interop.mof \
+			  $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof)
 	mkdir -p $(DESTDIR)$(PROVIDER_ROOT)/mof
 	cp $^ $(DESTDIR)$(PROVIDER_ROOT)/mof
 endif

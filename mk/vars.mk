@@ -32,6 +32,7 @@ IMP_NAMESPACE=root/cimv2
 else
 IMP_NAMESPACE=root/solarflare
 endif
+ROOT_NAMESPACE?=root/cimv2
 ifeq ($(CIM_SERVER),pegasus)
 INTEROP_NAMESPACE=root/pg_interop
 else

@@ -40,6 +40,7 @@ m4_ifdef([__CIMOM_SERVICE_NAME__],
 __PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc -aE __PROVIDER_ROOT__/mof/schema.mof
 __PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/namespace.mof
 __PEGASUS_BINPATH__/cimmof -n __INTEROP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/interop.mof
+__PEGASUS_BINPATH__/cimmof -n __ROOT_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/root.mof
 __PEGASUS_BINPATH__/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/repository.reg
 
 
@@ -47,6 +48,7 @@ __PEGASUS_BINPATH__/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/reposi
 __PEGASUS_BINPATH__/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
 m4_ifdef([__CIMMOFR__],
 [
+__CIMMOFR__ -n __ROOT_NAMESPACE__ __PROVIDER_ROOT__/mof/root.mof
 __CIMMOFR__ -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/interop.mof
 __CIMMOFR__ -n __IMP_NAMESPACE__  __PROVIDER_ROOT__/mof/namespace.mof
 __CIMMOFR__ -n __IMP_NAMESPACE__ __PROVIDER_ROOT__/mof/schema.mof
@@ -61,6 +63,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 __PROVIDER_LIBPATH__/__libprovider_TARGET__
 %attr(444,root,root) __PROVIDER_ROOT__/mof/namespace.mof
+%attr(444,root,root) __PROVIDER_ROOT__/mof/root.mof
 %attr(444,root,root) __PROVIDER_ROOT__/mof/interop.mof
 %attr(444,root,root) __PROVIDER_ROOT__/mof/schema.mof
 %attr(444,root,root) __PROVIDER_ROOT__/mof/repository.reg

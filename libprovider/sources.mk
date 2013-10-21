@@ -117,7 +117,7 @@ libprovider_CPPFLAGS = $(libprovider_PROVIDE_CPPFLAGS) -Ilibprovider/v5_import -
 	-DPROVIDER_VENDOR='"$(PROVIDER_VENDOR)"' \
 	-DPROVIDER_DESCRIPTION='"$(PROVIDER_DESCRIPTION)"'
 
-ifeq ($(CIM_SERVER),esxi)
+ifneq ($(CIM_INTERFACE),wmi)
 NEED_ASSOC_IN_ROOT_CIMV2=1
 libprovider_CPPFLAGS += -DNEED_ASSOC_IN_ROOT_CIMV2=$(NEED_ASSOC_IN_ROOT_CIMV2)
 endif
@@ -170,13 +170,14 @@ $(eval $(call component,libprovider,SHARED_LIBRARIES))
 repository.reg : $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/classes $(TOP)/mof2reg.awk
 	$(AWK) -f $(TOP)/mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
                 -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
-                -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),root/cimv2)" \
+                -vROOT_NAMESPACE="$(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(ROOT_NAMESPACE))" \
 				-vINTERFACE="$(CIM_INTERFACE)" \
                 -vCLASSLIST="`cat $(word 2,$^)`" -vTARGET="$(CIM_SERVER)" $< >$@
 
 .PHONY : registration 
 
-registration : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof
+registration : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
+							  $(libcimobjects_DIR)/interop.mof $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof)
 
 ifeq ($(CIM_SERVER),pegasus)
 
@@ -184,10 +185,15 @@ ifeq ($(PEGASUS_MANAGEABLE),1)
 register : $(PEGASUS_START_CONF)
 endif
 
-register: repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof install 
+register: repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
+						 $(libcimobjects_DIR)/interop.mof \
+						 $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof) install
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/namespace.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof
+ifeq ($(NEED_ASSOC_IN_ROOT_CIMV2),1)
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(ROOT_NAMESPACE) $(libcimobjects_DIR)/root.mof
+endif
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg
 
 unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
@@ -233,8 +239,12 @@ NSIS_DEPENDENCIES=$(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/namespace
 				  $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof
 NSIS_OPTIONS=-DNAMESPACE='\\.\root\cimv2'
 else
-NSIS_DEPENDENCIES=repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof
-NSIS_OPTIONS=-DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMESPACE)'
+NSIS_DEPENDENCIES=repository.reg $(libcimobjects_DIR)/namespace.mof \
+					$(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof \
+					$(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof)
+NSIS_OPTIONS=-DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMESPACE)' \
+			 $(if $(NEED_ASSOC_IN_ROOT_CIMV2),-DNEED_ASSOC_IN_ROOT_CIMV2=1) \
+			 -DROOT_NAMESPACE='$(ROOT_NAMESPACE)'
 endif
 
 $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSIS_DEPENDENCIES)
