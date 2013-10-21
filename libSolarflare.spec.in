@@ -30,6 +30,12 @@ rm -rf $RPM_BUILD_ROOT
 make CONFIG=__CONFIG__ DESTDIR=$RPM_BUILD_ROOT install
 make CONFIG=__CONFIG__ DESTDIR=$RPM_BUILD_ROOT install-aux
 
+%pre
+m4_ifdef([__CIMOM_SERVICE_NAME__],
+[
+( /etc/init.d/__CIMOM_SERVICE_NAME__ status &> /dev/null ) || exit 3
+])
+
 %post
 __PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc -aE __PROVIDER_ROOT__/mof/schema.mof
 __PEGASUS_BINPATH__/cimmof -n __IMP_NAMESPACE__ -uc __PROVIDER_ROOT__/mof/namespace.mof

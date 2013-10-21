@@ -21,5 +21,5 @@ override CIM_INTERFACE=cmpi
 
 override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
 
-PROVIDER_RPM_BUILD_REQUIRES = tog-pegasus-devel
-PROVIDER_RPM_REQUIRES = tog-pegasus-libs
+PROVIDER_RPM_REQUIRES = tog-pegasus
+CIMOM_SERVICE_NAME = tog-pegasus

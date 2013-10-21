@@ -9,3 +9,6 @@ override PROVIDER_PLATFORM = linux
 override PROVIDER_PLATFORM_VARIANT = ibmdpa
 RUNASROOT = sudo 
 CURL = curl -u$(LOGNAME)
+
+PROVIDER_RPM_REQUIRES = ibmcimom
+CIMOM_SERVICE_NAME = cimserverd
