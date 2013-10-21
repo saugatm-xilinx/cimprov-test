@@ -62,12 +62,15 @@ File libcimobjects/namespace.mof
 File libcimobjects/schema.mof
 !if ${CIM_INTERFACE} == cmpi
 File libcimobjects/interop.mof
+!if ${NEED_ASSOC_IN_ROOT_CIMV2} == 1
+File libcimobjects/root.mof
+!endif
 File repository.reg
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\schema.mof"'
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${NAMESPACE} "$INSTDIR\namespace.mof"'
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\interop.mof"'
 !if ${NEED_ASSOC_IN_ROOT_CIMV2} == 1
-!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${ROOT_NAMESPACE} "$INSTDIR\interop.mof"'
+!insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${ROOT_NAMESPACE} "$INSTDIR\root.mof"'
 !endif
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\repository.reg"'
 !else
@@ -95,6 +98,9 @@ RMDir /r '${PegasusRoot}\repository\root#solarflare'
 !insertmacro SilentExec 'net' 'start cimserver'
 Delete $INSTDIR\repository.reg
 Delete $INSTDIR\interop.mof
+!if ${NEED_ASSOC_IN_ROOT_CIMV2} == 1
+Delete $INSTDIR\root.mof
+!endif
 !else
 !insertmacro SilentExecNofail wmic `path __InstanceProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
 !insertmacro SilentExecNofail wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
