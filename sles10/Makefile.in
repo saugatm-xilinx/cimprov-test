@@ -35,6 +35,7 @@ register: install
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n __IMP_NAMESPACE__ __libcimobjects_DIR__/schema.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n __IMP_NAMESPACE__ __libcimobjects_DIR__/namespace.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n __INTEROP_NAMESPACE__ __libcimobjects_DIR__/interop.mof
+	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n __ROOT_NAMESPACE__ __libcimobjects_DIR__/root.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n __INTEROP_NAMESPACE__ repository.reg
 
 unregister: 
@@ -46,5 +47,6 @@ install-aux :
 	cp libcimobjects/namespace.mof $(DESTDIR)/$(MOFPATH)
 	cp libcimobjects/interop.mof $(DESTDIR)/$(MOFPATH)
 	cp libcimobjects/schema.mof $(DESTDIR)/$(MOFPATH)
+	cp libcimobjects/root.mof $(DESTDIR)/$(MOFPATH)
 	cp repository.reg $(DESTDIR)/$(MOFPATH)
 endif
