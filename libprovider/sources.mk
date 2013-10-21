@@ -180,7 +180,11 @@ registration : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects
 
 ifeq ($(CIM_SERVER),pegasus)
 
-register: repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof install $(PEGASUS_START_CONF)
+ifeq ($(PEGASUS_MANAGEABLE),1)
+register : $(PEGASUS_START_CONF)
+endif
+
+register: repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/interop.mof install 
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/namespace.mof
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -n $(INTEROP_NAMESPACE) $(libcimobjects_DIR)/interop.mof

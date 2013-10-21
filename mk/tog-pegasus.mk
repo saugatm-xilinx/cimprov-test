@@ -23,7 +23,6 @@ override PEGASUS_SERVER = /usr/sbin/cimserver
 override PEGASUS_REPODIR = $(PEGASUS_HOME)/repository
 override PROVIDER_LIBPATH = $(PEGASUS_LIBDIR)/Pegasus/providers
 override PROVIDER_ROOT = /usr/share/$(PROVIDER_LIBRARY)
-override PEGASUS_START_CONF = /var/run/tog-pegasus/cimserver.pid
 
 CIMPLE_PLATFORM = $(HOST_CIMPLE_PLATFORM)
 override PROVIDER_PLATFORM = linux
