@@ -67,7 +67,7 @@ Modify_Instance_Status SF_EnabledLogicalElementCapabilities_Provider::modify_ins
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
-#if CIM_SCHEMA_VERSION_MINOR < 28
+#if CIM_SCHEMA_VERSION_MINOR < 28  || CIM_SCHEMA_VERSION_MINOR == 32
 Invoke_Method_Status SF_EnabledLogicalElementCapabilities_Provider::CreateGoalSettings(
     const SF_EnabledLogicalElementCapabilities* self,
     const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,

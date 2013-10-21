@@ -572,7 +572,7 @@ namespace solarflare
         newSvc->SupportedLogOptions.value.append(SF_DiagnosticServiceCapabilities::_SupportedLogOptions::enum_Results);
         
         newSvc->SupportedLogStorage.null = false;
-#if CIM_SCHEMA_VERSION_MINOR < 28
+#if CIM_SCHEMA_VERSION_MINOR < 28 || CIM_SCHEMA_VERSION_MINOR >= 32
         newSvc->SupportedLogStorage.value.append(SF_DiagnosticServiceCapabilities::_SupportedLogStorage::enum_DiagnosticLog);
 #else
         newSvc->SupportedLogStorage.value.append(SF_DiagnosticServiceCapabilities::_SupportedLogStorage::enum_DiagnosticRecordLog);

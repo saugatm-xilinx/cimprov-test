@@ -65,7 +65,7 @@ Modify_Instance_Status SF_DiagnosticServiceCapabilities_Provider::modify_instanc
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
-#if CIM_SCHEMA_VERSION_MINOR < 28
+#if CIM_SCHEMA_VERSION_MINOR < 28 || CIM_SCHEMA_VERSION_MINOR == 32
 Invoke_Method_Status SF_DiagnosticServiceCapabilities_Provider::CreateGoalSettings(
     const SF_DiagnosticServiceCapabilities* self,
     const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,

@@ -51,7 +51,7 @@ public:
         const SF_DiagnosticLogCapabilities* model,
         const SF_DiagnosticLogCapabilities* instance);
 
-#if CIM_SCHEMA_VERSION_MINOR < 28
+#if CIM_SCHEMA_VERSION_MINOR < 28 || CIM_SCHEMA_VERSION_MINOR == 32
     Invoke_Method_Status CreateGoalSettings(
         const SF_DiagnosticLogCapabilities* self,
         const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,

@@ -472,7 +472,7 @@ void MOF_Class_Decl::validate()
 
     if (MOF_Class_Decl::find(name))
     {
-        MOF_error_printf(
+        MOF_warning_printf(
             "class already defined: \"%s\"", name);
     }
 
@@ -799,9 +799,8 @@ void MOF_Class_Decl::validate()
 
         if (n1 && n1 != n2)
         {
-            MOF_error_printf(
+            MOF_warning_printf(
                 "a subclass cannot define any keys if the superclass has");
-            return;
         }
     }
 

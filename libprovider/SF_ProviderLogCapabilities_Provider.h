@@ -51,7 +51,7 @@ public:
         const SF_ProviderLogCapabilities* model,
         const SF_ProviderLogCapabilities* instance);
 
-#if CIM_SCHEMA_VERSION_MINOR < 28
+#if CIM_SCHEMA_VERSION_MINOR < 28 || CIM_SCHEMA_VERSION_MINOR == 32
     Invoke_Method_Status CreateGoalSettings(
         const SF_ProviderLogCapabilities* self,
         const Property< Array<CIM_SettingData*> >& TemplateGoalSettings,
