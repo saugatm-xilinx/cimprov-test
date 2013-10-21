@@ -23,3 +23,4 @@ CURL = curl -u$(LOGNAME)
 
 PROVIDER_RPM_REQUIRES = ibmcimom
 CIMOM_SERVICE_NAME = cimserverd
+CIMMOFR = $(PEGASUS_BINPATH)/cimmofr

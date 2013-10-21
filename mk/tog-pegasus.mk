@@ -16,7 +16,7 @@ SYSLIBDIR=lib
 endif
 override PEGASUS_ROOT=/usr
 override PEGASUS_HOME=/var/lib/Pegasus
-override PEGASUS_LIBDIR = $(PEGASUS_ROOT)/lib
+override PEGASUS_LIBDIR = $(PEGASUS_ROOT)/$(SYSLIBDIR)
 override PEGASUS_INCLUDES = $(PEGASUS_ROOT)/include
 override PEGASUS_BINPATH = $(PEGASUS_ROOT)/bin
 override PEGASUS_SERVER = /usr/sbin/cimserver

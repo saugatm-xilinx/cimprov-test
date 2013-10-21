@@ -45,6 +45,13 @@ __PEGASUS_BINPATH__/cimmof -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/reposi
 
 %preun
 __PEGASUS_BINPATH__/cimprovider -r -m __PROVIDER_LIBRARY__[]_Module
+m4_ifdef([__CIMMOFR__],
+[
+__CIMMOFR__ -n __INTEROP_NAMESPACE__ __PROVIDER_ROOT__/mof/interop.mof
+__CIMMOFR__ -n __IMP_NAMESPACE__  __PROVIDER_ROOT__/mof/namespace.mof
+__CIMMOFR__ -n __IMP_NAMESPACE__ __PROVIDER_ROOT__/mof/schema.mof
+__CIMMOFR__ -rn __IMP_NAMESPACE__
+])
 
 %clean
 rm -rf $RPM_BUILD_ROOT
