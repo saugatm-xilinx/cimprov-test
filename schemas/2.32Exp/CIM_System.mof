@@ -29,10 +29,10 @@
 // ====================================================
 // Title      : CIM_System MOF
 // Filename   : CIM_System.mof
-// Version    : CIM 231
-// Date       : 01/18/2012
+// Version    : CIM 236
+// Date       : 04/29/2013
 // Description: This file was created by The OpenPegasus Group to
-//              create DMTF CIM Schema Version 231 
+//              create DMTF CIM Schema Version 236 
 //              interface filesfiles compatible with OpenPegasus 
 //              build enviroment.
 //
@@ -53,6 +53,8 @@
 #pragma include ("DMTF/System/CIM_MethodResult.mof")
 #pragma include ("DMTF/System/CIM_RecordForLog.mof")
 #pragma include ("DMTF/System/CIM_UnixProcessStatisticalInformation.mof")
+#pragma include ("DMTF/System/CIM_VirtualSystemMigrationSettingData.mof")
+#pragma include ("DMTF/System/CIM_VirtualSystemSettingData.mof")
 #pragma include ("DMTF/System/CIM_BIOSServiceCapabilities.mof")
 #pragma include ("DMTF/System/CIM_BootServiceCapabilities.mof")
 #pragma include ("DMTF/System/CIM_ComputerSystemNodeCapabilities.mof")
@@ -71,6 +73,8 @@
 #pragma include ("DMTF/System/CIM_PlatformWatchdogServiceCapabilities.mof")
 #pragma include ("DMTF/System/CIM_RecordAppliesToElement.mof")
 #pragma include ("DMTF/System/CIM_RecordLogCapabilities.mof")
+#pragma include ("DMTF/System/CIM_ResourceAllocationFromPool.mof")
+#pragma include ("DMTF/System/CIM_SettingAssociatedToCapabilities.mof")
 #pragma include ("DMTF/System/CIM_SymbolicLink.mof")
 #pragma include ("DMTF/System/CIM_TimeZone.mof")
 #pragma include ("DMTF/System/CIM_UnixFile.mof")
@@ -107,6 +111,7 @@
 #pragma include ("DMTF/System/CIM_JobDestination.mof")
 #pragma include ("DMTF/System/CIM_JobDestinationJobs.mof")
 #pragma include ("DMTF/System/CIM_JobQueue.mof")
+#pragma include ("DMTF/System/CIM_LastAppliedSnapshot.mof")
 #pragma include ("DMTF/System/CIM_LocalFileSystem.mof")
 #pragma include ("DMTF/System/CIM_Log.mof")
 #pragma include ("DMTF/System/CIM_LogManagesRecord.mof")
@@ -124,6 +129,7 @@
 #pragma include ("DMTF/System/CIM_ResidesOnExtent.mof")
 #pragma include ("DMTF/System/CIM_RunningOS.mof")
 #pragma include ("DMTF/System/CIM_ServiceProcess.mof")
+#pragma include ("DMTF/System/CIM_SnapshotOfVirtualSystem.mof")
 #pragma include ("DMTF/System/CIM_SystemResource.mof")
 #pragma include ("DMTF/System/CIM_Thread.mof")
 #pragma include ("DMTF/System/CIM_UnitaryComputerSystem.mof")

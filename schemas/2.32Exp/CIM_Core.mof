@@ -29,10 +29,10 @@
 // ====================================================
 // Title      : CIM_Core MOF
 // Filename   : CIM_Core.mof
-// Version    : CIM 231
-// Date       : 01/18/2012
+// Version    : CIM 236
+// Date       : 04/29/2013
 // Description: This file was created by The OpenPegasus Group to
-//              create DMTF CIM Schema Version 231 
+//              create DMTF CIM Schema Version 236 
 //              interface filesfiles compatible with OpenPegasus 
 //              build enviroment.
 //
@@ -63,7 +63,6 @@
 #pragma include ("DMTF/Core/CIM_SystemConfiguration.mof")
 #pragma include ("DMTF/Core/CIM_SystemStatisticalInformation.mof")
 #pragma include ("DMTF/Core/CIM_View.mof")
-#pragma include ("DMTF/Core/CIM_VirtualSystemSettingData.mof")
 #pragma include ("DMTF/Core/CIM_Capabilities.mof")
 #pragma include ("DMTF/Core/CIM_Collection.mof")
 #pragma include ("DMTF/Core/CIM_CollectionOfMSEs.mof")
@@ -80,6 +79,7 @@
 #pragma include ("DMTF/Core/CIM_ElementConfiguration.mof")
 #pragma include ("DMTF/Core/CIM_ElementSettingData.mof")
 #pragma include ("DMTF/Core/CIM_ElementStatisticalData.mof")
+#pragma include ("DMTF/Core/CIM_ElementView.mof")
 #pragma include ("DMTF/Core/CIM_EnabledLogicalElementCapabilities.mof")
 #pragma include ("DMTF/Core/CIM_FRU.mof")
 #pragma include ("DMTF/Core/CIM_FRUIncludesProduct.mof")
@@ -99,7 +99,6 @@
 #pragma include ("DMTF/Core/CIM_PhysicalStatisticalInformation.mof")
 #pragma include ("DMTF/Core/CIM_PhysicalStatistics.mof")
 #pragma include ("DMTF/Core/CIM_PowerManagementCapabilities.mof")
-#pragma include ("DMTF/Core/CIM_PowerUtilizationManagementCapabilities.mof")
 #pragma include ("DMTF/Core/CIM_ProductComponent.mof")
 #pragma include ("DMTF/Core/CIM_ProductElementComponent.mof")
 #pragma include ("DMTF/Core/CIM_ProductFRU.mof")
@@ -117,7 +116,6 @@
 #pragma include ("DMTF/Core/CIM_ScopedSettingData.mof")
 #pragma include ("DMTF/Core/CIM_ServiceStatisticalInformation.mof")
 #pragma include ("DMTF/Core/CIM_Setting.mof")
-#pragma include ("DMTF/Core/CIM_SettingAssociatedToCapabilities.mof")
 #pragma include ("DMTF/Core/CIM_SettingContext.mof")
 #pragma include ("DMTF/Core/CIM_SettingsDefineCapabilities.mof")
 #pragma include ("DMTF/Core/CIM_SoftwareIdentity.mof")
@@ -129,6 +127,7 @@
 #pragma include ("DMTF/Core/CIM_SystemSetting.mof")
 #pragma include ("DMTF/Core/CIM_SystemSettingContext.mof")
 #pragma include ("DMTF/Core/CIM_SystemSpecificCollection.mof")
+#pragma include ("DMTF/System/CIM_VirtualSystemSettingData.mof")
 #pragma include ("DMTF/Core/CIM_VirtualEthernetSwitchSettingData.mof")
 #pragma include ("DMTF/Core/CIM_VirtualSystemManagementCapabilities.mof")
 #pragma include ("DMTF/Core/CIM_VirtualSystemSnapshotCapabilities.mof")
@@ -151,10 +150,10 @@
 #pragma include ("DMTF/Core/CIM_ExtraCapacityGroup.mof")
 #pragma include ("DMTF/Core/CIM_Job.mof")
 #pragma include ("DMTF/Core/CIM_PhysicalElementLocation.mof")
+#pragma include ("DMTF/Core/CIM_ProcessorAllocationSettingData.mof")
 #pragma include ("DMTF/Core/CIM_ProductSoftwareComponent.mof")
 #pragma include ("DMTF/Core/CIM_RedundancyComponent.mof")
 #pragma include ("DMTF/Core/CIM_RedundancySet.mof")
-#pragma include ("DMTF/Core/CIM_ResourceAllocationFromPool.mof")
 #pragma include ("DMTF/Core/CIM_ScopedSetting.mof")
 #pragma include ("DMTF/Core/CIM_StatisticsCollection.mof")
 #pragma include ("DMTF/Core/CIM_StorageRedundancySet.mof")
@@ -163,6 +162,7 @@
 #pragma include ("DMTF/Core/CIM_EnabledLogicalElement.mof")
 #pragma include ("DMTF/Core/CIM_IsSpare.mof")
 #pragma include ("DMTF/Core/CIM_LogicalDevice.mof")
+#pragma include ("DMTF/Core/CIM_PhysicalComputerSystemView.mof")
 #pragma include ("DMTF/Core/CIM_Realizes.mof")
 #pragma include ("DMTF/Core/CIM_Service.mof")
 #pragma include ("DMTF/Core/CIM_ServiceAccessPoint.mof")
@@ -194,13 +194,9 @@
 #pragma include ("DMTF/Core/CIM_HostedResourcePool.mof")
 #pragma include ("DMTF/Core/CIM_HostedService.mof")
 #pragma include ("DMTF/Core/CIM_InstalledSoftwareIdentity.mof")
-#pragma include ("DMTF/System/CIM_ComputerSystem.mof")
-#pragma include ("DMTF/Core/CIM_LastAppliedSnapshot.mof")
 #pragma include ("DMTF/Core/CIM_OpaqueManagementData.mof")
 #pragma include ("DMTF/Core/CIM_OpaqueManagementDataService.mof")
 #pragma include ("DMTF/Core/CIM_PowerManagementService.mof")
-#pragma include ("DMTF/Device/CIM_PowerAllocationSettingData.mof")
-#pragma include ("DMTF/Core/CIM_PowerUtilizationManagementService.mof")
 #pragma include ("DMTF/Core/CIM_ProductServiceComponent.mof")
 #pragma include ("DMTF/Core/CIM_ProtocolEndpoint.mof")
 #pragma include ("DMTF/Core/CIM_ProvidesServiceToElement.mof")
@@ -212,7 +208,6 @@
 #pragma include ("DMTF/Core/CIM_ServiceAccessBySAP.mof")
 #pragma include ("DMTF/Core/CIM_ServiceServiceDependency.mof")
 #pragma include ("DMTF/Core/CIM_SettingForSystem.mof")
-#pragma include ("DMTF/Core/CIM_SnapshotOfVirtualSystem.mof")
 #pragma include ("DMTF/Core/CIM_VirtualSystemManagementService.mof")
 #pragma include ("DMTF/Core/CIM_VirtualSystemSnapshotService.mof")
 #pragma include ("DMTF/Core/CIM_ActiveConnection.mof")
