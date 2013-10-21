@@ -18,7 +18,6 @@ override PROVIDER_ROOT=/opt/solarflare
 override CIM_SCHEMA_DIR = $(abspath $(CIM_SCHEMA_PATCHDIR))
 override PROVIDER_PLATFORM = linux
 override PROVIDER_PLATFORM_VARIANT = ibmdpa
-RUNASROOT = sudo 
 CURL = curl -u$(LOGNAME)
 
 PROVIDER_RPM_REQUIRES = ibmcimom
