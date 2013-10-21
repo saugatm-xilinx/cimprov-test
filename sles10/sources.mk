@@ -14,6 +14,7 @@ sles10_archive_DIR = sles10
 
 sles10_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
 								  $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof \
+								  $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof) \
 				                  repository.reg \
 								  $(CIM_SCHEMA_DIR) \
 								  lib$(PROVIDER_LIBRARY).spec
