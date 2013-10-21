@@ -267,27 +267,29 @@ namespace solarflare
         const SWElement& sw = static_cast<const SWElement&>(se);
         
         SF_SoftwareIdentity *identity = static_cast<SF_SoftwareIdentity *>(reference(sw, idx));
+
+        VersionInfo swVer = sw.version();
         
         identity->IsEntity.set(true);
 #if CIM_SCHEMA_VERSION_MINOR > 0
         identity->ElementName.set(sw.sysName());
 #endif
         identity->Name.set(se.name());
-        identity->MajorVersion.set(sw.version().major());
-        identity->MinorVersion.set(sw.version().minor());
-        if (sw.version().revision() != VersionInfo::unknown)
-            identity->RevisionNumber.set(sw.version().revision());
-        if (sw.version().build() != VersionInfo::unknown)
+        identity->MajorVersion.set(swVer.major());
+        identity->MinorVersion.set(swVer.minor());
+        if (swVer.revision() != VersionInfo::unknown)
+            identity->RevisionNumber.set(swVer.revision());
+        if (swVer.build() != VersionInfo::unknown)
         {
 #if CIM_SCHEMA_VERSION_MINOR == 26
-            identity->LargeBuildNumber.set(sw.version().build());
+            identity->LargeBuildNumber.set(swVer.build());
             identity->IsLargeBuildNumber.set(true);
 #else
-            identity->BuildNumber.set(sw.version().build());
+            identity->BuildNumber.set(swVer.build());
 #endif
         }
-        identity->VersionString.set(sw.version().string());
-        identity->ReleaseDate.set(sw.version().releaseDate());
+        identity->VersionString.set(swVer.string());
+        identity->ReleaseDate.set(swVer.releaseDate());
         identity->Description.set(sw.description());
 
         identity->Manufacturer.set(System::target.manufacturer());
