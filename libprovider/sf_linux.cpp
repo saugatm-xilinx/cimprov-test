@@ -804,13 +804,10 @@ namespace solarflare
         if (!boundIface)
             return VersionInfo("");
 
-        if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
-                                 ver) == 0)
-            return ver;
-
         if (boundIface->port() == NULL)
             return VersionInfo("");
 
+        // Try SIOCEFX/MCDI_REQUEST firstly - it may be faster
         s = socket(PF_INET, SOCK_STREAM, 0);
         if (s < 0)
         {
@@ -828,6 +825,11 @@ namespace solarflare
             return ver;
         }
         close(s);
+
+        // On failure try MTD using mtdchar or mtdblock module
+        if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
+                                 ver) == 0)
+            return ver;
 
         return VersionInfo("");
     }
