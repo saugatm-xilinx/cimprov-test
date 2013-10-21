@@ -182,7 +182,7 @@ registration : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects
 ifeq ($(CIM_SERVER),pegasus)
 
 ifeq ($(PEGASUS_MANAGEABLE),1)
-register : $(PEGASUS_START_CONF)
+register unregister : $(PEGASUS_START_CONF)
 endif
 
 register: repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
@@ -196,7 +196,7 @@ ifeq ($(NEED_ASSOC_IN_ROOT_CIMV2),1)
 endif
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg
 
-unregister: $(regmod_TARGET) $(PEGASUS_START_CONF)
+unregister: 
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimprovider -r -m $(PROVIDER_LIBRARY)_Module
 
 endif
