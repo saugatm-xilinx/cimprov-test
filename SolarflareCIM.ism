@@ -304,7 +304,7 @@
 		<col def="S255">Argument</col>
 		<col def="s38">Feature_</col>
 		<col def="I2">Attributes</col>
-		<row><td>{E0883443-7EC0-1251-84ED-F96921AB5923}</td><td>InprocServer32</td><td>Provider</td><td/><td>Solarflare_Module</td><td/><td/><td/><td/><td/><td/><td>SolarflareCIM_Files</td><td/></row>
+		<row><td>{05FE7AB5-1198-1A9D-B261-8F5709C8E02E}</td><td>InprocServer32</td><td>Provider</td><td/><td>Solarflare_Module</td><td/><td/><td/><td/><td/><td/><td>SolarflareCIM_Files</td><td/></row>
 	</table>
 
 	<table name="ComboBox">
@@ -4041,7 +4041,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col key="yes" def="s255">Condition</col>
 		<col def="l255">Description</col>
 		<row><td>(Not Version9X) And (Not VersionNT=400) And (Not VersionNT=500) And (Not VersionNT=501) And (Not (VersionNT=600 And (MsiNTProductType=1))) And (Not (VersionNT=601 And (MsiNTProductType=1)))</td><td>##IDPROP_EXPRESS_LAUNCH_CONDITION_OS##</td></row>
-		<row><td>CIM_SERVER_IS_RUNNING=1</td><td>##ID_CIM_SERVER_IS_NOT_RUNNING##</td></row>
+		<row><td>CIM_SERVER_RUNNING = "1"</td><td>##ID_CIM_SERVER_IS_NOT_RUNNING##</td></row>
 	</table>
 
 	<table name="ListBox">
@@ -4090,10 +4090,9 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="s72">Namespace</col>
 		<col def="i2">Options</col>
 		<col def="i2">Sequence</col>
-		<row><td>NAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>2</td><td>200</td></row>
-		<row><td>REGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>2</td><td>300</td></row>
-		<row><td>SCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>2</td><td>100</td></row>
-		<row><td>UNREGISTERMOF</td><td>AllOtherFiles</td><td>unregister.mof</td><td>INSTALLDIR</td><td>\\.\root\cimv2</td><td>4</td><td>100</td></row>
+		<row><td>NAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>root/cimv2</td><td>6</td><td>200</td></row>
+		<row><td>REGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>root/cimv2</td><td>6</td><td>300</td></row>
+		<row><td>SCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>root/cimv2</td><td>6</td><td>100</td></row>
 	</table>
 
 	<table name="MoveFile">
@@ -4436,7 +4435,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<row><td>Registry3</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>InstallLocation</td><td>[SystemFolder]\wbem\Solarflare.dll</td><td>Provider</td><td>0</td></row>
 		<row><td>Registry4</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>Version</td><td>[ProductVersion]</td><td>Provider</td><td>0</td></row>
 		<row><td>Registry5</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>ProductCode</td><td>[ProductCode]</td><td>Provider</td><td>0</td></row>
-		<row><td>_AD20AE10EFE1A8766731EAE1AAE4BDCE</td><td>0</td><td>CLSID\{E0883443-7EC0-1251-84ED-F96921AB5923}\InprocServer32</td><td>ThreadingModel</td><td>Both</td><td>Provider</td><td>0</td></row>
+		<row><td>_32A9B3E7C5C2EBE792E51C183242B71B</td><td>0</td><td>CLSID\{05FE7AB5-1198-1A9D-B261-8F5709C8E02E}\InprocServer32</td><td>ThreadingModel</td><td>Both</td><td>Provider</td><td>0</td></row>
 	</table>
 
 	<table name="RemoveFile">
