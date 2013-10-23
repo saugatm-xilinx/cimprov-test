@@ -41,6 +41,7 @@
 #pragma include ("DMTF/qualifiers.mof")
 #pragma include ("DMTF/qualifiers_optional.mof")
  
+#pragma include ("DMTF/Interop/CIM_Message.mof")
 #pragma include ("DMTF/Interop/CIM_Error.mof")
 #pragma include ("DMTF/Core/CIM_ManagedElement.mof")
 #pragma include ("DMTF/Core/CIM_ManagedSystemElement.mof")
@@ -67,6 +68,7 @@
 #pragma include ("DMTF/Core/CIM_Collection.mof")
 #pragma include ("DMTF/Core/CIM_CollectionOfMSEs.mof")
 #pragma include ("DMTF/Core/CIM_CompatibleProduct.mof")
+#pragma include ("DMTF/Core/CIM_AbstractComponent.mof")
 #pragma include ("DMTF/Core/CIM_Component.mof")
 #pragma include ("DMTF/Core/CIM_ConcreteCollection.mof")
 #pragma include ("DMTF/Core/CIM_ConcreteComponent.mof")
