@@ -39,6 +39,24 @@ bool property_eq(
     const void* value1,
     const void* value2)
 {
+    // We consider empty string and NULL string to be the same
+    // to overcome the problem with empty key property and
+    // cimcli which seems to send NULL key property instead.
+    if (mp->subscript == 0 && mp->type == STRING &&
+        null_of(mp, value1) != null_of(mp, value2))
+    {
+        bool first_empty_str = false;
+        bool second_empty_str = false;
+
+        if (!null_of(mp, value1))
+            first_empty_str = (*((String*)value1) == String(""));
+        if (!null_of(mp, value2))
+            second_empty_str = (*((String*)value2) == String(""));
+        if ((null_of(mp, value1) && second_empty_str) ||
+            (null_of(mp, value2) && first_empty_str))
+            return true;
+    }
+
     if (null_of(mp, value1) != null_of(mp, value2))
         return false;
 
@@ -73,6 +91,20 @@ bool property_eq(
                 return *((real64*)value1) == *((real64*)value2);
 
             case STRING:
+                // This fixes the problem with OpenPegasus which
+                // (at least on Windows) has
+                // CreationClassName=CIM_ComputerSystem when we call
+                // enumerate instance names for PG_ComputerSystem,
+                // but CreationClassName=PG_ComputerSystem when we
+                // call enumerate instances for it (at least in version
+                // 2.11.2).
+                if (strcmp(mp->name, "CreationClassName") == 0 &&
+                    (*((String*)value1) == String("PG_ComputerSystem") ||
+                     *((String*)value1) == String("CIM_ComputerSystem")) &&
+                    (*((String*)value2) == String("PG_ComputerSystem") ||
+                     *((String*)value2) == String("CIM_ComputerSystem")))
+                    return true;
+
                 return *((String*)value1) == *((String*)value2);
 
             case DATETIME:
