@@ -235,7 +235,7 @@ static void gen_register(const char* module_name, const cimple::UUID& uuid,
     // Create register.mof:
 
     static const char REGISTER_FMT[] =
-        "Instance of __Win32Provider as $P\n"
+        "instance of __Win32Provider as $P\n"
         "{\n"
         "    Name = \"%s\";\n"
         "    ClsId = \"{%s}\";\n"
