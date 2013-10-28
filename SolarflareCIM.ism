@@ -304,7 +304,6 @@
 		<col def="S255">Argument</col>
 		<col def="s38">Feature_</col>
 		<col def="I2">Attributes</col>
-		<row><td>{05FE7AB5-1198-1A9D-B261-8F5709C8E02E}</td><td>InprocServer32</td><td>Provider</td><td/><td>Solarflare_Module</td><td/><td/><td/><td/><td/><td/><td>SolarflareCIM_Files</td><td/></row>
 	</table>
 
 	<table name="ComboBox">
@@ -341,7 +340,8 @@
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
 		<row><td>AllOtherFiles</td><td>{84576CBB-C740-4F10-B5E8-C13C8090E785}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Provider</td><td>{5D8194A3-B575-4F59-BEC8-4D5BC3F5E431}</td><td>WBEM</td><td>8</td><td/><td>solarflare.dll</td><td>17</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Provider</td><td>{5D8194A3-B575-4F59-BEC8-4D5BC3F5E431}</td><td>WBEM</td><td>8</td><td>not msix64</td><td/><td>17</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Provider64</td><td>{2AAE6402-D418-4AED-9FA0-BAF95FFAC79B}</td><td>WBEM64</td><td>8</td><td>msix64</td><td/><td>20</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -1124,6 +1124,7 @@
 		<row><td>TemplateFolder</td><td>TARGETDIR</td><td>.:ShellNew</td><td/><td>0</td><td/></row>
 		<row><td>USERPROFILE</td><td>TARGETDIR</td><td>.:USERPR~1|UserProfile</td><td/><td>0</td><td/></row>
 		<row><td>WBEM</td><td>SystemFolder</td><td>wbem</td><td/><td>0</td><td/></row>
+		<row><td>WBEM64</td><td>System64Folder</td><td>wbem</td><td/><td>0</td><td/></row>
 		<row><td>WindowsFolder</td><td>TARGETDIR</td><td>.:Windows</td><td/><td>0</td><td/></row>
 		<row><td>WindowsVolume</td><td>TARGETDIR</td><td>.:WinRoot</td><td/><td>0</td><td/></row>
 	</table>
@@ -1833,11 +1834,12 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I4">ISAttributes</col>
 		<col def="S72">ISComponentSubFolder_</col>
-		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>NAMESP~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\namespace.mof</td><td>1</td><td/></row>
-		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\register.mof</td><td>1</td><td/></row>
-		<row><td>schema.mof</td><td>AllOtherFiles</td><td>schema.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\schema.mof</td><td>1</td><td/></row>
-		<row><td>solarflare.dll</td><td>Provider</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\Solarflare.dll</td><td>1</td><td/></row>
-		<row><td>unregister.mof</td><td>AllOtherFiles</td><td>UNREGI~1.MOF|unregister.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;PATH_TO_ADMINISTRATOR_FILES&gt;\unregister.mof</td><td>1</td><td/></row>
+		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>NAMESP~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\namespace.mof</td><td>1</td><td/></row>
+		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\register.mof</td><td>1</td><td/></row>
+		<row><td>schema.mof</td><td>AllOtherFiles</td><td>schema.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\schema.mof</td><td>1</td><td/></row>
+		<row><td>solarflare.dll</td><td>Provider</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\dll\Solarflare.dll</td><td>1</td><td/></row>
+		<row><td>solarflare.dll1</td><td>Provider64</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\dll64\Solarflare.dll</td><td>1</td><td/></row>
+		<row><td>unregister.mof</td><td>AllOtherFiles</td><td>UNREGI~1.MOF|unregister.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\unregister.mof</td><td>1</td><td/></row>
 	</table>
 
 	<table name="FileSFPCatalog">
@@ -1987,6 +1989,7 @@
 		<col def="S0">Miscellaneous</col>
 		<row><td>AllOtherFiles</td><td/><td/><td>_603A3017_0478_4553_92E5_533FB4765153_FILTER</td><td/><td/><td/><td/></row>
 		<row><td>Provider</td><td/><td/><td>_33BCAE52_854A_451B_ACFF_D384F4BA270E_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>Provider64</td><td/><td/><td>_33BCAE52_854A_451B_ACFF_D384F4BA270E_FILTER</td><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="ISCustomActionReference">
@@ -2318,7 +2321,6 @@
 		<row><td>ISProductFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectDataFolder</td><td/><td/><td>1</td></row>
 		<row><td>ISProjectFolder</td><td/><td/><td>1</td></row>
-		<row><td>PATH_TO_ADMINISTRATOR_FILES</td><td>C:\Documents and Settings\artem\Desktop\CIM</td><td/><td>2</td></row>
 		<row><td>ProgramFilesFolder</td><td/><td/><td>1</td></row>
 		<row><td>SystemFolder</td><td/><td/><td>1</td></row>
 		<row><td>WindowsFolder</td><td/><td/><td>1</td></row>
@@ -2383,7 +2385,7 @@
 		<col def="S255">DotNetBuildConfiguration</col>
 		<col def="S255">MsiCommandLine</col>
 		<col def="I4">ISSetupPrerequisiteLocation</col>
-		<row><td>SINGLE_EXE_IMAGE</td><td>PROJECT_ASSISTANT</td><td>&lt;ISProjectDataFolder&gt;</td><td>PackageName</td><td>1</td><td>1033</td><td>2</td><td>1</td><td>Intel</td><td/><td>1033</td><td>0</td><td>0</td><td>0</td><td>0</td><td/><td>0</td><td/><td>MediaLocation</td><td/><td>http://</td><td/><td/><td/><td/><td>8464397</td><td/><td/><td/><td/></row>
+		<row><td>SINGLE_EXE_IMAGE</td><td>PROJECT_ASSISTANT</td><td>c:\cygwin\home\artem\cim\SolarflareCIM</td><td>PackageName</td><td>1</td><td>1033</td><td>2</td><td>1</td><td>Intel</td><td/><td>1033</td><td>0</td><td>0</td><td>0</td><td>0</td><td/><td>0</td><td/><td>MediaLocation</td><td/><td>http://</td><td/><td/><td/><td/><td>8464397</td><td/><td/><td/><td/></row>
 		<row><td>SINGLE_MSI_IMAGE</td><td>PROJECT_ASSISTANT</td><td>&lt;ISProjectDataFolder&gt;</td><td>PackageName</td><td>1</td><td>1033</td><td>2</td><td>2</td><td>Intel</td><td/><td>1033</td><td>0</td><td>0</td><td>0</td><td>0</td><td/><td>0</td><td/><td>MediaLocation</td><td/><td>http://</td><td/><td/><td/><td/><td>8464397</td><td/><td/><td/><td/></row>
 	</table>
 
@@ -4339,6 +4341,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<row><td>IS_SQLSERVER_USERNAME</td><td>sa</td><td/></row>
 		<row><td>InstallChoice</td><td>AR</td><td/></row>
 		<row><td>Manufacturer</td><td>##COMPANY_NAME##</td><td/></row>
+		<row><td>MsiLogging</td><td>voicewarmup</td><td/></row>
 		<row><td>PIDTemplate</td><td>12345&lt;###-%%%%%%%&gt;@@@@@</td><td/></row>
 		<row><td>PROGMSG_IIS_CREATEAPPPOOL</td><td>##IDS_PROGMSG_IIS_CREATEAPPPOOL##</td><td/></row>
 		<row><td>PROGMSG_IIS_CREATEAPPPOOLS</td><td>##IDS_PROGMSG_IIS_CREATEAPPPOOLS##</td><td/></row>
@@ -4363,7 +4366,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<row><td>PROGMSG_IIS_ROLLBACKAPPPOOLS</td><td>##IDS_PROGMSG_IIS_ROLLBACKAPPPOOLS##</td><td/></row>
 		<row><td>PROGMSG_IIS_ROLLBACKVROOTS</td><td>##IDS_PROGMSG_IIS_ROLLBACKVROOTS##</td><td/></row>
 		<row><td>PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS</td><td>##IDS_PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS##</td><td/></row>
-		<row><td>ProductCode</td><td>{C0799BA3-9C0D-4F79-A0E0-27B86BC76FA2}</td><td/></row>
+		<row><td>ProductCode</td><td>{005B1E8C-22CB-4AB8-AB0C-A7657BDE1C97}</td><td/></row>
 		<row><td>ProductID</td><td>none</td><td/></row>
 		<row><td>ProductLanguage</td><td>1033</td><td/></row>
 		<row><td>ProductName</td><td>SolarflareCIM</td><td/></row>
@@ -4435,7 +4438,6 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<row><td>Registry3</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>InstallLocation</td><td>[SystemFolder]\wbem\Solarflare.dll</td><td>Provider</td><td>0</td></row>
 		<row><td>Registry4</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>Version</td><td>[ProductVersion]</td><td>Provider</td><td>0</td></row>
 		<row><td>Registry5</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>ProductCode</td><td>[ProductCode]</td><td>Provider</td><td>0</td></row>
-		<row><td>_32A9B3E7C5C2EBE792E51C183242B71B</td><td>0</td><td>CLSID\{05FE7AB5-1198-1A9D-B261-8F5709C8E02E}\InprocServer32</td><td>ThreadingModel</td><td>Both</td><td>Provider</td><td>0</td></row>
 	</table>
 
 	<table name="RemoveFile">
