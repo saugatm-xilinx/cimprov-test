@@ -71,6 +71,34 @@ Modify_Instance_Status SF_InstalledSoftwareIdentity_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+static int tryFindAssociators(
+    const Instance* instance,
+    const String& result_class,
+    const String& role,
+    const String& result_role,
+    Enum_Associator_Names_Handler<Instance>* handlerNames,
+    Enum_Associators_Handler<Instance>* handler)
+{
+    if (strcmp(instance->meta_class->name, "SF_SoftwareIdentity") == 0 &&
+        solarflare::CIMHelper::findSystem() != NULL &&
+        (role.equali("InstalledSoftware") || role.empty()) &&
+        (result_class.equali("CIM_System") || result_class.empty()) &&
+        (result_role.equali("System") || result_role.empty()))
+    {
+        if (handler != NULL)
+            handler->handle(
+                      cast<Instance *>(
+                           solarflare::CIMHelper::findSystem()->clone()));
+        else if (handlerNames != NULL)
+            handlerNames->handle(
+                      cast<Instance *>(
+                           solarflare::CIMHelper::findSystem()->clone()));
+        return 0;
+    }
+
+    return -1;
+}
+
 Enum_Associator_Names_Status SF_InstalledSoftwareIdentity_Provider::enum_associator_names(
     const Instance* instance,
     const String& result_class,
@@ -78,6 +106,10 @@ Enum_Associator_Names_Status SF_InstalledSoftwareIdentity_Provider::enum_associa
     const String& result_role,
     Enum_Associator_Names_Handler<Instance>* handler)
 {
+    if (tryFindAssociators(instance, result_class,
+                           role, result_role, handler, NULL) == 0)
+        return ENUM_ASSOCIATOR_NAMES_OK;
+
     return ENUM_ASSOCIATOR_NAMES_UNSUPPORTED;
 }
 
@@ -88,6 +120,9 @@ Enum_Associators_Status SF_InstalledSoftwareIdentity_Provider::enum_associators(
     const String& result_role,
     Enum_Associators_Handler<Instance>* handler)
 {
+    if (tryFindAssociators(instance, result_class,
+                           role, result_role, NULL, handler) == 0)
+        return ENUM_ASSOCIATORS_OK;
     return ENUM_ASSOCIATORS_UNSUPPORTED;
 }
 
@@ -97,6 +132,25 @@ Enum_References_Status SF_InstalledSoftwareIdentity_Provider::enum_references(
     const String& role,
     Enum_References_Handler<SF_InstalledSoftwareIdentity>* handler)
 {
+    if (solarflare::CIMHelper::findSystem() != NULL &&
+        strcmp(instance->meta_class->name, "SF_SoftwareIdentity") == 0 &&
+        (role.equali("InstalledSoftware") || role.empty()))
+    {
+        SF_InstalledSoftwareIdentity *link =
+                              SF_InstalledSoftwareIdentity::create(true);
+        link->System =
+          cast<cimple::CIM_System *>(
+                         solarflare::CIMHelper::findSystem()->clone());
+        link->InstalledSoftware =
+                  cast<cimple::CIM_SoftwareIdentity *>(instance);
+#if NEED_ASSOC_IN_ROOT_CIMV2
+        link->InstalledSoftware->__name_space =
+                                      solarflare::CIMHelper::solarflareNS;
+#endif 
+        handler->handle(link); 
+
+        return ENUM_REFERENCES_OK;
+    }
     return ENUM_REFERENCES_UNSUPPORTED;
 }
 

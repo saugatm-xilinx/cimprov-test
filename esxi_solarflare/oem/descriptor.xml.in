@@ -118,7 +118,7 @@
    <acceptance-level>accepted</acceptance-level>
 
    <!-- Defaults to false -->
-   <live-install-allowed>true</live-install-allowed>
+   <live-install-allowed>false</live-install-allowed>
 
    <!-- Both live install and live removes must be true for a live upgrade -->
    <live-remove-allowed>false</live-remove-allowed>
