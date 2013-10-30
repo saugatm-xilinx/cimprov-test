@@ -2211,58 +2211,68 @@ cleanup:
 
     bool WindowsSystem::forAllDrivers(ElementEnumerator &en)
     {
-        IWbemClassObject *efxRoot;
-        String            strDrvVersion;
-        VersionInfo       curDriversVersion;
-        int               rc;
-        unsigned int      i;
+        IWbemClassObject     *efxRoot;
+        String                strDrvVersion;
+        VersionInfo           curDriversVersion;
+        Array<WindowsDriver>  savedDriversCopy;
+        int                   rc;
+        unsigned int          i;
 
-        WMICtxRef ctxRef;
-
-        if (!ctxRef)
         {
-            driversFromScratch = true;
-            return false;
-        }
+            Auto_Mutex guard(driversLock);
 
-        rc = querySingleObj(NULL,
-                            "SELECT DriverVersion "
-                            "FROM EFX_Root WHERE "
-                            "DummyInstance='false'",
-                            efxRoot);
-        if (rc != 0)
-        {
-            driversFromScratch = true;
-            return false;
-        }
+            WMICtxRef ctxRef;
 
-        rc = wmiGetStringProp(efxRoot, "DriverVersion", strDrvVersion);
-        efxRoot->Release();
-        if (rc != 0)
-        {
-            driversFromScratch = true;
-            return false;
-        }
-
-        curDriversVersion = VersionInfo(strDrvVersion.c_str());
-
-        Auto_Mutex guard(driversLock);
-
-        if (driversFromScratch ||
-            curDriversVersion != driversVersion)
-        {
-            if (driversFillArray(savedDrivers) != 0)
+            if (!ctxRef)
             {
                 driversFromScratch = true;
                 return false;
             }
 
-            driversVersion = curDriversVersion;
-            driversFromScratch = false;
+            rc = querySingleObj(NULL,
+                                "SELECT DriverVersion "
+                                "FROM EFX_Root WHERE "
+                                "DummyInstance='false'",
+                                efxRoot);
+            if (rc != 0)
+            {
+                driversFromScratch = true;
+                return false;
+            }
+
+            rc = wmiGetStringProp(efxRoot, "DriverVersion", strDrvVersion);
+            efxRoot->Release();
+            if (rc != 0)
+            {
+                driversFromScratch = true;
+                return false;
+            }
+
+            curDriversVersion = VersionInfo(strDrvVersion.c_str());
+
+            if (driversFromScratch ||
+                curDriversVersion != driversVersion)
+            {
+                if (driversFillArray(savedDrivers) != 0)
+                {
+                    driversFromScratch = true;
+                    return false;
+                }
+
+                driversVersion = curDriversVersion;
+                driversFromScratch = false;
+            }
+
+            savedDriversCopy = savedDrivers;
         }
 
-        for (i = 0; i < savedDrivers.size(); i++)
-            if (!en.process(savedDrivers[i]))
+        // Processing driver instance may hang when CIM client
+        // unexpectedly closes connection and OpenPegasus waits
+        // for 20 seconds before considering request terminated.
+        // To avoid locking all operations related to drivers
+        // we operate on a copy here, not locking original array.
+        for (i = 0; i < savedDriversCopy.size(); i++)
+            if (!en.process(savedDriversCopy[i]))
                 return false;
 
         return true;
