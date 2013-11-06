@@ -80,7 +80,10 @@ bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
 include $(TOP)/libcimobjects/sources.mk
 
 include $(TOP)/libprovider/sources.mk
+
 ifeq ($(CIM_SERVER),esxi)
+include $(TOP)/libprovider/v5_import/endianness/sources.mk
+include $(TOP)/libprovider/v5_import/tlv/sources.mk
 include $(TOP)/esxi_solarflare/sources.mk
 endif
 
@@ -136,7 +139,7 @@ platform : $(PLATFORM_BUILD)/Makefile
 
 $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
 		mkdir -p $(PLATFORM_BUILD)
-		cd $(PLATFORM_BUILD); $(HG) manifest | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
+		cd $(PLATFORM_BUILD); $(HG) st --all | grep -v "^[?IR]" | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
 		echo "CONFIG:=$(CONFIG)" >$@
 		echo "TOP:=$(CURDIR)" >>$@
 		cat $< >>$@

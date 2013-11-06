@@ -127,8 +127,9 @@ libprovider_SYSLIBRARIES += pci
 endif
 
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
-CI_INCLUDES = libprovider/v5_import libprovider/v5_import/ci libprovider/v5_import/ci/app \
-	      libprovider/v5_import/ci/app/platform \
+CI_INCLUDES = libprovider/v5_import libprovider/v5_import/tlv libprovider/v5_import/endianness/ \
+		libprovider/v5_import/ci libprovider/v5_import/ci/app \
+		libprovider/v5_import/ci/app/platform \
 		libprovider/v5_import/ci/compat libprovider/v5_import/ci/driver \
 		libprovider/v5_import/ci/driver/efab \
 		libprovider/v5_import/ci/driver/efab/hardware \
@@ -163,6 +164,9 @@ endif
 $(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_$(CIM_INTERFACE_UPCASE)_MODULE
 
 libprovider_DEPENDS = libcimobjects
+ifeq ($(PROVIDER_PLATFORM),vmware)
+libprovider_DEPENDS += libtlv libendianness
+endif
 libprovider_BUILD_DEPENDS = genmod
 
 $(eval $(call component,libprovider,SHARED_LIBRARIES))
