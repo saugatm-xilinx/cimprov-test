@@ -1091,7 +1091,7 @@ fail:
         int       fd;
         uint8_t  *nvram_data = NULL;
         int       nvram_data_len;
-        uint8_t  *vpd;
+        uint8_t  *vpd = NULL;
         int       vpd_off;
         int       vpd_len;
         uint32_t  nvram_type;
@@ -1218,6 +1218,13 @@ fail:
             vpd_len = le32_to_host(
                         reinterpret_cast<struct tlv_pf_static_vpd *>
                                 (partition.tlv_cursor.current)->length);
+        }
+        else
+        {
+            CIMPLE_ERR(("PCI device id 0x%x seems to be neither of "
+                        "Siena nor of EF10 NIC", pci_device_id));
+            close(fd);
+            return -1;
         }
 
         if ((rc = parseVPD(vpd, vpd_len, product_name,
