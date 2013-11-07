@@ -1090,7 +1090,7 @@ fail:
         int       rc;
         int       fd;
         uint8_t  *nvram_data = NULL;
-        int       nvram_data_len;
+        uint32_t  nvram_data_len;
         uint8_t  *vpd = NULL;
         int       vpd_off;
         int       vpd_len;
@@ -1149,47 +1149,16 @@ fail:
         else if (SFU_DEVICE_TYPE(pci_device_id) ==
                                     SFU_DEVICE_TYPE_HUNTINGTON)
         {
-            struct efx_mcdi_request *mcdi_req;
-            struct efx_ioctl         ioc;
-            payload_t                payload;
-            nvram_partition_t        partition;
+            nvram_partition_t partition;
 
             nvram_type = NVRAM_PARTITION_TYPE_STATIC_CONFIG;
 
-            memset(&ioc, 0, sizeof(ioc));
-            strncpy(ioc.if_name, ifname, sizeof(ioc.if_name));
-            ioc.cmd = EFX_MCDI_REQUEST;
-
-            mcdi_req = &ioc.u.mcdi_request;
-            mcdi_req->cmd = MC_CMD_NVRAM_INFO;
-            mcdi_req->len = 4;
-            
-            memset(&payload, 0, sizeof(payload));
-            SET_PAYLOAD_DWORD(payload, 0, nvram_type);
-            memcpy(mcdi_req->payload, &payload,
-                   sizeof(*(mcdi_req->payload)));
-
-            if (ioctl(fd, SIOCEFX, &ioc) < 0)
-            {
-                CIMPLE_ERR(("ioctl(SIOCEFX/MC_CMD_NVRAM_INFO) "
-                            "failed with errno %d ('%s')",
-                            errno, strerror(errno)));
-                close(fd);
-                return -1;
-            }
-
-            memcpy(payload.u8, mcdi_req->payload,
-                   mcdi_req->len);
-            nvram_data_len = PAYLOAD_DWORD(payload, 1);
-            nvram_data = new uint8_t[nvram_data_len];
-
-            if (siocEFXReadNVRAM(fd, false, nvram_data, 0,
-                                 nvram_data_len,
-                                 ifname, nvram_type) < 0)
+            if (siocEFXReadNVRAMPartition(fd, false, ifname,
+                                          nvram_type, nvram_data,
+                                          nvram_data_len) < 0)
             {
                 CIMPLE_ERR(("Failed to read VPD from NVRAM"));
                 close(fd);
-                delete[] nvram_data;
                 return -1;
             }
 
@@ -2131,6 +2100,10 @@ fail:
         }
 
         virtual PCIAddress pciAddress() const;
+        virtual uint32_t getPciDeviceID() const
+        {
+            return pci_device_id;
+        }
     };
 
     VitalProductData VMwareNIC::vitalProductData() const 
@@ -2675,34 +2648,8 @@ curl_fail:
         return VersionInfo(edata.fw_version);
     }
 
-    ///
-    /// Correspondence between port and its BootROM version.
-    ///
-    class BootROMVer
-    {
-    public:
-        String portName; ///< Port name
-        String version;  ///< BootROM version
-
-        // Dummy operator to make possible using of cimple::Array
-        bool operator== (const BootROMVer &rhs)
-        {
-            UNUSED(rhs);
-            return false;
-        }
-    };
-
-    /// Array to store correspondence between ports and their
-    /// BootROM versions (currently these versions are obtained
-    /// via sfupdate which is time-consuming and also requires
-    /// locking).
-    static Array<BootROMVer> bootROMVers;
-    /// Mutex to protect bootROMVers array
-    static Mutex             bootROMVersLock(false);
-
     bool VMwareBootROM::syncInstall(const char *file_name)
     {
-        Auto_Mutex     auto_lock(bootROMVersLock);
         unsigned int   i = 0;
 
         String strPath;
@@ -2712,17 +2659,6 @@ curl_fail:
         strPath = fixFwImagePath(file_name,
                                  strDefPath.c_str());
 
-
-        for (i = 0; i < bootROMVers.size(); i++)
-        {
-            if (((VMwareNIC *)owner)->ports[0].dev_name ==
-                                              bootROMVers[i].portName)
-            {
-                bootROMVers.remove(i);
-                i--;
-            }
-        }
-
         if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
             return false;
 
@@ -2731,75 +2667,43 @@ curl_fail:
 
     VersionInfo VMwareBootROM::version() const
     {
-        int   rc = 0;
-        char  cmd[CMD_MAX_LEN];
-        char  str[SFU_STR_MAX_LEN];
-        char *s = NULL;
-        char *version = NULL;
-        int   fd = -1;
-        FILE *f = NULL;
+        VersionInfo ver;
+        int         fd;
+        uint32_t    pci_device_id;
+        const char *ifname;
 
-        unsigned int   i;
-        Auto_Mutex     auto_lock(bootROMVersLock);
+        const VMwareNIC  *nic = reinterpret_cast<const VMwareNIC *>(owner);
 
-        for (i = 0; i < bootROMVers.size(); i++)
-        {
-            if (((VMwareNIC *)owner)->ports[0].dev_name ==
-                                              bootROMVers[i].portName)
-                return VersionInfo(bootROMVers[i].version.c_str());
-        }
-
-        rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s",
-                      ((VMwareNIC *)owner)->ports[0].dev_name.c_str());
-        if (rc < 0 || rc >= CMD_MAX_LEN)
+        if (nic == NULL || nic->ports.size() < 1)
             return VersionInfo(DEFAULT_VERSION_STR);
 
-        fd = sfupdatePOpen(cmd);
+        ifname = nic->ports[0].dev_name.c_str();
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
-            return VersionInfo(DEFAULT_VERSION_STR);
-
-        f = fdopen(fd, "r");
-        if (f == NULL)
         {
-            close(fd);
+            CIMPLE_ERR(("Failed to open '%s', errno %d('%s')",
+                        DEV_SFC_CONTROL, errno, strerror(errno)));
             return VersionInfo(DEFAULT_VERSION_STR);
         }
 
-        while (1)
-        {
-            if (fgets(str, SFU_STR_MAX_LEN, f) != str)
-                break;
+        pci_device_id = nic->getPciDeviceID();
 
-            if (strstr(str, "Boot ROM version:") != NULL)
-            {
-                s = strstr(str, ":");
-                if (s == NULL)
-                    continue;
-                s++;
-                while (*s == ' ')
-                    s++;
-                trim(s);
-                if (*s == 'v')
-                    s++;
-                version = s;
-                break;
-            }
+        if (SFU_DEVICE_TYPE(pci_device_id) == SFU_DEVICE_TYPE_SIENA)
+        {
+            if (siocEFXGetBootROMVersionSiena(ifname, 0, fd,
+                                              false, ver) == 0)
+                return ver;
+        }
+        else if (SFU_DEVICE_TYPE(pci_device_id) ==
+                                          SFU_DEVICE_TYPE_HUNTINGTON)
+        {
+            if (siocEFXGetBootROMVersionEF10(ifname, 0, fd,
+                                             false, ver) == 0)
+                return ver;
         }
 
-        fclose(f);
-
-        if (version != NULL)
-        {
-            BootROMVer ver;
-
-            ver.portName = ((VMwareNIC *)owner)->ports[0].dev_name;
-            ver.version = String(version);
-            bootROMVers.append(ver);
-
-            return VersionInfo(version);
-        }
-        else
-            return VersionInfo(DEFAULT_VERSION_STR);
+        return VersionInfo(DEFAULT_VERSION_STR);
     }
 
     ///
