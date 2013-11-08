@@ -2693,16 +2693,23 @@ curl_fail:
         {
             if (siocEFXGetBootROMVersionSiena(ifname, 0, fd,
                                               false, ver) == 0)
+            {
+                close(fd);
                 return ver;
+            }
         }
         else if (SFU_DEVICE_TYPE(pci_device_id) ==
                                           SFU_DEVICE_TYPE_HUNTINGTON)
         {
             if (siocEFXGetBootROMVersionEF10(ifname, 0, fd,
                                              false, ver) == 0)
+            {
+                close(fd);
                 return ver;
+            }
         }
 
+        close(fd);
         return VersionInfo(DEFAULT_VERSION_STR);
     }
 
