@@ -80,9 +80,15 @@ namespace solarflare
             MCDI_SENSOR_TYPE_CHECK(SENSOR_VREG_INTERNAL_TEMP);
             MCDI_SENSOR_TYPE_CHECK(SENSOR_VREG_0V9_TEMP);
             MCDI_SENSOR_TYPE_CHECK(SENSOR_VREG_1V2_TEMP);
+            MCDI_SENSOR_TYPE_CHECK(SENSOR_CONTROLLER_VPTAT);
             MCDI_SENSOR_TYPE_CHECK(SENSOR_CONTROLLER_INTERNAL_TEMP);
+            MCDI_SENSOR_TYPE_CHECK(SENSOR_CONTROLLER_VPTAT_EXTADC);
+            MCDI_SENSOR_TYPE_CHECK(SENSOR_CONTROLLER_INTERNAL_TEMP_EXTADC);
             MCDI_SENSOR_TYPE_CHECK(SENSOR_AMBIENT_TEMP);
             MCDI_SENSOR_TYPE_CHECK(SENSOR_AIRFLOW);
+            MCDI_SENSOR_TYPE_CHECK(SENSOR_VDD08D_VSS08D_CSR);
+            MCDI_SENSOR_TYPE_CHECK(SENSOR_VDD08D_VSS08D_CSR_EXTADC);
+            MCDI_SENSOR_TYPE_CHECK(SENSOR_HOTPOINT_TEMP);
             default:
                 return SENSOR_UNKNOWN;
         }
@@ -187,7 +193,7 @@ namespace solarflare
         uint32_t                   mask;
         uint16_t                  *lims;
         int                        i;
-        unsigned int               info_count;
+        unsigned int               info_count = 0;
         struct ifreq               ifreq;
 
         sensors.clear();
@@ -273,7 +279,6 @@ namespace solarflare
                      payload_info,
                      MC_CMD_SENSOR_INFO_EXT_OUT_MASK_OFST / 4);
             lims = &payload_info.u16[2];
-            info_count = 0;
 
             for (i = 0; i < 31; i++)
             {
