@@ -1,5 +1,5 @@
 ##########################################################################
-#//#! \file Makefile
+##! \file Makefile
 ## <L5_PRIVATE L5_SOURCE>
 ## \author  OktetLabs
 ##  \brief  CIM Provider
@@ -9,6 +9,7 @@
 ##
 ##########################################################################
 
+##! Path to the top of the source tree
 TOP ?= .
 include $(TOP)/mk/def.mk
 
@@ -120,12 +121,15 @@ endif
 endif
 
 ifneq ($(CIM_SERVER),esxi)
+
+##! Installs CIM provider where the CIMOM expects to find it
 install : all
 	$(RUNASROOT) mkdir -p $(DESTDIR)$(PROVIDER_LIBPATH)
 	$(RUNASROOT) cp lib$(PROVIDER_LIBRARY).so $(DESTDIR)$(PROVIDER_LIBPATH)
 endif
 
 ifneq ($(PROVIDER_ROOT),)
+##! Installs CIM provider's supplementary files under PROVIDER_ROOT()
 install-aux : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
 			  $(libcimobjects_DIR)/interop.mof \
 			  $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof)
@@ -135,6 +139,8 @@ endif
 
 .PHONY : platform
 PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
+
+##! Creates a platform-specific build directory
 platform : $(PLATFORM_BUILD)/Makefile
 
 $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)

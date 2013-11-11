@@ -1,5 +1,5 @@
 ##########################################################################
-#//#! \file ./mk/rules.mk
+##! \file ./mk/rules.mk
 ## <L5_PRIVATE L5_SOURCE>
 ## \author  OktetLabs
 ##  \brief  CIM Provider
@@ -51,27 +51,32 @@ m4.defs : $(MAKEFILE_LIST)
 lib$(PROVIDER_LIBRARY).spec : m4.defs lib$(PROVIDER_LIBRARY).spec.in
 	$(M4) $^ >$@
 
-%.d: %.cpp
+##! Automatically generate include dependencies from C++ files
+%.d : %.cpp
 	@echo Producing $@
 	@set -e; rm -f $@; \
 	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$; \
 	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
-%.o: %.rc
+##! Compile Windows resource descriptions from sources
+%.o : %.rc
 	$(WINDRES) -o $@ -i $< $(WINDRES_CPPFLAGS)
 
 ifneq ($(_DO_NOT_GENERATE),1)
 include $(patsubst %.cpp,%.d,$(ALL_SOURCES))
 endif
 
+##! Generate Yacc/Bison parsers
 %_Yacc.cpp : %.y
 	$(BISON) --defines=$(patsubst %.cpp,%.h,$@) -p$(notdir $*)_ -o$@ $<
 
+##! Generate (F)lex parsers
 %_Lex.cpp : %.l
 	$(FLEX) -P$(notdir $*)_ -o$@ $<
 
-$(STATIC_LIBRARIES) : %.a:
+##! Assemble static libraries
+$(STATIC_LIBRARIES) : %.a :
 	$(AR) crsu $@ $(filter %.o,$^)
 
 link_static_to_shared_start = -Wl,-whole-archive
@@ -79,12 +84,13 @@ link_static_to_shared_end = -Wl,-no-whole-archive
 
 SOEXT ?= so
 
-$(SHARED_LIBRARIES) : %.$(SOEXT):
+##! Link dynamic libraries
+$(SHARED_LIBRARIES) : %.$(SOEXT) :
 	$(CXX) -shared -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) \
 	-L. $(link_static_to_shared_start) $(addprefix -l,$(LIBRARIES)) $(link_static_to_shared_end) \
 	$(addprefix -l,$(SYSLIBRARIES))
 
-
+##! Link executables
 $(BINARIES) : %:
 	$(CXX) -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) -L. $(addprefix -l,$(LIBRARIES)) $(addprefix -l,$(SYSLIBRARIES))
 
@@ -102,6 +108,8 @@ $(CLEAN_TARGETS) $(EXTRA_CLEAN_TARGETS) : clean-% :
 	-$($*_EXTRA_CLEAN)
 
 TAR_TRANSFORM = !^!$*/!
+
+##! Produces a gzipped tar archive of dependencies
 %.tar.gz :
 	tar $(patsubst %,--transform='s%',$(TAR_TRANSFORM)) -czf $@ $(filter-out $(TOP)/%,$^) -C $(TOP) $(patsubst $(TOP)/%,%,$(filter $(TOP)/%,$^))
 
