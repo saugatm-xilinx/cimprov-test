@@ -52,13 +52,13 @@ $(1)_$(2) ?= $$($(1)_PROVIDE_$(2))
 endef
 
 ##! %List of static libraries
-override STATIC_LIBRARIES =
+#override STATIC_LIBRARIES =
 
 ##! %List of shared libraries
-override SHARED_LIBRARIES =
+#override SHARED_LIBRARIES =
 
 ##! %List of binaries
-override BINARIES =
+#override BINARIES =
 
 ##! Declare a component inside a build system
 ##
