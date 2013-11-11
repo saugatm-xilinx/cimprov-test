@@ -8,10 +8,15 @@
     next
 }
 
+comment_block {
+    $0 = gensub(/<L5_PRIVATE[[:space:]]+([^>]*)>/, "\\\\L5_PRIVATE{\\\\\\1}", "g");
+    $0 = gensub(/<\/L5_PRIVATE>/, "\\\\endL5_PRIVATE", "g");
+}
+
+
 comment_block && /^#+[[:space:]]+[@\\](file|page)/ {
     standalone = 1;
 }
-
 
 comment_block && /^#+[[:space:]]+[@\\]param/ {
     block_params = block_params "" (block_params ? ", " : "") $3;

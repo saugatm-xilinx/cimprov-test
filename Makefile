@@ -20,7 +20,12 @@ include $(TOP)/presets/$(PRESET).mk
 $(warning Presets are obsolete, use 'make CONFIG=$(CONFIG)' instead)
 endif
 
+ifneq ($(MAKECMDGOALS), doc)
+ifeq ($(CONFIG),)
+$(error No CONFIG is known)
+endif
 include $(TOP)/config/$(CONFIG).mk
+endif
 
 include $(TOP)/mk/vars.mk
 ifeq ($(CIM_SERVER),wmi)
@@ -55,7 +60,9 @@ endif
 else ifeq ($(CIM_SERVER),wmi)
 # do nothing
 else
+ifneq ($(MAKECMDGOALS),doc)
 $(error Unknown CIM_SERVER: $(CIM_SERVER))
+endif
 endif
 ifeq ($(CIM_INTERFACE),cmpi)
 include $(TOP)/cimple/cmpi/sources.mk
@@ -149,5 +156,9 @@ $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
 		echo "CONFIG:=$(CONFIG)" >$@
 		echo "TOP:=$(CURDIR)" >>$@
 		cat $< >>$@
+
+.PHONY : doc
+doc : Doxyfile
+	cd $(dir $<); $(DOXYGEN) $(notdir $<)
 
 include $(TOP)/mk/rules.mk

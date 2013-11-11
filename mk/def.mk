@@ -16,6 +16,7 @@ BISON=bison
 FLEX=flex
 HG=hg
 M4=m4 -P
+DOXYGEN=doxygen
 
 override host_CXX := $(or $(CXX),$(CC),c++)
 override host_AR := $(or $(AR),ar)
@@ -169,5 +170,8 @@ ifeq ($(MAKECMDGOALS),clean)
 _DO_NOT_GENERATE := 1
 endif
 ifeq ($(MAKECMDGOALS),platform)
+_DO_NOT_GENERATE := 1
+endif
+ifeq ($(MAKECMDGOALS),doc)
 _DO_NOT_GENERATE := 1
 endif
