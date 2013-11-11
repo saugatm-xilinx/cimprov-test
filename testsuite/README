@@ -1,62 +1,102 @@
 Python testsuite howto:
 
-1. Getting and installing PyWBEM library
+1. [Linux, ESXI] Getting and installing PyWBEM library
+Note: for Windows this step is ommited
 
 Run pywbem_setup.sh script. It performs following actions:
-* wget's the tar
+* downloads PyWBEM library archive
 * unpacks it into /tmp/pywbem.xxx
 * installs it into cimprov/testsuite/pywbem
 * removes the temporary directory
 
+Note: if you've installed pywbem manually, check that installation
+path is added to PYTHONPATH environment variable.
 
-2. Running tests
+2. Setting global variables
 
-Use run.sh wrapper script. By default it runs whole test package
-for default configuration.
+There are some global varables in vars.py file such as number of
+ports for each NIC card. You should look it through and change
+these variables values corresponding to your test system values.
 
-marsik@sinda:~/work/wbem/src/cimprov_el/testsuite$ ./run.sh --help
-USAGE: run.sh [options] [test_name[:param=value[,param=value]*]]*
-Options:
---cfg=<CFG>           Configuration to be used
---list-cfg            Print the list of known configurations
 
-You can specify configuration, test names and parameters:
--bash-4.1$ ./testsuite/run.sh  --cfg=ibm namespace
+3. Running tests
+
+Use wrapper script (it runs tester.py):
+[Linux, ESXI]   run.sh
+[Windows]       run.bat
+
+You should specify configuration name via --cfg option.
+Available configurations can be listed via --list-cfg option.
+
+Example:
+<RUNSCRIPT> --list-cfg
+esxi       Configuration for running on ESXi host
+wmi        Configuration for running on Windows host using WMI client
+ibm        Configuration for running on IBM host
+linux      Default configuration for Linux with Pegasus
+
+<RUNSCRIPT> --cfg=ibm
+Starting package profile
+Starting test diag_profile                                  PASSED
+Starting test phys_net_profile                              PASSED
+Starting test reg_profile                                   PASSED
+Starting test sw_profile                                    PASSED
+Done package profile
 Starting package misc
+Starting test namespace                                     PASSED
+...
+
+By default it runs whole test package.
+You can specify options and package/test list to run.
+
+<RUNSCRIPT> --help
+USAGE: tester.py [options] [package|test[:param=value[,param=value]*]]*
+Options:
+ --help                Display this information
+ --cfg=<CFG>           Configuration to be used
+ --list-cfg            Print the list of known configurations
+ --list-test           Print the list of available tests
+ --print-test-spec     Print tests specification instead of running
+
+Examples:
+<RUNSCRIPT> --cfg=ibm namespace
+Starting package misc
+Starting test namespace                                     PASSED
 Starting test namespace                                     PASSED
 Done package misc
 
-marsik@frar:~$ /home/marsik/work/wbem/src/cimprov_el/testsuite/run.sh namespace \
-association:names_only=True,role=False
+<RUNSCRIPT> --cfg=wmi profile
+Starting package profile
+Starting test diag_profile                                  PASSED
+Starting test phys_net_profile                              PASSED
+Starting test reg_profile                                   PASSED
+Starting test sw_profile                                    FAILED
+
+<RUNSCRIPT> --cfg=ibm association:namesOnly=True,role=False
 Starting package misc
+Starting test namespace                                     PASSED
 Starting test namespace                                     PASSED
 Done package misc
 Starting package intrinsics
-Starting test association                                   FAILED
-Starting test association                                   FAILED
+Starting test association                                   PASSED
+Starting test association                                   PASSED
 Done package intrinsics
 
-You can find logs in /tmp/tester.log:
-marsik@frar:~$ grep TEST /tmp/tester.log
-TEST namespace: Check namespaces existance
-TEST namespace: PASSED
-TEST association: Check associations traversal
-TEST association: FAILED
-TEST association: Check associations traversal
-TEST association: FAILED
+By default tester logs are located in tester.log file.
 
+3. Configuration
 
-Environment Variables.
+Configuration files are located in config subdirectory.
+Each file is a python script which creates an instance of
+TesterConfiguration class defined in cfg.py.
+If you're adding new configuration file you should add its name in
+the __all__ list of__init__.py.
 
-You can set CIMPROV_CLASSES to the file with provider classes list,
-which is uѕed by enumeration, association, reference and stress tests.
-By default it points to the classes file in cimprov directory:
-export CIMPROV_CLASSES=/home/marsik/work/wbem/src/cimprov_el/classes
-
-If you have installed pywbem manually, set PYTHONPATH to installation location:
-export PYTHONPATH=/home/marsik/work/wbem/build/pywbem_frar
-
-If you want to add new configuration, you should describe configuration
-parameters in the tester_vars_<cfg>.py file.
-
-
+In configuration file you can specify such things as:
+ - provider namespace
+ - interop namespace
+ - host
+ - username
+ - password
+ - logger file path
+ - path to classes list (which is used for intrinsics package)

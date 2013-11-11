@@ -1,4 +1,6 @@
 #!/usr/bin/python
+#
+# fixme: broken
 
 from test_lib import req_state_change_check
 from tester_vars import *
@@ -24,7 +26,6 @@ def test_function(param = {}):
         logger.info("Checking RequestStateChange() " +
                  "for %s class...", cl)
         for state_name, state_code in REQ_STATES.items():
-            passed = True
             logger.info("Checking " + state_name)
             passed = req_state_change_check(TESTER_NS, cl,
                                             state_code, TIMEOUT)

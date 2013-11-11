@@ -146,9 +146,19 @@ namespace solarflare
       { "Regulator internal temp",  SENSOR_VREG_INTERNAL_TEMP },
       { "0.9V regulator temp",      SENSOR_VREG_0V9_TEMP },
       { "1.2V regulator temp",      SENSOR_VREG_1V2_TEMP },
-      { "On-chip temp.",            SENSOR_CONTROLLER_INTERNAL_TEMP },
+      { "Controller PTAT voltage (int. ADC)",
+        SENSOR_CONTROLLER_VPTAT },
+      { "Controller die temp. (int. ADC)",
+        SENSOR_CONTROLLER_INTERNAL_TEMP },
+      { "Controller PTAT voltage (ext. ADC)",
+        SENSOR_CONTROLLER_VPTAT_EXTADC },
+      { "Controller die temp. (ext. ADC)",
+        SENSOR_CONTROLLER_INTERNAL_TEMP_EXTADC },
       { "Ambient temp.",            SENSOR_AMBIENT_TEMP },
-      { "Airflow",                  SENSOR_AIRFLOW },
+      { "Air flow raw",             SENSOR_AIRFLOW },
+      { "0.9V die (int. ADC)",      SENSOR_VDD08D_VSS08D_CSR },
+      { "0.9V die (ext. ADC)",      SENSOR_VDD08D_VSS08D_CSR_EXTADC },
+      { "Controller board temp. (hotpoint)", SENSOR_HOTPOINT_TEMP },
       LAST_ENUM
     };
 
@@ -196,9 +206,15 @@ namespace solarflare
         SENSOR_TYPE_ID(SENSOR_VREG_INTERNAL_TEMP),
         SENSOR_TYPE_ID(SENSOR_VREG_0V9_TEMP),
         SENSOR_TYPE_ID(SENSOR_VREG_1V2_TEMP),
+        SENSOR_TYPE_ID(SENSOR_CONTROLLER_VPTAT),
         SENSOR_TYPE_ID(SENSOR_CONTROLLER_INTERNAL_TEMP),
+        SENSOR_TYPE_ID(SENSOR_CONTROLLER_VPTAT_EXTADC),
+        SENSOR_TYPE_ID(SENSOR_CONTROLLER_INTERNAL_TEMP_EXTADC),
         SENSOR_TYPE_ID(SENSOR_AMBIENT_TEMP),
         SENSOR_TYPE_ID(SENSOR_AIRFLOW),
+        SENSOR_TYPE_ID(SENSOR_VDD08D_VSS08D_CSR),
+        SENSOR_TYPE_ID(SENSOR_VDD08D_VSS08D_CSR_EXTADC),
+        SENSOR_TYPE_ID(SENSOR_HOTPOINT_TEMP),
         SENSOR_TYPE_ID(SENSOR_UNKNOWN),
         LAST_ENUM
     };
