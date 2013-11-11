@@ -672,9 +672,20 @@ namespace solarflare
         virtual bool forAllInterfaces(ElementEnumerator& en);
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const;
         virtual bool forAllDiagnostics(ElementEnumerator& en);
+        /// Enumerate all software except diagnostics
         virtual bool forAllNDiagSoftware(ConstElementEnumerator& en) const;
+        /// Enumerate all software objects except software type objects
+        /// (const enumerator)
+        virtual bool forAllSoftwareNTypes(ConstElementEnumerator& en) const;
+        /// Enumerate all software type objects
+        virtual bool forAllSoftwareTypes(ConstElementEnumerator& en) const;
+        /// Enumerate all software, including software type objects
         virtual bool forAllSoftware(ConstElementEnumerator& en) const;
+        /// Enumerate all software except diagnostics (not const
+        /// enumerator)
         virtual bool forAllNDiagSoftware(ElementEnumerator& en);
+        /// Enumerate all software (not const enumerator, so
+        /// software type objects are not enumerated)
         virtual bool forAllSoftware(ElementEnumerator& en);
 
         virtual bool forAllObjects(ConstElementEnumerator& en) const;

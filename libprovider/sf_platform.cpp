@@ -367,7 +367,57 @@ namespace solarflare
         return forAllDrivers(en);
     }
 
-    bool System::forAllSoftware(ConstElementEnumerator& en) const
+    /// This enumerator enumerates each object passed to it
+    /// plus software type object if it can be obtained for
+    /// a given object.
+    class ConstEnumIncSWTypes : public ConstElementEnumerator {
+        ConstElementEnumerator& elmEnum;
+        bool swTypesOnly;
+        Array<SWType *> types;
+    public:
+        ConstEnumIncSWTypes(ConstElementEnumerator& en,
+                            bool swTOnly = false) : elmEnum(en),
+                                                    swTypesOnly(swTOnly) {};
+
+        virtual bool process(const SystemElement& obj)
+        {
+            bool ret = true;
+
+            unsigned int  i;
+
+            if (!swTypesOnly && !elmEnum.process(obj))
+                return false;
+
+            SWType *swType = obj.getSWType();
+            if (swType != NULL)
+            {
+                for (i = 0; i < types.size(); i++)
+                    if (*(types[i]) == *swType)
+                        break;
+                if (i < types.size())
+                    delete swType;
+                else
+                {
+                    ret = elmEnum.process(*swType);
+                    types.append(swType);
+                }
+            }
+            
+            return ret;
+        }
+
+        ~ConstEnumIncSWTypes()
+        {
+            unsigned int i = 0;
+
+            for (i = 0; i < types.size(); i++)
+                delete types[i];
+
+            types.clear();
+        }
+    };
+
+    bool System::forAllSoftwareNTypes(ConstElementEnumerator& en) const
     {
         if (!forAllNDiagSoftware(en))
             return false;
@@ -377,6 +427,20 @@ namespace solarflare
             return false;
 
         return true;
+    }
+
+    bool System::forAllSoftwareTypes(ConstElementEnumerator& en) const
+    {
+        ConstEnumIncSWTypes    incSwTypesEmbed(en, true);
+
+        return this->forAllSoftwareNTypes(incSwTypesEmbed);
+    }
+
+    bool System::forAllSoftware(ConstElementEnumerator& en) const
+    {
+        ConstEnumIncSWTypes incSwTypesEmbed(en);
+
+        return this->forAllSoftwareNTypes(incSwTypesEmbed);
     }
 
     bool System::forAllNDiagSoftware(ElementEnumerator& en)
@@ -406,18 +470,20 @@ namespace solarflare
 
     bool System::forAllObjects(ConstElementEnumerator& en) const
     {
-        en.process(System::target);
+        ConstEnumIncSWTypes incSwTypesEmbed(en);
+
+        incSwTypesEmbed.process(System::target);
 
         // Enumerate software in packages
-        ConstPackageContentsEnumerator embedPkg(en);
+        ConstPackageContentsEnumerator embedPkg(incSwTypesEmbed);
         if (!forAllPackages(embedPkg))
             return false;
 
-        if (!forAllDrivers(en))
+        if (!forAllDrivers(incSwTypesEmbed))
             return false;
 
         // Enumerate NICs and all objects they contain
-        ConstNICContentsEnumerator embedNIC(en);
+        ConstNICContentsEnumerator embedNIC(incSwTypesEmbed);
         if (!forAllNICs(embedNIC))
             return false;
 
