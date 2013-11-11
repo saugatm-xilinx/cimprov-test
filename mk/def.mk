@@ -53,13 +53,13 @@ $(1)_$(2) ?= $$($(1)_PROVIDE_$(2))
 endef
 
 ##! %List of static libraries
-#override STATIC_LIBRARIES =
+override STATIC_LIBRARIES =
 
 ##! %List of shared libraries
-#override SHARED_LIBRARIES =
+override SHARED_LIBRARIES =
 
 ##! %List of binaries
-#override BINARIES =
+override BINARIES =
 
 ##! Declare a component inside a build system
 ##
@@ -114,7 +114,7 @@ endif
 _$(1)_HEADERS = $$(foreach incdir,$$($(1)_INCLUDES),$$(wildcard $$(incdir)/*.h) $$(wildcard $$(TOP)/$$(incdir)/*.h))
 ALL_HEADERS += $$(_$(1)_HEADERS)
 $(1)_OBJS = $$(patsubst %.cpp,%.o,$$(_$(1)_SOURCES))
-$(2) += $$($(1)_TARGET)
+override $(2) += $$($(1)_TARGET)
 
 $$($(1)_OBJS) $$(patsubst %.o,%.d,$$($(1)_OBJS)) : $$(_$(1)_GENERATED)
 
