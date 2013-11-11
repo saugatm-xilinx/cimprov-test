@@ -334,38 +334,6 @@ namespace solarflare
         }
     };
 
-    ///
-    /// Process software item and add its type to an array if we
-    /// we have not met this type yet.
-    ///
-    /// @param obj    Reference to SWElement instance
-    /// @param data   Pointer to the array of software types.
-    ///
-    static inline void collectSWTypes(const SystemElement& obj,
-                                      void *data)
-    {
-        Array<SWType *> *types;
-        const SWElement &sw = dynamic_cast<const SWElement&>(obj);
-        SWType          *curType = NULL;
-
-        unsigned int i;
-
-        types = reinterpret_cast<Array<SWType *> *>(data);
-
-        curType = sw.getSWType();
-        if (curType == NULL)
-            return;
-
-        for (i = 0; i < types->size(); i++)
-            if (*((*types)[i]) == *curType)
-                break;
-
-        if (i == types->size())
-            types->append(curType);
-        else
-            delete curType;
-    }
-
     template <class CIMClass>
     class EnumInstances : public ConstElementEnumerator {
         cimple::Enum_Instances_Handler<CIMClass> *handler;
@@ -396,19 +364,8 @@ namespace solarflare
         static void allSoftwareTypes(
                           cimple::Enum_Instances_Handler<CIMClass> *handler)
         {
-            Array<SWType *> types;
-            unsigned int    i;
-
             EnumInstances<CIMClass> iter(handler);
-            ConstEnumProvClsInsts   en(collectSWTypes, &types);
-
-            System::target.forAllSoftware(en);
-
-            for (i = 0; i < types.size(); i++)
-            {
-                iter.process(*(types[i]));
-                delete types[i];
-            }
+            System::target.forAllSoftwareTypes(iter);
         }
         static void allNICs(cimple::Enum_Instances_Handler<CIMClass> *handler)
         {

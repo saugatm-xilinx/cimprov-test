@@ -37,6 +37,8 @@ namespace solarflare
 
     class CIMHelper;
 
+    class SWType;
+
     /// @brief The root class for all managed objects.
     class SystemElement {
         String descr;
@@ -83,6 +85,12 @@ namespace solarflare
         cimple::Instance *cimReference(const cimple::Meta_Class& cls, unsigned idx = 0) const;
 
         virtual Thread *embeddedThread() { return NULL; }
+
+        /// Returns generic type of this software (if this object
+        /// represents software) or NULL.
+        ///
+        /// @return SWType class instance
+        virtual SWType *getSWType() const { return NULL; }
     };
 
     /// @brief Abstract mutable enumerator for SystemObject
@@ -98,9 +106,6 @@ namespace solarflare
         virtual ~ConstElementEnumerator() {}
         virtual bool process(const SystemElement& elem) = 0;
     };
-
-    /// Forward declaration
-    class SWType;
 
     /// @brief Abstract class for software components.
     class SWElement : public SystemElement {
