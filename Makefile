@@ -1,5 +1,5 @@
 ##########################################################################
-#//#! \file Makefile
+##! \file Makefile
 ## <L5_PRIVATE L5_SOURCE>
 ## \author  OktetLabs
 ##  \brief  CIM Provider
@@ -9,6 +9,7 @@
 ##
 ##########################################################################
 
+##! Path to the top of the source tree
 TOP ?= .
 include $(TOP)/mk/def.mk
 
@@ -80,7 +81,10 @@ bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
 include $(TOP)/libcimobjects/sources.mk
 
 include $(TOP)/libprovider/sources.mk
+
 ifeq ($(CIM_SERVER),esxi)
+include $(TOP)/libprovider/v5_import/endianness/sources.mk
+include $(TOP)/libprovider/v5_import/tlv/sources.mk
 include $(TOP)/esxi_solarflare/sources.mk
 endif
 
@@ -117,12 +121,15 @@ endif
 endif
 
 ifneq ($(CIM_SERVER),esxi)
+
+##! Installs CIM provider where the CIMOM expects to find it
 install : all
 	$(RUNASROOT) mkdir -p $(DESTDIR)$(PROVIDER_LIBPATH)
 	$(RUNASROOT) cp lib$(PROVIDER_LIBRARY).so $(DESTDIR)$(PROVIDER_LIBPATH)
 endif
 
 ifneq ($(PROVIDER_ROOT),)
+##! Installs CIM provider's supplementary files under PROVIDER_ROOT()
 install-aux : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
 			  $(libcimobjects_DIR)/interop.mof \
 			  $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof)
@@ -132,11 +139,13 @@ endif
 
 .PHONY : platform
 PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
+
+##! Creates a platform-specific build directory
 platform : $(PLATFORM_BUILD)/Makefile
 
 $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
 		mkdir -p $(PLATFORM_BUILD)
-		cd $(PLATFORM_BUILD); $(HG) manifest | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
+		cd $(PLATFORM_BUILD); $(HG) st --all | grep -v "^[?IR]" | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
 		echo "CONFIG:=$(CONFIG)" >$@
 		echo "TOP:=$(CURDIR)" >>$@
 		cat $< >>$@

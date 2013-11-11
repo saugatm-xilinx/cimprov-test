@@ -49,15 +49,85 @@
 #define       MC_CMD_I2C_OP_IN_ARGS_MINNUM 1
 #define       MC_CMD_I2C_OP_IN_ARGS_MAXNUM 62
 
+/* MC_CMD_I2C_READ_REGS_IN msgrequest */
+#define    MC_CMD_I2C_READ_REGS_IN_LEN 16
+/* Operation code */
+#define       MC_CMD_I2C_READ_REGS_IN_OP_OFST 0
+/* I2C Bus address */
+#define       MC_CMD_I2C_READ_REGS_IN_ADDR_OFST 4
+/* Register offset */
+#define       MC_CMD_I2C_READ_REGS_IN_OFFSET_OFST 8
+/* Number of bytes to read */
+#define       MC_CMD_I2C_READ_REGS_IN_NUM_OFST 12
+
+/* MC_CMD_I2C_WRITE_REGS_IN msgrequest */
+#define    MC_CMD_I2C_WRITE_REGS_IN_LENMIN 13
+#define    MC_CMD_I2C_WRITE_REGS_IN_LENMAX 252
+#define    MC_CMD_I2C_WRITE_REGS_IN_LEN(num) (12+1*(num))
+/* Operation code */
+#define       MC_CMD_I2C_WRITE_REGS_IN_OP_OFST 0
+/* I2C Bus address */
+#define       MC_CMD_I2C_WRITE_REGS_IN_ADDR_OFST 4
+/* Register offset */
+#define       MC_CMD_I2C_WRITE_REGS_IN_OFFSET_OFST 8
+/* Bytes to write */
+#define       MC_CMD_I2C_WRITE_REGS_IN_DATA_OFST 12
+#define       MC_CMD_I2C_WRITE_REGS_IN_DATA_LEN 1
+#define       MC_CMD_I2C_WRITE_REGS_IN_DATA_MINNUM 1
+#define       MC_CMD_I2C_WRITE_REGS_IN_DATA_MAXNUM 240
+
+/* MC_CMD_I2C_SET_BUS_IN msgrequest */
+#define    MC_CMD_I2C_SET_BUS_IN_LEN 8
+/* Operation code */
+#define       MC_CMD_I2C_SET_BUS_IN_OP_OFST 0
+/* I2C Bus to select */
+#define       MC_CMD_I2C_SET_BUS_IN_BUS_OFST 4
+
+/* MC_CMD_I2C_GET_BUS_IN msgrequest */
+#define    MC_CMD_I2C_GET_BUS_IN_LEN 0
+
+/* MC_CMD_I2C_PROBE_BUS_IN msgrequest */
+#define    MC_CMD_I2C_PROBE_BUS_IN_LEN 8
+/* Operation code */
+#define       MC_CMD_I2C_PROBE_BUS_IN_OP_OFST 0
+/* Start address. Probing will proceed to MIN(ADDR + 31, 127) */
+#define       MC_CMD_I2C_PROBE_BUS_IN_ADDR_OFST 4
+
 /* MC_CMD_I2C_OP_OUT msgresponse */
-#define    MC_CMD_I2C_OP_OUT_LENMIN 4
+#define    MC_CMD_I2C_OP_OUT_LENMIN 0
 #define    MC_CMD_I2C_OP_OUT_LENMAX 252
 #define    MC_CMD_I2C_OP_OUT_LEN(num) (0+4*(num))
-/* operation-specific response */
+/* generic response */
 #define       MC_CMD_I2C_OP_OUT_RESULT_OFST 0
 #define       MC_CMD_I2C_OP_OUT_RESULT_LEN 4
-#define       MC_CMD_I2C_OP_OUT_RESULT_MINNUM 1
+#define       MC_CMD_I2C_OP_OUT_RESULT_MINNUM 0
 #define       MC_CMD_I2C_OP_OUT_RESULT_MAXNUM 63
+
+/* MC_CMD_I2C_READ_REGS_OUT msgresponse */
+#define    MC_CMD_I2C_READ_REGS_OUT_LENMIN 1
+#define    MC_CMD_I2C_READ_REGS_OUT_LENMAX 252
+#define    MC_CMD_I2C_READ_REGS_OUT_LEN(num) (0+1*(num))
+/* returned data */
+#define       MC_CMD_I2C_READ_REGS_OUT_DATA_OFST 0
+#define       MC_CMD_I2C_READ_REGS_OUT_DATA_LEN 1
+#define       MC_CMD_I2C_READ_REGS_OUT_DATA_MINNUM 1
+#define       MC_CMD_I2C_READ_REGS_OUT_DATA_MAXNUM 252
+
+/* MC_CMD_I2C_WRITE_REGS_OUT msgresponse */
+#define    MC_CMD_I2C_WRITE_REGS_OUT_LEN 0
+
+/* MC_CMD_I2C_SET_BUS_OUT msgresponse */
+#define    MC_CMD_I2C_SET_BUS_OUT_LEN 0
+
+/* MC_CMD_I2C_GET_BUS_OUT msgresponse */
+#define    MC_CMD_I2C_GET_BUS_OUT_LEN 4
+/* the currently selected bus */
+#define       MC_CMD_I2C_GET_BUS_OUT_CURRENT_BUS_OFST 0
+
+/* MC_CMD_I2C_PROBE_BUS_OUT msgresponse */
+#define    MC_CMD_I2C_PROBE_BUS_OUT_LEN 4
+/* bitmap of addresses in the specified ranged that got a response */
+#define       MC_CMD_I2C_PROBE_BUS_OUT_DEVICES_OFST 0
 
 
 /***********************************/
@@ -337,6 +407,8 @@
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_ECC_TEST  0x1e
 /* enum: RX DPCPU test settings */
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_RXDPCPU  0x1f
+/* enum: PCIE error monitoring operations */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_PCIE_MONITOR  0x20
 /* the operation requested (interpretation is test-specific) */
 #define       MC_CMD_EFTEST_OP_IN_EFTEST_OP_OFST 1
 #define       MC_CMD_EFTEST_OP_IN_EFTEST_OP_LEN 1
@@ -2597,8 +2669,47 @@
 #define        MC_CMD_EFTEST_DUT_FEATURES_OUT_INCLUDES_EFTESTS_GROUP_3_WIDTH 1
 #define        MC_CMD_EFTEST_DUT_FEATURES_OUT_40G_SUPPORTED_LBN 19
 #define        MC_CMD_EFTEST_DUT_FEATURES_OUT_40G_SUPPORTED_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PCIE_MONITOR_PRESENT_LBN 20
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PCIE_MONITOR_PRESENT_WIDTH 1
 /* First word of flags. */
 #define       MC_CMD_EFTEST_DUT_FEATURES_OUT_FLAGS1_OFST 0
+
+/* MC_CMD_EFTEST_PCIE_MONITOR_IN msgrequest */
+#define    MC_CMD_EFTEST_PCIE_MONITOR_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_PCIE_MONITOR_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_PCIE_MONITOR_IN_EFTEST_OP_LEN 1
+/* enum: Enable counting and clearing of PCIE errors and link retrains */
+#define          MC_CMD_EFTEST_PCIE_MONITOR_IN_START  0x0
+/* enum: Disable counting of PCIE errors and restore normal operation */
+#define          MC_CMD_EFTEST_PCIE_MONITOR_IN_STOP  0x1
+/* enum: Read PCIE monitor counters */
+#define          MC_CMD_EFTEST_PCIE_MONITOR_IN_READ  0x2
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_PCIE_MONITOR_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_PCIE_MONITOR_OUT msgresponse */
+#define    MC_CMD_EFTEST_PCIE_MONITOR_OUT_LEN 232
+/* Number of LTSSM transitions that have occurred */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LTSSM_TRANSITIONS_OFST 0
+/* Number of PHY link up/down transitions that have occurred */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_PHY_LINK_STATE_TRANSITIONS_OFST 4
+/* Error counts for each PCIE lane */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LANE_ERRORS_OFST 8
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LANE_ERRORS_LEN 4
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LANE_ERRORS_NUM 8
+/* Error counts for each bit in the AER uncorrectable error status register */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_UNCORRECTABLE_ERRORS_OFST 40
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_UNCORRECTABLE_ERRORS_LEN 4
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_UNCORRECTABLE_ERRORS_NUM 32
+/* Error counts for each bit in the AER correctable error status register */
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_CORRECTABLE_ERRORS_OFST 168
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_CORRECTABLE_ERRORS_LEN 4
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_CORRECTABLE_ERRORS_NUM 16
 
 #endif /* _SIENA_MC_DRIVER_PCOL_PRIVATE_H */
 /*! \cidoxg_end */

@@ -31,6 +31,8 @@
 #include "Provider.h"
 #include "Registration.h"
 
+#include <cimple/log.h>
+
 CIMPLE_NAMESPACE_BEGIN
 
 class CIMPLE_CIMPLE_LINKAGE Provider_Handle
@@ -106,6 +108,36 @@ public:
 
 protected:
 
+    class FunctionLogger
+    {
+        String            functionName;
+        String            functionParams;
+        Datetime          dtStart;
+        const Meta_Class* mc;
+    public:
+        FunctionLogger(Provider_Handle *handle, const char *fn,
+                       String params) :
+                          functionName(fn), functionParams(params),
+                          dtStart(Datetime::now())
+        { 
+            handle->get_meta_class(mc);
+            CIMPLE_DBG(("START Provider_Handle[meta_class='%s']::%s(): %s",
+                        mc->name, functionName.c_str(),
+                        functionParams.c_str()));
+        }
+
+        ~FunctionLogger()
+        {
+            uint64 timeDiff = Datetime::now().usec() - dtStart.usec();
+
+            CIMPLE_DBG(("END Provider_Handle[meta_class='%s']::%s(): %s; "
+                        "ELAPSED %llu usec",
+                        mc->name, functionName.c_str(),
+                        functionParams.c_str(),
+                        static_cast<long long unsigned int>(timeDiff)));
+        }
+    };
+
     const Registration* _registration;
     Provider_Proc _proc;
     void* _provider;
@@ -151,6 +183,16 @@ inline Enum_Instances_Status Provider_Handle::enum_instances(
     Enum_Instances_Proc enum_instances_proc,
     void* client_data)
 {
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    String            modelPath;
+    Buffer            buff;
+
+    instance_to_model_path(model, modelPath);
+    buff.format("model='%s'", modelPath.c_str());
+
+    FunctionLogger fl(this, __FUNCTION__, buff.data());
+#endif
+
     return (Enum_Instances_Status)_proc(_registration, OPERATION_ENUM_INSTANCES,
         _provider, (void*)model, (void*)enum_instances_proc, client_data,
         0, 0, 0, 0);
@@ -185,6 +227,19 @@ inline Invoke_Method_Status Provider_Handle::invoke_method(
     const Instance* instance,
     const Instance* method)
 {
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    String            instancePath;
+    String            methodPath;
+    Buffer            buff;
+
+    instance_to_model_path(instance, instancePath);
+    instance_to_model_path(method, methodPath);
+    buff.format("model='%s', method='%s'",
+                instancePath.c_str(), methodPath.c_str());
+
+    FunctionLogger fl(this, __FUNCTION__, buff.data());
+#endif
+
     return (Invoke_Method_Status)_proc(_registration, OPERATION_INVOKE_METHOD, 
         (void*)_provider, (void*)instance, (void*)method, 0, 0, 0, 0, 0);
 }
@@ -193,6 +248,10 @@ inline Enable_Indications_Status Provider_Handle::enable_indications(
     Indication_Proc indication_proc,
     void* client_data)
 {
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    FunctionLogger fl(this, __FUNCTION__, "none");
+#endif
+
     return (Enable_Indications_Status)_proc(_registration,
         OPERATION_ENABLE_INDICATIONS, (void*)_provider, 
         (void*)indication_proc, client_data, 0, 0, 0, 0, 0);
@@ -200,6 +259,10 @@ inline Enable_Indications_Status Provider_Handle::enable_indications(
 
 inline Disable_Indications_Status Provider_Handle::disable_indications()
 {
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    FunctionLogger fl(this, __FUNCTION__, "none");
+#endif
+
     return (Disable_Indications_Status)_proc(_registration,
         OPERATION_DISABLE_INDICATIONS, (void*)_provider, 0, 0, 0, 0, 0, 0, 0);
 }
@@ -220,6 +283,19 @@ inline Enum_Associators_Status Provider_Handle::enum_associators(
     Enum_Associators_Proc proc,
     void* client_data)
 {
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    String            instPath;
+    Buffer            buff;
+
+    instance_to_model_path(instance, instPath);
+    buff.format("instance='%s', result_class='%s', role='%s', "
+                "result_role='%s'",
+                instPath.c_str(), result_class.c_str(),
+                role.c_str(), result_role.c_str());
+
+    FunctionLogger fl(this, __FUNCTION__, buff.data());
+#endif
+
     return (Enum_Associators_Status)_proc(
         _registration,
         OPERATION_ENUM_ASSOCIATORS,

@@ -1,5 +1,5 @@
 ##########################################################################
-#//#! \file ./mk/def.mk
+##! \file ./mk/def.mk
 ## <L5_PRIVATE L5_SOURCE>
 ## \author  OktetLabs
 ##  \brief  CIM Provider
@@ -25,12 +25,25 @@ override host_LDFLAGS := $(LDFLAGS)
 override host_LIBRARIES := 
 override host_SYSLIBRARIES := 
 
+##! Target C++ compiler
 target_CXX = $(host_CXX)
+
+##! Target static archiver
 target_AR = $(host_AR)
+
+##! Target C++ preprocessor flags
 target_CPPFLAGS = $(host_CPPFLAGS)
+
+##! Target C++ compiler flags
 target_CXXFLAGS = $(host_CXXFLAGS)
+
+##! Target linker flags
 target_LDFLAGS = $(host_LDFLAGS)
+
+##! Target user libraries to link
 target_LIBRARIES = $(host_LIBRARIES)
+
+##! Target system libraries to link
 target_SYSLIBRARIES = $(host_SYSLIBRARIES)
 
 define _augment_vars
@@ -38,6 +51,23 @@ _$(1)_DEP_$(2) = $$(foreach d,$$(_$(1)_DEPENDS),$$($$(d)_PROVIDE_$(2)) )
 $(1)_$(2) ?= $$($(1)_PROVIDE_$(2))
 endef
 
+##! %List of static libraries
+override STATIC_LIBRARIES =
+
+##! %List of shared libraries
+override SHARED_LIBRARIES =
+
+##! %List of binaries
+override BINARIES =
+
+##! Declare a component inside a build system
+##
+## \param _1  component name
+## \param _2  component type:
+## - #STATIC_LIBRARIES()  component is a static library
+## - #SHARED_LIBRARIES()  component is a shared library 
+## - #BINARIES() component is an executable
+## \sa mk/sample-sources.mk
 define component
 ifeq ($$($(1)_TARGET),)
 $$(error Target not specified for $(1))
@@ -106,6 +136,10 @@ endif
 
 COMPONENTS += $(1)
 endef
+
+##! declare an archive component inside a build system
+##
+## \param _1  component name
 
 define archive_component
 ifeq ($$($(1)_TARGET),)

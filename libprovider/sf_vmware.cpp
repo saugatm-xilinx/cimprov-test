@@ -24,7 +24,14 @@
 #include "ci/tools/byteorder.h"
 #include "ci/tools/bitfield.h"
 #include "image.h"
+#include "sf_siocefx_common.h"
 #include "sf_siocefx_nvram.h"
+
+extern "C" {
+#include "tlv_partition.h"
+#include "tlv_layout.h"
+#include "endian_base.h"
+}
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +90,15 @@
 // interfaces from other devices
 #define CLASS_NET_VALUE     0x20000
 #define VENDOR_SF_VALUE     0x1924 
+
+// These values allows to distinguish NIC models by PCI device ID
+enum sfu_device_types {
+  SFU_DEVICE_TYPE_FALCON     = 0x0700,
+  SFU_DEVICE_TYPE_SIENA      = 0x0800,
+  SFU_DEVICE_TYPE_HUNTINGTON = 0x0900
+};
+
+#define SFU_DEVICE_TYPE(pci_id) ((pci_id) & 0x0F00)
 
 #define EFX_MAX_MTU (9 * 1024)
 
@@ -421,9 +437,10 @@ fail:
     class NICDescr
     {
     public:
-        int pci_domain;                 ///< PCI domain ID
-        int pci_bus;                    ///< PCI bus ID
-        int pci_device;                 ///< PCI device ID
+        int pci_domain;                 ///< PCI domain number
+        int pci_bus;                    ///< PCI bus number
+        int pci_device;                 ///< PCI device number
+        int pci_device_id;              ///< PCI device ID
 
         Array<PortDescr> ports;         ///< NIC ports
 
@@ -446,10 +463,10 @@ fail:
     class DeviceDescr
     {
     public:
-        int     pci_domain_id;  ///< PCI domain ID
-        int     pci_bus_id;     ///< PCI bus ID
-        int     pci_dev_id;     ///< PCI device ID
-        int     pci_fn_id;      ///< PCI function
+        int     pci_domain_num; ///< PCI domain number
+        int     pci_bus_num;    ///< PCI bus number
+        int     pci_dev_num;    ///< PCI device number
+        int     pci_fn_num;     ///< PCI function number
         String  dev_name;       ///< Device name
         String  dev_file;       ///< Path to device file
 
@@ -597,6 +614,7 @@ fail:
         char                 pci_conf[PCI_CONF_LEN];
         FILE                *f;
         int                  vendor_id;
+        int                  device_id;
         int                  device_class;
 
         Array<DeviceDescr> devs;
@@ -662,7 +680,7 @@ fail:
                 str = strchr(drvinfo.bus_info, '.');
                 if (str == NULL)
                     continue;
-                tmp_dev.pci_fn_id = strtol(str + 1, NULL, 16);
+                tmp_dev.pci_fn_num = strtol(str + 1, NULL, 16);
                 *str = '\0';
                 str = strrchr(drvinfo.bus_info, ':');
                 if (str == NULL)
@@ -672,21 +690,21 @@ fail:
                                 drvinfo.bus_info));
                     return -1;
                 }
-                tmp_dev.pci_dev_id = strtol(str + 1, NULL, 16);
+                tmp_dev.pci_dev_num = strtol(str + 1, NULL, 16);
                 *str = '\0';
                 str = strrchr(drvinfo.bus_info, ':');
                 if (str == NULL)
                 {
-                    tmp_dev.pci_domain_id = 0;
-                    tmp_dev.pci_bus_id = strtol(drvinfo.bus_info,
-                                                NULL, 16);
+                    tmp_dev.pci_domain_num = 0;
+                    tmp_dev.pci_bus_num = strtol(drvinfo.bus_info,
+                                                 NULL, 16);
                 }
                 else
                 {
-                    tmp_dev.pci_bus_id = strtol(str + 1, NULL, 16);
+                    tmp_dev.pci_bus_num = strtol(str + 1, NULL, 16);
                     *str = '\0';
-                    tmp_dev.pci_domain_id = strtol(drvinfo.bus_info,
-                                                   NULL, 16);
+                    tmp_dev.pci_domain_num = strtol(drvinfo.bus_info,
+                                                    NULL, 16);
                 }
                 tmp_dev.dev_file = device_path;
                 devs.append(tmp_dev);
@@ -767,6 +785,8 @@ fail:
                 fclose(f);
                 vendor_id = CHAR2INT(pci_conf[1]) * 256 +
                             CHAR2INT(pci_conf[0]);
+                device_id = CHAR2INT(pci_conf[3]) * 256 +
+                            CHAR2INT(pci_conf[2]);
                 device_class = (CHAR2INT(pci_conf[11]) << 16) +
                                (CHAR2INT(pci_conf[10]) << 8) +
                                CHAR2INT(pci_conf[9]);
@@ -777,10 +797,10 @@ fail:
 
                 for (i = 0; i < (int)devs.size(); i++)
                 {
-                    if (cur_domain == devs[i].pci_domain_id &&
-                        cur_bus == devs[i].pci_bus_id &&
-                        cur_dev == devs[i].pci_dev_id &&
-                        cur_fn == devs[i].pci_fn_id)
+                    if (cur_domain == devs[i].pci_domain_num &&
+                        cur_bus == devs[i].pci_bus_num &&
+                        cur_dev == devs[i].pci_dev_num &&
+                        cur_fn == devs[i].pci_fn_num)
                         break;
                 }
                 
@@ -790,8 +810,14 @@ fail:
                                 "by PCI address %x:%x:%x.%x",
                                 cur_domain, cur_bus,
                                 cur_dev, cur_fn));
+#if 0
                     nics.clear();
                     return -1;
+#else
+                    // Do not break everything due to this issue
+                    // - it was seen on an ESXi 5.5 host
+                    continue;
+#endif
                 }
 
                 // If a new NIC was found - insert it so that
@@ -815,6 +841,7 @@ fail:
                     tmp_nic.pci_domain = cur_domain;
                     tmp_nic.pci_bus = cur_bus;
                     tmp_nic.pci_device = cur_dev;
+                    tmp_nic.pci_device_id = device_id;
                     nics.insert(j, tmp_nic);
                 }
 
@@ -880,14 +907,24 @@ fail:
         if (vpd[0] & 0x80) // 10000000b
         {
             if (len < 2)
+            {
+                CIMPLE_ERR(("Incorrect length %u of large "
+                            "resource data type tag", len));
                 return -1;
+            }
             // Get large item name
             *tag_name = vpd[0] & 0x7f; // 01111111b
             *tag_len = (vpd[1] & 0x000000ff) +
                        ((vpd[2] & 0x000000ff) >> 8);
             *tag_start = vpd + 3;
             if (len < *tag_len + 3)
+            {
+                CIMPLE_ERR(("Too small length %u of large "
+                            "resource data type tag; it "
+                            "should be not less than %u",
+                            len, *tag_len + 3));
                 return -1;
+            }
         }
         else
         {
@@ -898,7 +935,13 @@ fail:
             *tag_len = (vpd[0] & 0x07); // 00000111b
             *tag_start = vpd + 1;
             if (len < *tag_len + 1)
+            {
+                CIMPLE_ERR(("Too small length %u of small "
+                            "resource data type tag; it "
+                            "should be not less than %u",
+                            len, *tag_len + 1));
                 return -1;
+            }
         }
 
         return 0;
@@ -979,6 +1022,10 @@ fail:
                         {
                             if (field_len < 1)
                             {
+                                CIMPLE_ERR(("Too small length %u "
+                                            "of field %s",
+                                            field_len,
+                                            field_name));
                                 delete[] field_value;
                                 return -1;
                             }
@@ -1009,7 +1056,11 @@ fail:
                 tag_name != VPD_TAG_R &&
                 tag_name != VPD_TAG_W &&
                 tag_name != VPD_TAG_END)
+            {
+                CIMPLE_ERR(("Unexpected tag name %d(0x%x) encountered",
+                            tag_name, tag_name));
                 return -1;
+            }
 
             vpd = tag_start + tag_len;
             len = end - vpd;
@@ -1034,11 +1085,13 @@ fail:
     ///
     static int getVPD(const char *ifname, int port_number,
                       String &product_name, String &product_number,
-                      String &serial_number)
+                      String &serial_number, int pci_device_id)
     {
         int       rc;
         int       fd;
-        uint8_t  *vpd;
+        uint8_t  *nvram_data = NULL;
+        uint32_t  nvram_data_len;
+        uint8_t  *vpd = NULL;
         int       vpd_off;
         int       vpd_len;
         uint32_t  nvram_type;
@@ -1053,39 +1106,93 @@ fail:
             return -1;
         }
 
-        nvram_type = port_number == 0 ?
-                        MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0 :
-                                MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT1;
-
-        if (siocEFXReadNVRAM(fd, false, (uint8_t *)&partial_hdr, 0,
-                             sizeof(partial_hdr),
-                             ifname, nvram_type) < 0)
+        if (SFU_DEVICE_TYPE(pci_device_id) == SFU_DEVICE_TYPE_SIENA)
         {
-            CIMPLE_ERR(("Failed to get header from NVRAM"));
-            close(fd);
-            return -1;
+            nvram_type = port_number == 0 ?
+                            MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0 :
+                                    MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT1;
+
+            if (siocEFXReadNVRAM(fd, false, (uint8_t *)&partial_hdr, 0,
+                                 sizeof(partial_hdr),
+                                 ifname, nvram_type) < 0)
+            {
+                CIMPLE_ERR(("Failed to get header from NVRAM"));
+                close(fd);
+                return -1;
+            }
+
+            if (CI_BSWAP_LE32(partial_hdr.magic) !=
+                                        SIENA_MC_STATIC_CONFIG_MAGIC)
+            {
+                CIMPLE_ERR(("Unknown NVRAM header magic number %ld(0x%lx)",
+                            static_cast<long int>(partial_hdr.magic),
+                            static_cast<long int>(partial_hdr.magic)));
+                close(fd);
+                return -1;
+            }
+
+            vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
+            vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
+
+            vpd = new uint8_t[vpd_len];
+            if (siocEFXReadNVRAM(fd, false, vpd, vpd_off, vpd_len,
+                                 ifname, nvram_type) < 0)
+            {
+                CIMPLE_ERR(("Failed to read VPD from NVRAM"));
+                close(fd);
+                delete[] vpd;
+                return -1;
+            }
+
+            nvram_data = vpd;
         }
-
-        if (CI_BSWAP_LE32(partial_hdr.magic) !=
-                                    SIENA_MC_STATIC_CONFIG_MAGIC)
+        else if (SFU_DEVICE_TYPE(pci_device_id) ==
+                                    SFU_DEVICE_TYPE_HUNTINGTON)
         {
-            CIMPLE_ERR(("Incorrect NVRAM header magic number %ld(%lx)",
-                        static_cast<long int>(partial_hdr.magic),
-                        static_cast<long int>(partial_hdr.magic)));
-            close(fd);
-            return -1;
+            nvram_partition_t partition;
+
+            nvram_type = NVRAM_PARTITION_TYPE_STATIC_CONFIG;
+
+            if (siocEFXReadNVRAMPartition(fd, false, ifname,
+                                          nvram_type, nvram_data,
+                                          nvram_data_len) < 0)
+            {
+                CIMPLE_ERR(("Failed to read VPD from NVRAM"));
+                close(fd);
+                return -1;
+            }
+
+            if ((rc = tlv_init_partition_from_buffer(
+                                    &partition, nvram_data,
+                                    nvram_data_len)) != TLV_OK)
+            {
+                CIMPLE_ERR(("tlv_init_partition_from_buffer() returned %d",
+                            rc));
+                close(fd);
+                delete[] nvram_data;
+                return -1;
+            }
+
+            if ((rc = tlv_find(&partition.tlv_cursor,
+                               TLV_TAG_PF_STATIC_VPD(0))) != TLV_OK)
+            {
+                CIMPLE_ERR(("tlv_find() returned %d", rc));
+                close(fd);
+                delete[] nvram_data;
+                return -1;
+            }
+
+            vpd = reinterpret_cast<struct tlv_pf_static_vpd *>
+                                (partition.tlv_cursor.current)->bytes;
+            vpd_len = le32_to_host(
+                        reinterpret_cast<struct tlv_pf_static_vpd *>
+                                (partition.tlv_cursor.current)->length);
         }
-
-        vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
-        vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
-
-        vpd = new uint8_t[vpd_len];
-        if (siocEFXReadNVRAM(fd, false, vpd, vpd_off, vpd_len,
-                             ifname, nvram_type) < 0)
+        else
         {
-            CIMPLE_ERR(("Failed to read VPD from NVRAM"));
+            CIMPLE_ERR(("PCI device id 0x%x seems to be neither of "
+                        "Siena nor of EF10 NIC", pci_device_id));
             close(fd);
-            delete[] vpd;
             return -1;
         }
 
@@ -1094,11 +1201,11 @@ fail:
         {
             CIMPLE_ERR(("Failed to parse VPD"));
             close(fd);
-            delete[] vpd;
+            delete[] nvram_data;
             return -1;
         }
 
-        delete[] vpd;
+        delete[] nvram_data;
         close(fd);
 
         return 0;
@@ -1867,6 +1974,7 @@ fail:
         int pci_domain;
         int pci_bus;
         int pci_device;
+        int pci_device_id;
 
     public:
 
@@ -1907,7 +2015,8 @@ fail:
             nicFw(this),
             rom(this),
             diag(this), pci_domain(descr.pci_domain),
-            pci_bus(descr.pci_bus), pci_device(descr.pci_device)
+            pci_bus(descr.pci_bus), pci_device(descr.pci_device),
+            pci_device_id(descr.pci_device_id)
         {
             int i = 0;
 
@@ -1991,6 +2100,10 @@ fail:
         }
 
         virtual PCIAddress pciAddress() const;
+        virtual uint32_t getPciDeviceID() const
+        {
+            return pci_device_id;
+        }
     };
 
     VitalProductData VMwareNIC::vitalProductData() const 
@@ -2004,7 +2117,7 @@ fail:
             String   sn;
 
             if (getVPD(ports[0].dev_name.c_str(), 0,
-                       p_name, pn, sn) < 0)
+                       p_name, pn, sn, pci_device_id) < 0)
                 return VitalProductData("", "", "", "", "", "");
 
             VitalProductData vpd(sn.c_str(), "", sn.c_str(), pn.c_str(),
@@ -2535,34 +2648,8 @@ curl_fail:
         return VersionInfo(edata.fw_version);
     }
 
-    ///
-    /// Correspondence between port and its BootROM version.
-    ///
-    class BootROMVer
-    {
-    public:
-        String portName; ///< Port name
-        String version;  ///< BootROM version
-
-        // Dummy operator to make possible using of cimple::Array
-        bool operator== (const BootROMVer &rhs)
-        {
-            UNUSED(rhs);
-            return false;
-        }
-    };
-
-    /// Array to store correspondence between ports and their
-    /// BootROM versions (currently these versions are obtained
-    /// via sfupdate which is time-consuming and also requires
-    /// locking).
-    static Array<BootROMVer> bootROMVers;
-    /// Mutex to protect bootROMVers array
-    static Mutex             bootROMVersLock(false);
-
     bool VMwareBootROM::syncInstall(const char *file_name)
     {
-        Auto_Mutex     auto_lock(bootROMVersLock);
         unsigned int   i = 0;
 
         String strPath;
@@ -2572,17 +2659,6 @@ curl_fail:
         strPath = fixFwImagePath(file_name,
                                  strDefPath.c_str());
 
-
-        for (i = 0; i < bootROMVers.size(); i++)
-        {
-            if (((VMwareNIC *)owner)->ports[0].dev_name ==
-                                              bootROMVers[i].portName)
-            {
-                bootROMVers.remove(i);
-                i--;
-            }
-        }
-
         if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
             return false;
 
@@ -2591,75 +2667,50 @@ curl_fail:
 
     VersionInfo VMwareBootROM::version() const
     {
-        int   rc = 0;
-        char  cmd[CMD_MAX_LEN];
-        char  str[SFU_STR_MAX_LEN];
-        char *s = NULL;
-        char *version = NULL;
-        int   fd = -1;
-        FILE *f = NULL;
+        VersionInfo ver;
+        int         fd;
+        uint32_t    pci_device_id;
+        const char *ifname;
 
-        unsigned int   i;
-        Auto_Mutex     auto_lock(bootROMVersLock);
+        const VMwareNIC  *nic = reinterpret_cast<const VMwareNIC *>(owner);
 
-        for (i = 0; i < bootROMVers.size(); i++)
-        {
-            if (((VMwareNIC *)owner)->ports[0].dev_name ==
-                                              bootROMVers[i].portName)
-                return VersionInfo(bootROMVers[i].version.c_str());
-        }
-
-        rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s",
-                      ((VMwareNIC *)owner)->ports[0].dev_name.c_str());
-        if (rc < 0 || rc >= CMD_MAX_LEN)
+        if (nic == NULL || nic->ports.size() < 1)
             return VersionInfo(DEFAULT_VERSION_STR);
 
-        fd = sfupdatePOpen(cmd);
+        ifname = nic->ports[0].dev_name.c_str();
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
-            return VersionInfo(DEFAULT_VERSION_STR);
-
-        f = fdopen(fd, "r");
-        if (f == NULL)
         {
-            close(fd);
+            CIMPLE_ERR(("Failed to open '%s', errno %d('%s')",
+                        DEV_SFC_CONTROL, errno, strerror(errno)));
             return VersionInfo(DEFAULT_VERSION_STR);
         }
 
-        while (1)
-        {
-            if (fgets(str, SFU_STR_MAX_LEN, f) != str)
-                break;
+        pci_device_id = nic->getPciDeviceID();
 
-            if (strstr(str, "Boot ROM version:") != NULL)
+        if (SFU_DEVICE_TYPE(pci_device_id) == SFU_DEVICE_TYPE_SIENA)
+        {
+            if (siocEFXGetBootROMVersionSiena(ifname, 0, fd,
+                                              false, ver) == 0)
             {
-                s = strstr(str, ":");
-                if (s == NULL)
-                    continue;
-                s++;
-                while (*s == ' ')
-                    s++;
-                trim(s);
-                if (*s == 'v')
-                    s++;
-                version = s;
-                break;
+                close(fd);
+                return ver;
+            }
+        }
+        else if (SFU_DEVICE_TYPE(pci_device_id) ==
+                                          SFU_DEVICE_TYPE_HUNTINGTON)
+        {
+            if (siocEFXGetBootROMVersionEF10(ifname, 0, fd,
+                                             false, ver) == 0)
+            {
+                close(fd);
+                return ver;
             }
         }
 
-        fclose(f);
-
-        if (version != NULL)
-        {
-            BootROMVer ver;
-
-            ver.portName = ((VMwareNIC *)owner)->ports[0].dev_name;
-            ver.version = String(version);
-            bootROMVers.append(ver);
-
-            return VersionInfo(version);
-        }
-        else
-            return VersionInfo(DEFAULT_VERSION_STR);
+        close(fd);
+        return VersionInfo(DEFAULT_VERSION_STR);
     }
 
     ///

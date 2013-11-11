@@ -167,6 +167,18 @@ Enum_Associator_Names_Status Provider_Handle::enum_associator_names(
 {
     PENTRY("Provider_Handle::enum_associator_names");
 
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    String instPath;
+    Buffer buff;
+
+    instance_to_model_path(instance, instPath);
+    buff.format("instance='%s', result_class=%s, role=%s, result_role=%s",
+                instPath.c_str(), result_class.c_str(),
+                role.c_str(), result_role.c_str());
+
+    FunctionLogger fl(this, __FUNCTION__, buff.data());
+#endif
+
     // Get meta-class.
     const Meta_Class* mc;
     get_meta_class(mc);
@@ -341,10 +353,24 @@ Enum_References_Status Provider_Handle::enum_references(
     void* client_data)
 {
     PENTRY("Provider_Handle::enum_references");
-    // Get meta class:
 
+    // Get meta class:
     const Meta_Class* mc;
     get_meta_class(mc);
+
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    String instPath;
+    String modelPath;
+    Buffer buff;
+
+    instance_to_model_path(instance, instPath);
+    instance_to_model_path(model, modelPath);
+    buff.format("instance='%s', model='%s', role=%s",
+                instPath.c_str(), modelPath.c_str(),
+                role.c_str());
+
+    FunctionLogger fl(this, __FUNCTION__, buff.data());
+#endif
 
     // Disallow this operation on non-association providers.
 
@@ -490,8 +516,18 @@ Get_Instance_Status Provider_Handle::get_instance(
     Instance*& instance)
 {
     PENTRY("Provider_Handle::get_instance");
-    // Use OPERATION_GET_INSTANCE:
 
+#ifdef CIMPLE_LOG_PROVIDER_OPS
+    String modelPath;
+    Buffer buff;
+
+    instance_to_model_path(model, modelPath);
+    buff.format("model='%s'", modelPath.c_str());
+
+    FunctionLogger fl(this, __FUNCTION__, buff.data());
+#endif
+
+    // Use OPERATION_GET_INSTANCE:
     Get_Instance_Status get_instance_status = (Get_Instance_Status)_proc(
         _registration,
         OPERATION_GET_INSTANCE, 

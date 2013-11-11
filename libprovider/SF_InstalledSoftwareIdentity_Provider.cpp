@@ -142,7 +142,8 @@ Enum_References_Status SF_InstalledSoftwareIdentity_Provider::enum_references(
           cast<cimple::CIM_System *>(
                          solarflare::CIMHelper::findSystem()->clone());
         link->InstalledSoftware =
-                  cast<cimple::CIM_SoftwareIdentity *>(instance);
+                  static_cast<CIM_SoftwareIdentity *>(
+                        cast<cimple::CIM_SoftwareIdentity *>(instance))->clone();
 #if NEED_ASSOC_IN_ROOT_CIMV2
         link->InstalledSoftware->__name_space =
                                       solarflare::CIMHelper::solarflareNS;

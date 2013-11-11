@@ -817,9 +817,9 @@ namespace solarflare
 
         port_index = boundIface->port()->elementId();
 
-        if (siocEFXGetBootROMVersion(boundIface->ifName().c_str(),
-                                     port_index, s, true,
-                                     ver) == 0)
+        if (siocEFXGetBootROMVersionSiena(boundIface->ifName().c_str(),
+                                          port_index, s, true,
+                                          ver) == 0)
         {
             close(s);
             return ver;
