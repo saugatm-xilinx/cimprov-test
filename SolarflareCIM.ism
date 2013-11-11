@@ -340,8 +340,8 @@
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
 		<row><td>AllOtherFiles</td><td>{84576CBB-C740-4F10-B5E8-C13C8090E785}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Provider</td><td>{5D8194A3-B575-4F59-BEC8-4D5BC3F5E431}</td><td>WBEM</td><td>8</td><td>not msix64</td><td/><td>17</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Provider64</td><td>{2AAE6402-D418-4AED-9FA0-BAF95FFAC79B}</td><td>WBEM64</td><td>8</td><td>msix64</td><td/><td>20</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Provider</td><td>{5D8194A3-B575-4F59-BEC8-4D5BC3F5E431}</td><td>WBEM</td><td>8</td><td>not msix64</td><td>solarflare.dll</td><td>20</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Provider64</td><td>{2AAE6402-D418-4AED-9FA0-BAF95FFAC79B}</td><td>WBEM64</td><td>8</td><td>msix64</td><td>solarflare.dll1</td><td>20</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
