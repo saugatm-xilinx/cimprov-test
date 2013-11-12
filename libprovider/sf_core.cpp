@@ -53,10 +53,10 @@ namespace solarflare
         return true;
     }
 
-    String BusElement::name() const
+    String OrderedElement::name(const String& prefix) const
     {
         Buffer buf;
-        buf.appends(SystemElement::name().c_str());
+        buf.appends(prefix.c_str());
         buf.append(' ');
         buf.append_uint16(elementId());
         return buf.data();
@@ -99,5 +99,24 @@ namespace solarflare
     }
 
     const String DiagSWElement::diagSwGenName = "Diagnostic";
+
+    String NICElement::name() const
+    {
+        Buffer      buf;
+        const NIC  *nic = this->nic(); 
+
+        if (nic != NULL)
+        {
+            buf.appends(nic->name().c_str());
+            buf.append(' ');
+        }
+
+        buf.appends(genericName().c_str());
+        buf.append(' ');
+        buf.append_uint16(elementId());
+
+        return buf.data();
+    }
+
 } // namespace
 

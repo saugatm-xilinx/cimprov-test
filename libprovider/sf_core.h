@@ -56,12 +56,6 @@ namespace solarflare
             descr = d;
         }
 
-        /// The ordinal number of the element inside its parent.  That is
-        /// relevant for 'homogenenous' elements such as NICs or
-        /// ports. Software elements are all different in some sense, so
-        /// zero value is expected for them.
-        virtual unsigned elementId() const { return 0; }
-
         /// Run-time initialization for things that are unsafe to do from
         /// constructors (including calling virtual methods).  CIM provider
         /// will call these method for topmost System object and the later
@@ -345,41 +339,56 @@ namespace solarflare
         }
     };
 
-    /// @brief Abstract class for bus components (currently, NICs and
-    /// Ports).  A hardware element always has an ordinal number inside its
-    /// parent object, and a PCI bus address.
-    class BusElement : public SystemElement {
+    /// @brief Mix-in class for ordered elements (having index value).
+    class OrderedElement {
         unsigned idx;
+    public:
+        OrderedElement(unsigned i) : idx(i) {}
+        virtual ~OrderedElement() {}
+        /// @return Element index
+        virtual unsigned elementId() const { return idx; }
+        virtual String name(const String& prefix) const;
+    };
+
+    /// @brief Abstract mix-in class for bus components
+    /// (currently, NICs, Ports and Interfaces).
+    /// Each bus component has a PCI bus address.
+    class BusElement {
+    public:
+        virtual ~BusElement() {}
+
+        /// @return PCI Address of the Element
+        virtual PCIAddress pciAddress() const = 0;
+    };
+
+    class NIC;
+
+    /// @brief Abstract mix-in for NIC associated elements (ports,
+    /// interfaces and firmware)
+    class NICElementMixIn {
+    public:
+        virtual ~NICElementMixIn() {}
+        virtual const NIC *nic() const = 0;
+    };
+
+    /// @brief Abstract class for NIC associated elements (ports,
+    /// interfaces and firmware)
+    class NICElement : public SystemElement,
+                       public OrderedElement,
+                       public NICElementMixIn {
     public:
         /// Constructor
         ///
         /// @param d  Description
         /// @param i  Index in parent object
-        BusElement(const String& d, unsigned i) :
-            SystemElement(d), idx(i) {}
-
-        /// @return Element index
-        virtual unsigned elementId() const { return idx; }
-
-        /// @return PCI Address of the Element
-        virtual PCIAddress pciAddress() const = 0;
-
-        /// Name of the object in accordance with IBM requirements.
+        NICElement(const String& d, unsigned i) : SystemElement(d),
+                                                  OrderedElement(i) {}
+        virtual ~NICElement() {}
         virtual String name() const;
     };
 
-    class NIC;
-
-    /// @brief Abstract mix-in for NIC associated elements (ports and
-    /// firmware)
-    class NICElement {
-    public:
-        virtual ~NICElement() {}
-        virtual const NIC *nic() const = 0;
-    };
-
     /// @brief Abstract class for firmware elements.
-    class Firmware : public SWElement, public NICElement {
+    class Firmware : public SWElement, public NICElementMixIn {
     protected:
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:

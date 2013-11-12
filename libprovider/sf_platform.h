@@ -40,7 +40,7 @@ namespace solarflare
 
     /// @brief Abstract class for diagnostics. Implementors shall subclass it for
     /// platform-specific port representation.
-    class Diagnostic : public SystemElement, public NICElement,
+    class Diagnostic : public SystemElement, public NICElementMixIn,
                        public SoftwareContainer {
         //// Private subclass of Thread to run diagnostics asynchronously
         class DiagnosticThread : public Thread {
@@ -84,7 +84,7 @@ namespace solarflare
 
         /// Copy constructor
         Diagnostic(const Diagnostic& src) :
-            SystemElement(src), NICElement(src),
+            SystemElement(src), 
             diagThread(src.diagThread)
         {
             diagThread.owner = this;
@@ -176,22 +176,17 @@ namespace solarflare
 
     /// @brief Abstract class for ports. Implementors shall subclass it for
     /// platform-specific port representation.
-    class Port : public SystemElement, public NICElement {
+    class Port : public BusElement, public NICElement {
         /// Class-wide name of the port to be passed into constructor
         static const String portName;
         /// Class-wide description of the port to be passed into constructor
         static const char portDescription[];
 
-        /// Index of the port on this particular NIC.
-        ///
-        /// fixme: may be it's better to create another hierarchy level like
-        /// OrderedSystemElement.
-        unsigned portIndex;
     public:
         /// Constructor
         ///
         /// @param i  Index of the port (0, 1)
-        Port(unsigned i) : SystemElement(portDescription), portIndex(i) {}
+        Port(unsigned i) : NICElement(portDescription, i) {}
 
         /// @return link status
         virtual bool linkStatus() const = 0;
@@ -235,7 +230,6 @@ namespace solarflare
 
         /// We're a port.
         virtual const String& genericName() const { return portName; }
-        virtual unsigned elementId() const { return portIndex; }
 
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     };
@@ -295,7 +289,7 @@ namespace solarflare
         /// @param i Index of the interface among all SF interfaces on
         ///          particular NIC (not system-wide).
         ///          fixme: or on all NICs?
-        Interface(unsigned i) : BusElement(ifGenDescription, i) {}
+        Interface(unsigned i) : NICElement(ifGenDescription, i) {}
 
         /// Function port.
         virtual Port *port() = 0;
@@ -367,7 +361,9 @@ namespace solarflare
 
     /// @brief An abstract class for NIC elements
     /// Implementors shall subclass it for platform-specific behaviour
-    class NIC : public BusElement,
+    class NIC : public SystemElement,
+                public BusElement,
+                public OrderedElement,
                 public SoftwareContainer,
                 public PortContainer,
                 public InterfaceContainer,
@@ -396,7 +392,8 @@ namespace solarflare
         /// @param i Index that uniqely identifies this particular instance
         ///          of SF NIC among other SF NICs in the system. Starts
         ///          from zero.
-        NIC(unsigned i) : BusElement(nicDescription, i) {};
+        NIC(unsigned i) : SystemElement(nicDescription),
+                          OrderedElement(i) {};
 
         /// @return NIC VPD
         virtual VitalProductData vitalProductData() const = 0;
@@ -459,6 +456,11 @@ namespace solarflare
         }
 
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
+        virtual String name() const
+        {
+            return OrderedElement::name(genericName());
+        }
     };
 
     /// @brief An abstract driver class.
