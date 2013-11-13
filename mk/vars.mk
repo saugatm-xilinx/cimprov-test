@@ -68,7 +68,7 @@ ifeq ($(DIST_IS_SPECIAL),)
 ##! List of all files that are to be packaged into a tarball
 ## \note The bulk of files comes from Mercurial manifest, so Mercurial must be installed
 ## for packaging to work
-PROVIDER_DIST_FILES := $(addprefix $(TOP)/,$(shell $(HG) st --all | grep -v "^[?IR]"))
+PROVIDER_DIST_FILES := $(addprefix $(TOP)/,$(shell $(HG) st --all | grep -v "^[?IR]" | sed "s/^.\s//"))
 PROVIDER_DIST_FILES += $(CIM_SCHEMA_ZIP)
 PROVIDER_DIST_FILES += lib$(PROVIDER_LIBRARY).spec
 endif

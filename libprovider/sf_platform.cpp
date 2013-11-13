@@ -114,10 +114,10 @@ namespace solarflare
         return &soft;
     }
 
-    const String Port::portName = "Ethernet Port";
+    const String Port::portName = "Port";
     const char Port::portDescription[] = "NIC Ethernet Port";
 
-    const String Interface::ifGenName = "Ethernet Interface";
+    const String Interface::ifGenName = "Interface";
     const char Interface::ifGenDescription[] = "NIC Ethernet Interface";
 
     const String NICFirmware::fwName = "Firmware";
