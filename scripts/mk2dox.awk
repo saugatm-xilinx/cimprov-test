@@ -48,8 +48,10 @@ comment_block {
     } else if (($1 == "override" || $1 == "export") && ($3 ~ /^[?+:]?=$/)) {
         documentation = "\\internal " documentation;
         name = $2;
-    } else if ($1 == "define") {
+    } else if ($1 == "define" || $1 == "ifdef" || $1 == "ifndef") {
         name = $2;
+    } else if (($1 == "ifeq" || $1 == "ifneq") && ($2 ~ /^\(\$\(([^)]+)\),/)) {
+        name = gensub(/^\(\$\(([^)]+)\).*$/, "\\1", "g", $2);
     }
     print "/**" documentation "\n*/"
     if (name)

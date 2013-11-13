@@ -25,11 +25,13 @@ endif
 
 .PHONY : distname
 
+##! Output the base name of provider package name (w/o .tar.gz etc)
 distname :
 	@echo $(PROVIDER_TARBALL_DIR)
 
 .PHONY : dist
 
+##! Make a source distribution tarball
 dist : $(PROVIDER_TARBALL)
 
 ifeq ($(MAKECMDGOALS), dist)
@@ -43,11 +45,14 @@ define M4_DEFINE
 
 endef
 
+##! Collect all Makefile variables and dump them as M4 macro definitions
 m4.defs : $(MAKEFILE_LIST)
 	@echo Producing M4 defs from make var
 	@echo "m4_changequote([,])m4_dnl" >$@
 	$(foreach var,$(filter-out M4_DEFINE,$(.VARIABLES)), $(call M4_DEFINE,$(var)))
 
+##! Make an RPM spec file from a template and Makefile variables
+## The template is processed with m4 using Makefile-derived M4 macros
 lib$(PROVIDER_LIBRARY).spec : m4.defs lib$(PROVIDER_LIBRARY).spec.in
 	$(M4) $^ >$@
 
@@ -100,6 +105,7 @@ CLEAN_TARGETS = $(addprefix clean-,$(COMPONENTS))
 
 clean : $(CLEAN_TARGETS)
 
+##! Clean components
 $(CLEAN_TARGETS) $(EXTRA_CLEAN_TARGETS) : clean-% :
 	-test -n "$($*_OBJS)" && rm $($*_OBJS)
 	-test -n "$($*_OBJS)" && rm $(patsubst %.o,%.d,$($*_OBJS))

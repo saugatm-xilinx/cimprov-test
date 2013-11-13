@@ -1,6 +1,6 @@
 ##########################################################################
-##! \file Makefile
-## <L5_PRIVATE L5_SOURCE>
+##! \file ./Makefile
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  CIM Provider
 ##   \date  2013/10/02
@@ -15,12 +15,15 @@ include $(TOP)/mk/def.mk
 
 .DEFAULT_GOAL := all
 
+##! Configuration preset (user-specified)
+## \deprecated Use appropriate CONFIG()
 ifneq ($(PRESET),)
 include $(TOP)/presets/$(PRESET).mk
 $(warning Presets are obsolete, use 'make CONFIG=$(CONFIG)' instead)
 endif
 
 ifneq ($(MAKECMDGOALS), doc)
+##! Configuration name (user-specified)
 ifeq ($(CONFIG),)
 $(error No CONFIG is known)
 endif
@@ -28,9 +31,21 @@ include $(TOP)/config/$(CONFIG).mk
 endif
 
 include $(TOP)/mk/vars.mk
+
+##! CIMOM type
+## Valid values are:
+## - pegasus for OpenPegasus or IBM DPA 
+## - sfcb for SFCB (except ESXi) 
+## - esxi for ESXi CIMOM 
+## - wmi for WMI
 ifeq ($(CIM_SERVER),wmi)
 include $(TOP)/mk/wmi.mk
 endif
+##! Provider target platform
+## Defined values are
+## - windows
+## - linux
+## - vmware
 ifeq ($(PROVIDER_PLATFORM),windows)
 include $(TOP)/mk/windows$(PROVIDER_BITNESS).mk
 include $(TOP)/cimple/posix/sources.mk
@@ -64,6 +79,12 @@ ifneq ($(MAKECMDGOALS),doc)
 $(error Unknown CIM_SERVER: $(CIM_SERVER))
 endif
 endif
+
+##! CIMOM interface
+## Supported values are:
+## - pegasus (OpenPegasus C++ API, deprecated)
+## - cmpi (default for Linux and VMWare)
+## - wmi
 ifeq ($(CIM_INTERFACE),cmpi)
 include $(TOP)/cimple/cmpi/sources.mk
 endif
@@ -158,6 +179,13 @@ $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
 		cat $< >>$@
 
 .PHONY : doc
+
+##! Generates documentation
+## \warning This the only target that always operate on TOP directory,
+## even when called in a build subdirectory
+## \note The target depends only on Doxygen, not on the whole source tree,
+## for technical reasons
+
 doc : Doxyfile
 	cd $(dir $<); $(DOXYGEN) $(notdir $<)
 
