@@ -1080,12 +1080,13 @@ fail:
     /// @param product_name      Where to save product name
     /// @param product_number    Where to save product number
     /// @param serial_number     Where to save serial number
+    /// @param device_type       Device type (Siena, Huntington, etc)
     ///
     /// @return 0 on success or error code
     ///
     static int getVPD(const char *ifname, int port_number,
                       String &product_name, String &product_number,
-                      String &serial_number, int pci_device_id)
+                      String &serial_number, int device_type)
     {
         int       rc;
         int       fd;
@@ -1106,7 +1107,7 @@ fail:
             return -1;
         }
 
-        if (SFU_DEVICE_TYPE(pci_device_id) == SFU_DEVICE_TYPE_SIENA)
+        if (device_type == SFU_DEVICE_TYPE_SIENA)
         {
             nvram_type = port_number == 0 ?
                             MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0 :
@@ -1146,8 +1147,7 @@ fail:
 
             nvram_data = vpd;
         }
-        else if (SFU_DEVICE_TYPE(pci_device_id) ==
-                                    SFU_DEVICE_TYPE_HUNTINGTON)
+        else if (device_type == SFU_DEVICE_TYPE_HUNTINGTON)
         {
             nvram_partition_t partition;
 
@@ -1190,8 +1190,8 @@ fail:
         }
         else
         {
-            CIMPLE_ERR(("PCI device id 0x%x seems to be neither of "
-                        "Siena nor of EF10 NIC", pci_device_id));
+            CIMPLE_ERR(("Device type %d seems to be neither of "
+                        "Siena nor of EF10 NIC", device_type));
             close(fd);
             return -1;
         }
@@ -1211,16 +1211,93 @@ fail:
         return 0;
     }
 
+    /// Types of firmware that can be updated by CIM provider
+    typedef enum {
+        FIRMWARE_UNKNOWN = 0, ///< Unknown firmware
+        FIRMWARE_BOOTROM,     ///< BootROM
+        FIRMWARE_MCFW         ///< MC firmware
+    } UpdatedFirmwareType;
+
+    /// Firmware default file names table entry
+    typedef struct {
+        UpdatedFirmwareType type;     ///< Firmware type
+        int subtype;                  ///< Firmware subtype
+        char *fName;                  ///< Default file name
+    } FwFileTableEntry;
+
+    ///
+    /// Table of correspondence between firmware
+    /// types and subtypes and names of files with
+    /// firmware images.
+    /// Use tools/image_table_gen/create_table.pl
+    /// to generate this table from files in
+    /// incoming_firmware repository.
+    ///
+    FwFileTableEntry fwFileTable[] = {
+        // Bootrom
+        { FIRMWARE_BOOTROM, 2, "SFL9021.dat" },
+        { FIRMWARE_BOOTROM, 4, "SFC9120.dat" },
+        { FIRMWARE_BOOTROM, 1, "SFC9020.dat" },
+        { FIRMWARE_BOOTROM, 0, "FALCON.dat" },
+
+        // MCFW
+        { FIRMWARE_MCFW, 10, "DYLAN.dat" },
+        { FIRMWARE_MCFW, 25, "LONGMORE.dat" },
+        { FIRMWARE_MCFW, 16, "MR_MCHENRY.dat" },
+        { FIRMWARE_MCFW, 17, "UNCLE_HAMISH.dat" },
+        { FIRMWARE_MCFW, 9, "ERMINTRUDE.dat" },
+        { FIRMWARE_MCFW, 7, "FLORENCE.dat" },
+        { FIRMWARE_MCFW, 18, "TUTTLE.dat" },
+        { FIRMWARE_MCFW, 11, "BRIAN.dat" },
+        { FIRMWARE_MCFW, 13, "MR_RUSTY.dat" },
+        { FIRMWARE_MCFW, 20, "KAPTEYN.dat" },
+        { FIRMWARE_MCFW, 23, "WHIPPLE.dat" },
+        { FIRMWARE_MCFW, 24, "FORBES.dat" },
+        { FIRMWARE_MCFW, 8, "ZEBEDEE.dat" },
+        { FIRMWARE_MCFW, 14, "BUXTON.dat" },
+
+        { FIRMWARE_UNKNOWN, 0, NULL},
+    };
+
+    /// Get native firmware type ID used to obtain information about it via
+    /// SIOCEFX ioctl().
+    ///
+    /// @param fwType       Updated firmware type ID
+    /// @param device_type  Device type (Siena, Huntington, etc)
+    ///
+    /// @return Native firmware type
+    ///
+    int getNativeFirmwareType(UpdatedFirmwareType fwType, int device_type)
+    {
+        switch (fwType)
+        {
+            case FIRMWARE_BOOTROM:
+                if (device_type == SFU_DEVICE_TYPE_SIENA)
+                    return MC_CMD_NVRAM_TYPE_EXP_ROM;
+                else
+                    return NVRAM_PARTITION_TYPE_EXPANSION_ROM;
+
+            case FIRMWARE_MCFW:
+                if (device_type == SFU_DEVICE_TYPE_SIENA)
+                    return MC_CMD_NVRAM_TYPE_MC_FW;
+                else
+                    return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
+        }
+        return -1;
+    }
+
     ///
     /// Get subtype of a specific type of firmware installed on NIC.
     ///
-    /// @param ifName         Interface name
-    /// @param type           Firmware type
-    /// @param subtype  [out] Firmware subtype
+    /// @param ifName             Interface name
+    /// @param type               Firmware type
+    /// @param device_type        Device type (Siena, Huntington, etc)
+    /// @param subtype      [out] Firmware subtype
     /// 
     /// @return 0 on success, -1 on error
     ///
-    static int getFwSubType(const char *ifName, int type, int &subtype)
+    static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
+                            int device_type, int &subtype)
     {
         int       rc;
         int       fd;
@@ -1232,6 +1309,16 @@ fail:
             uint32_t dw;
             uint16_t w[2];
         } buf;
+
+        int nativeType = getNativeFirmwareType(type, device_type);
+
+        if (device_type != SFU_DEVICE_TYPE_SIENA &&
+            device_type != SFU_DEVICE_TYPE_HUNTINGTON)
+        {
+            CIMPLE_ERR(("%s(): incorrect device type %d",
+                        __FUNCTION__, device_type));
+            return -1;
+        }
 
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
@@ -1247,8 +1334,19 @@ fail:
         ioc.cmd = EFX_MCDI_REQUEST;
 
         mcdi_req = &ioc.u.mcdi_request;
-        mcdi_req->cmd = MC_CMD_GET_BOARD_CFG;
-        mcdi_req->len = 0;
+
+        if (device_type == SFU_DEVICE_TYPE_SIENA)
+        {
+            mcdi_req->cmd = MC_CMD_GET_BOARD_CFG;
+            mcdi_req->len = 0;
+        }
+        else
+        {
+            mcdi_req->cmd = MC_CMD_NVRAM_METADATA;
+            mcdi_req->payload[
+              MC_CMD_NVRAM_METADATA_IN_TYPE_OFST / 4] = nativeType;
+            mcdi_req->len = 4;
+        }
 
         if (ioctl(fd, SIOCEFX, &ioc) < 0)
         {
@@ -1258,14 +1356,82 @@ fail:
             return -1;
         }
 
-        buf.dw = mcdi_req->payload[
-            MC_CMD_GET_BOARD_CFG_OUT_FW_SUBTYPE_LIST_OFST / 4 +
-            (type >> 1)];
-
-        subtype =  buf.w[type & 1] & 0x0000ffff;
+        if (device_type == SFU_DEVICE_TYPE_SIENA)
+        {
+            buf.dw = mcdi_req->payload[
+                MC_CMD_GET_BOARD_CFG_OUT_FW_SUBTYPE_LIST_OFST / 4 +
+                (nativeType >> 1)];
+            subtype =  buf.w[nativeType & 1] & 0x0000ffff;
+        }
+        else
+        {
+            buf.dw = mcdi_req->payload[
+                MC_CMD_NVRAM_METADATA_OUT_SUBTYPE_OFST / 4];
+            subtype = buf.dw;
+        }
 
         close(fd);
         return 0;
+    }
+
+    ///
+    /// Check firmware path, fix it if necessary and return it.
+    ///
+    /// @param path     Path to firmware image
+    /// @param defPath  What to add to the path if it does not
+    ///                 end with firmware image file name (*.dat)
+    ///
+    /// @return Fixed firmware image path
+    ///
+    static String fixFwImagePath(const char *path,
+                                 const char *defPath)
+    {
+        char    *fn = strdup(path);
+        String   strPath;
+
+        if (fn == NULL)
+            return String("");
+        trim(fn);
+        strPath = String(fn);
+        if (strstr(fn, ".dat") != fn + (strlen(fn) - 4))
+            strPath.append(String(defPath));
+        free(fn);
+
+        return strPath;
+    }
+
+    // Forward-declaration
+    static int vmwareInstallFirmware(const NIC *owner,
+                                     const char *fileName);
+
+    // Forward-declaration
+    String getDefaultFwPath(const NIC *owner, UpdatedFirmwareType fwType);
+
+    ///
+    /// Install firmware of a given type on a given NIC
+    /// from a specified location.
+    ///
+    /// @param path     Where to find firmware image
+    /// @param owner    NIC on which to install firmware
+    /// @param fwType   Firmware type
+    ///
+    /// @return true on sucess, false on failure
+    ///
+    bool vmwareInstallFirmwareType(const char *path,
+                                   const NIC *owner,
+                                   UpdatedFirmwareType fwType)
+    {
+        String strPath;
+        String strDefPath;
+
+        strDefPath = getDefaultFwPath(owner, fwType);
+        strPath = fixFwImagePath(path,
+                                 strDefPath.c_str());
+
+        if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
+            return false;
+
+        return true;
     }
 
     ///
@@ -1421,10 +1587,6 @@ fail:
             return rc;
         }
     }
-
-    // Predeclaration
-    static int vmwareInstallFirmware(const NIC *owner,
-                                     const char *fileName);
 
     ///
     /// Perform ethool command.
@@ -1841,71 +2003,6 @@ fail:
         UNUSED(mac);
     }
 
-    ///
-    /// Check firmware path, fix it if necessary and return it.
-    ///
-    /// @param path     Path to firmware image
-    /// @param defPath  What to add to the path if it does not
-    ///                 end with firmware image file name (*.dat)
-    ///
-    /// @return Fixed firmware image path
-    ///
-    static String fixFwImagePath(const char *path,
-                                 const char *defPath)
-    {
-        char    *fn = strdup(path);
-        String   strPath;
-
-        if (fn == NULL)
-            return String("");
-        trim(fn);
-        strPath = String(fn);
-        if (strstr(fn, ".dat") != fn + (strlen(fn) - 4))
-            strPath.append(String(defPath));
-        free(fn);
-
-        return strPath;
-    }
-
-    /// Firmware default file names table entry
-    typedef struct {
-        int type;     ///< Firmware type
-        int subtype;  ///< Firmware subtype
-        char *fName;  ///< Default file name
-    } FwFileTableEntry;
-
-    ///
-    /// Table of correspondence between firmware
-    /// types and subtypes and names of files with
-    /// firmware images.
-    /// Entries were autogenerated.
-    ///
-    FwFileTableEntry fwFileTable[] = {
-      // Bootrom
-        { MC_CMD_NVRAM_TYPE_EXP_ROM, 0, "FALCON.dat" },
-        { MC_CMD_NVRAM_TYPE_EXP_ROM, 4, "SFC9120.dat" },
-        { MC_CMD_NVRAM_TYPE_EXP_ROM, 1, "SFC9020.dat" },
-        { MC_CMD_NVRAM_TYPE_EXP_ROM, 2, "SFL9021.dat" },
-
-      // MCFW
-        { MC_CMD_NVRAM_TYPE_MC_FW, 10, "DYLAN.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 17, "UNCLE_HAMISH.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 16, "MR_MCHENRY.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 8, "ZEBEDEE.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 13, "MR_RUSTY.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 9, "ERMINTRUDE.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 11, "BRIAN.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 14, "BUXTON.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 20, "KAPTEYN.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 18, "TUTTLE.dat" },
-        { MC_CMD_NVRAM_TYPE_MC_FW, 7, "FLORENCE.dat" },
-
-        { 0, 0, NULL},
-    };
-
-    // Forward-declaration
-    String getDefaultFwPath(const NIC *owner, int fwType);
-
     class VMwareNICFirmware : public NICFirmware {
         const NIC *owner;
     public:
@@ -1915,17 +2012,8 @@ fail:
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *file_name)
         {
-            String strPath;
-            String strDefPath;
-
-            strDefPath = getDefaultFwPath(owner, MC_CMD_NVRAM_TYPE_MC_FW);
-            strPath = fixFwImagePath(file_name,
-                                     strDefPath.c_str());
-
-            if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
-                return false;
-
-            return true;
+            return vmwareInstallFirmwareType(file_name, owner,
+                                             FIRMWARE_MCFW);
         }
         virtual void initialize() {};
     };
@@ -1937,7 +2025,11 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *file_name);
+        virtual bool syncInstall(const char *file_name)
+        {
+            return vmwareInstallFirmwareType(file_name, owner,
+                                             FIRMWARE_BOOTROM);
+        }
         virtual void initialize() {};
     };
 
@@ -2100,7 +2192,7 @@ fail:
         }
 
         virtual PCIAddress pciAddress() const;
-        virtual uint32_t getPciDeviceID() const
+        virtual uint32_t getPCIDeviceID() const
         {
             return pci_device_id;
         }
@@ -2117,7 +2209,7 @@ fail:
             String   sn;
 
             if (getVPD(ports[0].dev_name.c_str(), 0,
-                       p_name, pn, sn, pci_device_id) < 0)
+                       p_name, pn, sn, SFU_DEVICE_TYPE(pci_device_id)) < 0)
                 return VitalProductData("", "", "", "", "", "");
 
             VitalProductData vpd(sn.c_str(), "", sn.c_str(), pn.c_str(),
@@ -2160,7 +2252,7 @@ fail:
     ///
     /// @return default path
     ///
-    String getDefaultFwPath(const NIC *owner, int fwType)
+    String getDefaultFwPath(const NIC *owner, UpdatedFirmwareType fwType)
     {
         int    mcfwSubtype;
         String defPath;
@@ -2172,7 +2264,9 @@ fail:
             return defPath;
 
         if (getFwSubType(vmwareNIC->ports[0].dev_name.c_str(),
-                         fwType, mcfwSubtype) != 0)
+                         fwType,
+                         SFU_DEVICE_TYPE(vmwareNIC->getPCIDeviceID()),
+                         mcfwSubtype) != 0)
             return defPath;
 
         for (i = 0; fwFileTable[i].fName != NULL; i++)
@@ -2183,7 +2277,7 @@ fail:
         if (fwFileTable[i].fName != NULL)
         {
             defPath = String("/image/");
-            if (fwType == MC_CMD_NVRAM_TYPE_EXP_ROM)
+            if (fwType == FIRMWARE_BOOTROM)
                 defPath.append("bootrom/");
             else
                 defPath.append("mcfw/");
@@ -2648,23 +2742,6 @@ curl_fail:
         return VersionInfo(edata.fw_version);
     }
 
-    bool VMwareBootROM::syncInstall(const char *file_name)
-    {
-        unsigned int   i = 0;
-
-        String strPath;
-        String strDefPath;
-
-        strDefPath = getDefaultFwPath(owner, MC_CMD_NVRAM_TYPE_EXP_ROM);
-        strPath = fixFwImagePath(file_name,
-                                 strDefPath.c_str());
-
-        if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
-            return false;
-
-        return true;
-    }
-
     VersionInfo VMwareBootROM::version() const
     {
         VersionInfo ver;
@@ -2687,7 +2764,7 @@ curl_fail:
             return VersionInfo(DEFAULT_VERSION_STR);
         }
 
-        pci_device_id = nic->getPciDeviceID();
+        pci_device_id = nic->getPCIDeviceID();
 
         if (SFU_DEVICE_TYPE(pci_device_id) == SFU_DEVICE_TYPE_SIENA)
         {
