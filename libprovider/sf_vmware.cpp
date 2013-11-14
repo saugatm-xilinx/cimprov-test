@@ -2452,7 +2452,10 @@ curl_fail:
             tmp_file_used = 1;
         }
         else // Protocol not supported
+        {
+            CIMPLE_ERR(("Unknown protocol for path '%s'", fileName));
             return -1;
+        }
 
         CIMPLE_DBG(("Run sfupdate command '%s'", cmd));
         fd = sfupdatePOpen(cmd);
@@ -2460,6 +2463,7 @@ curl_fail:
         {
             if (tmp_file_used)
                 unlink(tmp_file);
+            CIMPLE_DBG(("Failed to run sfupdate command '%s'", cmd));
             return -1;
         }
 

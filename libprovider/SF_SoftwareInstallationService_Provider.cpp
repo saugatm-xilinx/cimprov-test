@@ -162,6 +162,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
 
     if (URI.null)
     {
+        CIMPLE_ERR(("%s(): URI is not specified", __FUNCTION__));
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
     }
@@ -182,6 +183,9 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
                     /* option is supported, do nothing */
                     break;
                 default:
+                    CIMPLE_ERR(("%s(): unsupported option value %u "
+                                "specified", __FUNCTION__,
+                                InstallOptions.value[i]));
                     return_value.set(InvalidParameter);
                     return INVOKE_METHOD_OK;
             }
@@ -194,6 +198,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         if (Target != NULL &&
             !solarflare::CIMHelper::isOurSystem(sys))
         {
+            CIMPLE_ERR(("%s(): incorrect system was specified as a target",
+                        __FUNCTION__));
             return_value.set(InvalidParameter);
             return INVOKE_METHOD_OK;
         }
@@ -215,6 +221,9 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     }
     else
     {
+ 
+        CIMPLE_ERR(("%s(): incorrect target was specified",
+                    __FUNCTION__));
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
     }
