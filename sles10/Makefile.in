@@ -15,12 +15,13 @@ IMPORT([PEGASUS_BINPATH])
 [CPPFLAGS] += -DCIMPLE_CMPI_MODULE
 [CPPFLAGS] += -DSLES10_BUILD_HOST
 [CXXFLAGS] = __target_CXXFLAGS__
+[CFLAGS] = __target_CFLAGS__
 [LDFLAGS] = __target_LDFLAGS__
 [SYSLIBRARIES] = __target_SYSLIBRARIES__
 IMPORT([RUNASROOT])
 MOFPATH=$(PROVIDER_ROOT)/mof
 
-$(TARGET) : $(patsubst %.cpp,%.o,$(SOURCES))
+$(TARGET) : $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 $(TARGET) : %.so:
 	$(CXX) -shared -o $@ $(LDFLAGS) $(CXXFLAGS) $(filter %.o,$^) $(addprefix -l,$(SYSLIBRARIES))
 

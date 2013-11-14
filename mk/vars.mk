@@ -92,6 +92,8 @@ endif
 endif
 override host_CXXFLAGS += -fvisibility=hidden
 
+override host_CFLAGS = $(host_CXXFLAGS)
+
 ifneq ($(CIM_SERVER),esxi)
 override host_CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
 override host_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"

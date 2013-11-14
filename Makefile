@@ -108,12 +108,12 @@ bootstrap : $(CLASSLIST) $(genmod_TARGET) $(genprov_TARGET)
 
 include $(TOP)/libcimobjects/sources.mk
 
-include $(TOP)/libprovider/sources.mk
-
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 include $(TOP)/libprovider/v5_import/endianness/sources.mk
 include $(TOP)/libprovider/v5_import/tlv/sources.mk
 endif
+
+include $(TOP)/libprovider/sources.mk
 
 ifeq ($(CIM_SERVER),esxi)
 include $(TOP)/esxi_solarflare/sources.mk
