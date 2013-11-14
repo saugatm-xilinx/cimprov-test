@@ -2463,7 +2463,6 @@ curl_fail:
         {
             if (tmp_file_used)
                 unlink(tmp_file);
-            CIMPLE_DBG(("Failed to run sfupdate command '%s'", cmd));
             return -1;
         }
 
