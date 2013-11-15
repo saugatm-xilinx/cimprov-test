@@ -123,9 +123,10 @@ namespace solarflare
             }
         };
         InstallThread installer;
-    protected:
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;        
+
     public:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;        
+
         //// Constructor
         ////
         //// @param d     Description
@@ -246,10 +247,9 @@ namespace solarflare
     class SWType : public SWElement {
         String swGenericName;
         SWClass swClass;
-    protected:
+    public:
         virtual const CIMHelper *cimDispatch(
                                   const cimple::Meta_Class& mc) const;
-    public:
         
         SWType(const String& d, const String& sn,
                const String& genName, SWClass swClassId) :
@@ -389,9 +389,9 @@ namespace solarflare
 
     /// @brief Abstract class for firmware elements.
     class Firmware : public SWElement, public NICElementMixIn {
-    protected:
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
         /// Constructor
         ///
         /// @param d  Description
@@ -412,9 +412,9 @@ namespace solarflare
     class Package;
     /// @brief An abstract member of a software package.
     class HostSWElement : public SWElement {
-    protected:
-        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
     public:
+        virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
         /// The containing software package (e.g. RPM)
         /// which this element belongs to.
         virtual const Package *package() const = 0;

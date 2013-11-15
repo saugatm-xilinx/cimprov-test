@@ -1,0 +1,10 @@
+This tool can be used to generate table of firmware subtype to firmware
+image file name correspondence used by ESXi provider.
+
+To use it, in its folder run make and then run
+./create_table.pl /path/to/firmware/images/
+
+For example,
+./create_table.pl ~/incoming_firmware/bootrom/
+
+image.h is taken from a14b194c7d1d revision of v5-incoming repository.

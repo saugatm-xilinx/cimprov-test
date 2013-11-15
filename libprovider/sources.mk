@@ -169,7 +169,7 @@ endif
 $(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_$(CIM_INTERFACE_UPCASE)_MODULE
 
 libprovider_DEPENDS = libcimobjects
-ifeq ($(PROVIDER_PLATFORM),vmware)
+ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 libprovider_DEPENDS += libtlv libendianness
 endif
 libprovider_BUILD_DEPENDS = genmod

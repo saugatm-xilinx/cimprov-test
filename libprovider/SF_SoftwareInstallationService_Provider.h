@@ -32,6 +32,8 @@ class SF_SoftwareInstallationService_Provider
             solarflare::ActionForAll(inst), uri(u), ok(false),
             firstRun(true) {}
         bool isOk() const { return ok; };
+        bool installWasRun() const { return !firstRun; };
+        virtual bool process(solarflare::SystemElement& el);
     };
 
     class NICInstaller : public solarflare::ActionForAll
@@ -39,6 +41,7 @@ class SF_SoftwareInstallationService_Provider
         const char *uri;
         const SF_SoftwareInstallationService *service;
         bool ok;
+        bool runInstallTried;
     protected:
         virtual void handler(solarflare::SystemElement& se, unsigned);
     public:
@@ -46,8 +49,9 @@ class SF_SoftwareInstallationService_Provider
                      const SF_SoftwareInstallationService *svc,
                      const Instance *inst) :  
             solarflare::ActionForAll(inst), uri(u), service(svc),
-            ok(false) {}
+            ok(false), runInstallTried(false) {}
         bool isOk() const { return ok; };
+        bool installWasRun() const { return !runInstallTried; };
     };
 public:
 

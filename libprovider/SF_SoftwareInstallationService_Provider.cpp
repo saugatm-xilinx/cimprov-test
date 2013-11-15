@@ -119,6 +119,38 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromSoftwar
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
+bool SF_SoftwareInstallationService_Provider::Installer::process(
+                                              solarflare::SystemElement& se)
+{
+    using namespace solarflare;
+
+    const SWElement& sw = static_cast<const SWElement&>(se);
+
+    SWType          *swType;
+    const CIMHelper *helper = NULL;
+    unsigned         n;
+
+    swType = sw.getSWType();
+    if (swType == NULL)
+        return true;
+
+    helper = swType->cimDispatch(*sample->meta_class);
+    if (helper == NULL)
+    {
+        delete swType;
+        return true;
+    }
+    delete swType;
+
+    n = helper->nObjects(se);
+
+    for (unsigned i = 0; i < n; i++)
+        if (helper->match(se, *sample, i))
+            handler(se, i);
+
+    return true;
+}
+
 void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::SystemElement& se,
                                                                  unsigned)
 {
@@ -138,6 +170,7 @@ void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::
     Installer installer(uri, service);
     installer.forSoftware(nic);
     ok = installer.isOk();
+    runInstallTried = installer.installWasRun();
 }
 
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
@@ -162,6 +195,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
 
     if (URI.null)
     {
+        CIMPLE_ERR(("%s(): URI is not specified", __FUNCTION__));
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
     }
@@ -182,6 +216,9 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
                     /* option is supported, do nothing */
                     break;
                 default:
+                    CIMPLE_ERR(("%s(): unsupported option value %u "
+                                "specified", __FUNCTION__,
+                                InstallOptions.value[i]));
                     return_value.set(InvalidParameter);
                     return INVOKE_METHOD_OK;
             }
@@ -194,6 +231,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         if (Target != NULL &&
             !solarflare::CIMHelper::isOurSystem(sys))
         {
+            CIMPLE_ERR(("%s(): incorrect system was specified as a target",
+                        __FUNCTION__));
             return_value.set(InvalidParameter);
             return INVOKE_METHOD_OK;
         }
@@ -202,7 +241,12 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         if (installer.isOk())
             return_value.set(OK);
         else
+        {
+            if (!installer.installWasRun())
+                CIMPLE_ERR(("%s(): no matching software instance "
+                            "was found", __FUNCTION__));
             return_value.set(Error);
+        }
     }
     else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
     {
@@ -211,10 +255,18 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         if (installer.isOk())
             return_value.set(OK);
         else
+        {
+            if (!installer.installWasRun())
+                CIMPLE_ERR(("%s(): no matching software instance "
+                            "was found", __FUNCTION__));
             return_value.set(Error);
+        }
     }
     else
     {
+ 
+        CIMPLE_ERR(("%s(): incorrect target was specified",
+                    __FUNCTION__));
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
     }

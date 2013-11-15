@@ -9,4 +9,6 @@ libtlv_INCLUDES = libprovider/v5_import \
 		  libprovider/v5_import/endianness \
 		  libprovider/v5_import/ci/mgmt
 
+libtlv_CFLAGS = -fPIC
+
 $(eval $(call component,libtlv,STATIC_LIBRARIES))

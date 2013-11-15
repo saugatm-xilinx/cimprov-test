@@ -19,15 +19,20 @@ M4=m4 -P
 DOXYGEN=doxygen
 
 override host_CXX := $(or $(CXX),$(CC),c++)
+override host_CC := $(or $(CC),$(CXX),c++)
 override host_AR := $(or $(AR),ar)
 override host_CPPFLAGS := $(CPPFLAGS)
 override host_CXXFLAGS := $(or $(CXXFLAGS),$(CFLAGS))
+override host_CFLAGS := $(CFLAGS)
 override host_LDFLAGS := $(LDFLAGS)
 override host_LIBRARIES := 
 override host_SYSLIBRARIES := 
 
 ##! Target C++ compiler
 target_CXX = $(host_CXX)
+
+##! Target C compiler
+target_CC = $(host_CC)
 
 ##! Target static archiver
 target_AR = $(host_AR)
@@ -37,6 +42,9 @@ target_CPPFLAGS = $(host_CPPFLAGS)
 
 ##! Target C++ compiler flags
 target_CXXFLAGS = $(host_CXXFLAGS)
+
+##! Target C compiler flags
+target_CFLAGS = $(host_CFLAGS)
 
 ##! Target linker flags
 target_LDFLAGS = $(host_LDFLAGS)
@@ -113,16 +121,18 @@ ALL_SOURCES += $$(_$(1)_SOURCES)
 endif
 _$(1)_HEADERS = $$(foreach incdir,$$($(1)_INCLUDES),$$(wildcard $$(incdir)/*.h) $$(wildcard $$(TOP)/$$(incdir)/*.h))
 ALL_HEADERS += $$(_$(1)_HEADERS)
-$(1)_OBJS = $$(patsubst %.cpp,%.o,$$(_$(1)_SOURCES))
+$(1)_OBJS = $$(patsubst %.c,%.o,$$(patsubst %.cpp,%.o,$$(_$(1)_SOURCES)))
 override $(2) += $$($(1)_TARGET)
 
 $$($(1)_OBJS) $$(patsubst %.o,%.d,$$($(1)_OBJS)) : $$(_$(1)_GENERATED)
 
 $$($(1)_TARGET) : override CXX = $$($$($(1)_PURPOSE)_CXX)
+$$($(1)_TARGET) : override CC = $$($$($(1)_PURPOSE)_CC)
 $$($(1)_TARGET) : override AR = $$($$($(1)_PURPOSE)_AR)
 
 $$($(1)_TARGET) : $$(foreach d,$$($(1)_DEPENDS) $$($(1)_BUILD_DEPENDS),$$($$(d)_TARGET)) $$($(1)_OBJS) 
 $$($(1)_TARGET) : override CXXFLAGS = $$($$($(1)_PURPOSE)_CXXFLAGS) $($(1)_CXXFLAGS)
+$$($(1)_TARGET) : override CFLAGS = $$($$($(1)_PURPOSE)_CFLAGS) $($(1)_CFLAGS)
 
 ifneq ($(2),STATIC_LIBRARIES)
 $$($(1)_TARGET) : override LDFLAGS = $$($$($(1)_PURPOSE)_LDFLAGS) $$($(1)_LDFLAGS) $$(_$(1)_DEP_LDFLAGS)
@@ -132,7 +142,9 @@ endif
 
 $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : CPPFLAGS = $$($$($(1)_PURPOSE)_CPPFLAGS) $$($(1)_CPPFLAGS) $$(_$(1)_DEP_CPPFLAGS)
 $$($(1)_DIR)/%.o : override CXXFLAGS = $$($$($(1)_PURPOSE)_CXXFLAGS) $($(1)_CXXFLAGS) $$($(1)_$$(notdir $$*)_CXXFLAGS)
+$$($(1)_DIR)/%.o : override CFLAGS = $$($$($(1)_PURPOSE)_CFLAGS) $($(1)_CFLAGS) $$($(1)_$$(notdir $$*)_CFLAGS)
 $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : override CXX = $$($$($(1)_PURPOSE)_CXX) 
+$$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : override CC = $$($$($(1)_PURPOSE)_CC) 
 endif
 
 COMPONENTS += $(1)

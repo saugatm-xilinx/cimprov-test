@@ -41,6 +41,8 @@
 
 #include "sf_siocefx_nvram.h"
 
+#include "sf_pci_ids.h"
+
 extern "C" {
 #include <pci/pci.h>
 #include <linux/pci.h>
@@ -795,45 +797,6 @@ namespace solarflare
         virtual void initialize() {};
     };
 
-    VersionInfo LinuxBootROM::version() const
-    {
-        VersionInfo ver;
-        int         s;
-        int         port_index;
-
-        if (!boundIface)
-            return VersionInfo("");
-
-        if (boundIface->port() == NULL)
-            return VersionInfo("");
-
-        // Try SIOCEFX/MCDI_REQUEST firstly - it may be faster
-        s = socket(PF_INET, SOCK_STREAM, 0);
-        if (s < 0)
-        {
-            CIMPLE_ERR(("Failed to open a socket"));
-            return VersionInfo("");
-        }
-
-        port_index = boundIface->port()->elementId();
-
-        if (siocEFXGetBootROMVersionSiena(boundIface->ifName().c_str(),
-                                          port_index, s, true,
-                                          ver) == 0)
-        {
-            close(s);
-            return ver;
-        }
-        close(s);
-
-        // On failure try MTD using mtdchar or mtdblock module
-        if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
-                                 ver) == 0)
-            return ver;
-
-        return VersionInfo("");
-    }
-
     class LinuxDiagnostic : public Diagnostic {
         bool online;
         const NIC *owner;
@@ -1243,6 +1206,58 @@ namespace solarflare
         return alarm;
     }
 
+    VersionInfo LinuxBootROM::version() const
+    {
+        VersionInfo ver;
+        int         s;
+        int         port_index;
+        int         rc;
+
+        const LinuxNIC *nic = dynamic_cast<const LinuxNIC *>(owner);
+
+        if (!nic || !boundIface)
+            return VersionInfo("");
+
+        int device_type = SFU_DEVICE_TYPE(nic->deviceId());
+
+        if (boundIface->port() == NULL ||
+            (device_type != SFU_DEVICE_TYPE_SIENA &&
+             device_type != SFU_DEVICE_TYPE_HUNTINGTON))
+            return VersionInfo("");
+
+        // Try SIOCEFX/MCDI_REQUEST firstly - it may be faster
+        s = socket(PF_INET, SOCK_STREAM, 0);
+        if (s < 0)
+        {
+            LINUX_LOG_ERR("Failed to open a socket");
+            return VersionInfo("");
+        }
+
+        port_index = boundIface->port()->elementId();
+
+        if (device_type == SFU_DEVICE_TYPE_SIENA)
+            rc = siocEFXGetBootROMVersionSiena(boundIface->ifName().c_str(),
+                                               port_index, s, true,
+                                               ver);
+        else
+            rc = siocEFXGetBootROMVersionEF10(boundIface->ifName().c_str(),
+                                              port_index, s, true,
+                                              ver);
+        if (rc == 0)
+        {
+            close(s);
+            return ver;
+        }
+        close(s);
+
+        // On failure try MTD using mtdchar or mtdblock module
+        if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
+                                 ver) == 0)
+            return ver;
+
+        return VersionInfo("");
+    }
+
     class LinuxDriver : public Driver {
         const Package *owner;
         static const String drvName;
@@ -1624,7 +1639,7 @@ namespace solarflare
         fd = open(buf.data(), O_WRONLY | O_CREAT | O_TRUNC);
         if (fd < 0)
         {
-            CIMPLE_ERR(("Failed to open %s", buf.data()));
+            LINUX_LOG_ERR("Failed to open %s", buf.data());
             return -1;
         }
 
@@ -1663,8 +1678,8 @@ namespace solarflare
 
         if (rc < 0)
         {
-            CIMPLE_ERR(("Reading from file %s failed with errno %d",
-                        buf.data(), errno));
+            LINUX_LOG_ERR("Reading from file %s failed with errno %d",
+                          buf.data(), errno);
             close(fd);
             return -1;
         }
@@ -1727,8 +1742,8 @@ namespace solarflare
             // Arbitrary socket
             fd = socket(PF_INET, SOCK_STREAM, 0);
             if (fd < 0)
-                CIMPLE_ERR(("Failed to open a socket for checking NIC "
-                            "sensors"));
+                LINUX_LOG_ERR("Failed to open a socket for checking NIC "
+                              "sensors");
         }
         virtual ~LinuxSensorsAlertInfo()
         {

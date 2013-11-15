@@ -64,12 +64,20 @@ lib$(PROVIDER_LIBRARY).spec : m4.defs lib$(PROVIDER_LIBRARY).spec.in
 	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
+##! Automatically generate include dependencies from C files
+%.d : %.c
+	@echo Producing $@
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CPPFLAGS) $< > $@.$$$$; \
+	$(SED) 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
 ##! Compile Windows resource descriptions from sources
 %.o : %.rc
 	$(WINDRES) -o $@ -i $< $(WINDRES_CPPFLAGS)
 
 ifneq ($(_DO_NOT_GENERATE),1)
-include $(patsubst %.cpp,%.d,$(ALL_SOURCES))
+include $(patsubst %.c,%.d,$(patsubst %.cpp,%.d,$(ALL_SOURCES)))
 endif
 
 ##! Generate Yacc/Bison parsers
