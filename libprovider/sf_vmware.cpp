@@ -67,6 +67,7 @@ extern "C" {
 
 #include "sf_mcdi_sensors.h"
 #include "sf_alerts.h"
+#include "sf_pci_ids.h"
 
 #include <sys/syscall.h>
 
@@ -90,15 +91,6 @@ extern "C" {
 // interfaces from other devices
 #define CLASS_NET_VALUE     0x20000
 #define VENDOR_SF_VALUE     0x1924 
-
-// These values allows to distinguish NIC models by PCI device ID
-enum sfu_device_types {
-  SFU_DEVICE_TYPE_FALCON     = 0x0700,
-  SFU_DEVICE_TYPE_SIENA      = 0x0800,
-  SFU_DEVICE_TYPE_HUNTINGTON = 0x0900
-};
-
-#define SFU_DEVICE_TYPE(pci_id) ((pci_id) & 0x0F00)
 
 #define EFX_MAX_MTU (9 * 1024)
 
