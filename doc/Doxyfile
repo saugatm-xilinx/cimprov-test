@@ -52,7 +52,7 @@ PROJECT_LOGO           =
 # If a relative path is entered, it will be relative to the location
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = doc
+OUTPUT_DIRECTORY       = doc/devel
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create
 # 4096 sub-directories (in 2 levels) under the output directory of each output
@@ -426,7 +426,7 @@ HIDE_IN_BODY_DOCS      = NO
 # to NO (the default) then the documentation will be excluded.
 # Set it to YES to include the internal documentation.
 
-INTERNAL_DOCS          = NO
+INTERNAL_DOCS          = YES
 
 # If the CASE_SENSE_NAMES tag is set to NO then Doxygen will only generate
 # file names in lower-case letters. If set to YES upper-case letters are also
@@ -676,7 +676,7 @@ INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.c \
                          *.cpp \
                          *.h \
-                         *.mk Makefile *.tcl
+                         *.mk Makefile *.dox
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.
@@ -764,7 +764,7 @@ INPUT_FILTER           =
 # info on how filters are used. If FILTER_PATTERNS is empty or if
 # non of the patterns match the file name, INPUT_FILTER is applied.
 
-FILTER_PATTERNS        = *.mk=scripts/mk2dox.awk *Makefile=scripts/mk2dox.awk
+FILTER_PATTERNS        = *.mk=mk2dox.awk *Makefile=mk2dox.awk
 
 # If the FILTER_SOURCE_FILES tag is set to YES, the input filter (if set using
 # INPUT_FILTER) will be used to filter the input files when producing source

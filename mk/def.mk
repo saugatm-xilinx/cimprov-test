@@ -175,6 +175,9 @@ endif
 ifeq ($(MAKECMDGOALS),doc)
 _DO_NOT_GENERATE := 1
 endif
+ifeq ($(MAKECMDGOALS),userdoc)
+_DO_NOT_GENERATE := 1
+endif
 
 ##! A command line to list all files known to Mercurial repository
 ## \note we cannot use a simpler hg manifest here because it would not list added but yet uncommitted files

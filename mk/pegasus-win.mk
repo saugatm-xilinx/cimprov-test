@@ -1,8 +1,8 @@
 ##########################################################################
-#//#! \file ./mk/pegasus-win.mk
+##! \file ./mk/pegasus-win.mk
 ## <L5_PRIVATE L5_SOURCE>
 ## \author  OktetLabs
-##  \brief  CIM Provider
+##  \brief  Common configuration for OpenPegasus on Windows
 ##   \date  2013/10/02
 ##    \cop  (c) Solarflare Communications Inc.
 ## </L5_PRIVATE>

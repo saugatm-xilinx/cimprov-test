@@ -2,7 +2,7 @@
 #//#! \file ./libprovider/sources.mk
 ## <L5_PRIVATE L5_SOURCE>
 ## \author  OktetLabs
-##  \brief  CIM Provider
+##  \brief  CIM Provider: provider library
 ##   \date  2013/10/02
 ##    \cop  (c) Solarflare Communications Inc.
 ## </L5_PRIVATE>
@@ -118,7 +118,11 @@ libprovider_CPPFLAGS = $(libprovider_PROVIDE_CPPFLAGS) -Ilibprovider/v5_import -
 	-DPROVIDER_DESCRIPTION='"$(PROVIDER_DESCRIPTION)"'
 
 ifneq ($(CIM_INTERFACE),wmi)
-NEED_ASSOC_IN_ROOT_CIMV2=1
+
+##! A flag specifying whether the provider association classes shall be created in the root namespace too
+## \note this is generally needed for cross-namespace association traversal, but with WMI all provider classes are in
+## the root namespace
+NEED_ASSOC_IN_ROOT_CIMV2 = 1
 libprovider_CPPFLAGS += -DNEED_ASSOC_IN_ROOT_CIMV2=$(NEED_ASSOC_IN_ROOT_CIMV2)
 endif
 
@@ -146,6 +150,7 @@ CI_INCLUDES = libprovider/v5_import libprovider/v5_import/tlv libprovider/v5_imp
 libprovider_INCLUDES += $(CI_INCLUDES)
 endif
 
+##! Generate CIMPLE module definition 
 $(libprovider_DIR)/module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof $(CIM_SCHEMA_ROOTFILE) $(genmod_TARGET)
 	cd $(dir $@); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(abspath $(genmod_TARGET)) $(PROVIDER_LIBRARY) \
 									-F$(abspath $<) -M$(abspath $(libcimobjects_DIR)/repository.mof) \
@@ -171,6 +176,10 @@ libprovider_BUILD_DEPENDS = genmod
 
 $(eval $(call component,libprovider,SHARED_LIBRARIES))
 
+##! Make a registration file
+## \note for SFCB (Linux and ESXi) it creates a special-format file expected by SFCB;
+## for OpenPegasus (and IBM DPA) it creates a MOF file with registration instances;
+## WMI does not need it
 repository.reg : $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/classes $(TOP)/mof2reg.awk
 	$(AWK) -f $(TOP)/mof2reg.awk -vPRODUCTNAME=$(PROVIDER_LIBRARY) -vNAMESPACE=$(IMP_NAMESPACE) \
                 -vINTEROP_NAMESPACE=$(INTEROP_NAMESPACE) \
@@ -180,6 +189,7 @@ repository.reg : $(libcimobjects_DIR)/repository.mof $(libcimobjects_DIR)/classe
 
 .PHONY : registration 
 
+##! Create all registration-related files but do not perform registration as such
 registration : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
 							  $(libcimobjects_DIR)/interop.mof $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof)
 
@@ -189,7 +199,8 @@ ifeq ($(PEGASUS_MANAGEABLE),1)
 register unregister : $(PEGASUS_START_CONF)
 endif
 
-register: repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
+##! Register a provider 
+register : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_DIR)/schema.mof \
 						 $(libcimobjects_DIR)/interop.mof \
 						 $(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof) install
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -uc -aE -n $(IMP_NAMESPACE) $(libcimobjects_DIR)/schema.mof
@@ -200,14 +211,14 @@ ifeq ($(NEED_ASSOC_IN_ROOT_CIMV2),1)
 endif
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimmof -n $(INTEROP_NAMESPACE) repository.reg
 
-unregister: 
+unregister : 
 	$(RUNASROOT) $(PEGASUS_BINPATH)/cimprovider -r -m $(PROVIDER_LIBRARY)_Module
 
 endif
 
 ifeq ($(CIM_SERVER),sfcb)
 
-register: repository.reg install
+register : repository.reg install
 	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg namespace.mof
 	$(RUNASROOT) $(SFCBSTAGE) -n $(IMP_NAMESPACE) -r repository.reg interop.mof
 	$(RUNASROOT) $(SFCBREPOS)
@@ -234,6 +245,8 @@ endif
 .PHONY : msi InstallShieldProject
 
 PROVIDER_MSI_PACKAGE=sf_cim_provider
+
+##! Name of the MSI installer
 MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_windows_$(PROVIDER_BITNESS).exe
 
 msi : $(MSI_NAME)
@@ -251,12 +264,14 @@ NSIS_OPTIONS=-DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMES
 			 -DROOT_NAMESPACE='$(ROOT_NAMESPACE)'
 endif
 
+##! Build a NullSoft-based Windows installer
 $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSIS_DEPENDENCIES)
 	$(target_STRIP) $(libprovider_TARGET)
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DPROVIDERDESC='$(PROVIDER_DESCRIPTION)' \
 			-DVENDORNAME='$(PROVIDER_VENDOR)' \
 			-DCIM_INTERFACE=$(CIM_INTERFACE) -DINSTALLERNAME=$@ $(NSIS_OPTIONS) -DTOP=$(TOP) -NOCD $<
 
+##! Make a Windows cabinet with InstallShield installer project and needed binaries
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \
 					$(NSIS_DEPENDENCIES) \
 					sf-license.rtf

@@ -2,11 +2,11 @@
 ##! \file ./Makefile
 ## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
-##  \brief  CIM Provider
+##  \brief  CIM Provider build system
 ##   \date  2013/10/02
 ##    \cop  (c) Solarflare Communications Inc.
 ## </L5_PRIVATE>
-##
+## \ref build-faq
 ##########################################################################
 
 ##! Path to the top of the source tree
@@ -22,7 +22,11 @@ include $(TOP)/presets/$(PRESET).mk
 $(warning Presets are obsolete, use 'make CONFIG=$(CONFIG)' instead)
 endif
 
-ifneq ($(MAKECMDGOALS), doc)
+ifeq ($(MAKECMDGOALS), doc)
+# nothing
+else ifeq  ($(MAKECMDGOALS), userdoc)
+# nothing
+else
 ##! Configuration name (user-specified)
 ifeq ($(CONFIG),)
 $(error No CONFIG is known)
@@ -75,7 +79,11 @@ endif
 else ifeq ($(CIM_SERVER),wmi)
 # do nothing
 else
-ifneq ($(MAKECMDGOALS),doc)
+ifeq ($(MAKECMDGOALS),doc)
+# nothing
+else ifeq ($(MAKECMDGOALS),userdoc)
+# nothing
+else
 $(error Unknown CIM_SERVER: $(CIM_SERVER))
 endif
 endif
@@ -178,15 +186,26 @@ $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
 		echo "TOP:=$(CURDIR)" >>$@
 		cat $< >>$@
 
-.PHONY : doc
+.PHONY : doc userdoc
+
+MKDOC = cd $(TOP); mkdir doc/$(1); PATH=$(abspath $(TOP))/scripts:$$PATH $(DOXYGEN) $(2)
 
 ##! Generates documentation
-## \warning This the only target that always operate on TOP directory,
+## \warning This target always operate on TOP directory,
 ## even when called in a build subdirectory
-## \note The target depends only on Doxygen, not on the whole source tree,
+## \note The target depends only on Doxyfile, not on the whole source tree,
 ## for technical reasons
 
-doc : Doxyfile
-	cd $(dir $<); $(DOXYGEN) $(notdir $<)
+doc : doc/Doxyfile
+	$(call MKDOC,devel,$<)
+
+##! Generates users' documentation
+## \warning This target always operate on TOP directory,
+## even when called in a build subdirectory
+## \note The target depends only on Doxyfile, not on the whole source tree,
+## for technical reasons
+
+userdoc : doc/Doxyfile.user
+	$(call MKDOC,user,$<)
 
 include $(TOP)/mk/rules.mk

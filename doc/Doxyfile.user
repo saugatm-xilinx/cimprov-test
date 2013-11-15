@@ -1,0 +1,6 @@
+@INCLUDE = doc/Doxyfile
+INTERNAL_DOCS          = NO
+
+FILE_PATTERNS          = *.mk Makefile *.dox
+
+OUTPUT_DIRECTORY       = doc/user
