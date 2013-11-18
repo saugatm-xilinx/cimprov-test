@@ -157,13 +157,13 @@ $(libprovider_DIR)/module.cpp : $(libcimobjects_DIR)/classes $(libcimobjects_DIR
 									$(if $(findstring wmi,$(CIM_INTERFACE)),-w)
 
 ifeq ($(CIM_INTERFACE),cmpi)
-CIM_INTERFACE_UPCASE=CMPI
+CIM_INTERFACE_UPCASE = CMPI
 endif
 ifeq ($(CIM_INTERFACE),pegasus)
-CIM_INTERFACE_UPCASE=PEGASUS
+CIM_INTERFACE_UPCASE = PEGASUS
 endif
 ifeq ($(CIM_INTERFACE),wmi)
-CIM_INTERFACE_UPCASE=WMI
+CIM_INTERFACE_UPCASE = WMI
 endif
 
 $(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_$(CIM_INTERFACE_UPCASE)_MODULE
@@ -244,22 +244,22 @@ endif
 
 .PHONY : msi InstallShieldProject
 
-PROVIDER_MSI_PACKAGE=sf_cim_provider
+PROVIDER_MSI_PACKAGE = sf_cim_provider
 
 ##! Name of the MSI installer
-MSI_NAME=$(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_windows_$(PROVIDER_BITNESS).exe
+MSI_NAME = $(PROVIDER_MSI_PACKAGE)_$(PROVIDER_VERSION).$(PROVIDER_REVISION)_windows_$(PROVIDER_BITNESS).exe
 
 msi : $(MSI_NAME)
 
 ifeq ($(CIM_INTERFACE),wmi)
-NSIS_DEPENDENCIES=$(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/namespace.mof \
+NSIS_DEPENDENCIES = $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/namespace.mof \
 				  $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof
-NSIS_OPTIONS=-DNAMESPACE='\\.\root\cimv2'
+NSIS_OPTIONS = -DNAMESPACE='\\.\root\cimv2'
 else
-NSIS_DEPENDENCIES=repository.reg $(libcimobjects_DIR)/namespace.mof \
+NSIS_DEPENDENCIES = repository.reg $(libcimobjects_DIR)/namespace.mof \
 					$(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof \
 					$(if $(NEED_ASSOC_IN_ROOT_CIMV2),$(libcimobjects_DIR)/root.mof)
-NSIS_OPTIONS=-DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMESPACE)' \
+NSIS_OPTIONS = -DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAMESPACE)' \
 			 $(if $(NEED_ASSOC_IN_ROOT_CIMV2),-DNEED_ASSOC_IN_ROOT_CIMV2=1) \
 			 -DROOT_NAMESPACE='$(ROOT_NAMESPACE)'
 endif

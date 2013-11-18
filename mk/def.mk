@@ -9,14 +9,14 @@
 ##
 ##########################################################################
 
-AWK=awk
-SED=sed
-CURL=curl --negotiate -u :
-BISON=bison
-FLEX=flex
-HG=hg
-M4=m4 -P
-DOXYGEN=doxygen
+AWK = awk
+SED = sed
+CURL = curl --negotiate -u :
+BISON = bison
+FLEX = flex
+HG = hg
+M4 = m4 -P
+DOXYGEN = doxygen
 
 override host_CXX := $(or $(CXX),$(CC),c++)
 override host_CC := $(or $(CC),$(CXX),c++)

@@ -30,8 +30,8 @@ CIM_SCHEMA_VERSION_EXPERIMENTAL ?= 1
 ##! Directory for CIM schema patches for Pegasus
 CIM_SCHEMA_PATCHDIR = $(TOP)/schemas/$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)$(if $(CIM_SCHEMA_VERSION_EXPERIMENTAL),Exp)
 
-CIM_SCHEMA_ZIP=cim_schema_$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR).$(CIM_SCHEMA_VERSION_PATCHLEVEL)$(if $(CIM_SCHEMA_VERSION_EXPERIMENTAL),Experimental,Final)-MOFs.zip
-CIM_SCHEMA_ROOTFILE?=$(CIM_SCHEMA_DIR)/CIM_Schema.mof
+CIM_SCHEMA_ZIP = cim_schema_$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR).$(CIM_SCHEMA_VERSION_PATCHLEVEL)$(if $(CIM_SCHEMA_VERSION_EXPERIMENTAL),Experimental,Final)-MOFs.zip
+CIM_SCHEMA_ROOTFILE ?= $(CIM_SCHEMA_DIR)/CIM_Schema.mof
 
 DEFAULT_UPSTREAM_REPOSITORY ?= https://oktetlabs.ru/purgatorium/prj/level5/cim
 
@@ -45,14 +45,14 @@ else
 IMP_NAMESPACE = root/solarflare
 endif
 ##! System-wide root namespace
-ROOT_NAMESPACE?=root/cimv2
+ROOT_NAMESPACE ?= root/cimv2
 ifeq ($(CIM_SERVER),pegasus)
 ##! Interoperability classes namespace
-INTEROP_NAMESPACE=root/pg_interop
+INTEROP_NAMESPACE = root/pg_interop
 else
-INTEROP_NAMESPACE=root/interop
+INTEROP_NAMESPACE = root/interop
 endif
-INTEROP_CLASSES=SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
+INTEROP_CLASSES = SF_RegisteredProfile SF_ReferencedProfile SF_ElementConformsToProfile
 
 ##! Platform variant tag
 PROVIDER_PLATFORM_VARIANT ?= generic

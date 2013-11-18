@@ -85,9 +85,9 @@ ESXI_BUILD_SUBDIR ?= $(PROVIDER_LIBRARY)
 ESXI_BUILD_DIR = $(ESXI_BUILD_CIMPDK_PATH)/$(ESXI_BUILD_SUBDIR)
 ESXI_BUILD_VIB_PATH = build/obj/esx/staging
 
-ESXI_BUILD_RSH=$(ESXI_CONNECT) ssh $(ESXI_BUILD_HOST) #-oBatchMode=yes 
-ESXI_BUILD_RCP=scp #-oBatchMode=yes 
-ESXI_COPYTO=$(or $(ESXI_GATEWAY),$(ESXI_BUILD_HOST))
+ESXI_BUILD_RSH = $(ESXI_CONNECT) ssh $(ESXI_BUILD_HOST) #-oBatchMode=yes 
+ESXI_BUILD_RCP = scp #-oBatchMode=yes 
+ESXI_COPYTO = $(or $(ESXI_GATEWAY),$(ESXI_BUILD_HOST))
 
 esxi_vib_TARGET = vmware-esx-$(PROVIDER_NAME).vib
 esxi_vib_DIR = esxi_solarflare

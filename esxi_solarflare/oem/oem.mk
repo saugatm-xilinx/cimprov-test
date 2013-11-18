@@ -10,7 +10,7 @@
 ##########################################################################
 
 
-OEM_MODULES=solarflare
+OEM_MODULES = solarflare
 
 include $(OEM_DIR)/solarflare.inc
 

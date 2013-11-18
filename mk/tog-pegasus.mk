@@ -11,9 +11,9 @@
 
 ifeq ($(PROVIDER_BITNESS),64)
 ##! System library path component (depends on provider bitness)
-SYSLIBDIR=lib64
+SYSLIBDIR = lib64
 else
-SYSLIBDIR=lib
+SYSLIBDIR = lib
 endif
 override PEGASUS_ROOT=/usr
 override PEGASUS_HOME=/var/lib/Pegasus
