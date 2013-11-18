@@ -9,10 +9,16 @@
 ##
 ##########################################################################
 
+##! If this variable is set 1, no CIM schema downloading and patching takes place
 ifeq ($(USE_EXISITING_SCHEMA),)
+##! Download CIM schema ZIP
 $(CIM_SCHEMA_ZIP):
 	$(CURL) $(CIM_SCHEMA_REPOSITORY)/$(CIM_SCHEMA_ZIP) -o $@
 
+##! Unpack CIM schema ZIP and patch it for use with Pegasus
+## \note patching only occurs if CIM_SCHEMA_PATCHDIR() is different from
+## CIM_SCHEMA_DIR(); in the latter case it is assumed all necessary files
+## are already there
 $(CIM_SCHEMA_ROOTFILE) : $(CIM_SCHEMA_ZIP)
 	mkdir -p $(CIM_SCHEMA_DIR)/DMTF
 	unzip -q -o $(CIM_SCHEMA_ZIP) -d $(CIM_SCHEMA_DIR)/DMTF
@@ -33,6 +39,12 @@ distname :
 
 ##! Make a source distribution tarball
 dist : $(PROVIDER_TARBALL)
+
+.PHONY : list-components
+
+##! Lists all the components defined for the current configuration
+list-components :
+	@echo $(COMPONENTS)
 
 ifeq ($(MAKECMDGOALS), dist)
 ifeq ($(DIST_IS_SPECIAL),)
@@ -111,6 +123,8 @@ CLEAN_TARGETS = $(addprefix clean-,$(COMPONENTS))
 
 .PHONY: clean $(CLEAN_TARGETS)
 
+##! Clean all
+## \deprecated Better use separate build directories and purge them if necessary
 clean : $(CLEAN_TARGETS)
 
 ##! Clean components

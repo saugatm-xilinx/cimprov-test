@@ -177,6 +177,8 @@ install-aux : repository.reg $(libcimobjects_DIR)/namespace.mof $(libcimobjects_
 endif
 
 .PHONY : platform
+
+##! The path to the platform-specific build directory
 PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
 
 ##! Creates a platform-specific build directory

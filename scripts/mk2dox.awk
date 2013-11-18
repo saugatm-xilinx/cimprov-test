@@ -15,12 +15,15 @@
     
 
 /^##!/ {
+    if (comment_block) {
+        gsub(/\n/, "\n *", documentation);
+        print "/**" documentation "\n*/"
+    }
     comment_block = 1;
-    standalone = /([@\\](file|page|name|dir|defgroup|addtogroup|weakgroup|mainpage)\>|@[{}])/;
+    standalone = 0;
+    sub(/^##!/, "##"); 
+    documentation = "";
     block_params = "";
-    sub(/^##!/, ""); 
-    documentation = $0 "\n"
-    next
 }
 
 configure_block && (($1 == "export" || $1 == "override") && ($3 ~ /[?+:]?=/)) {
@@ -38,7 +41,7 @@ configure_block && ($2 ~ /^[?+:]?=$/) {
     next
 }
 
-configure_block && /^#+[[:space:]]*[@\\]endconfig[[:space:]]*$/ {
+configure_block && /^#+[[:space:]]*<\/example>[[:space:]]*$/ {
     documentation = documentation "\n</dl>\n";
     configure_block = 0;
     comment_block = 1;
@@ -55,11 +58,11 @@ comment_block && /^#+[[:space:]]*([@\\](file|page|name|dir|defgroup|addtogroup|w
     standalone = 1;
 }
 
-comment_block && /^#+[[:space:]]*[@\\]param/ {
+comment_block && /^#+[[:space:]]+[@\\]param/ {
     block_params = block_params "" (block_params ? ", " : "") $3;
 }
 
-comment_block && /^#+[[:space:]]*[@\\]config[[:space:]]*$/ {
+comment_block && /^#+[[:space:]]*<example>[[:space:]]*$/ {
     comment_block = 0;
     configure_block = 1;
     documentation = documentation "\n<dl>\n";
@@ -72,6 +75,18 @@ comment_block && (/^#/ || (!standalone && /^[[:space:]]*$/)) {
     next
 }
 
+$1 == "include" {
+    sub(/\$\(TOP)\//, "./", $2);
+    if ($2 !~ /\$/) {
+        sa = "\\sa " $2 "\n";
+        if (comment_block)
+            documentation = documentaton sa;
+        else {
+            print "/** \\file\n" sa "*/";
+        }
+    }
+    next
+}
 
 function makename(funcname)
 {
@@ -80,6 +95,7 @@ function makename(funcname)
         gsub(/\$\(/, "_VAR_", funcname);
         gsub(/\)/, "", funcname);
         gsub(/:/, "_COLON_", funcname);
+        gsub(/\//, "_DIR_", funcname);
         gsub(/[ -]/, "_", funcname);
         return funcname;
 }
@@ -93,7 +109,7 @@ comment_block {
     }
     
     name = "";
-    if ($2 == ":") {
+    if ($2 == ":" || $3 == ":") {
         target = /%/ ? $0 : $1;
         funcname = makename(target);
         if (target != funcname) 
@@ -104,7 +120,6 @@ comment_block {
     } else if ($2 ~ /^[?+:]?=$/) {
         name = $1;
     } else if (($1 == "override" || $1 == "export") && ($3 ~ /^[?+:]?=$/)) {
-        documentation = "\\internal " documentation;
         name = $2;
     } else if ($1 == "define" || $1 == "ifdef" || $1 == "ifndef") {
         name = $2;
@@ -128,9 +143,15 @@ comment_block {
 }
     
 EOF {
+    if (configure_block) {
+        print "error: <example> without closing </example>" >"/dev/stderr";
+        exit 1;
+    }
+    
     if (comment_block) {
         if (!standalone)
             print "warning: missing entity to comment at end of file" >"/dev/stderr";
+        gsub(/\n/, "\n *", documentation);
         print "/**" documentation "\n*/"
     }    
 }

@@ -8,7 +8,7 @@
 ## </L5_PRIVATE>
 ##
 ##########################################################################
-## \config
+## <example>
 override target_CXX = i686-w64-mingw32-g++
 override target_AR = i686-w64-mingw32-ar 
 override target_CPPFLAGS = -I$(TOP) -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\" -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\" 
@@ -20,4 +20,4 @@ override target_STRIP = i686-w64-mingw32-strip
 
 override CIMPLE_PLATFORM = WIN32_IX86_MSVC
 SOEXT = dll
-## \endconfig
+## </example>

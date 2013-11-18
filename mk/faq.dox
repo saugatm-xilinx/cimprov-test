@@ -1,3 +1,85 @@
 /** \page build-faq Build system FAQ
-
+    1. \anchor build-separate Is it possible to use separate build directories for different configurations? \n
+    Yes. and it is the recommended way of building.
+    Per-configuration build directories are created with <code>make CONFIG=<var>configuration</var> platform</code>.
+    That creates a subdirectory inside <code>TOP()/build</code> directory named like the this:
+    <code>PROVIDER_PLATFORM()PROVIDER_BITNESS()/PROVIDER_PLATFORM_VARIANT()-CIM_INTERFACE()-CIM_SCHEMA_VERSION_MAJOR().(CIM_SCHEMA_VERSION_MINOR()</code>.
+    It is possible to specify a different directory, even lying outside of the source tree, by specifying PLATFORM_BUILD() directory.
+    The build directory will mirror the directory structure of the root source directory and it will have a Makefile with a CONFIG() variable
+    set to a proper value.
+    \warning Other variables passed to \link platform() make platform \endlink are \e never stored in the generated Makefile. However, you may modify the build Makefile
+    to contain all the variable assignments that may be necessary.
+    \note The build in the root source tree is deprecated for the casual use. The behaviour of the two build methods \e must be the same when starting from
+    a fresh directory, and any violation is a grave bug and must be reported. However, building from the tainted root directory is unpredictable, even 
+    after \link clean() make clean \endlink, so the main usage for non-separate builds is for automated scripts that always obtain a fresh source tree or unpack a
+    source distributable. 
+    2. What components constitute the CIM provider and how do they depen on each other? \n
+    It depends on the configuration used. The following components are present in all cases:
+           - \link libprovider/sources.mk libprovider \endlink
+           - \link libcimobjects/sources.mk libcimobjects \endlink
+           - \link cimple/lib/sources.mk CIMPLE \endlink
+           .
+    The following components are used for the build process but are not present in the resulting binary:
+          - \refcomp{cimple/tools,file2c} \endlink
+          - \refcomp{cimple/tools,libmof} \endlink
+          - \refcomp{cimple/tools,libgencommon} \endlink
+          - \refcomp{cimple/tools,genclass} \endlink
+          - \refcomp{cimple/tools,genmod} \endlink
+          - \refcomp{cimple/tools,genprov} \endlink
+          .
+    A complete list of buildable components may be found through the description of ./Makefile \n 
+    The list of the components defined for a given configuration can be obtained with <kbd>make list-components</kbd>\n
+    3. In what circumstances is it necessary to remove the build directory? \n
+    In general, the build system tries to build robust and keep track of any build actions that may be necessary.
+    If you suspect something is not automatically rebuilt when it should, you should probably file a bug.
+    There are a few cases, though, where purging the build directory is more or less inevitable:
+         - if you delete, move or rename C/C++ sources, dependency files (<code>.d</code>) get out of sync and the build fails.
+         This issue cannot be cured automatically, and while it is possible to track and kill those dependency files one by one,
+         it's usually simple to kill the build directory altogether
+         - if you manually change any Makefile variables. The build system does not track changes in variables, so it may unable to
+         detect that something needs rebuild. Unless you're absolutely sure what you're doing, you shall delete the build directory
+         after any such changes.
+    4. Does \link clean() make clean \endlink work? Is there any good reasons to use it instead of removing the build directory?\n
+       It should work but it is not much supported. If you use separate build directories, there is absolutely no benefits in
+       using \link clean() make clean \endlink over deleting the build directory. If you do not but you need \link clean() make clean\endlink,
+       you should strong consider using a separate build directory (see \ref build-separate).
+       You may also want to use partial clean targets 
+       \link #_VAR_CLEAN_TARGETS__VAR_EXTRA_CLEAN_TARGETS__COLON__clean__PERCENT___COLON_ make clean-<var>COMPONENT</var> \endlink if you feel that the build problem is local to that component.
+    5. How to switch to a different version of CIM schema? \n
+       Just change CIM_SCHEMA_VERSION_MINOR(), CIM_SCHEMA_VERSION_PATCHLEVEL() or CIM_SCHEMA_VERSION_EXPERIMENTAL() \n
+       It \e strongly recommended to create a separate configuration for each CIM version, because even though the version
+       is present by default in the build directory name, it is \e not stored in its Makefile. 
+       Changing the CIM schema version and building without a complete purge is generally a very bad idea.
+    6. What prerequisites are for making a source distributable on Linux? \n
+       You need:
+       - a sufficiently recent GNU <kbd>tar</kbd> (generally shall not be a problem)
+       - Mercurial (you probably have one already if you get the source tree)
+       - <kbd>curl</kbd> for downloading the CIM schema file
+       .
+    7. What prerequisites are for building the provider for Windows? \n
+       You need:
+       - mingw64 compiler and libraries 
+         \warning Older mingw32 suite does not have necessary support for WBEM
+       - NullSoft installer builder (<kbd>nsis</kbd>) if you want a non-InstallShield-based installer
+       - <kbd>lcab</kbd> utility if you want to pack an InstallShield project sources
+       .
+    8. How to build the provider using a local copy of OpenPegasus? \n
+       Use \link config/local.mk local \endlink configuration. The Pegasus build is not part of the regular build, because
+       it would take extra time for nothing. Therefore before building the provider itself, you need to
+       build and set up the Pegasus using the following targets:
+          - \link pegasus_build() pegasus-build \endlink
+          That will download the source tarball, unpack it, patch the CIM schema if necessary, build it and install locally
+          in the build tree
+          - \link pegasus_start() pegasus-start \endlink
+          That will create the Pegasus repository and start it. You don't need this for building as such, but if you want
+          to register the provider, you definitely need it.
+          .
+    10. What files may be downloaded during the build? \n
+        - CIM schema file 
+        - Pegasus source tarball during \link pegasus_build() pegasus-build \endlink
+    11. \anchor build-mercurial Is Mercurial used during the build and how? \n
+        It is not used for the build process proper. However, it is used when it is necessary to list
+        all sources files from the repository:
+            - for \link dist() make dist \endlink
+            - to clone directory structure when doing \link platform() make platform \endlink
 */
