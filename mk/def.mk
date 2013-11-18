@@ -122,6 +122,7 @@ endif
 _$(1)_HEADERS = $$(foreach incdir,$$($(1)_INCLUDES),$$(wildcard $$(incdir)/*.h) $$(wildcard $$(TOP)/$$(incdir)/*.h))
 ALL_HEADERS += $$(_$(1)_HEADERS)
 $(1)_OBJS = $$(patsubst %.c,%.o,$$(patsubst %.cpp,%.o,$$(_$(1)_SOURCES)))
+$(1)_OBJS += $$($(1)_EXTRA_OBJS)
 override $(2) += $$($(1)_TARGET)
 
 $$($(1)_OBJS) $$(patsubst %.o,%.d,$$($(1)_OBJS)) : $$(_$(1)_GENERATED)

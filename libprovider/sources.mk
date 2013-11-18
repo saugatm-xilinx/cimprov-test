@@ -174,6 +174,16 @@ libprovider_DEPENDS += libtlv libendianness
 endif
 libprovider_BUILD_DEPENDS = genmod
 
+ifdef CIMPLE_WIN_LOG
+ifeq ($(PROVIDER_PLATFORM),windows)
+ifeq ($(CIMPLE_PLATFORM),WIN32_IX86_MSVC)
+libprovider_EXTRA_OBJS = $(libprovider_DIR)/win_evt_res/win32/sf_cim_evts.o
+else
+libprovider_EXTRA_OBJS = $(libprovider_DIR)/win_evt_res/win64/sf_cim_evts.o
+endif
+endif
+endif
+
 $(eval $(call component,libprovider,SHARED_LIBRARIES))
 
 ##! Make a registration file

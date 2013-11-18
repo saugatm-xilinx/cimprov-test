@@ -1,0 +1,53 @@
+<!-- <?xml version="1.0" encoding="UTF-16"?> -->
+<instrumentationManifest
+    xmlns="http://schemas.microsoft.com/win/2004/08/events" 
+    xmlns:win="http://manifests.microsoft.com/win/2004/08/windows/events"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"    
+    >
+
+    <instrumentation>
+        <events>
+            <provider name="Solarflare-CIM-EvtProvider" 
+                guid="{2fdedae5-60a4-42f7-9ca5-e4c1a106ed17}" 
+                symbol="ProviderGuid" 
+                resourceFileName="C:\Solarflare.dll" 
+                messageFileName="C:\Solarflare.dll"
+                message="$(string.Provider.Name)"
+                >
+
+                <channels>
+                    <channel chid="c1"
+                    name="Solarflare-CIM-EvtProvider/Operational"
+                    type="Operational"
+                    enabled="true"/>
+                </channels>
+
+                <templates>
+                    <template tid="LogMessageTemplate">
+                        <data name="Message"
+                              inType="win:AnsiString"/>
+                    </template>
+                </templates>
+
+                <events>
+                    <event value="1"
+                           template="LogMessageTemplate"
+                           symbol="LogMessage"
+                           message="$(String.LogMessage.Message)"
+                           channel="c1"/>
+                </events>
+            </provider>
+        </events>
+    </instrumentation>
+
+    <localization>
+        <resources culture="en-US">
+            <stringTable>
+                <string id="Provider.Name"
+                        value="Solarflare-CIM-EvtProvider"/>
+                <string id="LogMessage.Message"
+                        value="%1"/>
+            </stringTable>
+        </resources>
+    </localization>
+</instrumentationManifest>
