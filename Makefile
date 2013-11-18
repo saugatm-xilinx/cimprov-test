@@ -201,7 +201,7 @@ MKDOC = cd $(TOP); mkdir -p doc/$(1); PATH=$(abspath $(TOP))/scripts:$$PATH $(DO
 ## \note The target depends only on Doxyfile, not on the whole source tree,
 ## for technical reasons
 
-doc : Doxyfile
+doc : doc/Doxyfile $(TOP)/doc/Makefile.dox
 	$(call MKDOC,devel,$<)
 
 ##! Generates users' documentation
@@ -210,7 +210,10 @@ doc : Doxyfile
 ## \note The target depends only on Doxyfile, not on the whole source tree,
 ## for technical reasons
 
-userdoc : Doxyfile.user
+userdoc : doc/Doxyfile.user $(TOP)/doc/Makefile.dox
 	$(call MKDOC,user,$<)
+
+$(TOP)/doc/Makefile.dox : Makefile
+	./scripts/mk2dox.awk $< >$@
 
 include $(TOP)/mk/rules.mk

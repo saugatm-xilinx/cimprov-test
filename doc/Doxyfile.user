@@ -1,4 +1,4 @@
-@INCLUDE = Doxyfile
+@INCLUDE = doc/Doxyfile
 INTERNAL_DOCS          = NO
 
 FILE_PATTERNS          = *.mk Makefile *.dox
