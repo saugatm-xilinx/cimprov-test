@@ -142,12 +142,11 @@ comment_block {
     
 }
     
-EOF {
+END {
     if (configure_block) {
         print "error: <example> without closing </example>" >"/dev/stderr";
         exit 1;
     }
-    
     if (comment_block) {
         if (!standalone)
             print "warning: missing entity to comment at end of file" >"/dev/stderr";
