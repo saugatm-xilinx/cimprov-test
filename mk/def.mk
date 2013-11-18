@@ -175,21 +175,20 @@ COMPONENTS += $(1)
 
 endef
 
-ifeq ($(MAKECMDGOALS),distname)
+##! Declare a special target.
+## A special target is a target that does not need processing CIM schema files
+## \sa SPECIAL_TARGETS()
+define SPECIAL_TARGET
+ifeq ($$(MAKECMDGOALS),$(1))
 _DO_NOT_GENERATE := 1
 endif
-ifeq ($(MAKECMDGOALS),clean)
-_DO_NOT_GENERATE := 1
-endif
-ifeq ($(MAKECMDGOALS),platform)
-_DO_NOT_GENERATE := 1
-endif
-ifeq ($(MAKECMDGOALS),doc)
-_DO_NOT_GENERATE := 1
-endif
-ifeq ($(MAKECMDGOALS),userdoc)
-_DO_NOT_GENERATE := 1
-endif
+endef
+
+##! List of special targets
+## \sa SPECIAL_TARGET()
+SPECIAL_TARGETS := distname clean platform doc userdoc list-components help
+$(foreach tgt,$(SPECIAL_TARGETS),$(eval $(call SPECIAL_TARGET,$(tgt))))
+
 
 ##! A command line to list all files known to Mercurial repository
 ## \note we cannot use a simpler hg manifest here because it would not list added but yet uncommitted files

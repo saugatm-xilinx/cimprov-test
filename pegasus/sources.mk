@@ -1,6 +1,6 @@
 ##########################################################################
-##! \file ./pegasus/sources.mk
-## <L5_PRIVATE L5_SOURCE>
+##! \file 
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  Pegasus buid
 ##   \date  2013/10/02
@@ -19,10 +19,10 @@ $(info Using in-tree Pegasus build)
 PEGASUS_SETUP_SUBDIR ?= /setup
 
 ##! Root of the Pegasus source tree
-override PEGASUS_ROOT=$(abspath pegasus)
+override PEGASUS_ROOT = $(abspath pegasus)
 
 ##! The location where Pegasus is installed
-override PEGASUS_HOME=$(PEGASUS_ROOT)$(PEGASUS_SETUP_SUBDIR)
+override PEGASUS_HOME = $(PEGASUS_ROOT)$(PEGASUS_SETUP_SUBDIR)
 else
 ifeq ($(and $(PEGASUS_ROOT),$(PEGASUS_HOME),ok),ok)
 else
@@ -113,7 +113,7 @@ $(PEGASUS_COMPONENTS) : PEGASUS_DISABLE_PROV_USERCTXT=1
 ## functions to Pegasus build system), depending only on the schema root file
 ## and the Pegasus tarball. On the other hand, if invoked it will always unpack
 ## the tarball which may cause a total rebuild of Pegasus
-$(PEGASUS_SERVER): $(PEGASUS_UPSTREAM_TARBALL) $(CIM_SCHEMA_ROOTFILE)
+$(PEGASUS_SERVER) : $(PEGASUS_UPSTREAM_TARBALL) $(CIM_SCHEMA_ROOTFILE)
 	tar xzf $<
 ifneq ($(PEGASUS_PREBUILT),1)
 	PATH=$(PATH_WITH_PEGASUS) make -C $(PEGASUS_ROOT) build
@@ -127,7 +127,7 @@ endif
 
 .PHONY : pegasus-start
 ##! Start the OpenPegasus initializing its repository if needed
-pegasus-start: $(PEGASUS_START_CONF) $(PEGASUS_OWN_REPOSITORY)
+pegasus-start : $(PEGASUS_START_CONF) $(PEGASUS_OWN_REPOSITORY)
 
 .PHONY : pegasus-stop
 pegasus-stop : $(PEGASUS_START_CONF) 

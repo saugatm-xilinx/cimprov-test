@@ -15,17 +15,17 @@
     source distributable. 
     2. What components constitute the CIM provider and how do they depen on each other? \n
     It depends on the configuration used. The following components are present in all cases:
-           - \link libprovider/sources.mk libprovider \endlink
-           - \link libcimobjects/sources.mk libcimobjects \endlink
-           - \link cimple/lib/sources.mk CIMPLE \endlink
+           - \refcomp{,libprovider}
+           - \refcomp{,libcimobjects}
+           - \link cimple/lib/sources.mk cimple \endlink
            .
     The following components are used for the build process but are not present in the resulting binary:
-          - \refcomp{cimple/tools,file2c} \endlink
-          - \refcomp{cimple/tools,libmof} \endlink
-          - \refcomp{cimple/tools,libgencommon} \endlink
-          - \refcomp{cimple/tools,genclass} \endlink
-          - \refcomp{cimple/tools,genmod} \endlink
-          - \refcomp{cimple/tools,genprov} \endlink
+          - \refcomp{cimple/tools,file2c}
+          - \refcomp{cimple/tools,libmof}
+          - \refcomp{cimple/tools,libgencommon}
+          - \refcomp{cimple/tools,genclass}
+          - \refcomp{cimple/tools,genmod}
+          - \refcomp{cimple/tools,genprov}
           .
     A complete list of buildable components may be found through the description of ./Makefile \n 
     The list of the components defined for a given configuration can be obtained with <kbd>make list-components</kbd>\n

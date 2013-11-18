@@ -1,5 +1,5 @@
 ##########################################################################
-##! \file ./Makefile
+##! \file 
 ## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  CIM Provider build system
@@ -193,7 +193,7 @@ $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
 
 .PHONY : doc userdoc
 
-MKDOC = cd $(TOP); mkdir doc/$(1); PATH=$(abspath $(TOP))/scripts:$$PATH $(DOXYGEN) $(2)
+MKDOC = cd $(TOP); mkdir -p doc/$(1); PATH=$(abspath $(TOP))/scripts:$$PATH $(DOXYGEN) $(2)
 
 ##! Generates documentation
 ## \warning This target always operate on TOP directory,
