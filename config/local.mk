@@ -1,6 +1,6 @@
 ##########################################################################
 ##! \file ./config/local.mk
-## <L5_PRIVATE L5_SOURCE>
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  Local development configuration
 ##   \date  2013/10/02

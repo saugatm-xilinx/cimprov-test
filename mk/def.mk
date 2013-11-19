@@ -1,6 +1,6 @@
 ##########################################################################
 ##! \file ./mk/def.mk
-## <L5_PRIVATE L5_SOURCE>
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  CIM Provider
 ##   \date  2013/10/02
@@ -55,6 +55,9 @@ target_LIBRARIES = $(host_LIBRARIES)
 ##! Target system libraries to link
 target_SYSLIBRARIES = $(host_SYSLIBRARIES)
 
+##! Augment a variable with depender provided values
+## \param _1 component name
+## \param _2 variable suffix
 define _augment_vars
 _$(1)_DEP_$(2) = $$(foreach d,$$(_$(1)_DEPENDS),$$($$(d)_PROVIDE_$(2)) )
 $(1)_$(2) ?= $$($(1)_PROVIDE_$(2))
@@ -68,6 +71,9 @@ override SHARED_LIBRARIES =
 
 ##! %List of binaries
 override BINARIES =
+
+##! %List of all components
+override COMPONENTS =
 
 ##! Declare a component inside a build system
 ##
@@ -148,7 +154,7 @@ $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : override CXX = $$($$($(1)_PURPOSE)_CXX)
 $$($(1)_DIR)/%.o $$($(1)_DIR)/%.d : override CC = $$($$($(1)_PURPOSE)_CC) 
 endif
 
-COMPONENTS += $(1)
+override COMPONENTS += $(1)
 endef
 
 ##! declare an archive component inside a build system

@@ -1,6 +1,6 @@
 ##########################################################################
 ##! \file ./mk/windows32.mk
-## <L5_PRIVATE L5_SOURCE>
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  Common configuration for 32-bit Windows
 ##   \date  2013/10/02

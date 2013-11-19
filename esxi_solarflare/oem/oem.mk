@@ -1,6 +1,6 @@
 ##########################################################################
-#//#! \file ./esxi_solarflare/oem/oem.mk
-## <L5_PRIVATE L5_SOURCE>
+##! \file ./esxi_solarflare/oem/oem.mk
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  CIM Provider
 ##   \date  2013/10/02

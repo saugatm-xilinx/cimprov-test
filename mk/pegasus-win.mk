@@ -1,6 +1,6 @@
 ##########################################################################
 ##! \file ./mk/pegasus-win.mk
-## <L5_PRIVATE L5_SOURCE>
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  Common configuration for OpenPegasus on Windows
 ##   \date  2013/10/02

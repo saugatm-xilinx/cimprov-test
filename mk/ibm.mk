@@ -1,6 +1,6 @@
 ##########################################################################
 ##! \file ./mk/ibm.mk
-## <L5_PRIVATE L5_SOURCE>
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  Configuration for IBM linux systems
 ##   \date  2013/10/02

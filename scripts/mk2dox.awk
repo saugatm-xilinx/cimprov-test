@@ -76,7 +76,7 @@ comment_block && (/^#/ || (!standalone && /^[[:space:]]*$/)) {
 }
 
 $1 == "include" {
-    sub(/\$\(TOP)\//, "./", $2);
+    sub(/\$\(TOP)\//, "", $2);
     if ($2 !~ /\$/) {
         sa = "\\sa " $2 "\n";
         if (comment_block)

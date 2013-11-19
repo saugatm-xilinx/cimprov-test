@@ -1,6 +1,6 @@
 ##########################################################################
-#//#! \file ./libprovider/sources.mk
-## <L5_PRIVATE L5_SOURCE>
+##! \file ./libprovider/sources.mk
+## <L5_PRIVATE L5_SCRIPT>
 ## \author  OktetLabs
 ##  \brief  CIM Provider: provider library
 ##   \date  2013/10/02

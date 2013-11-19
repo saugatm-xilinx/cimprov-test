@@ -207,13 +207,13 @@ doc : doc/Doxyfile $(TOP)/doc/Makefile.dox
 ##! Generates users' documentation
 ## \warning This target always operate on TOP directory,
 ## even when called in a build subdirectory
-## \note The target depends only on Doxyfile, not on the whole source tree,
+## \note The target depends only on Doxyfile.user, not on the whole source tree,
 ## for technical reasons
 
 userdoc : doc/Doxyfile.user $(TOP)/doc/Makefile.dox
 	$(call MKDOC,user,$<)
 
 $(TOP)/doc/Makefile.dox : Makefile
-	./scripts/mk2dox.awk $< >$@
+	$(AWK) -f ./scripts/mk2dox.awk $< >$@
 
 include $(TOP)/mk/rules.mk
