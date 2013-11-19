@@ -35,6 +35,13 @@ endif
 include $(TOP)/config/$(CONFIG).mk
 endif
 
+##! Location name (user-specified or provided by CONFIG())
+## Locations asemble variables that may vary from site to site
+## (such as the URL for schema downloading)
+ifneq ($(LOCATION),)
+include $(TOP)/config/locations/$(LOCATION).mk
+endif
+
 include $(TOP)/mk/vars.mk
 
 ##! CIMOM type
