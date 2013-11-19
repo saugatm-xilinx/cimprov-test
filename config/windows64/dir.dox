@@ -1,0 +1,6 @@
+/** \dir 
+    List of 64-bit Windows configurations:
+    - \link windows64/wmi.mk WMI \endlink
+    - \link windows64/pegasus.mk OpenPegasus \endlink
+    - \link windows64/pegasus-cim2.32.mk OpenPegasus with CIMv2.32 \endlink
+*/

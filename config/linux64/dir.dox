@@ -1,0 +1,9 @@
+/** \dir 
+    List of 64-bit Linux configurations:
+    - \link linux64/ibmdpa.mk IBM DPA \endlink
+    - \link linux64/ibmdpa-cim2.32.mk IBM DPA with CIMv2.32 \endlink
+    - \link linux64/tog-pegasus.mk OpenPegasus \endlink
+    - \link linux64/tog-pegasus-cim2.32.mk OpenPegasus with CIMv2.32 \endlink
+    - \link linux64/sles10.mk SLES 10 \endlink
+    - \link linux64/sles10ibmdpa.mk SLES 10 + IBM DPA \endlink
+*/

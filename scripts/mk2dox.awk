@@ -40,7 +40,7 @@ configure_block && (($1 == "export" || $1 == "override") && ($3 ~ /[?+:]?=/)) {
 
 configure_block && ($2 ~ /^[?+:]?=$/) {
     gsub(/[$<>%"]/, "\\\\&", $1);
-    documentation = documentation "\n<tr><td>" $1 "</td><td><code>";
+    documentation = documentation "\n<tr><td>" $1 "()</td><td><code>";
     for (i = 3; i <= NF; i++) {
         gsub(/[$<>%"]/, "\\\\&", $i);
         documentation = documentation " " $i;

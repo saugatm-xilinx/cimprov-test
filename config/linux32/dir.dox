@@ -1,0 +1,9 @@
+/** \dir 
+    List of 32-bit Linux configurations:
+    - \link linux32/ibmdpa.mk IBM DPA \endlink
+    - \link linux32/ibmdpa-cim2.32.mk IBM DPA with CIMv2.32 \endlink
+    - \link linux32/tog-pegasus.mk OpenPegasus \endlink
+    - \link linux32/tog-pegasus-cim2.32.mk OpenPegasus with CIMv2.32 \endlink
+    - \link linux32/sles10.mk SLES 10 \endlink
+    - \link linux32/sles10ibmdpa.mk SLES 10 + IBM DPA \endlink
+*/

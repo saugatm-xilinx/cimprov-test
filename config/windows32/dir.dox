@@ -1,0 +1,6 @@
+/** \dir 
+    List of 32-bit Windows configurations:
+    - \link windows32/wmi.mk WMI \endlink
+    - \link windows32/pegasus.mk OpenPegasus \endlink
+    - \link windows32/pegasus-cim2.32.mk OpenPegasus with CIMv2.32 \endlink
+*/

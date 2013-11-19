@@ -1,0 +1,5 @@
+/** \dir 
+    List of VMWare configurations:
+    - \link vmware32/default.mk ESXi 5.0 \endlink
+    - \link vmware32/default.mk ESXi 5.5 \endlink
+ */

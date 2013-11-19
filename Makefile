@@ -28,6 +28,7 @@ else ifeq  ($(MAKECMDGOALS), userdoc)
 # nothing
 else
 ##! Configuration name (user-specified)
+## \sa config/config.dox
 ifeq ($(CONFIG),)
 $(error No CONFIG is known)
 endif

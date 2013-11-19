@@ -1,0 +1,10 @@
+/** \dir 
+    List of configurations:
+    - \link local.mk Local configuration \endlink
+    - \link local-cim2.32.mk Local configuration (CIM v2.32) \endlink
+    - \link linux32/dir.dox Linux 32-bit \endlink
+    - \link linux64/dir.dox Linux 64-bit \endlink
+    - \link windows32/dir.dox Windows 32-bit \endlink
+    - \link windows64/dir.dox Windows 64-bit \endlink
+    - \link vmware32/dir.dox VMWare (ESXi) \endlink
+  */
