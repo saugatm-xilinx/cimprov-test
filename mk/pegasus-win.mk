@@ -9,8 +9,8 @@
 ##
 ##########################################################################
 
-override CIM_SCHEMA_VERSION_MINOR=28
-override CIM_SCHEMA_VERSION_EXPERIMENTAL=
+override CIM_SCHEMA_VERSION_MINOR = 28
+override CIM_SCHEMA_VERSION_EXPERIMENTAL = 
 override CIM_SERVER = pegasus
 override CIM_INTERFACE = cmpi
 override PROVIDER_PLATFORM = windows

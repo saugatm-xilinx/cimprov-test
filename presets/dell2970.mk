@@ -9,5 +9,5 @@
 ##
 ##########################################################################
 
-override CONFIG=vmware/dell2970
+override CONFIG = vmware/dell2970
 

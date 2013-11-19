@@ -9,10 +9,10 @@
 ##
 ##########################################################################
 # <example>
-override CIM_SERVER=esxi
-override CIMPLE_PLATFORM=LINUX_IX86_GNU
-override BITNESS=32
-override HOST_CIMPLE_PLATFORM=$(CIMPLE_PLATFORM)
-override PROVIDER_PLATFORM=vmware
+override CIM_SERVER = esxi
+override CIMPLE_PLATFORM = LINUX_IX86_GNU
+override BITNESS = 32
+override HOST_CIMPLE_PLATFORM = $(CIMPLE_PLATFORM)
+override PROVIDER_PLATFORM = vmware
 override CROSS_BUILD = 1
 # </example>

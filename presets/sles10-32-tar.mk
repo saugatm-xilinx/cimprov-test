@@ -9,4 +9,4 @@
 ##
 ##########################################################################
 
-override CONFIG=linux32/sles10
+override CONFIG = linux32/sles10

@@ -9,5 +9,5 @@
 ##
 ##########################################################################
 
-override CONFIG=vmware32/default
+override CONFIG = vmware32/default
 

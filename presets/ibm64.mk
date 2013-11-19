@@ -9,4 +9,4 @@
 ##
 ##########################################################################
 
-override CONFIG=linux64/ibmdpa
+override CONFIG = linux64/ibmdpa

@@ -9,4 +9,4 @@
 ##
 ##########################################################################
 
-override CONFIG=linux64/sles10ibmdpa
+override CONFIG = linux64/sles10ibmdpa

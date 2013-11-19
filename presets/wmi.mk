@@ -9,4 +9,4 @@
 ##
 ##########################################################################
 
-override CONFIG=windows32/wmi
+override CONFIG = windows32/wmi
