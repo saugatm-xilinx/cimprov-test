@@ -1,3 +1,13 @@
+#! /usr/bin/gawk -f 
+## <L5_PRIVATE L5_SCRIPT>
+## \author  OktetLabs
+##  \brief  MOF to registration file converter
+##   \date  2013/11/19
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
+
 BEGIN {
     split(CLASSLIST, classes);
     for (i in classes)

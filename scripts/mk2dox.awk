@@ -1,4 +1,12 @@
 #! /usr/bin/gawk -f 
+## <L5_PRIVATE L5_SCRIPT>
+## \author  OktetLabs
+##  \brief  Makefile to Doxygen converter
+##   \date  2013/11/19
+##    \cop  (c) Solarflare Communications Inc.
+## </L5_PRIVATE>
+##
+##########################################################################
 
 /\\$/ {
     sub(/\\$/, "");
@@ -32,17 +40,17 @@ configure_block && (($1 == "export" || $1 == "override") && ($3 ~ /[?+:]?=/)) {
 
 configure_block && ($2 ~ /^[?+:]?=$/) {
     gsub(/[$<>%"]/, "\\\\&", $1);
-    documentation = documentation "\n<dt>" $1 "</dt><dd><code>";
+    documentation = documentation "\n<tr><td>" $1 "</td><td><code>";
     for (i = 3; i <= NF; i++) {
         gsub(/[$<>%"]/, "\\\\&", $i);
         documentation = documentation " " $i;
     }
-    documentation = documentation "</code></dd>\n";
+    documentation = documentation "</code></td></tr>\n";
     next
 }
 
 configure_block && /^#+[[:space:]]*<\/example>[[:space:]]*$/ {
-    documentation = documentation "\n</dl>\n";
+    documentation = documentation "\n</table>\n";
     configure_block = 0;
     comment_block = 1;
     next;
@@ -65,7 +73,7 @@ comment_block && /^#+[[:space:]]+[@\\]param/ {
 comment_block && /^#+[[:space:]]*<example>[[:space:]]*$/ {
     comment_block = 0;
     configure_block = 1;
-    documentation = documentation "\n<dl>\n";
+    documentation = documentation "\n<table>\n";
     next
 }   
 
