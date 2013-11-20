@@ -76,6 +76,7 @@
 #include "FileSystem.h"
 #include "cimpleio.h"
 #include <errno.h>
+#include "log_file_path.h"
 
 #ifdef CIMPLE_WINDOWS_MSVC
 # include <windows.h>
@@ -277,7 +278,7 @@ struct Log_Diag_Call_Frame
 # define LOG_DIAG(ARGS) \
     do \
     { \
-        Log_Diag_Call_Frame frame(__FILE__,__LINE__); \
+        Log_Diag_Call_Frame frame(__FILE_REL__,__LINE__); \
         frame.invoke ARGS ; \
     } \
     while (0)
@@ -325,7 +326,7 @@ struct Log_Err_Call_Frame
 # define LOG_ERR(ARGS) \
     do \
     { \
-        Log_Err_Call_Frame frame(__FILE__,__LINE__); \
+        Log_Err_Call_Frame frame(__FILE_REL__,__LINE__); \
         frame.invoke ARGS ; \
     } \
     while (0)

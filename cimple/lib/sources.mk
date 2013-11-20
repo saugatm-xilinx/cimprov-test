@@ -49,7 +49,8 @@ libcimple_SOURCES = \
     Type.cpp \
     Property.cpp \
     TSD.cpp \
-    FileSystem.cpp
+    FileSystem.cpp \
+    log_file_path.cpp \
 
 libcimple_DIR = cimple/lib
 libcimple_INCLUDES = cimple

@@ -37,6 +37,7 @@
 #ifdef CMPI_ADAPTER_DEBUG
 #include "CMPIUtils.h"
 #endif
+#include <cimple/log_file_path.h>
 
 #define STATIC_DATA_MAGIC 0x5DE2B131
 
@@ -49,7 +50,7 @@
 // #define CIMPLE_LOG_CMPI_OBJECTS
 #endif
 
-#define FL __FILE__, __LINE__
+#define FL __FILE_REL__, __LINE__
 
 // Export cimple_cmpi_adapter() only for shared library.
 #ifdef CIMPLE_STATIC
@@ -271,7 +272,7 @@ CMPI_Adapter::~CMPI_Adapter()
 template<class MI>
 static CMPI_Adapter* _adapter(MI* mi)
 {
-    log(LL_DBG, __FILE__, __LINE__, "enter: %s()", "_Adapter Template");
+    log(LL_DBG, __FILE_REL__, __LINE__, "enter: %s()", "_Adapter Template");
     CIMPLE_ASSERT(mi != 0);
     CMPI_Static_Data* sd = (CMPI_Static_Data*)mi->hdl;
     CIMPLE_ASSERT(sd != 0);

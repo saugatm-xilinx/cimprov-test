@@ -37,6 +37,8 @@
 #include <cassert>
 #include <new>
 
+#include <cimple/log_file_path.h>
+
 //==============================================================================
 //
 // Include the selected platform header file:
@@ -109,7 +111,7 @@
 //==============================================================================
 
 #define CIMPLE_WARNING(X) \
-    fprintf(stderr, "CIMPLE_WARNING: %s(%d): %s\n", __FILE__, __LINE__, #X)
+    fprintf(stderr, "CIMPLE_WARNING: %s(%d): %s\n", __FILE_REL__, __LINE__, #X)
 
 //==============================================================================
 //
@@ -171,7 +173,8 @@
 //
 //==============================================================================
 
-#define CIMPLE_TRACE cimple::__cimple_trace(__FILE__, __LINE__, CIMPLE_FUNCTION)
+#define CIMPLE_TRACE cimple::__cimple_trace(__FILE_REL__, __LINE__, \
+                                            CIMPLE_FUNCTION)
 
 
 CIMPLE_NAMESPACE_BEGIN
@@ -194,7 +197,7 @@ CIMPLE_NAMESPACE_END
     do \
     { \
         if (!(COND)) \
-            __cimple_assert(__FILE__, __LINE__, CIMPLE_FUNCTION, #COND); \
+            __cimple_assert(__FILE_REL__, __LINE__, CIMPLE_FUNCTION, #COND); \
     } \
     while (0)
 #else
@@ -208,8 +211,8 @@ CIMPLE_NAMESPACE_END
     {                                                                     \
         if (!(COND))                                                      \
         {                                                                 \
-            printf("CIMPLE_TEST_ASSERT failed in file %s at line %d\n",  \
-                __FILE__, __LINE__);                                      \
+            printf("CIMPLE_TEST_ASSERT failed in file %s at line %d\n",   \
+                   __FILE_REL__, __LINE__);                               \
             abort();                                                      \
         }                                                                 \
     } while (0)
@@ -223,7 +226,7 @@ CIMPLE_NAMESPACE_END
         if (!(COND))                                                      \
         {                                                                 \
             printf("CIMPLE_TEST_ASSERT_TEMP failed in file %s at line %d\n", \
-                __FILE__, __LINE__);                                      \
+                   __FILE_REL__, __LINE__)                                   \
                                                      \
         }                                                                 \
     } while (0)
@@ -312,7 +315,7 @@ CIMPLE_NAMESPACE_END
 //
 //==============================================================================
 
-#define CIMPLE_FL __FILE__, __LINE__
+#define CIMPLE_FL __FILE_REL__, __LINE__
 
 //==============================================================================
 //
@@ -333,7 +336,7 @@ CIMPLE_NAMESPACE_END
     do \
     { \
         printf("CIMPLE_RETURN: %s(%d): %s\n", \
-            __FILE__, __LINE__, CIMPLE_FUNCTION); \
+               __FILE_REL__, __LINE__, CIMPLE_FUNCTION); \
         return X; \
     } \
     while (0)

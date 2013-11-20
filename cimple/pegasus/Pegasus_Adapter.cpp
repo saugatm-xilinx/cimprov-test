@@ -35,6 +35,7 @@
 #include <pegasus/Str.h>
 #include "Pegasus_Thread_Context.h"
 #include <cimple/log.h>
+#include <cimple/log_file_path.h>
 #include <cimple/Adapter_Tracer.h>
 #include <pegasus/print.h>
 
@@ -380,7 +381,7 @@ static bool _enum_instances_proc(
     _discard_properties(pi, data->propertyList);
 
 
-    /// KS_TODO delete this logPegasusInstance(pi, LL_DBG, __FILE__, __LINE__);
+    /// KS_TODO delete this logPegasusInstance(pi, LL_DBG, __FILE_REL__, __LINE__);
 
     data->handler->deliver(pi);
 
@@ -857,9 +858,9 @@ static bool _enum_associator_proc_1(
 
     // Discard properties:
     _discard_properties(ci, data->propertyList);
-    //logPegasusInstance(ci, LL_DBG, __FILE__, __LINE__);
+    //logPegasusInstance(ci, LL_DBG, __FILE_REL__, __LINE__);
     PTRACEPEGASUSINSTANCE(ci);
-    //printf("_enum_associator_proc_1-2 %s %u \n", __FILE__, __LINE__);    
+    //printf("_enum_associator_proc_1-2 %s %u \n", __FILE_REL__, __LINE__);    
     data->handler.deliver(ci);
 
     // Keep them coming!
@@ -915,7 +916,7 @@ static bool _enum_associator_proc_2(
         PEXITBOOL(false);
         return false;
     }
-    //printf("_enum_associator_proc_2 %s %u associator_name = \n", __FILE__, __LINE__);
+    //printf("_enum_associator_proc_2 %s %u associator_name = \n", __FILE_REL__, __LINE__);
     //print(associator_name);
     // Convert associator to object path:
 
@@ -930,7 +931,7 @@ static bool _enum_associator_proc_2(
     }
 
 
-    //printf("_enum_associator_proc_2 %s %u path %s\n", __FILE__, __LINE__, (const char *)objectPath.toString().getCString());
+    //printf("_enum_associator_proc_2 %s %u path %s\n", __FILE_REL__, __LINE__, (const char *)objectPath.toString().getCString());
     // Get instance from the provider:
 
     P_CIMInstance instance;
@@ -948,7 +949,7 @@ static bool _enum_associator_proc_2(
 
         // ATTN: added this since instance lacks an object path. Find out why!
         instance.setPath(objectPath);
-        //logPegasusInstance(instance, LL_DBG, __FILE__, __LINE__);
+        //logPegasusInstance(instance, LL_DBG, __FILE_REL__, __LINE__);
         PTRACEPEGASUSINSTANCE(instance);
         data->handler.deliver(instance);
     }
@@ -1030,7 +1031,7 @@ void Pegasus_Adapter::associators(
         _throw(Pegasus::CIM_ERR_FAILED);
     }
 
-    //printf("Pegasus_Adapter::associators %s %u \n", __FILE__, __LINE__);
+    //printf("Pegasus_Adapter::associators %s %u \n", __FILE_REL__, __LINE__);
     //print(ck);
     Ref<Instance> ck_d(ck);
 
@@ -1049,7 +1050,7 @@ void Pegasus_Adapter::associators(
             propertyList,
             handler);
 
-        //printf("Pegasus_Adapter::associators %s %u \n", __FILE__, __LINE__);
+        //printf("Pegasus_Adapter::associators %s %u \n", __FILE_REL__, __LINE__);
         Enum_Associators_Status status = _provider->enum_associators(
             ck, 
             *Str(resultClass), 
@@ -1059,7 +1060,7 @@ void Pegasus_Adapter::associators(
             &data);
 
         //printf("Pegasus_Adapter::associators %s %u status = %u \n",
-        //        __FILE__, __LINE__, (unsigned int)status);
+        //        __FILE_REL__, __LINE__, (unsigned int)status);
         if (status != ENUM_ASSOCIATORS_UNSUPPORTED)
         {
             if (data.error)
@@ -1075,7 +1076,7 @@ void Pegasus_Adapter::associators(
         }
     }
 
-    //printf("Pegasus_Adapter::associators 2 %s %u \n", __FILE__, __LINE__);
+    //printf("Pegasus_Adapter::associators 2 %s %u \n", __FILE_REL__, __LINE__);
     // Second try enum_associator_names().
     {
         Handle_Associators_Request_Data_2 data(
@@ -1087,7 +1088,7 @@ void Pegasus_Adapter::associators(
             propertyList,
             handler);
 
-        //printf("Pegasus_Adapter::associators 3 %s %u \n", __FILE__, __LINE__);
+        //printf("Pegasus_Adapter::associators 3 %s %u \n", __FILE_REL__, __LINE__);
         // Call common function in Provider_Handle to process instance
         Enum_Associator_Names_Status status = 
             _provider->enum_associator_names(
@@ -1106,7 +1107,7 @@ void Pegasus_Adapter::associators(
 
         _check(status);
 
-        //printf("Pegasus_Adapter::associators 4 %s %u \n", __FILE__, __LINE__);
+        //printf("Pegasus_Adapter::associators 4 %s %u \n", __FILE_REL__, __LINE__);
         handler.complete();
 
         PEXIT();

@@ -48,6 +48,7 @@
 #include <cstdarg>
 #include "config.h"
 #include <cimple/log.h>
+#include <cimple/log_file_path.h>
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -59,7 +60,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 // Define the standard components required for the log interface, Log_Level,
 // file, and line
-#define FL LL_DBG, __FILE__, __LINE__
+#define FL LL_DBG, __FILE_REL__, __LINE__
 
 #ifdef ENABLE_ADAPTER_TRACE_OPT
 
@@ -78,7 +79,7 @@ CIMPLE_NAMESPACE_BEGIN
 
 #define PENTRY(PROC_NAME) \
     static const char __cimple_local_proc_name[] = PROC_NAME; \
-    AdapterTracer::pEntry(__cimple_local_proc_name, __FILE__, __LINE__);
+    AdapterTracer::pEntry(__cimple_local_proc_name, __FILE_REL__, __LINE__);
 
 /**
     Macro to define  the exit from a function which has no return value.
@@ -86,22 +87,25 @@ CIMPLE_NAMESPACE_BEGIN
 
 
 #define PEXIT() \
-    AdapterTracer::pExit(__cimple_local_proc_name, __FILE__, __LINE__);
+    AdapterTracer::pExit(__cimple_local_proc_name, __FILE_REL__, __LINE__);
 
 #define PEXIT_RTN_VAL(RTN_VAL) \
-    AdapterTracer::pExit(__cimple_local_proc_name, __FILE__, __LINE__, RTN_VAL);
+    AdapterTracer::pExit(__cimple_local_proc_name, __FILE_REL__, __LINE__, \
+                         RTN_VAL);
 
 #define PEXITBOOL(RTN_VAL) \
-    AdapterTracer::pExit(__cimple_local_proc_name, __FILE__, __LINE__, RTN_VAL);
+    AdapterTracer::pExit(__cimple_local_proc_name, __FILE_REL__, __LINE__, \
+                         RTN_VAL);
 
 #define PEXITUINT32(RTN_VAL) \
-    AdapterTracer::pExit(__cimple_local_proc_name, __FILE__, __LINE__, RTN_VAL);
+    AdapterTracer::pExit(__cimple_local_proc_name, __FILE_REL__, __LINE__, \
+                         RTN_VAL);
 
 #define PEXITTHROW(CODE) \
     log (FL,"Exit: %s %u", __cimple_local_proc_name, CODE);
 
 #define PTRACEPEGASUSINSTANCE(INST) \
-    logPegasusInstance(INST, LL_DBG, __FILE__, __LINE__);
+    logPegasusInstance(INST, LL_DBG, __FILE_REL__, __LINE__);
 
 // ARGS is format, ... NOTE: requires (())
 #define PTRACE(ARGS) \
@@ -109,7 +113,7 @@ CIMPLE_NAMESPACE_BEGIN
     { \
         if (_log_enabled_state) \
         { \
-            Log_Call_Frame frame(LL_DBG, __FILE__, __LINE__); \
+            Log_Call_Frame frame(LL_DBG, __FILE_REL__, __LINE__); \
             frame.invoke ARGS; \
         } \
     } \

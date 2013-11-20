@@ -13,6 +13,7 @@
 
 #include <cimple/cimple.h>
 #include <cstdarg>
+#include <cimple/log_file_path.h>
 
 // Logging facility
 
@@ -203,12 +204,15 @@ namespace solarflare
 } // namespace
 
 #define PROVIDER_LOG_ERR(_fmt, _args...) \
-    solarflare::Logger::errorLog.format(__FILE__, __LINE__, _fmt, ##_args)
+    solarflare::Logger::errorLog.format(__FILE_REL__, __LINE__, \
+                                        _fmt, ##_args)
 
 #define PROVIDER_LOG_EVT(_fmt, _args...) \
-    solarflare::Logger::eventLog.format(__FILE__, __LINE__, _fmt, ##_args)
+    solarflare::Logger::eventLog.format(__FILE_REL__, __LINE__, \
+                                        _fmt, ##_args)
 
 #define PROVIDER_LOG_DBG(_fmt, _args...) \
-    solarflare::Logger::debugLog.format(__FILE__, __LINE__, _fmt, ##_args)
+    solarflare::Logger::debugLog.format(__FILE_REL__, __LINE__, \
+                                        _fmt, ##_args)
 
 #endif   // SOLARFLARE_SF_CORE_H

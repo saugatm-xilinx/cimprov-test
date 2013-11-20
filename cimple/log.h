@@ -74,6 +74,7 @@
 #include <cstdarg>
 #include "config.h"
 #include "String.h"
+#include "log_file_path.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -225,7 +226,8 @@ struct Log_Call_Frame
     { \
         if (::cimple::_log_enabled_state)       \
         { \
-            ::cimple::Log_Call_Frame frame(::cimple::LL_FATAL, __FILE__, __LINE__); \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_FATAL, \
+                                           __FILE_REL__, __LINE__); \
             frame.invoke ARGS; \
         } \
     } \
@@ -248,7 +250,8 @@ struct Log_Call_Frame
     { \
         if (::cimple::_log_enabled_state)       \
         { \
-            ::cimple::Log_Call_Frame frame(::cimple::LL_ERR, __FILE__, __LINE__); \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_ERR, \
+                                           __FILE_REL__, __LINE__); \
             frame.invoke ARGS; \
         } \
     } \
@@ -270,7 +273,8 @@ struct Log_Call_Frame
     { \
         if(::cimple::_log_enabled_state)        \
         { \
-            ::cimple::Log_Call_Frame frame(::cimple::LL_WARN, __FILE__, __LINE__); \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_WARN, \
+                                           __FILE_REL__, __LINE__); \
             frame.invoke ARGS;                                  \
         } \
     } \
@@ -292,7 +296,8 @@ struct Log_Call_Frame
     { \
         if(::cimple::_log_enabled_state)        \
         {   \
-            ::cimple::Log_Call_Frame frame(::cimple::LL_INFO, __FILE__, __LINE__); \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_INFO, \
+                                           __FILE_REL__, __LINE__); \
             frame.invoke ARGS;                                  \
         } \
     } \
@@ -313,7 +318,8 @@ struct Log_Call_Frame
     { \
         if(::cimple::_log_enabled_state)        \
         {   \
-            ::cimple::Log_Call_Frame frame(::cimple::LL_DBG, __FILE__, __LINE__); \
+            ::cimple::Log_Call_Frame frame(::cimple::LL_DBG, \
+                                           __FILE_REL__, __LINE__); \
             frame.invoke ARGS;                                  \
         } \
     } \

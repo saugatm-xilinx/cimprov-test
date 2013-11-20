@@ -31,9 +31,10 @@
 #include "CMPI_Adapter.h"
 #include "CMPI_Containers.h"
 #include <cimple/log.h>
+#include <cimple/log_file_path.h>
 
 CIMPLE_NAMESPACE_BEGIN
-#define FL __FILE__, __LINE__
+#define FL __FILE_REL__, __LINE__
 extern int cmpi_to_cimple_value(
     const Meta_Repository* mr,
     const CMPIBroker* cb,
@@ -128,7 +129,7 @@ static CMPI_Thread_Context* _top()
 
 CMPI_Thread_Context::~CMPI_Thread_Context()
 {
-    log(LL_DBG, __FILE__, __LINE__, "enter: %s()",
+    log(LL_DBG, __FILE_REL__, __LINE__, "enter: %s()",
         "CMPI_Thread_Context::~CMPI_Thread_Context");
 }
 

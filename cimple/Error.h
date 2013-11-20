@@ -29,13 +29,14 @@
 
 #include <cimple/config.h>
 #include <cimple/String.h>
+#include <cimple/log_file_path.h>
 
 #ifdef CIMPLE_DEBUG
 # define CIMPLE_ERROR(ARGS) \
     do \
     { \
         Error::set ARGS; \
-        Error::set_prefix(CIMPLE_FUNCTION, __FILE__, __LINE__); \
+        Error::set_prefix(CIMPLE_FUNCTION, __FILE_REL__, __LINE__); \
     } \
     while (0)
 #else
