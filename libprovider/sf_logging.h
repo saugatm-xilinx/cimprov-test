@@ -176,4 +176,13 @@ namespace solarflare
     };
 } // namespace
 
+#define PROVIDER_LOG_ERR(_fmt, _args...) \
+    solarflare::Logger::errorLog.format(_fmt, ##_args)
+
+#define PROVIDER_LOG_EVT(_fmt, _args...) \
+    solarflare::Logger::eventLog.format(_fmt, ##_args)
+
+#define PROVIDER_LOG_DBG(_fmt, _args...) \
+    solarflare::Logger::debugLog.format(_fmt, ##_args)
+
 #endif   // SOLARFLARE_SF_CORE_H

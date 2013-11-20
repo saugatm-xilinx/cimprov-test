@@ -9,6 +9,7 @@
 \**************************************************************************/
 
 #include "sf_alerts.h"
+#include "sf_logging.h"
 
 namespace solarflare
 {
@@ -298,8 +299,8 @@ namespace solarflare
             prevLinkState = false;
         else
         {
-            CIMPLE_ERR(("Failed to get saved link state from %s",
-                        backup.c_str()));
+            PROVIDER_LOG_ERR("Failed to get saved link state from %s",
+                             backup.c_str());
             return -1;
         }
 
@@ -336,8 +337,8 @@ namespace solarflare
 
         if (s == NULL)
         {
-            CIMPLE_ERR(("Failed to get saved sensors state: "
-                        "strdup() failed"));
+            PROVIDER_LOG_ERR("Failed to get saved sensors state: "
+                             "strdup() failed");
             return -1;
         }
 
@@ -376,8 +377,8 @@ namespace solarflare
 
         if (p != NULL || !isType || *q != '\0')
         {
-            CIMPLE_ERR(("Failed to get saved sensors state from\n%s",
-                        backup.c_str()));
+            PROVIDER_LOG_ERR("Failed to get saved sensors state from\n%s",
+                             backup.c_str());
             return -1;
         }
 

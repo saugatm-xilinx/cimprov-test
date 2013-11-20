@@ -82,10 +82,6 @@ extern "C" {
 #define VPD_TAG_W                       0x91
 #define VPD_TAG_END                     0x78
 
-#define LINUX_LOG_ERR(_fmt, _args...)   Logger::errorLog.format(_fmt, ##_args)
-#define LINUX_LOG_EVT(_fmt, _args...)   Logger::eventLog.format(_fmt, ##_args)
-#define LINUX_LOG_DBG(_fmt, _args...)   Logger::debugLog.format(_fmt, ##_args)
-
 namespace solarflare
 {
     using cimple::Mutex;
@@ -119,16 +115,16 @@ namespace solarflare
         fd = open(path, O_RDONLY);
         if (fd < 0)
         {
-            LINUX_LOG_ERR("Failed to open file %s: %s",
-                            path, strerror(errno));
+            PROVIDER_LOG_ERR("Failed to open file %s: %s",
+                             path, strerror(errno));
             return -1;
         }
         size = read(fd, buf, maxlen);
         close(fd);
         if (size < 0)
         {
-            LINUX_LOG_ERR("Failed to read file %s: %s",
-                            path, strerror(errno));
+            PROVIDER_LOG_ERR("Failed to read file %s: %s",
+                             path, strerror(errno));
             return -1;
         }
         if (size == 0 || size == maxlen)
@@ -184,7 +180,7 @@ namespace solarflare
         sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP);
         if (sock < 0)
         {
-            LINUX_LOG_ERR("Failed to create PF_INET socket: %s",
+            PROVIDER_LOG_ERR("Failed to create PF_INET socket: %s",
                              strerror(errno));
             return -1;
         }
@@ -194,8 +190,8 @@ namespace solarflare
         ((struct ethtool_value *)edata)->cmd = cmd;
         if (ioctl(sock, SIOCETHTOOL, &ifr) < 0)
         {
-            LINUX_LOG_ERR("Failed to perform SIOCETHTOOL ioctl with "
-                            "cmd value <%u>: %s", cmd, strerror(errno));
+            PROVIDER_LOG_ERR("Failed to perform SIOCETHTOOL ioctl with "
+                             "cmd value <%u>: %s", cmd, strerror(errno));
             close(sock);
             return -1;
         }
@@ -1229,7 +1225,7 @@ namespace solarflare
         s = socket(PF_INET, SOCK_STREAM, 0);
         if (s < 0)
         {
-            LINUX_LOG_ERR("Failed to open a socket");
+            PROVIDER_LOG_ERR("Failed to open a socket");
             return VersionInfo("");
         }
 
@@ -1453,7 +1449,7 @@ namespace solarflare
 
         if (wordBits == -1)
         {
-            LINUX_LOG_ERR("Failed to determine OS bitness");
+            PROVIDER_LOG_ERR("Failed to determine OS bitness");
             return false;
         }
         if (wordBits == 64)
@@ -1639,7 +1635,7 @@ namespace solarflare
         fd = open(buf.data(), O_WRONLY | O_CREAT | O_TRUNC);
         if (fd < 0)
         {
-            LINUX_LOG_ERR("Failed to open %s", buf.data());
+            PROVIDER_LOG_ERR("Failed to open %s", buf.data());
             return -1;
         }
 
@@ -1678,8 +1674,8 @@ namespace solarflare
 
         if (rc < 0)
         {
-            LINUX_LOG_ERR("Reading from file %s failed with errno %d",
-                          buf.data(), errno);
+            PROVIDER_LOG_ERR("Reading from file %s failed with errno %d",
+                             buf.data(), errno);
             close(fd);
             return -1;
         }
@@ -1742,8 +1738,8 @@ namespace solarflare
             // Arbitrary socket
             fd = socket(PF_INET, SOCK_STREAM, 0);
             if (fd < 0)
-                LINUX_LOG_ERR("Failed to open a socket for checking NIC "
-                              "sensors");
+                PROVIDER_LOG_ERR("Failed to open a socket for checking NIC "
+                                 "sensors");
         }
         virtual ~LinuxSensorsAlertInfo()
         {

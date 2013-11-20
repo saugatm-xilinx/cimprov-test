@@ -14,6 +14,7 @@
 #include <wbemprov.h>
 #include <cimple/wmi/BString.h>
 #include <cimple/wmi/utils.h>
+#include "sf_logging.h"
 
 /// Auxiliary functions to access WMI objects
 
@@ -77,7 +78,7 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
+            PROVIDER_LOG_ERR("Failed to obtain value of '%s'", propName);
             return -1;
         }
 
@@ -104,8 +105,8 @@ namespace solarflare
             *value = strtoll(str_val, &endptr, 10);
             if (endptr == NULL || *endptr != '\0')
             {
-                CIMPLE_ERR(("Failed to convert '%s' string to int",
-                            str_val));
+                PROVIDER_LOG_ERR("Failed to convert '%s' string to int",
+                                 str_val);
                 VariantClear(&wbemObjProp);
                 delete[] str_val;
                 return -1;
@@ -114,7 +115,7 @@ namespace solarflare
         }
         else
         {
-            CIMPLE_ERR(("Wrong variant type 0x%hx", wbemObjProp.vt));
+            PROVIDER_LOG_ERR("Wrong variant type 0x%hx", wbemObjProp.vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -156,16 +157,16 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
+            PROVIDER_LOG_ERR("Failed to obtain value of '%s'", propName);
             return -1;
         }
 
         vt = wbemObjProp.vt;
         if (!(vt & VT_ARRAY))
         {
-            CIMPLE_ERR(("%s():   Array flag is not set in "
-                        "variant type 0x%hx",
-                        __FUNCTION__, wbemObjProp.vt));
+            PROVIDER_LOG_ERR("%s():   Array flag is not set in "
+                             "variant type 0x%hx",
+                             __FUNCTION__, wbemObjProp.vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -175,9 +176,9 @@ namespace solarflare
             vt != VT_UI2 && vt != VT_UI4 && vt != VT_UINT &&
             vt != VT_UI1)
         {
-            CIMPLE_ERR(("%s():   variant type 0x%hx is not among "
-                        "known integer types",
-                        __FUNCTION__, vt));
+            PROVIDER_LOG_ERR("%s():   variant type 0x%hx is not among "
+                             "known integer types",
+                             __FUNCTION__, vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -186,8 +187,8 @@ namespace solarflare
         dims_number = SafeArrayGetDim(pArray);
         if (dims_number != 1)
         {
-            CIMPLE_ERR(("%s():   wrong number of array dimensions %d",
-                        __FUNCTION__, dims_number));
+            PROVIDER_LOG_ERR("%s():   wrong number of array dimensions %d",
+                             __FUNCTION__, dims_number);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -195,8 +196,8 @@ namespace solarflare
         hr = SafeArrayGetLBound(pArray, 1, &LBound);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to obtain lower bound of dimension, "
-                        "rc=%lx", __FUNCTION__, hr));
+            PROVIDER_LOG_ERR("%s():   failed to obtain lower bound of "
+                             "dimension, rc=%lx", __FUNCTION__, hr);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -204,8 +205,9 @@ namespace solarflare
         hr = SafeArrayGetUBound(pArray, 1, &UBound);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to obtain upper bound of dimension, "
-                        "rc=%lx", __FUNCTION__, hr));
+            PROVIDER_LOG_ERR("%s():   failed to obtain upper "
+                             "bound of dimension, rc=%lx",
+                             __FUNCTION__, hr);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -218,8 +220,8 @@ namespace solarflare
                                      reinterpret_cast<void *>(&el));
             if (FAILED(hr))
             {
-                CIMPLE_ERR(("%s():   failed to get %d element, "
-                            "rc=%lx", __FUNCTION__, i, hr));
+                PROVIDER_LOG_ERR("%s():   failed to get %d element, "
+                                 "rc=%lx", __FUNCTION__, i, hr);
                 VariantClear(&wbemObjProp);
                 value.clear();
                 return -1;
@@ -241,9 +243,9 @@ namespace solarflare
                 value.append(*(reinterpret_cast<BYTE *>(&el)));
             else
             {
-                CIMPLE_ERR(("%s():   failed to get %d element, "
-                            "incorrect variant type 0x%hx",
-                            __FUNCTION__, i, vt));
+                PROVIDER_LOG_ERR("%s():   failed to get %d element, "
+                                 "incorrect variant type 0x%hx",
+                                 __FUNCTION__, i, vt);
                 VariantClear(&wbemObjProp);
                 value.clear();
                 return -1;

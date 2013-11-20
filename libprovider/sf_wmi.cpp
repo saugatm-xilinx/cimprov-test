@@ -12,6 +12,7 @@
 #include <cimple/wmi/BString.h>
 #include <cimple/wmi/utils.h>
 #include <sf_wmi.h>
+#include "sf_logging.h"
 
 namespace solarflare 
 {
@@ -69,7 +70,7 @@ namespace solarflare
                               reinterpret_cast<LPVOID *>(&wbemLocator));
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("CoCreateInstance() failed, rc = %lx", hr));
+            PROVIDER_LOG_ERR("CoCreateInstance() failed, rc = %lx", hr);
             return -1;
         }
 
@@ -78,7 +79,7 @@ namespace solarflare
                                         svc);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("ConnectServer() failed, rc = %lx", hr));
+            PROVIDER_LOG_ERR("ConnectServer() failed, rc = %lx", hr);
             *svc = NULL;
             wbemLocator->Release();
             return -1;
@@ -110,10 +111,10 @@ namespace solarflare
                                       RPC_C_IMP_LEVEL_IMPERSONATE,
                                       NULL, EOAC_NONE, NULL);
             if (hr != S_OK)
-                CIMPLE_ERR(("CoInitializeSecurity() "
-                            "returned %ld(0x%lx)",
-                            static_cast<long int>(hr),
-                            static_cast<long int>(hr)));
+                PROVIDER_LOG_ERR("CoInitializeSecurity() "
+                                 "returned %ld(0x%lx)",
+                                 static_cast<long int>(hr),
+                                 static_cast<long int>(hr));
         }
 
         if (wmiEstablishConnNs("\\\\.\\ROOT\\WMI",
@@ -213,13 +214,13 @@ namespace solarflare
                           &wbemObjProp, NULL, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("Failed to obtain value of '%s'", propName));
+            PROVIDER_LOG_ERR("Failed to obtain value of '%s'", propName);
             return -1;
         }
 
         if (wbemObjProp.vt != VT_BSTR)
         {
-            CIMPLE_ERR(("Wrong variant type 0x%hx", wbemObjProp.vt));
+            PROVIDER_LOG_ERR("Wrong variant type 0x%hx", wbemObjProp.vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -228,7 +229,7 @@ namespace solarflare
 
         if (value == NULL)
         {
-            CIMPLE_ERR(("%s():   null string obtained", __FUNCTION__));
+            PROVIDER_LOG_ERR("%s():   null string obtained", __FUNCTION__);
             return -1;
         }
 
@@ -255,8 +256,8 @@ namespace solarflare
         if (FAILED(hr))
         {
             if (!quiet)
-                CIMPLE_ERR(("Failed to obtain value of '%s'",
-                            propName));
+                PROVIDER_LOG_ERR("Failed to obtain value of '%s'",
+                                 propName);
             return -1;
         }
 
@@ -265,8 +266,8 @@ namespace solarflare
         else
         {
             if (!quiet)
-                CIMPLE_ERR(("Wrong variant type 0x%hx",
-                            wbemObjProp.vt));
+                PROVIDER_LOG_ERR("Wrong variant type 0x%hx",
+                                 wbemObjProp.vt);
             VariantClear(&wbemObjProp);
             return -1;
         }
@@ -289,8 +290,8 @@ namespace solarflare
             hr = enumWbemObj->Next(WBEM_INFINITE, 1, &wbemObj, &count);
             if (hr != WBEM_S_NO_ERROR && hr != WBEM_S_FALSE)
             {
-                CIMPLE_ERR(("%s():   IEnumWbemClassObject::Next() "
-                            "failed with rc=%lx", __FUNCTION__, hr));
+                PROVIDER_LOG_ERR("%s():   IEnumWbemClassObject::Next() "
+                                 "failed with rc=%lx", __FUNCTION__, hr);
                 for (unsigned i = 0; i < instances.size(); i++)
                     instances[i]->Release();
                 instances.clear();
@@ -330,8 +331,8 @@ namespace solarflare
 
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("CreateInstancesEnum() failed, rc = %lx",
-                        hr));
+            PROVIDER_LOG_ERR("CreateInstancesEnum() failed, rc = %lx",
+                             hr);
             return -1;
         }
 
@@ -369,8 +370,8 @@ namespace solarflare
                                 &enumWbemObj);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("ExecQuery('%s') failed, rc = %lx",
-                        search, hr));
+            PROVIDER_LOG_ERR("ExecQuery('%s') failed, rc = %lx",
+                             search, hr);
             return -1;
         }
 
@@ -399,8 +400,9 @@ namespace solarflare
                                 NULL, obj, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   IWbemClassObject::GetObject(%s) failed with "
-                        "rc = %lx", __FUNCTION__, objPath, hr));
+            PROVIDER_LOG_ERR("%s():   IWbemClassObject::GetObject(%s) "
+                             "failed with rc = %lx",
+                             __FUNCTION__, objPath, hr);
             return -1;
         }
 
@@ -438,8 +440,8 @@ namespace solarflare
                            &className, NULL, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to obtain class name of "
-                        "WMI object, rc=%lx", __FUNCTION__, hr));
+            PROVIDER_LOG_ERR("%s():   failed to obtain class name of "
+                             "WMI object, rc=%lx", __FUNCTION__, hr);
             return -1;
         }
 
@@ -447,8 +449,8 @@ namespace solarflare
                            &path, NULL, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to obtain path of WMI object, "
-                        "rc=%lx", __FUNCTION__, hr));
+            PROVIDER_LOG_ERR("%s():   failed to obtain path of WMI object, "
+                             "rc=%lx", __FUNCTION__, hr);
             rc = -1;
             goto cleanup;
         }
@@ -457,8 +459,8 @@ namespace solarflare
                                                 &classObj, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to obtain class definition "
-                        "of WMI object, rc=%lx", __FUNCTION__, hr));
+            PROVIDER_LOG_ERR("%s():   failed to obtain class definition "
+                             "of WMI object, rc=%lx", __FUNCTION__, hr);
             rc = -1;
             goto cleanup;
         }
@@ -469,8 +471,9 @@ namespace solarflare
                                      NULL);
             if (FAILED(hr))
             {
-                CIMPLE_ERR(("%s():   failed to obtain method definition "
-                            "for WMI object, rc=%lx", __FUNCTION__, hr));
+                PROVIDER_LOG_ERR("%s():   failed to obtain method "
+                                 "definition for WMI object, rc=%lx",
+                                 __FUNCTION__, hr);
                 rc = -1;
                 goto cleanup;
             }
@@ -478,9 +481,9 @@ namespace solarflare
             hr = pInDef->SpawnInstance(0, pIn);
             if (FAILED(hr))
             {
-                CIMPLE_ERR(("%s():   failed to obtain input "
-                            "parameters instance, rc=%lx",
-                            __FUNCTION__, hr));
+                PROVIDER_LOG_ERR("%s():   failed to obtain input "
+                                 "parameters instance, rc=%lx",
+                                 __FUNCTION__, hr);
                 rc = -1;
                 goto cleanup;
             }
@@ -529,9 +532,9 @@ cleanup:
         CoRevertToSelf();
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to call %s() "
-                        "method, rc=%lx", __FUNCTION__,
-                        methodName.c_str(), hr));
+            PROVIDER_LOG_ERR("%s():   failed to call %s() "
+                             "method, rc=%lx", __FUNCTION__,
+                             methodName.c_str(), hr);
             return -1;
         }
 
@@ -545,10 +548,10 @@ cleanup:
         }
         if (completionCode != 0)
         {
-            CIMPLE_ERR(("%s():   %s() method returned wrong completion "
-                        "code %ld (0x%lx)", __FUNCTION__,
-                        methodName.c_str(), completionCode,
-                        completionCode));
+            PROVIDER_LOG_ERR("%s():   %s() method returned wrong "
+                             "completion code %ld (0x%lx)",
+                             __FUNCTION__, methodName.c_str(),
+                             completionCode, completionCode);
             tmpPOut->Release();
             tmpPOut = NULL;
             return -1;
@@ -588,9 +591,9 @@ cleanup:
                                         NULL, &newObj, NULL);
         if (FAILED(hr))
         {
-            CIMPLE_ERR(("%s():   failed to get object '%s',"
-                        " rc = %ld (0x%lx)",
-                        __FUNCTION__, objPath.c_str(), hr, hr));
+            PROVIDER_LOG_ERR("%s():   failed to get object '%s',"
+                             " rc = %ld (0x%lx)",
+                             __FUNCTION__, objPath.c_str(), hr, hr);
             return -1;
         }
 
@@ -613,9 +616,9 @@ cleanup:
             return rc;
         if (objs.size() != 1)
         {
-            CIMPLE_ERR(("%s():   incorrect number %u of matching "
-                        "objects found, query '%s'", __FUNCTION__,
-                        objs.size(), query));
+            PROVIDER_LOG_ERR("%s():   incorrect number %u of matching "
+                             "objects found, query '%s'", __FUNCTION__,
+                             objs.size(), query);
             for (i = 0; i < objs.size(); i++)
                 objs[i]->Release();
             return -1;

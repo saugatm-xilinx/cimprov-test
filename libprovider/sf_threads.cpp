@@ -10,6 +10,7 @@
 
 #include "sf_threads.h"
 #include "sf_provider.h"
+#include "sf_logging.h"
 
 #if defined(linux)
 #include <unistd.h>
@@ -100,7 +101,7 @@ namespace solarflare
 
         AsyncRunner runner(job);
         if (!runner.forThread())
-            CIMPLE_ERR(("Failed to find Thread"));
+            PROVIDER_LOG_ERR("Failed to find Thread");
 
         exit(NULL);
         return NULL;

@@ -33,6 +33,7 @@
 #include <cimple/Auto_Mutex.h>
 
 #include "sf_utils.h"
+#include "sf_logging.h"
 
 #define DEV_PATH_MAX 256
 
@@ -334,8 +335,8 @@ namespace solarflare
 
             if (errno != ENOENT && errno != ENODEV && errno != ENXIO)
             {
-                CIMPLE_ERR(("%s(): obtained bad errno %d (%s)",
-                            __FUNCTION__, errno, strerror(errno)));
+                PROVIDER_LOG_ERR("%s(): obtained bad errno %d (%s)",
+                                 __FUNCTION__, errno, strerror(errno));
                 return -1;
             }
 
@@ -362,7 +363,8 @@ namespace solarflare
 
         if (buggy_mtdblock && !reported_buggy_mtdblock)
         {
-            CIMPLE_ERR(("This command requires either the 'mtdchar' "
+            PROVIDER_LOG_ERR(
+                        "This command requires either the 'mtdchar' "
                         "or 'mtdblock' driver for access to flash "
                         "memory on Solarstorm adapters.  The current "
                         "kernel does not have the 'mtdchar' driver, but "
@@ -370,7 +372,7 @@ namespace solarflare
                         "to use the 'mtdblock' driver by running "
                         "'modprobe mtdblock' and then running this "
                         "command again, but you MUST reboot when you "
-                        "have finished."));
+                        "have finished.");
             reported_buggy_mtdblock = true;
         }
 
@@ -430,9 +432,9 @@ namespace solarflare
         if (mtd_open(netif_name, NV_PART_DYNAMIC_CFG,
                      0) != 0)
         {
-            CIMPLE_ERR(("%s(): failed to open dynamic configuration "
-                        "of %s port for reading", __FUNCTION__,
-                        netif_name));
+            PROVIDER_LOG_ERR("%s(): failed to open dynamic configuration "
+                             "of %s port for reading", __FUNCTION__,
+                             netif_name);
             return -1;
         }
 
@@ -442,10 +444,11 @@ namespace solarflare
                            cur_nv_part_size, 0)) !=
                                           (ssize_t)cur_nv_part_size)
         {
-            CIMPLE_ERR(("%s(): mtd_read() returned %ld instead of %ld",
-                        __FUNCTION__,
-                        static_cast<long int>(rc),
-                        static_cast<long int>(cur_nv_part_size)));
+            PROVIDER_LOG_ERR("%s(): mtd_read() returned "
+                             "%ld instead of %ld",
+                             __FUNCTION__,
+                             static_cast<long int>(rc),
+                             static_cast<long int>(cur_nv_part_size));
             delete[] configBuf;
             mtd_close();
             return -1;

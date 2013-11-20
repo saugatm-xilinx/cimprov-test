@@ -14,6 +14,7 @@
 #include "SF_ConcreteJob_Provider.h"
 #include "SF_NICCard_Provider.h"
 #include "sf_provider.h"
+#include "sf_logging.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -125,7 +126,7 @@ void SF_DiagnosticTest_Provider::Runner::handler(solarflare::SystemElement &se,
     }
     else
     {
-        CIMPLE_ERR(("NIC does not match"));
+        PROVIDER_LOG_ERR("NIC does not match");
     }
 }
 
@@ -148,7 +149,7 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
     
     if (ManagedElement == NULL)
     {
-        CIMPLE_ERR(("No ManagedElement!"));
+        PROVIDER_LOG_ERR("No ManagedElement!");
         return_value.set(InvalidParameter);
     }
     else
@@ -156,7 +157,7 @@ Invoke_Method_Status SF_DiagnosticTest_Provider::RunDiagnosticService(
         Runner runner(Job, ManagedElement, self);
         if (!runner.forDiagnostic() || !runner.isOk())
         {
-            CIMPLE_ERR(("ManagedElement invalid or not found!"));
+            PROVIDER_LOG_ERR("ManagedElement invalid or not found!");
             return_value.set(InvalidParameter);
         }
         else

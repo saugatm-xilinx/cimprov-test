@@ -15,6 +15,7 @@
 #include "SF_EthernetPort.h"
 #include "sf_sensors.h"
 #include "sf_provider.h"
+#include "sf_logging.h"
 
 namespace solarflare
 {
@@ -237,24 +238,25 @@ namespace solarflare
 
             if (helper == NULL)
             {
-                CIMPLE_ERR(("%s(): failed to find helper "
-                            "for SF_EthernetPort", __FUNCTION__));
+                PROVIDER_LOG_ERR("%s(): failed to find helper "
+                                 "for SF_EthernetPort", __FUNCTION__);
                 return;
             }
 
             port = static_cast<SF_EthernetPort *>(helper->instance(obj, 0));
             if (port == NULL)
             {
-                CIMPLE_ERR(("%s(): failed to find SF_EthernetPort instance",
-                            __FUNCTION__));
+                PROVIDER_LOG_ERR("%s(): failed to find "
+                                 "SF_EthernetPort instance",
+                                 __FUNCTION__);
                 return;
             }
 
             if (cimple::instance_to_model_path(port, portPath) != 0)
             {
-                CIMPLE_ERR(("%s(): failed to determine path to "
-                            "SF_EthernetPort instance",
-                            __FUNCTION__));
+                PROVIDER_LOG_ERR("%s(): failed to determine path to "
+                                 "SF_EthernetPort instance",
+                                 __FUNCTION__);
                 SF_EthernetPort::destroy(port);
                 return;
             }
