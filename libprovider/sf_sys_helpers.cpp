@@ -225,6 +225,10 @@ namespace solarflare
         le->PerceivedSeverity.null = false;
         le->PerceivedSeverity.value = severityMap[entry.severity()];
 #endif
+        le->File.null = false;
+        le->File.value = entry.getFile();
+        le->Line.null = false;
+        le->Line.value = entry.getLine();
 
         return le;
     }

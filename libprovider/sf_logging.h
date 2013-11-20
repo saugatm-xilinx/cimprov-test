@@ -44,22 +44,29 @@ namespace solarflare
         unsigned errorCode; //< Error code
         unsigned nPassed; //< No of passed iterations
         unsigned nFailed; //< No of failed iterations
+        String file;      //< Path to file where log is printed
+        unsigned line;    //< Line number in the file
     public:
         /// Constructor
         ///
         /// @param no     Serial number
         /// @param stamp  Timestamp
         /// @param msg    Log message
+        /// @param f      File where the code printing this log resides
+        /// @param ln     Line number in the file
         /// @param code   Error code
         /// @param npass  No of passed iterations
         /// @param nfail  No of failed iterations
         LogEntry(uint64 no, const Datetime& stamp, const String& msg, 
-                 unsigned code = 0, unsigned npass = 0, unsigned nfail = 0,
+                 String f = String(""), unsigned ln = 0, unsigned code = 0,
+                 unsigned npass = 0, unsigned nfail = 0,
                  LogLevel lvl = LogInfo) :
             level(lvl), serial(no), timestamp(stamp), messageStr(msg), 
-            errorCode(code), nPassed(npass), nFailed(nfail) {}
+            errorCode(code), nPassed(npass), nFailed(nfail),
+            file(f), line(ln) {}
         /// Empty constructor
-        LogEntry() : level(LogInfo), serial(0), errorCode(0), nPassed(0), nFailed(0) {}
+        LogEntry() : level(LogInfo), serial(0), errorCode(0), nPassed(0), nFailed(0),
+                     file(""), line(0) {}
         /// @return unique id of the entry (serial number)
         uint64 id() const { return serial; };
         /// sets the serial number to @a sno
@@ -78,6 +85,11 @@ namespace solarflare
         LogLevel severity() const { return level; }
         /// Print a log entry at level @p using CIMPLE logging
         void printLog() const;
+        /// @return File where the code printing this log resides
+        String getFile() const { return file; }
+        /// @return Number of line in the file where the code
+        ///         printing this log resides
+        unsigned getLine() const { return line; }
     };
 
     class Logger 
@@ -123,14 +135,23 @@ namespace solarflare
         /// Logs a simple string message
         void log(const String& s)
         {
-            put(LogEntry(0, Datetime::now(), s, 0, 0, 0, defaultLevel));
+            put(LogEntry(0, Datetime::now(), s, "",
+                         0, 0, 0, 0, defaultLevel));
+        }
+
+        /// Logs a simple string message with file and line of code
+        /// printing this message included
+        void log(const char *file, unsigned line, const String& s)
+        {
+            put(LogEntry(0, Datetime::now(), s, file,
+                         line, 0, 0, 0, defaultLevel));
         }
 
         /// Log diagnostic status
         void logStatus(const String& s, unsigned err = 0, 
                        unsigned npass = 0, unsigned nfail = 0)
         {
-            put(LogEntry(0, Datetime::now(), s, err, npass, nfail,
+            put(LogEntry(0, Datetime::now(), s, "", 0, err, npass, nfail,
                          err != 0 || nfail != 0 ? LogError : defaultLevel));
         }
 
@@ -139,6 +160,11 @@ namespace solarflare
 
         /// Format and log a printf-style message
         void format(const char *fmt, ...);
+
+        /// Format and log a printf-style message with file name and line
+        /// number of code printing this message included
+        void format(const char *file, unsigned line,
+                    const char *fmt, ...);
 
         /// @return Log description
         const char *description() const { return descr; }
@@ -177,12 +203,12 @@ namespace solarflare
 } // namespace
 
 #define PROVIDER_LOG_ERR(_fmt, _args...) \
-    solarflare::Logger::errorLog.format(_fmt, ##_args)
+    solarflare::Logger::errorLog.format(__FILE__, __LINE__, _fmt, ##_args)
 
 #define PROVIDER_LOG_EVT(_fmt, _args...) \
-    solarflare::Logger::eventLog.format(_fmt, ##_args)
+    solarflare::Logger::eventLog.format(__FILE__, __LINE__, _fmt, ##_args)
 
 #define PROVIDER_LOG_DBG(_fmt, _args...) \
-    solarflare::Logger::debugLog.format(_fmt, ##_args)
+    solarflare::Logger::debugLog.format(__FILE__, __LINE__, _fmt, ##_args)
 
 #endif   // SOLARFLARE_SF_CORE_H

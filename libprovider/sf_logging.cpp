@@ -24,8 +24,13 @@ namespace solarflare
             cimple::LL_INFO,
             cimple::LL_DBG,
         };
-        cimple::log(mapping[level],
-                    "", errorCode, "%s", messageStr.c_str());
+        if (errorCode == 0)
+            cimple::log(mapping[level],
+                        file.c_str(), line, "%s", messageStr.c_str());
+        else
+            cimple::log(mapping[level],
+                        file.c_str(), line, "[errorCode = %u] %s",
+                        errorCode, messageStr.c_str());
     }
 
     String Logger::doFormat(const char *fmt, va_list args)
@@ -57,6 +62,15 @@ namespace solarflare
         va_end(args);
     }
     
+    void Logger::format(const char *file, unsigned line,
+                        const char *fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        log(file, line, doFormat(fmt, args));
+        va_end(args);
+    }
+
     void Logger::clear(void)
     {
         Auto_Mutex excl(lock);

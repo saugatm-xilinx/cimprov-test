@@ -361,6 +361,8 @@ class SF_DiagnosticCompletionRecord : CIM_DiagnosticCompletionRecord {
 
 INSTANCE
 class SF_LogEntry : CIM_LogEntry {
+    string File;
+    uint32 Line;
 };
 
 ASSOCIATION
