@@ -35,6 +35,7 @@
 #include "SF_ReferencedProfile.h"
 
 #include "sf_alerts.h"
+#include "sf_logging.h"
 
 namespace solarflare
 {
@@ -151,12 +152,12 @@ namespace solarflare
                                                       cimAssocModel.ptr(),
                                                       assocIE) != 0)
                     {
-                        CIMPLE_ERR(("%s():    failed to enumerate "
-                                    "CIM_ElementConformsToProfile",
-                                    __FUNCTION__));
+                        PROVIDER_LOG_ERR("%s():    failed to enumerate "
+                                         "CIM_ElementConformsToProfile",
+                                         __FUNCTION__);
                         if (cimSystem.ptr() == NULL)
-                            CIMPLE_ERR(("%s():    returning NULL "
-                                        "as system", __FUNCTION__));
+                            PROVIDER_LOG_ERR("%s():    returning NULL "
+                                             "as system", __FUNCTION__);
                         return cimSystem.ptr();
                     }
                    
@@ -215,7 +216,8 @@ namespace solarflare
             cimSystem.reset(cast<CIM_ComputerSystem *>(sysInstance.ptr()));
         }
         if (cimSystem.ptr() == NULL)
-            CIMPLE_ERR(("%s(): system not found, returning NULL", __FUNCTION__));
+            PROVIDER_LOG_ERR("%s(): system not found, returning NULL",
+                             __FUNCTION__);
         return cimSystem.ptr();
     }
 
@@ -281,8 +283,8 @@ namespace solarflare
             cimChassis.reset(cast<CIM_Chassis *>(chassisInstance.ptr()));
 
         if (cimChassis.ptr() == NULL)
-            CIMPLE_ERR(("%s(): chassis not found, returning NULL",
-                        __FUNCTION__));
+            PROVIDER_LOG_ERR("%s(): chassis not found, returning NULL",
+                             __FUNCTION__);
         return cimChassis.ptr();
 
     }

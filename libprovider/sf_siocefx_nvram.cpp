@@ -23,6 +23,7 @@
 #include "sf_siocefx_common.h"
 
 #include "sf_utils.h"
+#include "sf_logging.h"
 
 extern "C" {
 #include "tlv_partition.h"
@@ -118,9 +119,9 @@ namespace solarflare
 
             if (ioctl(fd, SIOCEFX, iocArg) < 0)
             {
-                CIMPLE_ERR(("ioctl(SIOCEFX/EFX_MCDI_REQUEST) failed, "
-                            "errno %d ('%s')",
-                            errno, strerror(errno)));
+                PROVIDER_LOG_ERR("ioctl(SIOCEFX/EFX_MCDI_REQUEST) failed, "
+                                 "errno %d ('%s')",
+                                 errno, strerror(errno));
                 return -1;
             }
 
@@ -129,7 +130,8 @@ namespace solarflare
             offset += mcdi_req->len;
             if (mcdi_req->len == 0)
             {
-                CIMPLE_ERR(("MCDI request returned data of zero length"));
+                PROVIDER_LOG_ERR("MCDI request returned data of "
+                                 "zero length");
                 return -1;
             }
         }
@@ -163,9 +165,9 @@ namespace solarflare
 
         if (ioctl(fd, SIOCEFX, iocArg) < 0)
         {
-            CIMPLE_ERR(("ioctl(SIOCEFX/MC_CMD_NVRAM_INFO) "
-                        "failed with errno %d ('%s')",
-                        errno, strerror(errno)));
+            PROVIDER_LOG_ERR("ioctl(SIOCEFX/MC_CMD_NVRAM_INFO) "
+                             "failed with errno %d ('%s')",
+                             errno, strerror(errno));
             return -1;
         }
 
@@ -220,8 +222,9 @@ namespace solarflare
                              sizeof(partial_hdr),
                              ifname, nvram_type) < 0)
         {
-            CIMPLE_ERR(("%s(): failed to get partial header from NVRAM",
-                        __FUNCTION__));
+            PROVIDER_LOG_ERR("%s(): failed to get partial "
+                             "header from NVRAM",
+                             __FUNCTION__);
             return -1;
         }
 
@@ -231,8 +234,8 @@ namespace solarflare
                              partial_hdr.length,
                              ifname, nvram_type) < 0)
         {
-            CIMPLE_ERR(("%s(): failed to get header from NVRAM",
-                        __FUNCTION__));
+            PROVIDER_LOG_ERR("%s(): failed to get header from NVRAM",
+                             __FUNCTION__);
             delete[] buf;
             return -1;
         }
@@ -292,7 +295,7 @@ void byteorder_le_to_native_16(uint16_t* data, size_t count)
                                       nvram_type, nvram_data,
                                       nvram_data_len) < 0)
         {
-            CIMPLE_ERR(("Failed to read VPD from NVRAM"));
+            PROVIDER_LOG_ERR("Failed to read VPD from NVRAM");
             return -1;
         }
 
@@ -300,8 +303,8 @@ void byteorder_le_to_native_16(uint16_t* data, size_t count)
                                 &partition, nvram_data,
                                 nvram_data_len)) != TLV_OK)
         {
-            CIMPLE_ERR(("tlv_init_partition_from_buffer() returned %d",
-                        rc));
+            PROVIDER_LOG_ERR("tlv_init_partition_from_buffer() returned %d",
+                             rc);
             delete[] nvram_data;
             return -1;
         }
@@ -312,7 +315,7 @@ void byteorder_le_to_native_16(uint16_t* data, size_t count)
                   TLV_TAG_PARTITION_VERSION(
                   NVRAM_PARTITION_TYPE_EXPANSION_ROM))) != TLV_OK)
         {
-            CIMPLE_ERR(("tlv_find() returned %d", rc));
+            PROVIDER_LOG_ERR("tlv_find() returned %d", rc);
             delete[] nvram_data;
             return -1;
         }

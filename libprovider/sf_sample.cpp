@@ -11,6 +11,7 @@
 #include "sf_platform.h"
 #include <cimple/Buffer.h>
 #include <cimple/Strings.h>
+#include "sf_logging.h"
 
 #if defined(linux)
 #include <unistd.h>
@@ -120,8 +121,9 @@ namespace solarflare
         virtual VersionInfo version() const { return vers; }
         virtual bool syncInstall(const char *)
         {
-            CIMPLE_DBG(("syncInstall() is called for NICFirmware on NIC %d",
-                        owner->elementId()));
+            PROVIDER_LOG_DBG("syncInstall() is called for "
+                             "NICFirmware on NIC %d",
+                             owner->elementId());
             return true;
         }
         virtual void initialize() {};
@@ -137,8 +139,9 @@ namespace solarflare
         virtual VersionInfo version() const { return vers; }
         virtual bool syncInstall(const char *)
         {
-            CIMPLE_DBG(("syncInstall() is called for NICBootROM on NIC %d",
-                        owner->elementId()));
+            PROVIDER_LOG_DBG("syncInstall() is called for "
+                             "NICBootROM on NIC %d",
+                             owner->elementId());
             return true;
         }
         virtual void initialize() {};

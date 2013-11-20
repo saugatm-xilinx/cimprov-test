@@ -24,6 +24,7 @@
 #include <cimple/log.h>
 
 #include "sf_mcdi_sensors.h"
+#include "sf_logging.h"
 
 namespace solarflare 
 {
@@ -233,9 +234,9 @@ namespace solarflare
             rc = ioctl(fd, SIOCEFX, &ifreq);
         if (rc != 0)
         {
-            CIMPLE_ERR(("ioctl(SIOCEFX/MC_CMD_READ_SENSORS) returned %d "
-                        "with errno %d (%s)",
-                        rc, errno, strerror(errno)));
+            PROVIDER_LOG_ERR("ioctl(SIOCEFX/MC_CMD_READ_SENSORS) "
+                             "returned %d with errno %d (%s)",
+                             rc, errno, strerror(errno));
             delete[] reinterpret_cast<uint8_t *>(ioc);
             return -1;
         }
@@ -265,9 +266,9 @@ namespace solarflare
                 rc = ioctl(fd, SIOCEFX, &ifreq);
             if (rc != 0)
             {
-                CIMPLE_ERR(("ioctl(SIOCEFX/MC_CMD_SENSOR_INFO) "
-                            "returned %d with errno %d (%s)",
-                            rc, errno, strerror(errno)));
+                PROVIDER_LOG_ERR("ioctl(SIOCEFX/MC_CMD_SENSOR_INFO) "
+                                 "returned %d with errno %d (%s)",
+                                 rc, errno, strerror(errno));
                 delete[] reinterpret_cast<uint8_t *>(ioc);
                 sensors.clear();
                 return -1;
@@ -309,13 +310,13 @@ namespace solarflare
 #endif
 
                     if (sensor.type == SENSOR_UNKNOWN)
-                        CIMPLE_ERR(("Unknown sensor id %d encountered",
-                                    sensorId));
+                        PROVIDER_LOG_ERR("Unknown sensor id %d encountered",
+                                         sensorId);
                     if (sensor.state == SENSOR_STATE_UNKNOWN)
-                        CIMPLE_ERR(("Unknown sensor state %d encountered "
-                                    "for sensor %d",
-                                    static_cast<int>(state),
-                                    sensorId));
+                        PROVIDER_LOG_ERR("Unknown sensor state %d "
+                                         "encountered for sensor %d",
+                                         static_cast<int>(state),
+                                         sensorId);
 
                     if (sensor.type != SENSOR_UNKNOWN)
                         sensors.append(sensor);
@@ -333,9 +334,10 @@ namespace solarflare
 
         unsigned int info_len = info_count * sizeof(uint16_t) * 2;
         if (info_len != readings_len)
-            CIMPLE_ERR(("MC_CMD_READ_SENSORS obtained %u bytes of data, "
-                        "whereas MC_CMD_SENSOR_INFO got %u bytes",
-                        readings_len, info_len));
+            PROVIDER_LOG_ERR("MC_CMD_READ_SENSORS obtained "
+                             "%u bytes of data, whereas "
+                             "MC_CMD_SENSOR_INFO got %u bytes",
+                             readings_len, info_len);
         delete[] reinterpret_cast<uint8_t *>(ioc);
         return 0;
     }

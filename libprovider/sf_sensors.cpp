@@ -9,6 +9,7 @@
 \**************************************************************************/
 
 #include "sf_sensors.h"
+#include "sf_logging.h"
 
 #include <cimple/log.h>
 
@@ -272,18 +273,18 @@ namespace solarflare
         unsigned int i;
 
         if (strlen(caption.c_str()) > 0)
-            CIMPLE_DBG((caption.c_str()));
-        CIMPLE_DBG(("    Sensor name             min1   max1   "
-                    "min2   max2   value state"));
+            PROVIDER_LOG_DBG(caption.c_str());
+        PROVIDER_LOG_DBG("    Sensor name             min1   max1   "
+                         "min2   max2   value state");
 
         for (i = 0; i < sensors.size(); i++)
-            CIMPLE_DBG(("%27s  %5d  %5d  %5d  %5d  %5d  %s",
-                        sensorType2Str(sensors[i].type).c_str(),
-                        sensors[i].limit1_low,
-                        sensors[i].limit1_high,
-                        sensors[i].limit2_low,
-                        sensors[i].limit2_high,
-                        sensors[i].value,
-                        sensorState2Str(sensors[i].state).c_str()));
+            PROVIDER_LOG_DBG("%27s  %5d  %5d  %5d  %5d  %5d  %s",
+                             sensorType2Str(sensors[i].type).c_str(),
+                             sensors[i].limit1_low,
+                             sensors[i].limit1_high,
+                             sensors[i].limit2_low,
+                             sensors[i].limit2_high,
+                             sensors[i].value,
+                             sensorState2Str(sensors[i].state).c_str());
     }
 }
