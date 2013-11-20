@@ -9,6 +9,7 @@
 \**************************************************************************/
 
 #include "sf_provider.h"
+#include "sf_logging.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_SoftwareInstallationService.h"
 #include "SF_BundleComponent.h"
@@ -126,7 +127,7 @@ namespace solarflare
 
     const Logger *LogEntryHelper::logger(unsigned& idx) const
     {
-        for (unsigned i = 0;  Logger::knownLogs[i] != NULL; i++)
+        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
         {
             if (idx < Logger::knownLogs[i]->currentSize())
                 return Logger::knownLogs[i];
@@ -148,9 +149,17 @@ namespace solarflare
     
     cimple::Instance *LogEntryHelper::reference(const SystemElement&, unsigned idx) const
     {
-        const Logger *log = logger(idx);
-        SF_LogEntry *l = SF_LogEntry::create(true);
+        const Logger *log = NULL;
+        SF_LogEntry *l = NULL;
 
+        log = logger(idx);
+        if (log == NULL)
+        {
+            PROVIDER_LOG_ERR("Failed to find logger with id=%u",
+                             idx);
+            return NULL;
+        }
+        l = SF_LogEntry::create(true);
         l->InstanceID.set(logInstanceID(log->description(), idx));
         return l;
     }
@@ -168,9 +177,20 @@ namespace solarflare
 #endif
         
         char id[17];
-        SF_LogEntry *le = static_cast<SF_LogEntry *>(reference(sys, idx));
+        SF_LogEntry *le = NULL;
         const Logger *log = logger(idx);
+
+        if (log == NULL)
+        {
+            PROVIDER_LOG_ERR("Failed to find logger with id=%u",
+                             idx);
+            return NULL;
+        }
+
         LogEntry entry = log->get(idx);
+
+        le = static_cast<SF_LogEntry *>(reference(sys, idx));
+
         le->LogInstanceID.set(CIMHelper::instanceID(log->description()));
         le->LogName.set(log->description());
         snprintf(id, sizeof(id), "%16.16" CIMPLE_LL "x", entry.id());
