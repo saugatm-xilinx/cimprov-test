@@ -52,6 +52,7 @@ namespace solarflare
         virtual bool match(const SystemElement&, const Instance& inst, unsigned idx) const;
         static String logInstanceID(const String& s, unsigned idx);
         static unsigned indexToLogIndex(unsigned idx);
+        static unsigned indexToLogInnerIndex(unsigned idx);
     };
 
     class ProviderLogHelper : public CIMHelper {
@@ -113,7 +114,7 @@ namespace solarflare
         Buffer buf;
         buf.appends(CIMHelper::instanceID(s).c_str());
         buf.append('#');
-        buf.append_uint64(idx);
+        buf.append_uint64(indexToLogInnerIndex(idx));
         return buf.data();
     }
 
@@ -127,9 +128,11 @@ namespace solarflare
 
     const Logger *LogEntryHelper::logger(unsigned& idx) const
     {
+        unsigned sz = 0;
         for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
         {
-            if (idx < Logger::knownLogs[i]->currentSize())
+            sz += Logger::knownLogs[i]->currentSize();
+            if (idx < sz)
                 return Logger::knownLogs[i];
         }
         return NULL;
@@ -137,7 +140,7 @@ namespace solarflare
 
     unsigned LogEntryHelper::indexToLogIndex(unsigned idx)
     {
-        for (unsigned i = 0;  Logger::knownLogs[i] != NULL; i++)
+        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
         {
             unsigned sz = Logger::knownLogs[i]->currentSize();
             if (idx < sz)
@@ -146,7 +149,24 @@ namespace solarflare
         }
         return unsigned(-1);
     }
-    
+
+    unsigned LogEntryHelper::indexToLogInnerIndex(unsigned idx)
+    {
+        unsigned logId = indexToLogIndex(idx);
+        unsigned sz = 0;
+
+        if (logId == unsigned(-1))
+            return unsigned(-1);
+
+        for (unsigned i = 0; i < logId && Logger::knownLogs[i] != NULL; i++)
+            sz += Logger::knownLogs[i]->currentSize();
+
+        if (idx < sz)
+            return unsigned(-1);
+        idx -= sz;
+        return idx;
+    }
+   
     cimple::Instance *LogEntryHelper::reference(const SystemElement&, unsigned idx) const
     {
         const Logger *log = NULL;
@@ -155,8 +175,8 @@ namespace solarflare
         log = logger(idx);
         if (log == NULL)
         {
-            PROVIDER_LOG_ERR("Failed to find logger with id=%u",
-                             idx);
+            PROVIDER_LOG_ERR("Failed to find logger containing "
+                             "entry with id=%u", idx);
             return NULL;
         }
         l = SF_LogEntry::create(true);
@@ -182,12 +202,12 @@ namespace solarflare
 
         if (log == NULL)
         {
-            PROVIDER_LOG_ERR("Failed to find logger with id=%u",
-                             idx);
+            PROVIDER_LOG_ERR("Failed to find logger containing "
+                             "entry with id=%u", idx);
             return NULL;
         }
 
-        LogEntry entry = log->get(idx);
+        LogEntry entry = log->get(indexToLogInnerIndex(idx));
 
         le = static_cast<SF_LogEntry *>(reference(sys, idx));
 
