@@ -21,6 +21,7 @@
 #include "efx_regs_mcdi.h"
 
 #include "sf_siocefx_common.h"
+#include "sf_ef10_fw_version.h"
 
 #include "sf_utils.h"
 #include "sf_logging.h"
@@ -248,46 +249,16 @@ namespace solarflare
         return 0;
     }
 
-#if __BYTE_ORDER == __ORDER_LITTLE_ENDIAN
-void byteorder_le_to_native_16(uint16_t* data, size_t count) {}
-#else
-void byteorder_le_to_native_16(uint16_t* data, size_t count)
-{
-  uint8_t* bytes = (uint8_t*)data;
-  size_t addr;
-
-  for( addr = 0; addr < count; addr++ )
-    data[addr] = (bytes[2 * addr] |
-                  (bytes[2 * addr + 1] << 8));
-}
-#endif
-
-    struct firmware_version
-    {
-        uint16_t a;
-        uint16_t b;
-        uint16_t c;
-        uint16_t d;
-    };
-
     /// Described in sf_siocefx_nvram.h
     int siocEFXGetBootROMVersionEF10(const char *ifname,
                                      int port_index,
                                      int fd, bool isSock,
                                      VersionInfo &ver)
     {
-        nvram_partition_t  partition;
         uint8_t           *nvram_data = NULL;
         uint32_t           nvram_data_len;
         uint32_t           nvram_type;
         int                rc;
-
-        struct firmware_version result;
-
-        result.a = 0;
-        result.b = 0;
-        result.c = 0;
-        result.d = 0;
 
         nvram_type = NVRAM_PARTITION_TYPE_DYNAMIC_CONFIG;
 
@@ -299,35 +270,9 @@ void byteorder_le_to_native_16(uint16_t* data, size_t count)
             return -1;
         }
 
-        if ((rc = tlv_init_partition_from_buffer(
-                                &partition, nvram_data,
-                                nvram_data_len)) != TLV_OK)
-        {
-            PROVIDER_LOG_ERR("tlv_init_partition_from_buffer() returned %d",
-                             rc);
-            delete[] nvram_data;
-            return -1;
-        }
-
-        if ((rc =
-              tlv_find(
-                  &partition.tlv_cursor,
-                  TLV_TAG_PARTITION_VERSION(
-                  NVRAM_PARTITION_TYPE_EXPANSION_ROM))) != TLV_OK)
-        {
-            PROVIDER_LOG_ERR("tlv_find() returned %d", rc);
-            delete[] nvram_data;
-            return -1;
-        }
-
-        memcpy(&result, &(partition.tlv_cursor.current[2]), sizeof(result));
-        /* The nvram is little-endian. */
-        byteorder_le_to_native_16((uint16_t*)&result,
-                                  sizeof(result) / sizeof(uint16_t));
-
-        ver = VersionInfo(result.a, result.b,
-                          result.c, result.d);
+        rc = getBootROMVersionEF10Gen(nvram_data, nvram_data_len,
+                                      ver);
         delete[] nvram_data;
-        return 0;
+        return rc;
     }
 }

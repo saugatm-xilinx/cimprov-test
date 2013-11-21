@@ -16,14 +16,24 @@
 namespace solarflare
 {
     ///
-    /// Get BootROM version via MTD.
+    /// Get BootROM version via MTD for a Siena NIC.
     ///
     /// @param netif_name         Network interface name
     /// @param ver          [out] Where to save obtained version
     ///
     /// @return 0 on success, -1 on failure
     ///
-    int mtdGetBootROMVersion(const char *netif_name, VersionInfo &ver);
+    int mtdGetBootROMVersionSiena(const char *netif_name, VersionInfo &ver);
+
+    ///
+    /// Get BootROM version via MTD for an EF10 NIC.
+    ///
+    /// @param netif_name         Network interface name
+    /// @param ver          [out] Where to save obtained version
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    int mtdGetBootROMVersionEF10(const char *netif_name, VersionInfo &ver);
 }
 
 #endif // SOLARFLARE_SF_MTD_H

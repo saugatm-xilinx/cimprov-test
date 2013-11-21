@@ -1247,10 +1247,15 @@ namespace solarflare
         close(s);
 
         // On failure try MTD using mtdchar or mtdblock module
-        if (mtdGetBootROMVersion(boundIface->ifName().c_str(),
-                                 ver) == 0)
-            return ver;
+        if (device_type == SFU_DEVICE_TYPE_SIENA)
+            rc = mtdGetBootROMVersionSiena(boundIface->ifName().c_str(),
+                                           ver);
+        else
+            rc = mtdGetBootROMVersionEF10(boundIface->ifName().c_str(),
+                                          ver);
 
+        if (rc == 0)
+            return ver;
         return VersionInfo("");
     }
 

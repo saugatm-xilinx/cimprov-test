@@ -91,6 +91,7 @@ ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 libprovider_SOURCES += sf_mcdi_sensors.cpp
 libprovider_SOURCES += sf_mtd.cpp
 libprovider_SOURCES += sf_siocefx_nvram.cpp
+libprovider_SOURCES += sf_ef10_fw_version.cpp
 endif
 
 ifeq ($(PROVIDER_PLATFORM),windows)

@@ -35,6 +35,8 @@
 #include "sf_utils.h"
 #include "sf_logging.h"
 
+#include "sf_ef10_fw_version.h"
+
 #define DEV_PATH_MAX 256
 
 #ifndef MTD_CHAR_MJAOR
@@ -418,7 +420,7 @@ namespace solarflare
         return total_bytes;
     }
 
-    int mtdGetBootROMVersion(const char *netif_name, VersionInfo &ver)
+    int mtdGetBootROMVersionSiena(const char *netif_name, VersionInfo &ver)
     {
         static Mutex lock(false);
         Auto_Mutex   guard(lock);
@@ -462,5 +464,47 @@ namespace solarflare
                           item->version_y, item->version_z);
         delete[] configBuf;
         return 0;
+    }
+
+    int mtdGetBootROMVersionEF10(const char *netif_name, VersionInfo &ver)
+    {
+        static Mutex lock(false);
+        Auto_Mutex   guard(lock);
+
+        char      *configBuf = NULL;
+        ssize_t    rc;
+
+        if (mtd_open(netif_name, NV_PART_DYNAMIC_CFG,
+                     0) != 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to open dynamic configuration "
+                             "of %s port for reading", __FUNCTION__,
+                             netif_name);
+            return -1;
+        }
+
+        configBuf = new char[cur_nv_part_size];
+
+        if ((rc = mtd_read(configBuf,
+                           cur_nv_part_size, 0)) !=
+                                          (ssize_t)cur_nv_part_size)
+        {
+            PROVIDER_LOG_ERR("%s(): mtd_read() returned "
+                             "%ld instead of %ld",
+                             __FUNCTION__,
+                             static_cast<long int>(rc),
+                             static_cast<long int>(cur_nv_part_size));
+            delete[] configBuf;
+            mtd_close();
+            return -1;
+        }
+
+        mtd_close();
+        rc = getBootROMVersionEF10Gen(
+                                reinterpret_cast<uint8_t *>(configBuf),
+                                cur_nv_part_size,
+                                ver);
+        delete[] configBuf;
+        return rc;
     }
 }

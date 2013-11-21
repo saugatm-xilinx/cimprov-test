@@ -11,6 +11,8 @@
 #ifndef SOLARFLARE_SF_SIOCEFX_NVRAM_H
 #define SOLARFLARE_SF_SIOCEFX_NVRAM_H 1
 
+#include <stdint.h>
+
 namespace solarflare 
 {
     ///
