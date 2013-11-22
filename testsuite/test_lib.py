@@ -73,6 +73,15 @@ def checkEnum(conn, checkKeys=False):
 ##################
 
 def checkNS(conn, ns):
+    """Check that name of given namespace exists in the list of
+    parent namespace childs.
+
+    conn        WBEM connection
+    ns          Namespace path
+
+    Return True if namespace name exists and False otherwise
+    """
+    
     # split full namespace path to its name and parent namespace path
     parent, nsName = ns.rsplit(WBEMConn.nsDelimiter(), 1)
     
@@ -97,6 +106,14 @@ def checkNS(conn, ns):
 ################
 
 def isProfileRegistered(conn, profileName):
+    """Check that there is a profile instance with given profile Name.
+
+    conn                WBEM connection
+    profileName         Profile name
+
+    Return True if corresponding instance exists and False otherwise
+    """
+    
     try:
         instList = conn.EnumerateInstances('SF_RegisteredProfile',
                                             getTesterCfg().interopNS)
@@ -111,6 +128,17 @@ def isProfileRegistered(conn, profileName):
     return False
 
 def checkProfile(conn, profList, descList):
+    """Check that profiles from @p profList are registered and that
+    all instances of profile classes descibed in @p descList specification
+    pass all requirements from this specification.
+
+    conn        WBEM connection
+    profList    List of profile names
+    descList    Specification of profile classes
+
+    Return True if corresponding instance exists and False otherwise
+    """
+    
     globalPassed = True
     
     logger.info("Checking profiles registration...")
@@ -213,50 +241,93 @@ def checkProfile(conn, profList, descList):
 # Request state change
 ######################
 def changeState(conn, instPath, state):
+    """Request state change for given instance to given state.
+
+    conn        WBEM connection
+    instPath    Instance path
+    state       Requested state
+
+    Return True if operation succeeded and False otherwise
+    """
     try:
         (rval, out_params) = conn.InvokeMethod('RequestStateChange',
-                                    instPath, RequestedState=state)
+                                               instPath,
+                                               RequestedState=state)
     except Exception, e:
         logger.error("Failed to change state of %(instance)s to " +
                      "%(state)s:\n%(error)s",
                      {'instance': instPath, 'state': state, 'error': e})
         (rval, outParams) = (WBEMConn.RC_FAIL, {})
-    
-    #TODO: do we need outParams ?
+        
+    #fixme: do we need outParams ?
     return rval
 
-def checkReqStateChange(conn, className, state, timeout):
+def checkReqStateChange(conn, params):
+    """Check RequestStateChange method for each instance of given class.
+    
+    conn        WBEM connection
+    class       Class name
+    state       Requested state
+    timeout     Timeout
+
+    Return True if method succeeded for all instances and False overwise
+    """
+    
     passed = True
-    instList = conn.EnumerateInstances(className)
+    instList = conn.EnumerateInstances(params['class'])
     instNum = 0
     for inst in instList:
         instNum += 1
         logger.info("instance #%(#)s", {'#': instNum})
         # Change state
         rc = changeState(conn, inst.path,
-                         wbemcli.Uint16(state)) #FIXME: <-function
-        if rc != WBEMConn.RC_OK:
+                         WBEMConn.uint16(params['state']))
+        if (rc != WBEMConn.RC_OK and rc != WBEMConn.RC_NO_CHANGE):
             passed = False
             continue
         
         # Wait for the state update
-        time.sleep(timeout)
+        time.sleep(params['timeout'])
+        
+        newInst = conn.GetInstance(inst.path)
+        
+        # Check requested state
+        reqState = newInst['RequestedState']
+        if reqState != params['state']:
+            logger.error("Requested state of instance %(inst)s" +
+                         "is %(valCur)s(%(strCur)s), " +
+                         "expected: %(valExp)s(%(strExp)s)",
+                         {'inst': inst.path,
+                          'valCur': reqState,
+                          'strCur': RequestState.stateToStr(reqState),
+                          'valExp': params['state'],
+                          'strExp': RequestState.stateToStr(params['state'])
+                         })
+            passed = False
+            continue
         
         # Check oper state
-        newInst = conn.GetInstance(inst.path)
-        if newInst['EnabledState'] != state:
-            logger.error("Oper state of instance %(inst)s is unexpected: " +
-                         "%(state)s instead of %(expected)s",
+        newState = newInst['EnabledState']
+        if ((newState != params['state']) and
+            (newState != RequestState.ENABLED_BUT_OFFLINE or
+             params['state'] != RequestState.ENABLED) and
+            (params['state'] != RequestState.RESET)):
+            logger.error("Oper state of instance %(inst)s " +
+                         "is unexpected: %(valCur)s(%(strCur)) " +
+                         "instead of %(valExp)s(%(strExp)s)",
                          {'inst': inst.path,
-                          'state': newInst['EnabledState'],
-                          'expected': state})
+                          'valCur': newState,
+                          'strCur': RequestState.stateToStr(newState),
+                          'valExp': params['state'],
+                          'strExp': RequestState.stateToStr(params['state'])
+                         })
             passed = False
             continue
         
         # Restore old state
         rc = changeState(conn, inst.path,
-                         wbemcli.Uint16(inst['EnabledState'])) #fixme!
-        if rc != WBEMConn.RC_OK:
+                         WBEMConn.uint16(inst['EnabledState']))
+        if (rc != WBEMConn.RC_OK and rc != WBEMConn.RC_NO_CHANGE):
             passed = False
     return passed
 
@@ -264,8 +335,20 @@ def checkReqStateChange(conn, className, state, timeout):
 # Association traversal
 #######################
 
-def checkAssociators(cli, num, ref, cl, params):
-    func = params['namesOnly'] and cli.AssociatorNames or cli.Associators
+def checkAssociators(conn, num, ref, cl, params):
+    """Check that specified reference instance of association instance
+    contains in associators list paired reference instance.
+
+    conn        WBEM connection
+    num         Number of reference instance (0 or 1)
+    ref         List with two references of association instance
+    cl          Association class name
+    params      Associator method parameters
+
+    Return True if check passed and False overwise
+    """
+    
+    func = params['namesOnly'] and conn.AssociatorNames or conn.Associators
     try:
         ref[num]['assoc'] = func(ref[num]['path'],
                                  AssocClass=cl,
@@ -282,8 +365,21 @@ def checkAssociators(cli, num, ref, cl, params):
             return True
     return False
 
-def checkReferences(cli, num, ref, cl, params):
-    func = params['namesOnly'] and cli.ReferenceNames or cli.References
+def checkReferences(conn, num, ref, cl, params):
+    """Check that specified reference instance of association instance
+    contains in references list association instance with path containing 
+    paired reference instance path.
+
+    conn        WBEM connection
+    num         Number of reference instance (0 or 1)
+    ref         List with two references of association instance
+    cl          Association class name
+    params      Reference method parameters
+
+    Return True if check passed and False overwise
+    """
+    
+    func = params['namesOnly'] and conn.ReferenceNames or conn.References
     try:
         ref[num]['assoc'] = func(ref[num]['path'],
                                  ResultClass=cl,
@@ -298,7 +394,7 @@ def checkReferences(cli, num, ref, cl, params):
     return False
 
 def assocTraversal(conn, params):
-    '''Perform association/reference traversal.
+    """Perform association/reference traversal.
 
     conn       WBEM connection
     isAssoc    True for association, False for reference check
@@ -307,7 +403,7 @@ def assocTraversal(conn, params):
     resRole    If True, specify the result role for required operation
 
     Return True if test passed for all association and False otherwise
-    '''
+    """
     globalPassed = True
     
     for cl in getTesterCfg().classList:
@@ -366,6 +462,14 @@ def assocTraversal(conn, params):
 
 
 def checkAssociatorsCount(conn, classList):
+    """Check for each class in @p classList that Associators
+    method returns non-empty list of instances.
+
+    classList   List of class names
+
+    Return True if associators exist for all classes and False otherwise
+    """
+    
     passed = True
     
     for className in classList:
@@ -379,5 +483,97 @@ def checkAssociatorsCount(conn, classList):
         logger.info("Associators check of %(class)s result: %(result)s",
                     {'class': className,
                      'result': res and 'PASSED' or 'FAILED'})
+    return passed
+
+###################
+# Diagnostics
+###################
+
+def checkDiagnosticsRun(conn, timeout):
+    """For all DiagnosticTest instance and associated ManagedElement
+    invoke RunDiagnosticService method and check corresponding Job state.
+
+    conn        WBEM connection
+    timeout     Timeout for Job running in seconds
+
+    Return      True if tests passed and False overwise
+    """
+    passed = True
+    try:
+        instList = conn.EnumerateInstances('SF_DiagnosticTest')
+    except Exception, e:
+        logger.error("Failed to enumerate instances of "+
+                     "SF_DiagnosticTest:\n%(error)s", {'error': e})
+    
+    for inst in instList:
+        logger.info("Diagnostic Test for: %(instance)s",
+                    {'instance': inst.path})
+        try:
+            assocList = conn.Associators(
+                            inst.path,
+                            AssocClass='SF_AvailableDiagnosticService')
+        except Exception, e:
+            logger.error("Failed to get associators:\n%(error)s",
+                         {'error': e})
+            passed = False
+            continue
+                
+        for elem in assocList:
+            logger.info("Managed Element: %(instance)s",
+                        {'instance': elem.path})
+            try:
+                (rval, outParams) = conn.InvokeMethod(
+                                            'RunDiagnosticService',
+                                            inst.path,
+                                            ManagedElement=elem.path)
+            except Exception, e:
+                logger.error("Failed to run diagnostics %(diag)s "
+                             "on %(managedElem)s:\n%(error)s",
+                             {'diag': inst.path,
+                              'managedElem': elem.path,
+                              'error': e})
+                (rval, outParams) = (WBEMConn.RC_FAIL, {})
+            
+            if (rval == WBEMConn.RC_FAIL):
+                passed = False
+            else:
+                logger.info("Job: %(instance)s",
+                            {'instance': outParams})
+            try:
+                jobPath = outParams['Job']
+            except Exception, e:
+                logger.error("Failed to get result Job:\n%(error)s",
+                             {'error': e})
+                passed = False
+                continue
+            
+            t = 0
+            state = -1
+            while t < timeout:
+                try:
+                    jobInst = conn.GetInstance(jobPath)
+                except:
+                    logger.error("Failed to get Job instance:\n" +
+                                 "%(error)s", {'error': e})
+                    passed = False
+                    break
+                state = jobInst['JobState']
+                if state == JobState.COMPLETED:
+                    logger.info("Job completed.")
+                    break
+                
+                if (state > JobState.COMPLETED or
+                    state == JobState.SUSPENDED):
+                    logger.error("Unexcpected Job state: %(state)s",
+                                 {'state': state})
+                    passed = False
+                    break
+                t += 1
+                time.sleep(1)
+            
+            if t >= timeout:
+                logger.error("Timeout while waiting for the job end. " +
+                             "Current state is %(state)s",
+                             {'state': state})
     return passed
 

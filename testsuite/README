@@ -14,7 +14,7 @@ path is added to PYTHONPATH environment variable.
 
 2. Setting global variables
 
-There are some global varables in vars.py file such as number of
+There are some global variables in vars.py file such as number of
 ports for each NIC card. You should look it through and change
 these variables values corresponding to your test system values.
 

@@ -24,7 +24,7 @@ classDescList = [
         associations=[CIMAssocDescr(
                         associationName='SF_CardRealizesController',
                         associatorName='SF_PortController',
-                        associatorsCount=MCPU_PER_NIC),
+                        associatorsCount=PORT_CTRL_PER_NIC),
                       CIMAssocDescr(
                         associationName='SF_ConnectorOnNIC',
                         associatorName='SF_PhysicalConnector',
@@ -98,7 +98,7 @@ classDescList = [
                         associationName='SF_CardRealizesController',
                         associatorName='SF_NICCard',
                         associatorsCount=1)],
-        count=getTesterCfg().NICNum * MCPU_PER_NIC),
+        count=getTesterCfg().NICNum * PORT_CTRL_PER_NIC),
 
     CIMClassDescr(
         name='SF_ControlledBy',
@@ -110,7 +110,7 @@ classDescList = [
         name='SF_CardRealizesController',
         properties=['Antecedent', 'Dependent'],
         associations=[],
-        count=getTesterCfg().NICNum * MCPU_PER_NIC),
+        count=getTesterCfg().NICNum * PORT_CTRL_PER_NIC),
 
     CIMClassDescr(
         name='SF_ConnectorRealizesPort',

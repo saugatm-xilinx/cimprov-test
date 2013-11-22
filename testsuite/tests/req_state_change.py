@@ -1,35 +1,54 @@
 #!/usr/bin/python
 #
-# fixme: broken
+# fixme: broken for WMI
 
-from test_lib import req_state_change_check
-from tester_vars import *
-from tester_hlpr import *
+from defs import *
+from test_lib import checkReqStateChange
 
-REQ_STATES = {
-    "disable" : 3,
-    "enable" : 2,
-    #"reset" : 11
-}
+testDesc = "Check RequestStateChange method"
 
-TIMEOUT = 0.5
-CLASSES_LIST = ["CIM_NetworkPort", "CIM_RecordLog", "CIM_DiagnosticLog"]
+testSpec = """
+Scenario:
+    - for each instance of each class from the list do:
+        - get instance property state value
+        - invoke RequestStateChange method
+        - restore instance property state
 
-def test_function(param = {}):
-    """RequestStateChange() testing"""
-    TEST_NAME = "req_state_change"
+Parameters:
+ class          Class name
+ state          Requested state
+ timeout        Timeout in seconds
+"""
+
+classList = ['SF_EthernetPort', 'SF_RecordLog', 'SF_DiagnosticLog']
+stateList = [RequestState.ENABLED,
+             RequestState.DISABLED,
+             RequestState.RESET]
+
+def reqStateMain(conn, params):
+    return checkReqStateChange(conn, params)
+
+def reqStateIter(self, params = {}):
+    defParam = {'class': classList,
+                'state': stateList,
+                'timeout': [RequestState.TIMEOUT]}
     
-    logger = logging.getLogger(LOGGER_NAME)
-    test_start(TEST_NAME, test_function.__doc__)
-    res = True
-    for cl in CLASSES_LIST:
-        logger.info("Checking RequestStateChange() " +
-                 "for %s class...", cl)
-        for state_name, state_code in REQ_STATES.items():
-            logger.info("Checking " + state_name)
-            passed = req_state_change_check(TESTER_NS, cl,
-                                            state_code, TIMEOUT)
-            res = res and passed
-            logger.info("State %s: %s",
-                        state_name, passed and "PASSED" or "FAILED")
-    test_result(TEST_NAME, res)
+    for parName in defParam:
+        if params.get(parName) != None:
+            if parName == 'state':
+                defParam[parName] = map(int, [params[parName]])
+            else:
+                defParam[parName] = [params[parName]]
+    
+    for cl in defParam['class']:
+        for st in defParam['state']:
+            for t in defParam['timeout']:
+                self.testRun({'class': cl, 'state': st, 'timeout': t})
+
+
+Test(name='req_state_change',
+     desc=testDesc,
+     spec=testSpec,
+     package='misc',
+     func=reqStateMain,
+     iter=reqStateIter)

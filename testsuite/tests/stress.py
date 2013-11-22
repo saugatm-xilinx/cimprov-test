@@ -94,7 +94,7 @@ def stressIter(self, params = {}):
             if parName != 'count':
                 defParam[parName] = map(Test.paramToBool, [params[parName]])
             else:
-                defParam[parName] = map[int, params[parName]]
+                defParam[parName] = map(int, params[parName])
         
     for enum in defParam['enum']:
         for assoc in defParam['assoc']:

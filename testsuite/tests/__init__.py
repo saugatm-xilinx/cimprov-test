@@ -7,4 +7,6 @@ __all__ = ['association',
            'reg_profile',
            'sw_profile',
            'stress',
-           'associators']
+           'associators',
+           'req_state_change',
+           'run_diag']
