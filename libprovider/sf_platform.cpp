@@ -534,6 +534,7 @@ namespace solarflare
     }
 
     Mutex System::portReqStateCacheLock(false);
+    Array<PortReqStateCacheEntry> System::portReqStateCache;
 
     void System::savePortReqState(const String& portName,
                                   unsigned requestedState)

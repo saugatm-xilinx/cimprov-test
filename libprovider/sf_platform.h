@@ -576,6 +576,12 @@ namespace solarflare
     public:
         unsigned requestedState; ///< RequestedState value
         String portName;         ///< Port name
+
+        bool operator== (const PortReqStateCacheEntry &rhs)
+        {
+            return (requestedState == rhs.requestedState &&
+                    portName == rhs.portName);
+        }
     };
 
     /// @brief An abstract topmost class. Implementors must subclass it to
