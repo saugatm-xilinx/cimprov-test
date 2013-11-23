@@ -34,6 +34,7 @@ namespace solarflare
     using cimple::Datetime;
     using cimple::uint64;
     using cimple::Mutex;
+    using cimple::Array;
 
 
     class NIC;
@@ -569,6 +570,14 @@ namespace solarflare
         }
     };
 
+    /// Entry of RequestedState values cache for ports
+    class PortReqStateCacheEntry
+    {
+    public:
+        unsigned requestedState; ///< RequestedState value
+        String portName;         ///< Port name
+    };
+
     /// @brief An abstract topmost class. Implementors must subclass it to
     /// define a specific platform All others abstract classes above will
     /// usually need to be subclassed too
@@ -590,6 +599,14 @@ namespace solarflare
         // Class-wide name and description
         static const char systemDescr[];
         static const String systemName;
+
+        // Stores last value of RequestedState parameter used
+        // when calling RequestStateChange() method for SF_EthernetPort,
+        // to be able to set the same value to RequestedState property
+        // of SF_EthernetPort instance after successful invocation
+        // of this method (required by DSP 1035).
+        static Array<PortReqStateCacheEntry> portReqStateCache;
+        static Mutex portReqStateCacheLock;
 
         /// True if initialization was performed
         bool initialized;
@@ -708,6 +725,10 @@ namespace solarflare
         {
             return -1;
         }
+
+        static void savePortReqState(const String& portName,
+                                     unsigned requestedState);
+        static unsigned getPortReqState(const String& portName);
     };
 
 } // namespace

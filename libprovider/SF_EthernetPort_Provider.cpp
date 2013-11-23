@@ -117,6 +117,9 @@ void SF_EthernetPort_Provider::StateChanger::handler(solarflare::SystemElement& 
             // cannot happen, do nothing
             break;
     }
+
+    if (intf.port() != NULL)
+        solarflare::System::savePortReqState(intf.port()->name(), reqState);
 }
 #endif
 

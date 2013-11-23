@@ -10,6 +10,8 @@
 
 #include "sf_provider.h"
 #include "SF_SoftwareIdentity.h"
+#include "SF_EthernetPort.h"
+#include "cimple/Auto_Mutex.h"
 
 #if defined(linux)
 #include <unistd.h>
@@ -17,6 +19,8 @@
 
 namespace solarflare
 {
+    using cimple::Auto_Mutex;
+
     const unsigned Diagnostic::maxRecordedEvents = 128;
 
     String Diagnostic::DiagnosticThread::getThreadID() const
@@ -527,5 +531,44 @@ namespace solarflare
             return driver()->version();
         else
             return VersionInfo();
+    }
+
+    Mutex System::portReqStateCacheLock(false);
+
+    void System::savePortReqState(const String& portName,
+                                  unsigned requestedState)
+    {
+        Auto_Mutex guard(portReqStateCacheLock);
+        unsigned   i;
+
+        for (i = 0; i < portReqStateCache.size(); i++)
+            if (portReqStateCache[i].portName == portName)
+                break;
+
+        if (i < portReqStateCache.size())
+            portReqStateCache[i].requestedState = requestedState;
+        else
+        {
+            PortReqStateCacheEntry  entry;
+
+            entry.portName = portName;
+            entry.requestedState = requestedState;
+            portReqStateCache.append(entry);
+        }
+    }
+
+    unsigned System::getPortReqState(const String& portName)
+    {
+        Auto_Mutex guard(portReqStateCacheLock);
+        unsigned   i;
+
+        for (i = 0; i < portReqStateCache.size(); i++)
+            if (portReqStateCache[i].portName == portName)
+                break;
+    
+        if (i < portReqStateCache.size())
+            return portReqStateCache[i].requestedState;
+
+        return cimple::SF_EthernetPort::_RequestedState::enum_Unknown;
     }
 } // namespace

@@ -195,7 +195,12 @@ namespace solarflare
                                         SF_EthernetPort::_EnabledState::enum_Enabled_but_Offline) :
                                        SF_EthernetPort::_EnabledState::enum_Disabled);
         newPort->RequestedState.null = false;
-        newPort->RequestedState.value = SF_EthernetPort::_RequestedState::enum_Not_Applicable;
+        if (intf.port() != NULL)
+            newPort->RequestedState.value =
+                              System::getPortReqState(intf.port()->name());
+        else
+            newPort->RequestedState.value =
+                            SF_EthernetPort::_RequestedState::enum_Unknown;
         newPort->StatusInfo.null = false;
         newPort->StatusInfo.value = (intf.ifStatus() ?
                                      SF_EthernetPort::_StatusInfo::enum_Enabled :
