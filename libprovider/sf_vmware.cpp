@@ -1910,7 +1910,11 @@ fail:
     bool VMwareInterface::ifStatus() const
     {
         // Implementation is blocked by SF bug 35613
-
+        // However it seems that link status on ESXi
+        // is the same as its status accessible via
+        // esxcli.
+        if (boundPort != NULL)
+            return boundPort->linkStatus();
         return false;
     }
 

@@ -189,11 +189,19 @@ namespace solarflare
 #endif
 #if CIM_SCHEMA_VERSION_MINOR > 0
         newPort->EnabledState.null = false;
+#if TARGET_CIM_SERVER_esxi
+        newPort->EnabledState.value =
+          (intf.ifStatus() ? 
+           SF_EthernetPort::_EnabledState::enum_Enabled :
+           SF_EthernetPort::_EnabledState::enum_Disabled);
+
+#else
         newPort->EnabledState.value = (intf.ifStatus() ?
                                        (intf.port()->linkStatus() ? 
                                         SF_EthernetPort::_EnabledState::enum_Enabled : 
                                         SF_EthernetPort::_EnabledState::enum_Enabled_but_Offline) :
                                        SF_EthernetPort::_EnabledState::enum_Disabled);
+#endif
         newPort->RequestedState.null = false;
         if (intf.port() != NULL)
             newPort->RequestedState.value =
