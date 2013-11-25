@@ -331,14 +331,20 @@ namespace solarflare
         SF_ProviderLogCapabilities *newRlc = static_cast<SF_ProviderLogCapabilities *>(reference(sys, idx));
         const Logger *log = Logger::knownLogs[idx];
 
-        
         newRlc->Description.set(log->description());
         newRlc->ElementName.set(log->description());
         
         newRlc->SupportedRecordTypes.null = false;
         newRlc->SupportedRecordTypes.value.append(SF_ProviderLogCapabilities::_SupportedRecordTypes::enum_Record_Data);
         newRlc->ElementNameEditSupported.set(false);
+
+        static const cimple::uint16 states[] = {
+            SF_ProviderLogCapabilities::_RequestedStatesSupported::enum_Disabled,
+            SF_ProviderLogCapabilities::_RequestedStatesSupported::enum_Enabled,
+            SF_ProviderLogCapabilities::_RequestedStatesSupported::enum_Reset,
+        };
         newRlc->RequestedStatesSupported.null = false;
+        newRlc->RequestedStatesSupported.value.append(states, sizeof(states) / sizeof(*states));
 
         return newRlc;
     }

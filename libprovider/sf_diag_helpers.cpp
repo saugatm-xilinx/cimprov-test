@@ -607,7 +607,14 @@ namespace solarflare
         newDlc->SupportedRecordTypes.null = false;
         newDlc->SupportedRecordTypes.value.append(SF_DiagnosticLogCapabilities::_SupportedRecordTypes::enum_Record_Data);
         newDlc->ElementNameEditSupported.set(false);
+
+        static const cimple::uint16 states[] = {
+            SF_DiagnosticLogCapabilities::_RequestedStatesSupported::enum_Disabled,
+            SF_DiagnosticLogCapabilities::_RequestedStatesSupported::enum_Enabled,
+            SF_DiagnosticLogCapabilities::_RequestedStatesSupported::enum_Reset,
+        };
         newDlc->RequestedStatesSupported.null = false;
+        newDlc->RequestedStatesSupported.value.append(states, sizeof(states) / sizeof(*states));
 
         return newDlc;
     }
