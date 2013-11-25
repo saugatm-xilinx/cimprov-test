@@ -9,4 +9,5 @@ __all__ = ['association',
            'stress',
            'associators',
            'req_state_change',
-           'run_diag']
+           'run_diag',
+           'disabled_intf']

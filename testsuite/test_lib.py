@@ -14,8 +14,12 @@ logger = logging.getLogger(getTesterCfg().loggerName)
 #######################
 
 def checkEnum(conn, checkKeys=False):
-    """Check EnumerateInstance and EnumerateInstanceName operations
-    for specified class list.
+    """For each class:
+        - check EnumerateInstance operation
+        - check EnumerateInstanceName operation
+        - check that number of instances match for these operations
+        - check uniqness of instance names
+        - if @p checkKeys is True, check keys consistance
     
     conn        WBEM connection
     checkKeys   True if we  need to check keys consistance
@@ -26,6 +30,8 @@ def checkEnum(conn, checkKeys=False):
     for cl in getTesterCfg().classList:
         res = 'PASSED'
         logger.info('Checking class %(class)s', {'class' : cl})
+        
+        # Check EI and EIN operations
         try:
             instList = conn.EnumerateInstances(cl)
             instNameList = conn.EnumerateInstanceNames(cl)
@@ -36,6 +42,8 @@ def checkEnum(conn, checkKeys=False):
             logger.info("%(class)s: FAILED", {'class' : cl})
             continue
         
+        # Check that EI and EIN operations returned the same
+        # number of instances
         if len(instList) != len(instNameList):
             logger.error('Number of ei and ein doesn\'t match: ' +
                          '%(eiNum)d != %(einNum)d',
@@ -50,6 +58,17 @@ def checkEnum(conn, checkKeys=False):
         logger.info("Number of instances of %(class)s: %(#)d",
                     {'class': cl, '#': len(instList)})
         
+        # Check uniqness of instances
+        uniqueList = []
+        for inst in instNameList:
+            if inst.path not in uniqueList:
+                uniqueList.append(inst.path)
+            else:
+                logger.error("Found instances with duplicated object "
+                             "paths %(path)s", {'inst': inst.path})
+                passed = False
+        
+        #  Check that keys are non-empty if needed
         if checkKeys:
             for idx in range(len(instList)):
                 for key in instNameList[idx].properties:
@@ -577,3 +596,67 @@ def checkDiagnosticsRun(conn, timeout):
                              {'state': state})
     return passed
 
+
+def checkDisabledIntf(conn):
+    """For each SF_EthernetPort instance:
+        - get DeviceID
+        - disable corresponding interface
+        - check that we still can get the same instances
+        - enable corresponding interface
+    
+    conn        WBEM connection
+
+    Return      True if tests passed and False overwise
+    """
+    
+    passed = True
+    try:
+        instList = conn.EnumerateInstances('SF_EthernetPort')
+    except Exception, e:
+        logger.error("Failed to enumerate instances:\n%(error)s",
+                     {'error': e})
+        return False
+
+    for inst in instList:
+        deviceId = WBEMConn.getPropVal(inst, 'DeviceID')
+        guid = conn.DeviceIdToGUID(deviceId)
+        if guid:
+            logger.info("GUID: %(guid)s", {'guid': guid})
+        else:
+            logger.error("Failed to get GUID from device ID")
+            return False
+
+        # Disable interface
+        try:
+            conn.SetIntfState(guid, False)
+        except Exception, e:
+            logger.error("Failed to set interface state:\n%(error)s",
+                         {'error': e})
+            passed = False
+            continue
+        
+        try:
+            instListNew = conn.EnumerateInstances('SF_EthernetPort')
+        except Exception, e:
+            logger.error("Failed to enumerate instances:\n%(error)s",
+                         {'error': e})
+            passed = False
+        else:
+            if len(instListNew) != len(instList):
+                logger.error("SF_EthernetPort counts differs after" +
+                             "interface disabling: %(before)s != %(after)s",
+                             {'before': len(instList),
+                              'after': len(instListNew)})
+         
+        # Enable interface
+        try:
+            conn.SetIntfState(guid, True)
+        except Exception, e:
+            logger.error("Failed to set interface state:\n%(error)s",
+                         {'error': e})
+            passed = False
+            continue
+    
+    return passed
+
+   
