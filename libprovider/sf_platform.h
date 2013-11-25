@@ -570,18 +570,45 @@ namespace solarflare
         }
     };
 
-    /// Entry of RequestedState values cache for ports
-    class PortReqStateCacheEntry
+    /// Entry of RequestedState values storage
+    class ReqStateStorageEntry
     {
     public:
         unsigned requestedState; ///< RequestedState value
-        String portName;         ///< Port name
+        String name;             ///< Instance name
 
-        bool operator== (const PortReqStateCacheEntry &rhs)
+        bool operator== (const ReqStateStorageEntry &rhs)
         {
             return (requestedState == rhs.requestedState &&
-                    portName == rhs.portName);
+                    name == rhs.name);
         }
+
+        ///
+        /// Save RequestedState value for a given instance name.
+        ///
+        /// @param storage        Where to save
+        /// @param name           Instance name
+        /// @param RequestedState RequestedState parameter value to be
+        ///                       saved
+        ///
+        static void saveReqState(Array<ReqStateStorageEntry> &storage,
+                                 const String &name,
+                                 unsigned reqSt);
+
+        ///
+        /// Get previously saved RequestedState value for a given
+        /// instance name.
+        ///
+        /// @param storage        Where to get 
+        /// @param name           Instance name
+        /// @param value    [out] RequestState value
+        /// 
+        /// @return 0 on success, -1 on failure
+        ///
+        static int getReqState(
+                            const Array<ReqStateStorageEntry> &storage,
+                            const String &name,
+                            unsigned &value);
     };
 
     /// @brief An abstract topmost class. Implementors must subclass it to
@@ -611,8 +638,11 @@ namespace solarflare
         // to be able to set the same value to RequestedState property
         // of SF_EthernetPort instance after successful invocation
         // of this method (required by DSP 1035).
-        static Array<PortReqStateCacheEntry> portReqStateCache;
-        static Mutex portReqStateCacheLock;
+        static Array<ReqStateStorageEntry> portReqStateStorage;
+        static Mutex portReqStateStorageLock;
+        // Doest the same for logging class instances
+        static Array<ReqStateStorageEntry> logReqStateStorage;
+        static Mutex logReqStateStorageLock;
 
         /// True if initialization was performed
         bool initialized;
@@ -732,9 +762,12 @@ namespace solarflare
             return -1;
         }
 
-        static void savePortReqState(const String& portName,
+        static void savePortReqState(const String &portName,
                                      unsigned requestedState);
-        static unsigned getPortReqState(const String& portName);
+        static unsigned getPortReqState(const String &portName);
+        static void saveLogReqState(const String &logName,
+                                    unsigned requestedState);
+        static unsigned getLogReqState(const String &logName);
     };
 
 } // namespace

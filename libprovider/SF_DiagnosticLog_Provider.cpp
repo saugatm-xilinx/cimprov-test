@@ -91,6 +91,8 @@ void SF_DiagnosticLog_Provider::ChangeState::handler(solarflare::SystemElement& 
             // cannot happen
             break;
     }
+
+    solarflare::System::saveLogReqState(log.description(), reqState);
 }
 
 Invoke_Method_Status SF_DiagnosticLog_Provider::RequestStateChange(

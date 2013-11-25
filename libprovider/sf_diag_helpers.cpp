@@ -339,7 +339,8 @@ namespace solarflare
                                       SF_DiagnosticLog::_EnabledState::enum_Enabled :
                                       SF_DiagnosticLog::_EnabledState::enum_Disabled);
         newLog->RequestedState.null = false;
-        newLog->RequestedState.value = SF_DiagnosticLog::_RequestedState::enum_No_Change;
+        newLog->RequestedState.value =
+                    System::getLogReqState(diag.log().description());
         newLog->LogState.null = false;
         newLog->LogState.value = (diag.log().isEnabled() ?
                                   SF_DiagnosticLog::_LogState::enum_Normal :

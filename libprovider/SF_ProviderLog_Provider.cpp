@@ -68,7 +68,7 @@ Modify_Instance_Status SF_ProviderLog_Provider::modify_instance(
 }
 
 void SF_ProviderLog_Provider::ChangeState::handler(solarflare::SystemElement&,
-                                                     unsigned idx)
+                                                   unsigned idx)
 {
     solarflare::Logger *log = solarflare::Logger::knownLogs[idx];
 
@@ -91,6 +91,8 @@ void SF_ProviderLog_Provider::ChangeState::handler(solarflare::SystemElement&,
             // cannot happen
             break;
     }
+
+    solarflare::System::saveLogReqState(log->description(), reqState);
 }
 
 

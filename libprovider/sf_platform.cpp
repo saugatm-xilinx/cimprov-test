@@ -11,6 +11,7 @@
 #include "sf_provider.h"
 #include "SF_SoftwareIdentity.h"
 #include "SF_EthernetPort.h"
+#include "CIM_RecordLog.h"
 #include "cimple/Auto_Mutex.h"
 
 #if defined(linux)
@@ -533,43 +534,97 @@ namespace solarflare
             return VersionInfo();
     }
 
-    Mutex System::portReqStateCacheLock(false);
-    Array<PortReqStateCacheEntry> System::portReqStateCache;
+    Array<ReqStateStorageEntry> System::portReqStateStorage;
+    Mutex System::portReqStateStorageLock(false);
+    Array<ReqStateStorageEntry> System::logReqStateStorage;
+    Mutex System::logReqStateStorageLock(false);
 
-    void System::savePortReqState(const String& portName,
-                                  unsigned requestedState)
+    void ReqStateStorageEntry::saveReqState(
+                                Array<ReqStateStorageEntry> &storage,
+                                const String &name,
+                                unsigned reqSt)
     {
-        Auto_Mutex guard(portReqStateCacheLock);
         unsigned   i;
 
-        for (i = 0; i < portReqStateCache.size(); i++)
-            if (portReqStateCache[i].portName == portName)
+        for (i = 0; i < storage.size(); i++)
+            if (storage[i].name == name)
                 break;
 
-        if (i < portReqStateCache.size())
-            portReqStateCache[i].requestedState = requestedState;
+        if (i < storage.size())
+            storage[i].requestedState = reqSt;
         else
         {
-            PortReqStateCacheEntry  entry;
+            ReqStateStorageEntry  entry;
 
-            entry.portName = portName;
-            entry.requestedState = requestedState;
-            portReqStateCache.append(entry);
+            entry.name = name;
+            entry.requestedState = reqSt;
+            storage.append(entry);
         }
     }
 
-    unsigned System::getPortReqState(const String& portName)
+    int ReqStateStorageEntry::getReqState(
+                              const Array<ReqStateStorageEntry> &storage,
+                              const String &name,
+                              unsigned &value)
     {
-        Auto_Mutex guard(portReqStateCacheLock);
         unsigned   i;
 
-        for (i = 0; i < portReqStateCache.size(); i++)
-            if (portReqStateCache[i].portName == portName)
+        for (i = 0; i < storage.size(); i++)
+            if (storage[i].name == name)
                 break;
     
-        if (i < portReqStateCache.size())
-            return portReqStateCache[i].requestedState;
+        if (i < storage.size())
+        {
+            value = storage[i].requestedState;
+            return 0;
+        }
 
-        return cimple::SF_EthernetPort::_RequestedState::enum_Unknown;
+        return -1;
+    }
+
+    void System::savePortReqState(const String &portName,
+                                  unsigned requestedState)
+    {
+        Auto_Mutex guard(portReqStateStorageLock);
+
+        ReqStateStorageEntry::saveReqState(portReqStateStorage,
+                                           portName,
+                                           requestedState);
+    }
+
+    unsigned System::getPortReqState(const String &portName)
+    {
+        Auto_Mutex guard(portReqStateStorageLock);
+        unsigned   value = 0;
+
+        if (ReqStateStorageEntry::getReqState(portReqStateStorage,
+                                              portName,
+                                              value) == 0)
+            return value;
+        else
+            return cimple::SF_EthernetPort::_RequestedState::enum_Unknown;
+    }
+
+    void System::saveLogReqState(const String &logName,
+                                 unsigned requestedState)
+    {
+        Auto_Mutex guard(logReqStateStorageLock);
+
+        ReqStateStorageEntry::saveReqState(logReqStateStorage,
+                                           logName,
+                                           requestedState);
+    }
+
+    unsigned System::getLogReqState(const String &logName)
+    {
+        Auto_Mutex guard(logReqStateStorageLock);
+        unsigned   value = 0;
+
+        if (ReqStateStorageEntry::getReqState(logReqStateStorage,
+                                              logName,
+                                              value) == 0)
+            return value;
+        else
+            return cimple::CIM_RecordLog::_RequestedState::enum_Unknown;
     }
 } // namespace
