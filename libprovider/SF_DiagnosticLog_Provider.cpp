@@ -71,6 +71,8 @@ void SF_DiagnosticLog_Provider::ChangeState::handler(solarflare::SystemElement& 
 {
     solarflare::Diagnostic &diag = static_cast<solarflare::Diagnostic&>(se);
     solarflare::Logger &log = diag.log();
+    const SF_DiagnosticLog *diagLog =
+                        reinterpret_cast<const SF_DiagnosticLog *>(sample);
 
     switch (reqState)
     {
@@ -92,7 +94,7 @@ void SF_DiagnosticLog_Provider::ChangeState::handler(solarflare::SystemElement& 
             break;
     }
 
-    solarflare::System::saveLogReqState(log.description(), reqState);
+    solarflare::System::saveLogReqState(diagLog->InstanceID.value, reqState);
 }
 
 Invoke_Method_Status SF_DiagnosticLog_Provider::RequestStateChange(
