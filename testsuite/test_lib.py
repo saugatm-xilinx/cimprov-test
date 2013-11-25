@@ -18,7 +18,7 @@ def checkEnum(conn, checkKeys=False):
         - check EnumerateInstance operation
         - check EnumerateInstanceName operation
         - check that number of instances match for these operations
-        - check uniqness of instance names
+        - check uniqueness of instance names
         - if @p checkKeys is True, check keys consistance
     
     conn        WBEM connection
