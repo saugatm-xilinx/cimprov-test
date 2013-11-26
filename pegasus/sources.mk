@@ -127,7 +127,8 @@ endif
 
 .PHONY : pegasus-start
 ##! Start the OpenPegasus initializing its repository if needed
-pegasus-start : $(PEGASUS_START_CONF) $(PEGASUS_OWN_REPOSITORY)
+pegasus-start : $(PEGASUS_OWN_REPOSITORY)
+	PATH=$(PATH_WITH_PEGASUS) $(PEGASUS_SERVER) $(PEGASUS_RUN_OPTS)
 
 .PHONY : pegasus-stop
 pegasus-stop : $(PEGASUS_START_CONF) 
