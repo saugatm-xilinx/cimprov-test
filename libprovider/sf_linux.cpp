@@ -629,7 +629,7 @@ namespace solarflare
             sysfsPath(path) { };
 
         virtual bool ifStatus() const;
-        virtual int enable(bool st);
+        virtual void enable(bool st);
         virtual uint64 mtu() const;
         virtual void mtu(uint64 u);
         virtual String ifName() const;
@@ -658,7 +658,7 @@ namespace solarflare
 
         memset(&ifr, 0, sizeof(ifr));
         if (linuxIOctlCmd(ifName().c_str(), SIOCGIFFLAGS, &ifr))
-            return false;
+            THROW_PROVIDER_EXCEPTION;
 
         if (ifr.ifr_flags & IFF_UP)
             return true;
@@ -666,13 +666,13 @@ namespace solarflare
         return false;
     }
 
-    int LinuxInterface::enable(bool st)
+    void LinuxInterface::enable(bool st)
     {
         struct ifreq    ifr;
 
         memset(&ifr, 0, sizeof(ifr));
         if (linuxIOctlCmd(ifName().c_str(), SIOCGIFFLAGS, &ifr))
-            return -1;
+            THROW_PROVIDER_EXCEPTION;
 
         if (st)
             ifr.ifr_flags |= IFF_UP;
@@ -680,9 +680,7 @@ namespace solarflare
             ifr.ifr_flags &= ~IFF_UP;
 
         if (linuxIOctlCmd(ifName().c_str(), SIOCSIFFLAGS, &ifr))
-            return -1;
-
-        return 0;
+            THROW_PROVIDER_EXCEPTION;
     }
 
     uint64 LinuxInterface::mtu() const
@@ -749,7 +747,9 @@ namespace solarflare
 
     bool LinuxInterface::linkAlarm(bool prev, bool exp) const
     {
-        bool cur = ifStatus();
+        bool cur;
+
+        ASSIGN_IGNORE_EXCEPTION(cur, ifStatus(), false);
 
         return (prev != cur) && (prev == exp);
     }

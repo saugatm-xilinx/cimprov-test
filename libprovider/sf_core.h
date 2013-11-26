@@ -16,6 +16,7 @@
 
 #include "sf_utils.h"
 #include "sf_threads.h"
+#include "sf_logging.h"
 
 #define __SF_MK_VSTRING(_x, _y, _z) #_x "." #_y "." #_z
 #define SF_MK_VSTRING(_x, _y, _z) __SF_MK_VSTRING(_x, _y, _z)
@@ -38,6 +39,38 @@ namespace solarflare
     class CIMHelper;
 
     class SWType;
+
+    /// Class for an exception thrown by our code
+    class ProviderException {
+        String file;    ///< File where exception was thrown
+        unsigned line;  ///< Line where exception was thrown
+    public:
+        ProviderException(const String &fileName,
+                          unsigned lineNo) : file(fileName),
+                                             line(lineNo)
+        {
+            solarflare::Logger::errorLog.format(
+                                      fileName.c_str(), lineNo,
+                                      "ProviderException was thrown");
+        }
+
+        String getFile() { return file; }
+        unsigned getLine() { return line; }
+    };
+
+#define THROW_PROVIDER_EXCEPTION \
+    throw ProviderException(__FILE_REL__, __LINE__)
+
+#define ASSIGN_IGNORE_EXCEPTION(_var, _expr, _def_val) \
+    do {                                                  \
+        try {                                             \
+            _var = (_expr);                               \
+        }                                                 \
+        catch (const ProviderException &exception)        \
+        {                                                 \
+            _var = (_def_val);                            \
+        }                                                 \
+    } while (0)
 
     /// @brief The root class for all managed objects.
     class SystemElement {

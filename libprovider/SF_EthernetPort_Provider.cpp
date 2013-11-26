@@ -98,23 +98,31 @@ void SF_EthernetPort_Provider::StateChanger::handler(solarflare::SystemElement& 
 {
     solarflare::Interface &intf = static_cast<solarflare::Interface&>(se);
     
-    switch (reqState)
+    try {
+        switch (reqState)
+        {
+            case SF_EthernetPort::_RequestedState::enum_Enabled:
+                intf.enable(true);
+                break;
+            case SF_EthernetPort::_RequestedState::enum_Disabled:
+                intf.enable(false);
+                break;
+            case SF_EthernetPort::_RequestedState::enum_Reset:
+                if (intf.ifStatus())
+                {
+                    intf.enable(false);
+                    intf.enable(true);
+                }
+                break;
+            default:
+                // cannot happen, do nothing
+                break;
+        }
+        ok = true;
+    }
+    catch (const solarflare::ProviderException &exception)
     {
-        case SF_EthernetPort::_RequestedState::enum_Enabled:
-            ok = (intf.enable(true) == 0);
-            break;
-        case SF_EthernetPort::_RequestedState::enum_Disabled:
-            ok = (intf.enable(false) == 0);
-            break;
-        case SF_EthernetPort::_RequestedState::enum_Reset:
-            if (intf.ifStatus())
-            {
-                ok = (intf.enable(false) == 0 && intf.enable(true) == 0);
-            }
-            break;
-        default:
-            // cannot happen, do nothing
-            break;
+        ok = false;
     }
 
     if (intf.port() != NULL)

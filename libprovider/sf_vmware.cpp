@@ -1880,7 +1880,7 @@ fail:
             boundPort(NULL) { };
 
         virtual bool ifStatus() const;
-        virtual int enable(bool st);
+        virtual void enable(bool st);
         virtual uint64 mtu() const;
         virtual void mtu(uint64 u);
         virtual String ifName() const;
@@ -1915,16 +1915,18 @@ fail:
         // esxcli.
         if (boundPort != NULL)
             return boundPort->linkStatus();
+        
+        THROW_PROVIDER_EXCEPTION;
         return false;
     }
 
-    int VMwareInterface::enable(bool st)
+    void VMwareInterface::enable(bool st)
     {
         // Implementation is blocked by SF bug 35613
 
         UNUSED(st);
 
-        return -1;
+        THROW_PROVIDER_EXCEPTION;
     }
 
     uint64 VMwareInterface::mtu() const

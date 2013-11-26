@@ -179,6 +179,10 @@ namespace solarflare
     
         SF_EthernetPort *newPort = static_cast<SF_EthernetPort *>(reference(intf, idx));
 
+        bool ifStatus;
+
+        ASSIGN_IGNORE_EXCEPTION(ifStatus, intf.ifStatus(), false);
+
         newPort->Description.set(intf.description());
 #if CIM_SCHEMA_VERSION_MINOR > 0
         newPort->ElementName.set(intf.ifName());
@@ -191,12 +195,12 @@ namespace solarflare
         newPort->EnabledState.null = false;
 #if TARGET_CIM_SERVER_esxi
         newPort->EnabledState.value =
-          (intf.ifStatus() ? 
+          (ifStatus ? 
            SF_EthernetPort::_EnabledState::enum_Enabled :
            SF_EthernetPort::_EnabledState::enum_Disabled);
 
 #else
-        newPort->EnabledState.value = (intf.ifStatus() ?
+        newPort->EnabledState.value = (ifStatus ?
                                        (intf.port()->linkStatus() ? 
                                         SF_EthernetPort::_EnabledState::enum_Enabled : 
                                         SF_EthernetPort::_EnabledState::enum_Enabled_but_Offline) :
@@ -210,7 +214,7 @@ namespace solarflare
             newPort->RequestedState.value =
                             SF_EthernetPort::_RequestedState::enum_Unknown;
         newPort->StatusInfo.null = false;
-        newPort->StatusInfo.value = (intf.ifStatus() ?
+        newPort->StatusInfo.value = (ifStatus ?
                                      SF_EthernetPort::_StatusInfo::enum_Enabled :
                                      SF_EthernetPort::_StatusInfo::enum_Disabled);
 #endif
@@ -297,6 +301,10 @@ namespace solarflare
         
         SF_LANEndpoint *newEP = static_cast<SF_LANEndpoint *>(reference(intf, idx));
 
+        bool ifStatus;
+
+        ASSIGN_IGNORE_EXCEPTION(ifStatus, intf.ifStatus(), false);
+
         newEP->Description.set(intf.description());
 #if CIM_SCHEMA_VERSION_MINOR > 0
         newEP->ElementName.set(intf.ifName());
@@ -307,7 +315,7 @@ namespace solarflare
 #endif
 #if CIM_SCHEMA_VERSION_MINOR > 0
         newEP->EnabledState.null = false;
-        newEP->EnabledState.value = (intf.ifStatus() ?
+        newEP->EnabledState.value = (ifStatus ?
                                      SF_LANEndpoint::_EnabledState::enum_Enabled : 
                                      SF_LANEndpoint::_EnabledState::enum_Disabled);
         newEP->RequestedState.null = false;

@@ -36,8 +36,8 @@ class SF_EthernetPort_Provider
 #if CIM_SCHEMA_VERSION_MINOR > 0
     class StateChanger : public solarflare::Action 
     {
-        bool ok;
         unsigned reqState;
+        bool ok;
     protected:
         virtual void handler(solarflare::SystemElement& se, unsigned);
     public:
