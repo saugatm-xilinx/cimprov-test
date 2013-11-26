@@ -101,16 +101,15 @@ void SF_EthernetPort_Provider::StateChanger::handler(solarflare::SystemElement& 
     switch (reqState)
     {
         case SF_EthernetPort::_RequestedState::enum_Enabled:
-            intf.enable(true);
+            ok = (intf.enable(true) == 0);
             break;
         case SF_EthernetPort::_RequestedState::enum_Disabled:
-            intf.enable(false);
+            ok = (intf.enable(false) == 0);
             break;
         case SF_EthernetPort::_RequestedState::enum_Reset:
             if (intf.ifStatus())
             {
-                intf.enable(false);
-                intf.enable(true);
+                ok = (intf.enable(false) == 0 && intf.enable(true) == 0);
             }
             break;
         default:
@@ -162,7 +161,10 @@ Invoke_Method_Status SF_EthernetPort_Provider::RequestStateChange(
                 StateChanger changer(RequestedState.value, self);
                 if (changer.forInterface())
                 {
-                    return_value.set(OK);
+                    if (changer.isOk())
+                        return_value.set(OK);
+                    else
+                        return_value.set(Error);
                     break;
                 }
             }

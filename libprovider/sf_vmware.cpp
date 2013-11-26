@@ -1880,7 +1880,7 @@ fail:
             boundPort(NULL) { };
 
         virtual bool ifStatus() const;
-        virtual void enable(bool st);
+        virtual int enable(bool st);
         virtual uint64 mtu() const;
         virtual void mtu(uint64 u);
         virtual String ifName() const;
@@ -1918,11 +1918,13 @@ fail:
         return false;
     }
 
-    void VMwareInterface::enable(bool st)
+    int VMwareInterface::enable(bool st)
     {
         // Implementation is blocked by SF bug 35613
 
         UNUSED(st);
+
+        return -1;
     }
 
     uint64 VMwareInterface::mtu() const

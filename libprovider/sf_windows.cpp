@@ -1331,7 +1331,7 @@ cleanup:
                                                             true : false);
         }
 
-        virtual void enable(bool st)
+        virtual int enable(bool st)
         {
             DWORD      rc;
             MIB_IFROW  mibIfRow;
@@ -1345,8 +1345,13 @@ cleanup:
 
             rc = SetIfEntry(&mibIfRow);
             if (rc != NO_ERROR)
+            {
                 PROVIDER_LOG_ERR("SetIfEntry() failed with rc=0x%lx",
                                  static_cast<long int>(rc));
+                return -1;
+            }
+
+            return 0;
         }
 
         /// @return current MTU

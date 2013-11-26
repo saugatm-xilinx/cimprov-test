@@ -629,7 +629,7 @@ namespace solarflare
             sysfsPath(path) { };
 
         virtual bool ifStatus() const;
-        virtual void enable(bool st);
+        virtual int enable(bool st);
         virtual uint64 mtu() const;
         virtual void mtu(uint64 u);
         virtual String ifName() const;
@@ -666,20 +666,23 @@ namespace solarflare
         return false;
     }
 
-    void LinuxInterface::enable(bool st)
+    int LinuxInterface::enable(bool st)
     {
         struct ifreq    ifr;
 
         memset(&ifr, 0, sizeof(ifr));
         if (linuxIOctlCmd(ifName().c_str(), SIOCGIFFLAGS, &ifr))
-            return;
+            return -1;
 
         if (st)
             ifr.ifr_flags |= IFF_UP;
         else
             ifr.ifr_flags &= ~IFF_UP;
 
-        linuxIOctlCmd(ifName().c_str(), SIOCSIFFLAGS, &ifr);
+        if (linuxIOctlCmd(ifName().c_str(), SIOCSIFFLAGS, &ifr))
+            return -1;
+
+        return 0;
     }
 
     uint64 LinuxInterface::mtu() const

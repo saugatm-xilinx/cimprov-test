@@ -300,8 +300,10 @@ namespace solarflare
         /// @return interface status.
         virtual bool ifStatus() const = 0;
 
-        /// @return changing the interface state up/down.
-        virtual void enable(bool status) = 0;
+        /// Changing the interface state up/down.
+        ///
+        /// @return 0 on success, -1 on failure
+        virtual int enable(bool status) = 0;
 
         /// @return system interface name (e.g. ethX for Linux).
         virtual String ifName() const = 0;
