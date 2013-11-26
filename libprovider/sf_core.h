@@ -44,22 +44,45 @@ namespace solarflare
     class ProviderException {
         String file;    ///< File where exception was thrown
         unsigned line;  ///< Line where exception was thrown
+        String msg;
     public:
         ProviderException(const String &fileName,
                           unsigned lineNo) : file(fileName),
-                                             line(lineNo)
+                                             line(lineNo),
+                                             msg("")
         {
             solarflare::Logger::errorLog.format(
                                       fileName.c_str(), lineNo,
                                       "ProviderException was thrown");
         }
 
-        String getFile() { return file; }
-        unsigned getLine() { return line; }
+        ProviderException(const String &fileName,
+                          unsigned lineNo,
+                          const String &message) :
+                                    file(fileName), line(lineNo),
+                                    msg(message)
+        {
+            solarflare::Logger::errorLog.format(
+                                      fileName.c_str(), lineNo,
+                                      "ProviderException was thrown: %s",
+                                      message.c_str());
+        }
+
+        String getFile() const { return file; }
+        unsigned getLine() const { return line; }
+        String getMessage() const { return msg; }
     };
 
 #define THROW_PROVIDER_EXCEPTION \
     throw ProviderException(__FILE_REL__, __LINE__)
+
+#define THROW_PROVIDER_EXCEPTION_FMT(_fmt...) \
+    do {                                                  \
+        cimple::Buffer _buf;                              \
+        _buf.format(_fmt);                                \
+        throw ProviderException(__FILE_REL__, __LINE__,   \
+                                _buf.data());             \
+    } while (0)
 
 #define ASSIGN_IGNORE_EXCEPTION(_var, _expr, _def_val) \
     do {                                                  \

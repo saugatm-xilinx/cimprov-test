@@ -12,6 +12,7 @@
 #include "SF_EthernetPort_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
 #include "sf_provider.h"
+#include "sf_logging.h"
 
 CIMPLE_NAMESPACE_BEGIN
 
@@ -66,13 +67,20 @@ void SF_EthernetPort_Provider::SpeedChanger::handler(solarflare::SystemElement& 
     solarflare::Interface &intf = static_cast<solarflare::Interface&>(se);
     
     if (reqSpeed == solarflare::Port::SpeedUnknown ||
-            reqSpeed > intf.nic()->maxLinkSpeed())
+        reqSpeed > intf.nic()->maxLinkSpeed())
     {
+        PROVIDER_LOG_ERR("Incorrect speed value");
         ok = false;
         return;
     }
-    intf.port()->linkSpeed(reqSpeed);
-    ok = true;
+    try {
+        intf.port()->linkSpeed(reqSpeed);
+        ok = true;
+    }
+    catch (solarflare::ProviderException &exception)
+    {
+        ok = false;
+    }
 }
 
 Modify_Instance_Status SF_EthernetPort_Provider::modify_instance(
@@ -88,6 +96,8 @@ Modify_Instance_Status SF_EthernetPort_Provider::modify_instance(
         
         if (!changer.forInterface())
             return MODIFY_INSTANCE_NOT_FOUND;
+        else if (!changer.isOk())
+            return MODIFY_INSTANCE_FAILED;
     }
 
     return MODIFY_INSTANCE_OK;

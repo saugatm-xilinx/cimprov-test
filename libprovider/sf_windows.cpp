@@ -1091,7 +1091,11 @@ cleanup:
         {
             return speedValue(portInfo.linkSpeed());
         }            
-        virtual void linkSpeed(Speed sp) { }
+        virtual void linkSpeed(Speed sp)
+        {
+            THROW_PROVIDER_EXCEPTION_FMT("Setting link speed is "
+                                         "not implemented");
+        }
 
         /// @return Associated interface's administrative status
         DWORD getAdminStatus() const

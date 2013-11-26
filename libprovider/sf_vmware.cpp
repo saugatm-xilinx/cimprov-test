@@ -1727,7 +1727,7 @@ fail:
         memset(&edata, 0, sizeof(edata));
         if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
                              ETHTOOL_GSET, &edata) < 0)
-            return;
+            THROW_PROVIDER_EXCEPTION;
 
         switch (sp)
         {
@@ -1735,11 +1735,13 @@ fail:
             case Port::Speed100M: edata.speed = SPEED_100; break;
             case Port::Speed1G: edata.speed = SPEED_1000; break;
             case Port::Speed10G: edata.speed = SPEED_10000; break;
-            default: return;
+            default:
+                THROW_PROVIDER_EXCEPTION_FMT("Nonstandard speed specified");
         }
 
-        vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
-                         ETHTOOL_SSET, &edata);
+        if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
+                             ETHTOOL_SSET, &edata) < 0)
+            THROW_PROVIDER_EXCEPTION;
     }
        
     bool VMwarePort::fullDuplex() const
@@ -1926,7 +1928,8 @@ fail:
 
         UNUSED(st);
 
-        THROW_PROVIDER_EXCEPTION;
+        THROW_PROVIDER_EXCEPTION_FMT("Changing interface state "
+                                     "is not implemented");
     }
 
     uint64 VMwareInterface::mtu() const

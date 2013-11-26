@@ -480,12 +480,12 @@ namespace solarflare
         struct ethtool_cmd edata;
 
         if (!boundIface)
-            return;
+            THROW_PROVIDER_EXCEPTION_FMT("Bound interface not found");
 
         memset(&edata, 0, sizeof(edata));
         if (linuxEthtoolCmd(boundIface->ifName().c_str(),
                             ETHTOOL_GSET, &edata) < 0)
-            return;
+            THROW_PROVIDER_EXCEPTION;
 
         switch (sp)
         {
@@ -493,11 +493,13 @@ namespace solarflare
             case Port::Speed100M: edata.speed = SPEED_100; break;
             case Port::Speed1G: edata.speed = SPEED_1000; break;
             case Port::Speed10G: edata.speed = SPEED_10000; break;
-            default: return;
+            default:
+                THROW_PROVIDER_EXCEPTION_FMT("Nonstandard speed specified");
         }
 
-        linuxEthtoolCmd(boundIface->ifName().c_str(),
-                        ETHTOOL_SSET, &edata);
+        if (linuxEthtoolCmd(boundIface->ifName().c_str(),
+                            ETHTOOL_SSET, &edata) < 0)
+            THROW_PROVIDER_EXCEPTION;
     }
 
     bool LinuxPort::fullDuplex() const
