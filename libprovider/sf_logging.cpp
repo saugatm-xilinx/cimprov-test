@@ -99,7 +99,8 @@ namespace solarflare
     
     Logger Logger::errorLog(LogError, 128, "Error log");
     Logger Logger::eventLog(LogInfo, 128, "Event log");
-    Logger Logger::debugLog(LogDebug, 1024, "Debugging log");
+    // This log is disabled by default
+    Logger Logger::debugLog(LogDebug, 1024, "Debugging log", false);
 
     Logger *const Logger::knownLogs[] = {
         &Logger::errorLog,
