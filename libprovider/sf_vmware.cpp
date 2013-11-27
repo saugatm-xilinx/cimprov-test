@@ -1431,10 +1431,12 @@ fail:
     ///
     /// Log sfupdate output for debugging purposes.
     ///
-    /// @param fd   Read end of pipe to which
-    ///             sfupdate output was redirected
+    /// @param fd     Read end of pipe to which
+    ///               sfupdate output was redirected
+    /// @param debug  Whether to write sfupdate output
+    ///               to debug or to error log
     ///
-    static void sfupdateLogOutput(int fd)
+    static void sfupdateLogOutput(int fd, bool debug = true)
     {
         char  str[SFU_STR_MAX_LEN];
         FILE *f = fdopen(fd, "r");
@@ -1445,7 +1447,10 @@ fail:
         {
             if (fgets(str, SFU_STR_MAX_LEN, f) != str)
                 break;
-            PROVIDER_LOG_DBG("%s", str);
+            if (debug)
+                PROVIDER_LOG_DBG("%s", str);
+            else
+                PROVIDER_LOG_ERR("%s", str);
         }
         fclose(f);
     }
@@ -1575,8 +1580,8 @@ fail:
             return pipefds[0];
         else
         {
-            PROVIDER_LOG_DBG("sfupdate failed:");
-            sfupdateLogOutput(pipefds[0]);
+            PROVIDER_LOG_ERR("sfupdate failed:");
+            sfupdateLogOutput(pipefds[0], false);
             close(pipefds[0]);
             return rc;
         }
