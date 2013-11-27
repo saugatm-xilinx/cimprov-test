@@ -815,7 +815,7 @@ namespace solarflare
             {
                 PROVIDER_LOG_ERR("Failed to find network interface "
                                  "information for portId=%d",
-                                 portDescr.port_id));
+                                 portDescr.port_id);
                 /// We skip ports not visible by system - see bug 8017
                 continue;
             }
@@ -2091,7 +2091,7 @@ cleanup:
             if (!GetVersionEx(reinterpret_cast<OSVERSIONINFO *>(&verInfo)))
             {
                 PROVIDER_LOG_ERR("%s():    failed to call GetVersionEx()",
-                                 __FUNCTION__));
+                                 __FUNCTION__);
                 // FIXME: no "unknown" value in enum
                 return WindowsServer2003;
             }
