@@ -110,17 +110,8 @@ namespace solarflare
         /// @param lvl   Severity level
         /// @param sz    Size of the message queue
         /// @param d     Log description
-        Logger(LogLevel lvl, unsigned sz, const char *d) :
-            enabled(true), defaultLevel(lvl), size(sz), 
-            entries(new LogEntry[sz]), serial(0), descr(d) {}
-
-        /// Constructor allowing to create disabled log
-        ///
-        /// @param lvl   Severity level
-        /// @param sz    Size of the message queue
-        /// @param d     Log description
         /// @param e     Whether log is enabled
-        Logger(LogLevel lvl, unsigned sz, const char *d, bool e) :
+        Logger(LogLevel lvl, unsigned sz, const char *d, bool e = true) :
             enabled(e), defaultLevel(lvl), size(sz), 
             entries(new LogEntry[sz]), serial(0), descr(d) {}
 
