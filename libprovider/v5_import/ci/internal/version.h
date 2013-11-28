@@ -23,19 +23,19 @@
 
 #define CI_MAJ_RELEASE_VERSION            (4)
 #define CI_MIN_RELEASE_VERSION            (0)
-#define CI_MAINT_RELEASE_VERSION          (0)
-#define CI_INCREMENTING_VERSION           (6602)
-#define CI_VERSION_STRING                 "v4.0.0.6602"
+#define CI_MAINT_RELEASE_VERSION          (1)
+#define CI_INCREMENTING_VERSION           (6623)
+#define CI_VERSION_STRING                 "v4.0.1.6623"
 
 /* version number in format as needed for Windows .rc files */
 #define CI_RC_PRODUCT_VERSION             CI_MAJ_RELEASE_VERSION,CI_MIN_RELEASE_VERSION,CI_MAINT_RELEASE_VERSION,CI_INCREMENTING_VERSION
 
 /* Don't show incrementing version (build number) by default in Windows .rc files */
-#define CI_RC_VERSION_STRING              "v4.0.0"
+#define CI_RC_VERSION_STRING              "v4.0.1"
 
 /* The family version string written to the VPD. Must be of the form "xx.yy.zz" 
 ** for Dell (see SF-103197-PS) */
-#define CI_VPD_FAMILY_VERSION_STRING      "4.0.0"
+#define CI_VPD_FAMILY_VERSION_STRING      "4.0.1"
 
 #define CI_COPYRIGHT_STRING \
   "Copyright Solarflare Communications 2006-2013, Level 5 Networks 2002-2005 "

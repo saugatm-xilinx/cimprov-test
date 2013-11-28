@@ -2537,7 +2537,7 @@
 /*            MC_CMD_AOE_IN_CMD_OFST 0 */
 #define       MC_CMD_AOE_IN_DDR_ECC_STATUS_BANK_OFST 4
 /*            Enum values, see field(s): */
-/*               MC_CMD_FC_IN_DDR_BANK */
+/*               MC_CMD_FC/MC_CMD_FC_IN_DDR/MC_CMD_FC_IN_DDR_BANK */
 
 /* MC_CMD_AOE_OUT_INFO msgresponse */
 #define    MC_CMD_AOE_OUT_INFO_LEN 44
@@ -2808,6 +2808,10 @@
 #define          MC_CMD_PTP_OP_PPS_ENABLE 0x15
 /* enum: Get the time format used by this NIC for PTP operations */
 #define          MC_CMD_PTP_OP_GET_TIME_FORMAT 0x16
+/* enum: Get the clock attributes. NOTE- extended version of
+ * MC_CMD_PTP_OP_GET_TIME_FORMAT
+ */
+#define          MC_CMD_PTP_OP_GET_ATTRIBUTES 0x16
 /* enum: Get corrections that should be applied to the various different
  * timestamps
  */
@@ -3044,6 +3048,11 @@
 /*            MC_CMD_PTP_IN_CMD_OFST 0 */
 /*            MC_CMD_PTP_IN_PERIPH_ID_OFST 4 */
 
+/* MC_CMD_PTP_IN_GET_ATTRIBUTES msgrequest */
+#define    MC_CMD_PTP_IN_GET_ATTRIBUTES_LEN 8
+/*            MC_CMD_PTP_IN_CMD_OFST 0 */
+/*            MC_CMD_PTP_IN_PERIPH_ID_OFST 4 */
+
 /* MC_CMD_PTP_IN_GET_TIMESTAMP_CORRECTIONS msgrequest */
 #define    MC_CMD_PTP_IN_GET_TIMESTAMP_CORRECTIONS_LEN 8
 /*            MC_CMD_PTP_IN_CMD_OFST 0 */
@@ -3235,6 +3244,29 @@
 #define          MC_CMD_PTP_OUT_GET_TIME_FORMAT_16SECONDS_8NANOSECONDS 0x1
 /* enum: Major register has units of seconds, minor 2^-27s per tick */
 #define          MC_CMD_PTP_OUT_GET_TIME_FORMAT_SECONDS_27FRACTION 0x2
+
+/* MC_CMD_PTP_OUT_GET_ATTRIBUTES msgresponse */
+#define    MC_CMD_PTP_OUT_GET_ATTRIBUTES_LEN 8
+/* Time format required/used by for this NIC. Applies to all PTP MCDI
+ * operations that pass times between the host and firmware. If this operation
+ * is not supported (older firmware) a format of seconds and nanoseconds should
+ * be assumed.
+ */
+#define       MC_CMD_PTP_OUT_GET_ATTRIBUTES_TIME_FORMAT_OFST 0
+/* enum: Times are in seconds and nanoseconds */
+#define          MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_NANOSECONDS 0x0
+/* enum: Major register has units of 16 second per tick, minor 8 ns per tick */
+#define          MC_CMD_PTP_OUT_GET_ATTRIBUTES_16SECONDS_8NANOSECONDS 0x1
+/* enum: Major register has units of seconds, minor 2^-27s per tick */
+#define          MC_CMD_PTP_OUT_GET_ATTRIBUTES_SECONDS_27FRACTION 0x2
+/* Minimum acceptable value for a corrected synchronization timeset. When
+ * comparing host and NIC clock times, the MC returns a set of samples that
+ * contain the host start and end time, the MC time when the host start was
+ * detected and the time the MC waited between reading the time and detecting
+ * the host end. The corrected sync window is the difference between the host
+ * end and start times minus the time that the MC waited for host end.
+ */
+#define       MC_CMD_PTP_OUT_GET_ATTRIBUTES_SYNC_WINDOW_MIN_OFST 4
 
 /* MC_CMD_PTP_OUT_GET_TIMESTAMP_CORRECTIONS msgresponse */
 #define    MC_CMD_PTP_OUT_GET_TIMESTAMP_CORRECTIONS_LEN 16
@@ -5239,7 +5271,7 @@
 #define       MC_CMD_SENSOR_INFO_EXT_IN_PAGE_OFST 0
 
 /* MC_CMD_SENSOR_INFO_OUT msgresponse */
-#define    MC_CMD_SENSOR_INFO_OUT_LENMIN 12
+#define    MC_CMD_SENSOR_INFO_OUT_LENMIN 4
 #define    MC_CMD_SENSOR_INFO_OUT_LENMAX 252
 #define    MC_CMD_SENSOR_INFO_OUT_LEN(num) (4+8*(num))
 #define       MC_CMD_SENSOR_INFO_OUT_MASK_OFST 0
@@ -5340,11 +5372,11 @@
 #define       MC_CMD_SENSOR_ENTRY_LEN 8
 #define       MC_CMD_SENSOR_ENTRY_LO_OFST 4
 #define       MC_CMD_SENSOR_ENTRY_HI_OFST 8
-#define       MC_CMD_SENSOR_ENTRY_MINNUM 1
+#define       MC_CMD_SENSOR_ENTRY_MINNUM 0
 #define       MC_CMD_SENSOR_ENTRY_MAXNUM 31
 
 /* MC_CMD_SENSOR_INFO_EXT_OUT msgresponse */
-#define    MC_CMD_SENSOR_INFO_EXT_OUT_LENMIN 12
+#define    MC_CMD_SENSOR_INFO_EXT_OUT_LENMIN 4
 #define    MC_CMD_SENSOR_INFO_EXT_OUT_LENMAX 252
 #define    MC_CMD_SENSOR_INFO_EXT_OUT_LEN(num) (4+8*(num))
 #define       MC_CMD_SENSOR_INFO_EXT_OUT_MASK_OFST 0
@@ -5357,7 +5389,7 @@
 /*            MC_CMD_SENSOR_ENTRY_LEN 8 */
 /*            MC_CMD_SENSOR_ENTRY_LO_OFST 4 */
 /*            MC_CMD_SENSOR_ENTRY_HI_OFST 8 */
-/*            MC_CMD_SENSOR_ENTRY_MINNUM 1 */
+/*            MC_CMD_SENSOR_ENTRY_MINNUM 0 */
 /*            MC_CMD_SENSOR_ENTRY_MAXNUM 31 */
 
 /* MC_CMD_SENSOR_INFO_ENTRY_TYPEDEF structuredef */
@@ -5934,9 +5966,11 @@
 #define    LICENSED_APP_ID_LEN 4
 #define       LICENSED_APP_ID_ID_OFST 0
 /* enum: OpenOnload */
-#define          LICENSED_APP_ID_ONLOAD  0x1
+#define          LICENSED_APP_ID_ONLOAD            0x1
 /* enum: PTP timestamping */
-#define          LICENSED_APP_ID_PTP     0x2
+#define          LICENSED_APP_ID_PTP               0x2
+/* enum: SolarCapture Pro */
+#define          LICENSED_APP_ID_SOLARCAPTURE_PRO  0x4
 #define       LICENSED_APP_ID_ID_LBN 0
 #define       LICENSED_APP_ID_ID_WIDTH 32
 
@@ -6097,6 +6131,8 @@
 #define        MC_CMD_INIT_RXQ_IN_FLAG_CHAIN_WIDTH 1
 #define        MC_CMD_INIT_RXQ_IN_FLAG_PREFIX_LBN 8
 #define        MC_CMD_INIT_RXQ_IN_FLAG_PREFIX_WIDTH 1
+#define        MC_CMD_INIT_RXQ_IN_FLAG_DISABLE_SCATTER_LBN 9
+#define        MC_CMD_INIT_RXQ_IN_FLAG_DISABLE_SCATTER_WIDTH 1
 /* Owner ID to use if in buffer mode (zero if physical) */
 #define       MC_CMD_INIT_RXQ_IN_OWNER_ID_OFST 20
 /* The port ID associated with the v-adaptor which should contain this DMAQ. */
@@ -8879,6 +8915,30 @@
 
 
 /***********************************/
+/* MC_CMD_CAP_BLK_READ
+ * Read multiple 64bit words from capture block memory
+ */
+#define MC_CMD_CAP_BLK_READ 0xe7
+
+/* MC_CMD_CAP_BLK_READ_IN msgrequest */
+#define    MC_CMD_CAP_BLK_READ_IN_LEN 12
+#define       MC_CMD_CAP_BLK_READ_IN_CAP_REG_OFST 0
+#define       MC_CMD_CAP_BLK_READ_IN_ADDR_OFST 4
+#define       MC_CMD_CAP_BLK_READ_IN_COUNT_OFST 8
+
+/* MC_CMD_CAP_BLK_READ_OUT msgresponse */
+#define    MC_CMD_CAP_BLK_READ_OUT_LENMIN 8
+#define    MC_CMD_CAP_BLK_READ_OUT_LENMAX 248
+#define    MC_CMD_CAP_BLK_READ_OUT_LEN(num) (0+8*(num))
+#define       MC_CMD_CAP_BLK_READ_OUT_BUFFER_OFST 0
+#define       MC_CMD_CAP_BLK_READ_OUT_BUFFER_LEN 8
+#define       MC_CMD_CAP_BLK_READ_OUT_BUFFER_LO_OFST 0
+#define       MC_CMD_CAP_BLK_READ_OUT_BUFFER_HI_OFST 4
+#define       MC_CMD_CAP_BLK_READ_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_CAP_BLK_READ_OUT_BUFFER_MAXNUM 31
+
+
+/***********************************/
 /* MC_CMD_DUMP_DO
  * Take a dump of the DUT state
  */
@@ -8905,6 +8965,10 @@
 #define       MC_CMD_DUMP_DO_IN_DUMPSPEC_SRC_CUSTOM_HOST_MEMORY_MLI_DEPTH_OFST 20
 #define          MC_CMD_DUMP_DO_IN_HOST_MEMORY_MLI_MAX_DEPTH  0x2 /* enum */
 #define       MC_CMD_DUMP_DO_IN_DUMPSPEC_SRC_CUSTOM_UART_PORT_OFST 12
+/* enum: The uart port this command was received over (if using a uart
+ * transport)
+ */
+#define          MC_CMD_DUMP_DO_IN_UART_PORT_SRC  0xff
 #define       MC_CMD_DUMP_DO_IN_DUMPSPEC_SRC_CUSTOM_SIZE_OFST 24
 #define       MC_CMD_DUMP_DO_IN_DUMPFILE_DST_OFST 28
 #define          MC_CMD_DUMP_DO_IN_DUMPFILE_DST_CUSTOM  0x0 /* enum */
@@ -9018,6 +9082,71 @@
 
 /* MC_CMD_ENABLE_OFFLINE_BIST_OUT msgresponse */
 #define    MC_CMD_ENABLE_OFFLINE_BIST_OUT_LEN 0
+
+
+/***********************************/
+/* MC_CMD_UART_SEND_DATA
+ * Send checksummed[sic] block of data over the uart. Response is a placeholder
+ * should we wish to make this reliable; currently requests are fire-and-
+ * forget.
+ */
+#define MC_CMD_UART_SEND_DATA 0xee
+
+/* MC_CMD_UART_SEND_DATA_OUT msgrequest */
+#define    MC_CMD_UART_SEND_DATA_OUT_LENMIN 16
+#define    MC_CMD_UART_SEND_DATA_OUT_LENMAX 252
+#define    MC_CMD_UART_SEND_DATA_OUT_LEN(num) (16+1*(num))
+/* CRC32 over OFFSET, LENGTH, RESERVED, DATA */
+#define       MC_CMD_UART_SEND_DATA_OUT_CHECKSUM_OFST 0
+/* Offset at which to write the data */
+#define       MC_CMD_UART_SEND_DATA_OUT_OFFSET_OFST 4
+/* Length of data */
+#define       MC_CMD_UART_SEND_DATA_OUT_LENGTH_OFST 8
+/* Reserved for future use */
+#define       MC_CMD_UART_SEND_DATA_OUT_RESERVED_OFST 12
+#define       MC_CMD_UART_SEND_DATA_OUT_DATA_OFST 16
+#define       MC_CMD_UART_SEND_DATA_OUT_DATA_LEN 1
+#define       MC_CMD_UART_SEND_DATA_OUT_DATA_MINNUM 0
+#define       MC_CMD_UART_SEND_DATA_OUT_DATA_MAXNUM 236
+
+/* MC_CMD_UART_SEND_DATA_IN msgresponse */
+#define    MC_CMD_UART_SEND_DATA_IN_LEN 0
+
+
+/***********************************/
+/* MC_CMD_UART_RECV_DATA
+ * Request checksummed[sic] block of data over the uart. Only a placeholder,
+ * subject to change and not currently implemented.
+ */
+#define MC_CMD_UART_RECV_DATA 0xef
+
+/* MC_CMD_UART_RECV_DATA_OUT msgrequest */
+#define    MC_CMD_UART_RECV_DATA_OUT_LEN 16
+/* CRC32 over OFFSET, LENGTH, RESERVED */
+#define       MC_CMD_UART_RECV_DATA_OUT_CHECKSUM_OFST 0
+/* Offset from which to read the data */
+#define       MC_CMD_UART_RECV_DATA_OUT_OFFSET_OFST 4
+/* Length of data */
+#define       MC_CMD_UART_RECV_DATA_OUT_LENGTH_OFST 8
+/* Reserved for future use */
+#define       MC_CMD_UART_RECV_DATA_OUT_RESERVED_OFST 12
+
+/* MC_CMD_UART_RECV_DATA_IN msgresponse */
+#define    MC_CMD_UART_RECV_DATA_IN_LENMIN 16
+#define    MC_CMD_UART_RECV_DATA_IN_LENMAX 252
+#define    MC_CMD_UART_RECV_DATA_IN_LEN(num) (16+1*(num))
+/* CRC32 over RESERVED1, RESERVED2, RESERVED3, DATA */
+#define       MC_CMD_UART_RECV_DATA_IN_CHECKSUM_OFST 0
+/* Offset at which to write the data */
+#define       MC_CMD_UART_RECV_DATA_IN_RESERVED1_OFST 4
+/* Length of data */
+#define       MC_CMD_UART_RECV_DATA_IN_RESERVED2_OFST 8
+/* Reserved for future use */
+#define       MC_CMD_UART_RECV_DATA_IN_RESERVED3_OFST 12
+#define       MC_CMD_UART_RECV_DATA_IN_DATA_OFST 16
+#define       MC_CMD_UART_RECV_DATA_IN_DATA_LEN 1
+#define       MC_CMD_UART_RECV_DATA_IN_DATA_MINNUM 0
+#define       MC_CMD_UART_RECV_DATA_IN_DATA_MAXNUM 236
 
 
 /***********************************/
@@ -9595,6 +9724,73 @@
 /* validation response */
 #define       MC_CMD_LICENSED_APP_OP_VALIDATE_OUT_RESPONSE_OFST 4
 #define       MC_CMD_LICENSED_APP_OP_VALIDATE_OUT_RESPONSE_LEN 64
+
+
+/***********************************/
+/* MC_CMD_SET_PORT_SNIFF_CONFIG
+ * Configure port sniffing for the physical port associated with the calling
+ * function. Only a privileged function may change the port sniffing
+ * configuration. A copy of all traffic delivered to the host (non-promiscuous
+ * mode) or all traffic arriving at the port (promiscuous mode) may be
+ * delivered to a specific queue, or a set of queues with RSS.
+ */
+#define MC_CMD_SET_PORT_SNIFF_CONFIG 0xf7
+
+/* MC_CMD_SET_PORT_SNIFF_CONFIG_IN msgrequest */
+#define    MC_CMD_SET_PORT_SNIFF_CONFIG_IN_LEN 16
+/* configuration flags */
+#define       MC_CMD_SET_PORT_SNIFF_CONFIG_IN_FLAGS_OFST 0
+#define        MC_CMD_SET_PORT_SNIFF_CONFIG_IN_ENABLE_LBN 0
+#define        MC_CMD_SET_PORT_SNIFF_CONFIG_IN_ENABLE_WIDTH 1
+#define        MC_CMD_SET_PORT_SNIFF_CONFIG_IN_PROMISCUOUS_LBN 1
+#define        MC_CMD_SET_PORT_SNIFF_CONFIG_IN_PROMISCUOUS_WIDTH 1
+/* receive queue handle (for RSS mode, this is the base queue) */
+#define       MC_CMD_SET_PORT_SNIFF_CONFIG_IN_RX_QUEUE_OFST 4
+/* receive mode */
+#define       MC_CMD_SET_PORT_SNIFF_CONFIG_IN_RX_MODE_OFST 8
+/* enum: receive to just the specified queue */
+#define          MC_CMD_SET_PORT_SNIFF_CONFIG_IN_RX_MODE_SIMPLE  0x0
+/* enum: receive to multiple queues using RSS context */
+#define          MC_CMD_SET_PORT_SNIFF_CONFIG_IN_RX_MODE_RSS  0x1
+/* RSS context (for RX_MODE_RSS) as returned by MC_CMD_RSS_CONTEXT_ALLOC. Note
+ * that these handles should be considered opaque to the host, although a value
+ * of 0xFFFFFFFF is guaranteed never to be a valid handle.
+ */
+#define       MC_CMD_SET_PORT_SNIFF_CONFIG_IN_RX_CONTEXT_OFST 12
+
+/* MC_CMD_SET_PORT_SNIFF_CONFIG_OUT msgresponse */
+#define    MC_CMD_SET_PORT_SNIFF_CONFIG_OUT_LEN 0
+
+
+/***********************************/
+/* MC_CMD_GET_PORT_SNIFF_CONFIG
+ * Obtain the current port sniffing configuration for the physical port
+ * associated with the calling function. Only a privileged function may read
+ * the configuration.
+ */
+#define MC_CMD_GET_PORT_SNIFF_CONFIG 0xf8
+
+/* MC_CMD_GET_PORT_SNIFF_CONFIG_IN msgrequest */
+#define    MC_CMD_GET_PORT_SNIFF_CONFIG_IN_LEN 0
+
+/* MC_CMD_GET_PORT_SNIFF_CONFIG_OUT msgresponse */
+#define    MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_LEN 16
+/* configuration flags */
+#define       MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_FLAGS_OFST 0
+#define        MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_ENABLE_LBN 0
+#define        MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_ENABLE_WIDTH 1
+#define        MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_PROMISCUOUS_LBN 1
+#define        MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_PROMISCUOUS_WIDTH 1
+/* receiving queue handle (for RSS mode, this is the base queue) */
+#define       MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_RX_QUEUE_OFST 4
+/* receive mode */
+#define       MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_RX_MODE_OFST 8
+/* enum: receiving to just the specified queue */
+#define          MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_RX_MODE_SIMPLE  0x0
+/* enum: receiving to multiple queues using RSS context */
+#define          MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_RX_MODE_RSS  0x1
+/* RSS context (for RX_MODE_RSS) */
+#define       MC_CMD_GET_PORT_SNIFF_CONFIG_OUT_RX_CONTEXT_OFST 12
 
 #endif /* _SIENA_MC_DRIVER_PCOL_H */
 /*! \cidoxg_end */

@@ -43,6 +43,10 @@
 #define          MC_CMD_I2C_GET_BUS 0x4
 /* enum: Probe a range of addresses */
 #define          MC_CMD_I2C_PROBE_BUS 0x5
+/* enum: Read one or more registers */
+#define          MC_CMD_I2C_READ_REGS_ADDR16 0x6
+/* enum: Write one or more registers */
+#define          MC_CMD_I2C_WRITE_REGS_ADDR16 0x7
 /* operation-specific arguments */
 #define       MC_CMD_I2C_OP_IN_ARGS_OFST 4
 #define       MC_CMD_I2C_OP_IN_ARGS_LEN 4

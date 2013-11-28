@@ -327,10 +327,9 @@ struct efx_timespec {
 	__s32	tv_nsec;
 };
 
-#if !defined(EFX_HAVE_NET_TSTAMP)
-
-/* Initialise timestamping, like SIOCHWTSTAMP *******************************/
+/* Set/get hardware timestamp config, like SIOC{S,G}HWTSTAMP ****************/
 #define EFX_TS_INIT 0xef12
+#define EFX_GET_TS_CONFIG 0xef25
 
 #define EFX_TS_INIT_FLAGS_PTP_V2_ENHANCED 0x80000000
 
@@ -380,6 +379,8 @@ struct hwtstamp_config {
 };
 
 #endif /* !__KERNEL__ || __VMKLNX__ */
+
+#if !defined(EFX_HAVE_NET_TSTAMP)
 
 /* Read any transmit or receive timestamps since the last call **************/
 #define EFX_TS_READ 0xef13
@@ -536,7 +537,7 @@ struct efx_device_ids {
 	__u8 perm_addr[6];			/* non-volatile MAC address */
 };
 
-/* Next available cmd number is 0xef25 */
+/* Next available cmd number is 0xef26 */
 
 /* Efx private ioctl command structures *************************************/
 
@@ -554,8 +555,8 @@ union efx_ioctl_data {
 	struct efx_reset_flags reset_flags;
 	struct efx_ethtool_rxnfc rxnfc;
 	struct efx_rxfh_indir rxfh_indir;
-#if !defined(EFX_HAVE_NET_TSTAMP)
 	struct hwtstamp_config ts_init;
+#if !defined(EFX_HAVE_NET_TSTAMP)
 	struct efx_ts_read ts_read;
 #endif
 	struct efx_ts_settime ts_settime;
