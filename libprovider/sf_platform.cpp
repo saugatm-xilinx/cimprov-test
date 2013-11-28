@@ -602,7 +602,11 @@ namespace solarflare
                                               value) == 0)
             return value;
         else
+#if CIM_SCHEMA_VERSION_MINOR > 0
             return cimple::SF_EthernetPort::_RequestedState::enum_Unknown;
+#else
+            return 0;
+#endif
     }
 
     void System::saveLogReqState(const String &logName,
