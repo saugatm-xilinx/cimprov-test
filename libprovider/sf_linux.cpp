@@ -44,7 +44,7 @@
 #include "sf_pci_ids.h"
 
 extern "C" {
-#include <pci/pci.h>
+#include <pciaccess.h>
 #include <linux/pci.h>
 }
 
@@ -267,11 +267,10 @@ namespace solarflare
         int                     fd;     ///< Descriptor for VPD node in sysfs
         int                     cap;    ///< PCI VPD capability address
         unsigned                addr;   ///< Current PCI address for reading
-        struct pci_dev         *dev;    ///< Pointer to PCI device data
-        struct pci_access      *acc;    ///< Pointer to PCI access data
+        struct pci_device      *dev;    ///< Pointer to PCI device data
 
-        int              vpdPCIFindCap();
-        unsigned char    vpdPCIReadByte(unsigned addr);
+        int     vpdPCIFindCap();
+        int     vpdPCIReadByte(unsigned addr, unsigned char *value);
     public:
         int     vpdAccessInit(const char *sysfsDevicePath,
                               const PCIAddress& pciAddr);
@@ -287,21 +286,31 @@ namespace solarflare
     int LinuxVPDHelper::vpdPCIFindCap()
     {
         unsigned short  status;
+        unsigned char   new_pos;
         unsigned char   pos;
         unsigned char   id;
         int             iter;
+        int             ret;
 
-        status = pci_read_word(dev, PCI_STATUS);
-        if (!(status & PCI_STATUS_CAP_LIST))
+        ret = pci_device_cfg_read_u16(dev, &status, PCI_STATUS);
+        if (ret < 0 || !(status & PCI_STATUS_CAP_LIST))
             return 0;
         pos = PCI_CAPABILITY_LIST;
 
         for (iter = 0; iter < ((0x100 - 0x40) / 4); iter++) {
-            pos = pci_read_byte(dev, pos);
+            ret = pci_device_cfg_read_u8(dev, &new_pos, pos);
+            if (ret < 0)
+                return 0;
+
+            pos = new_pos;
             if (pos < 0x40)
                 break;
+
             pos &= ~3;
-            id = pci_read_byte(dev, pos + PCI_CAP_LIST_ID);
+            ret = pci_device_cfg_read_u8(dev, &id, pos + PCI_CAP_LIST_ID);
+            if (ret < 0)
+                return 0;
+
             if (id == 0xff)
                 break;
             if (id == PCI_CAP_ID_VPD)
@@ -313,18 +322,35 @@ namespace solarflare
     }
 
     ///
-    /// Read VPD byte via libpci.
+    /// Read VPD byte via libpciaccess.
     ///
-    /// @param addr     PCI address
+    /// @param addr	PCI address
+    /// @param value 	Location for VPD byte value
     ///
-    /// @return VPD byte
+    /// @return zero on success, -1 on error
     ///
-    unsigned char LinuxVPDHelper::vpdPCIReadByte(unsigned addr)
+    int LinuxVPDHelper::vpdPCIReadByte(unsigned addr, unsigned char *value)
     {
-        pci_write_word(dev, cap + 2, addr & 0x7fff);
-        while ((pci_read_word(dev, cap + 2) & 0x8000) == 0)
+        unsigned short status = 0;
+        int ret;
+
+        ret = pci_device_cfg_write_u16(dev, addr & 0x7fff, cap + 2);
+        if (ret < 0)
+            return -1;
+
+        while ((status & 0x8000) == 0)
+        {
+            ret = pci_device_cfg_read_u16(dev, &status, cap + 2);
+            if (ret < 0)
+                return -1;
+
             usleep(1);
-        return pci_read_byte(dev, cap + 4);
+        }
+        ret = pci_device_cfg_read_u8(dev, value, cap + 4);
+        if (ret < 0)
+            return -1;
+
+        return 0;
     }
 
     ///
@@ -338,8 +364,9 @@ namespace solarflare
     int LinuxVPDHelper::vpdAccessInit(const char *sysfsDevicePath,
                                       const PCIAddress& pciAddr)
     {
-        String path(sysfsDevicePath);
-        
+        int ret;
+        String path(sysfsDevicePath); 
+
         path.append("/vpd");
 
         fd = open(path.c_str(), O_RDONLY);
@@ -350,18 +377,16 @@ namespace solarflare
         }
 
         addr = 0;
-        acc = pci_alloc();
-        if (acc == NULL)
+        ret = pci_system_init();
+        if (ret < 0)
         {
             type = Unknown;
             return -1;
         }
 
         type = PCI;
-        pci_init(acc);
-        pci_scan_bus(acc);
-        dev = pci_get_dev(acc, pciAddr.domain(), pciAddr.bus(),
-                          pciAddr.device(), 0);
+        dev = pci_device_find_by_slot(pciAddr.domain(), pciAddr.bus(),
+                          	      pciAddr.device(), 0);
         if (dev == NULL)
             return -1;
 
@@ -383,14 +408,27 @@ namespace solarflare
     int LinuxVPDHelper::vpdRead(char *buf, int size)
     {
         if (type == Sysfs)
-            return read(fd, buf, size);
+	{
+	    int ret;
+	    
+            ret = read(fd, buf, size);
+	    if (ret < 0)
+		PROVIDER_LOG_ERR("Failed to read VPD via sysfs");
+
+	    return ret;
+	}
         else if (type == PCI)
         {
             int i;
 
             for (i = 0; i < size; i++)
             {
-                buf[i] = vpdPCIReadByte(addr);
+                if (vpdPCIReadByte(addr, (unsigned char *)&buf[i]) < 0)
+		{
+		    PROVIDER_LOG_ERR("Failed to read VPD byte via PCI");
+		    return -1;
+		}
+
                 addr++;
             }
 
@@ -408,7 +446,7 @@ namespace solarflare
         if (type == Sysfs)
             close(fd);
         else if (type == PCI)
-            pci_cleanup(acc);
+            pci_system_cleanup();
     }
 
     class LinuxPort : public Port {

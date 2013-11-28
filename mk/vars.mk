@@ -101,7 +101,4 @@ endif
 
 override host_SYSLIBRARIES += pthread
 
-ifeq ($(PROVIDER_PLATFORM), linux)
-override host_SYSLIBRARIES += pci
-endif
 
