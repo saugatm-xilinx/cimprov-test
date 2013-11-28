@@ -51,7 +51,7 @@ class SF_SoftwareInstallationService_Provider
             solarflare::ActionForAll(inst), uri(u), service(svc),
             ok(false), runInstallTried(false) {}
         bool isOk() const { return ok; };
-        bool installWasRun() const { return !runInstallTried; };
+        bool installWasRun() const { return runInstallTried; };
     };
 public:
 
