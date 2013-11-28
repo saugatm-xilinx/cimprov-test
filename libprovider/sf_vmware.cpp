@@ -717,6 +717,9 @@ fail:
 
             if (busName[0] == '.')
                 continue;
+            if (strcmp(busName, "devices") == 0)
+                continue;
+
             rc = snprintf(device_path, PATH_MAX_LEN, "%s/%s",
                           PROC_BUS_PATH, busName);
             if (rc < 0 || rc >= PATH_MAX_LEN)
