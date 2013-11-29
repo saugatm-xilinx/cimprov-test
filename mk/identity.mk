@@ -10,7 +10,7 @@
 ##########################################################################
 
 ##! Base name for CIM provider library (many other values depend on it)
-PROVIDER_LIBRARY = Solarflare
+PROVIDER_LIBRARY = solarflare_nic_provider
 
 ##! Base name for a provider package
 PROVIDER_NAME = solarflare-cim-provider
