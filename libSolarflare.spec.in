@@ -4,7 +4,7 @@ Release:        %{RELEASE_TAG}
 Summary: __PROVIDER_DESCRIPTION__
 
 Group: Applications/System
-License: GPL
+License: Property of Solarflare
 URL: http://solarflare.com
 Source0: __PROVIDER_TARBALL__
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
