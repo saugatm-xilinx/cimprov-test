@@ -170,6 +170,9 @@ libprovider_DEPENDS = libcimobjects
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 libprovider_DEPENDS += libtlv libendianness
 endif
+ifeq ($(PROVIDER_PLATFORM),linux)
+libprovider_DEPENDS += libpciaccess
+endif
 libprovider_BUILD_DEPENDS = genmod
 
 ifdef CIMPLE_WIN_LOG

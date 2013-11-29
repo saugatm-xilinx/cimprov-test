@@ -63,6 +63,10 @@ include $(TOP)/mk/windows$(PROVIDER_BITNESS).mk
 include $(TOP)/cimple/posix/sources.mk
 endif
 
+ifeq ($(PROVIDER_PLATFORM),linux)
+include $(TOP)/libpciaccess/sources.mk
+endif
+
 .PHONY: all
 
 include $(TOP)/cimple/lib/sources.mk
