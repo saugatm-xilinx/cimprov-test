@@ -37,4 +37,4 @@ PROVIDER_VENDOR_SHORT = Solarflare
 
 ##! Support email of the CIM provider vendor
 PROVIDER_VENDOR_EMAIL = support@solarflare.com
-PROVIDER_RELEASE_DATE = 2013-10-17T05:03:09.233000+00:00
+PROVIDER_RELEASE_DATE = $(shell date +%Y-%m-%dT%H:%M:%S%:z)
