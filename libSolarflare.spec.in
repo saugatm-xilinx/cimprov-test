@@ -9,8 +9,8 @@ URL: http://solarflare.com
 Source0: __PROVIDER_TARBALL__
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires: pciutils-devel m4_ifdef([__PROVIDER_RPM_BUILD_REQUIRES__], [, __PROVIDER_RPM_BUILD_REQUIRES__])
-Requires: pciutils-libs m4_ifdef([__PROVIDER_RPM_REQUIRES__], [, __PROVIDER_RPM_REQUIRES__])
+m4_ifdef([__PROVIDER_RPM_BUILD_REQUIRES__], [BuildRequires: __PROVIDER_RPM_BUILD_REQUIRES__])
+m4_ifdef([__PROVIDER_RPM_REQUIRES__], [Requires: __PROVIDER_RPM_REQUIRES__])
 
 %description
 
