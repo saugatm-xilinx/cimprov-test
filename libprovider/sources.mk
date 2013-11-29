@@ -275,11 +275,15 @@ NSIS_OPTIONS = -DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAM
 			 -DROOT_NAMESPACE='$(ROOT_NAMESPACE)'
 endif
 
+ifeq ($(PROVIDER_BITNESS),64)
+MSI64_FLAGS = -DLIBRARY_X64=1
+endif
+
 ##! Build a NullSoft-based Windows installer
 $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSIS_DEPENDENCIES)
 	$(target_STRIP) $(libprovider_TARGET)
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DPROVIDERDESC='$(PROVIDER_DESCRIPTION)' \
-			-DVENDORNAME='$(PROVIDER_VENDOR)' \
+			-DVENDORNAME='$(PROVIDER_VENDOR)' $(MSI64_FLAGS) \
 			-DCIM_INTERFACE=$(CIM_INTERFACE) -DINSTALLERNAME=$@ $(NSIS_OPTIONS) -DTOP=$(TOP) -NOCD $<
 
 ##! Make a Windows cabinet with InstallShield installer project and needed binaries

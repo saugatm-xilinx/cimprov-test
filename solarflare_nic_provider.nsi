@@ -48,6 +48,7 @@ RequestExecutionLevel admin
 
 Section ProviderDLL
 
+
 !if ${CIM_INTERFACE} == cmpi
 !insertmacro InstallLib DLL NOTSHARED REBOOT_NOTPROTECTED ${PROVIDERNAME}.dll ${ProviderDLL} $INSTDIR
 !else
