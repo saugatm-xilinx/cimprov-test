@@ -275,8 +275,21 @@ NSIS_OPTIONS = -DNAMESPACE='$(IMP_NAMESPACE)' -DINTEROP_NAMESPACE='$(INTEROP_NAM
 			 -DROOT_NAMESPACE='$(ROOT_NAMESPACE)'
 endif
 
+# Don't even try to understand the logic behind ISM_TRANSFORM,
+# just accept your fate
+
+ISM_TRANSFORM = s/&VERSION;/$(PROVIDER_VERSION).$(PROVIDER_REVISION)/;
 ifeq ($(PROVIDER_BITNESS),64)
 MSI64_FLAGS = -DLIBRARY_X64=1
+ISM_TRANSFORM += s/&HARDWARE;/x64/;
+ISM_TRANSFORM += s/&WBEMDIR;/WBEM64/;
+ISM_TRANSFORM += s/&OPTIONS;/264/;
+ISM_TRANSFORM += s/&CHECKNT64;/<row><td>VersionNT64<\/td><td>\#\#IDPROP_EXPRESS_LAUNCH_CONDITION_OS\#\#<\/td><\/row>/;
+else
+ISM_TRANSFORM += s/&HARDWARE;/Intel/;
+ISM_TRANSFORM += s/&WBEMDIR;/WBEM/;
+ISM_TRANSFORM += s/&OPTIONS;/8/;
+ISM_TRANSFORM += s/&CHECKNT64;//;
 endif
 
 ##! Build a NullSoft-based Windows installer
@@ -285,6 +298,9 @@ $(MSI_NAME) : $(PROVIDER_LIBRARY).nsi $(libprovider_TARGET) sf-license.txt $(NSI
 	makensis -DPROVIDERNAME=$(PROVIDER_LIBRARY) -DPROVIDERDESC='$(PROVIDER_DESCRIPTION)' \
 			-DVENDORNAME='$(PROVIDER_VENDOR)' $(MSI64_FLAGS) \
 			-DCIM_INTERFACE=$(CIM_INTERFACE) -DINSTALLERNAME=$@ $(NSIS_OPTIONS) -DTOP=$(TOP) -NOCD $<
+
+SolarflareCIM.ism : SolarflareCIM.ism.in
+	$(SED) '$(ISM_TRANSFORM)' $< >$@
 
 ##! Make a Windows cabinet with InstallShield installer project and needed binaries
 SolarflareCIM.ism.cab : SolarflareCIM.ism $(libprovider_TARGET) \

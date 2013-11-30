@@ -56,7 +56,7 @@
 		<author>##COMPANY_NAME##</author>
 		<keywords>Installer,MSI,Database</keywords>
 		<comments>Contact:  Your local administrator</comments>
-		<template>Intel;1033</template>
+		<template>&HARDWARE;;1033</template>
 		<lastauthor>Administrator</lastauthor>
 		<revnumber>{65A39F53-AF74-4C29-86FD-E95F5A22B053}</revnumber>
 		<lastprinted/>
@@ -340,8 +340,7 @@
 		<col def="S0">ISDotNetInstallerArgsUninstall</col>
 		<col def="S0">ISDotNetInstallerArgsRollback</col>
 		<row><td>AllOtherFiles</td><td>{84576CBB-C740-4F10-B5E8-C13C8090E785}</td><td>INSTALLDIR</td><td>8</td><td/><td/><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Provider</td><td>{5D8194A3-B575-4F59-BEC8-4D5BC3F5E431}</td><td>WBEM</td><td>8</td><td>not msix64</td><td>solarflare.dll</td><td>20</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
-		<row><td>Provider64</td><td>{2AAE6402-D418-4AED-9FA0-BAF95FFAC79B}</td><td>WBEM64</td><td>8</td><td>msix64</td><td>solarflare.dll1</td><td>20</td><td>This component consists of a Windows dynamic link library.</td><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
+		<row><td>Provider</td><td>{3EDB5A42-3F62-495A-820F-47F239E3FA87}</td><td>&WBEMDIR;</td><td>&OPTIONS;</td><td/><td>solarflare_nic_provider.dll</td><td>17</td><td/><td/><td/><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td><td>/LogFile=</td></row>
 	</table>
 
 	<table name="Condition">
@@ -1837,8 +1836,7 @@
 		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>NAMESP~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\namespace.mof</td><td>1</td><td/></row>
 		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\register.mof</td><td>1</td><td/></row>
 		<row><td>schema.mof</td><td>AllOtherFiles</td><td>schema.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\schema.mof</td><td>1</td><td/></row>
-		<row><td>solarflare.dll</td><td>Provider</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\dll\Solarflare.dll</td><td>1</td><td/></row>
-		<row><td>solarflare.dll1</td><td>Provider64</td><td>SOLARF~1.DLL|Solarflare.dll</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\dll64\Solarflare.dll</td><td>1</td><td/></row>
+		<row><td>solarflare_nic_provider.dll</td><td>Provider</td><td>SOLARF~1.DLL|solarflare_nic_provider.dll</td><td>0</td><td/><td/><td>0</td><td>1</td><td>&lt;ISProjectFolder&gt;\solarflare_nic_provider.dll</td><td>1</td><td/></row>
 		<row><td>unregister.mof</td><td>AllOtherFiles</td><td>UNREGI~1.MOF|unregister.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\unregister.mof</td><td>1</td><td/></row>
 	</table>
 
@@ -1988,8 +1986,7 @@
 		<col def="S0">HTTPLocation</col>
 		<col def="S0">Miscellaneous</col>
 		<row><td>AllOtherFiles</td><td/><td/><td>_603A3017_0478_4553_92E5_533FB4765153_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>Provider</td><td/><td/><td>_33BCAE52_854A_451B_ACFF_D384F4BA270E_FILTER</td><td/><td/><td/><td/></row>
-		<row><td>Provider64</td><td/><td/><td>_33BCAE52_854A_451B_ACFF_D384F4BA270E_FILTER</td><td/><td/><td/><td/></row>
+		<row><td>Provider</td><td/><td/><td>_CF50E6F7_08E5_4DFE_A377_07554B2BA4C9_FILTER</td><td/><td/><td/><td/></row>
 	</table>
 
 	<table name="ISCustomActionReference">
@@ -2613,6 +2610,7 @@
 		<col def="I2">Cost</col>
 		<col def="I2">Order</col>
 		<col def="S50">CmdLine</col>
+		<row><td>solarflare_nic_provider.dll</td><td>1</td><td/><td/></row>
 	</table>
 
 	<table name="ISSetupFile">
@@ -4044,6 +4042,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="l255">Description</col>
 		<row><td>(Not Version9X) And (Not VersionNT=400) And (Not VersionNT=500) And (Not VersionNT=501) And (Not (VersionNT=600 And (MsiNTProductType=1))) And (Not (VersionNT=601 And (MsiNTProductType=1)))</td><td>##IDPROP_EXPRESS_LAUNCH_CONDITION_OS##</td></row>
 		<row><td>CIM_SERVER_RUNNING = "1"</td><td>##ID_CIM_SERVER_IS_NOT_RUNNING##</td></row>
+        &CHECKNT64;
 	</table>
 
 	<table name="ListBox">
@@ -4370,7 +4369,7 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<row><td>ProductID</td><td>none</td><td/></row>
 		<row><td>ProductLanguage</td><td>1033</td><td/></row>
 		<row><td>ProductName</td><td>SolarflareCIM</td><td/></row>
-		<row><td>ProductVersion</td><td>1.0.1.0</td><td/></row>
+		<row><td>ProductVersion</td><td>&VERSION;</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
 		<row><td>ProgressType1</td><td>Installing</td><td/></row>
 		<row><td>ProgressType2</td><td>installed</td><td/></row>
@@ -4434,10 +4433,6 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="S0">Value</col>
 		<col def="s72">Component_</col>
 		<col def="I4">ISAttributes</col>
-		<row><td>Registry2</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>Uninstall</td><td>msiexec.exe /X [ProductCode]</td><td>Provider</td><td>0</td></row>
-		<row><td>Registry3</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>InstallLocation</td><td>[SystemFolder]\wbem\Solarflare.dll</td><td>Provider</td><td>0</td></row>
-		<row><td>Registry4</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>Version</td><td>[ProductVersion]</td><td>Provider</td><td>0</td></row>
-		<row><td>Registry5</td><td>2</td><td>Software\IBM\Director\Platform\Extension\Solarflare</td><td>ProductCode</td><td>[ProductCode]</td><td>Provider</td><td>0</td></row>
 	</table>
 
 	<table name="RemoveFile">
