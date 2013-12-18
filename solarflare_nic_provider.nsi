@@ -75,8 +75,10 @@ File repository.reg
 !endif
 !insertmacro SilentExec '${PegasusPath}\cimmof.exe' '-n ${INTEROP_NAMESPACE} "$INSTDIR\repository.reg"'
 !else
+File ${TOP}/schemas/windows/cimwin32.mof
 File libprovider/register.mof
 File libprovider/unregister.mof
+!insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\cimwin32.mof"'
 !insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\schema.mof"'
 !insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\namespace.mof"'
 !insertmacro SilentExec mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\register.mof"'
@@ -103,11 +105,12 @@ Delete $INSTDIR\interop.mof
 Delete $INSTDIR\root.mof
 !endif
 !else
-!insertmacro SilentExecNofail wmic `path __InstanceProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
-!insertmacro SilentExecNofail wmic `path __MethodProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
-!insertmacro SilentExecNofail wmic `path __EventProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
-!insertmacro SilentExecNofail wmic 'path __Win32Provider.Name="${PROVIDERNAME}" delete'
+!insertmacro SilentExecNofail wmic `/namespace:${WMIC_NAMESPACE} path__InstanceProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
+!insertmacro SilentExecNofail wmic `/namespace:${WMIC_NAMESPACE} path __MethodProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
+!insertmacro SilentExecNofail wmic `/namespace:${WMIC_NAMESPACE} path __EventProviderRegistration.Provider="__Win32Provider.Name='${PROVIDERNAME}'" delete`
+!insertmacro SilentExecNofail wmic '/namespace:${WMIC_NAMESPACE} path __Win32Provider.Name="${PROVIDERNAME}" delete'
 !insertmacro SilentExecNofail mofcomp.exe '-N:${NAMESPACE} "$INSTDIR\unregister.mof"'
+!insertmacro SilentExecNofail wmic '/namespace:\\root path __Namespace.Name="${NAMESPACE_INSTANCE}" delete'
 Delete $INSTDIR\unregister.mof
 Delete $INSTDIR\register.mof
 !endif

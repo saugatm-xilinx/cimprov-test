@@ -38,12 +38,12 @@ DEFAULT_UPSTREAM_REPOSITORY ?= https://oktetlabs.ru/purgatorium/prj/level5/cim
 ##! Repository for CIM schema zip files
 CIM_SCHEMA_REPOSITORY = $(DEFAULT_UPSTREAM_REPOSITORY)
 
-ifeq ($(CIM_SERVER),wmi)
+#ifeq ($(CIM_SERVER),wmi)
 ##! Principal namespace for CIM provider classes
-IMP_NAMESPACE = root/cimv2
-else
+#IMP_NAMESPACE = root/cimv2
+#else
 IMP_NAMESPACE = root/solarflare
-endif
+#endif
 ##! System-wide root namespace
 ROOT_NAMESPACE ?= root/cimv2
 ifeq ($(CIM_SERVER),pegasus)

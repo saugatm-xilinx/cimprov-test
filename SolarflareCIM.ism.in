@@ -1836,6 +1836,7 @@
 		<row><td>namespace.mof</td><td>AllOtherFiles</td><td>NAMESP~1.MOF|namespace.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\namespace.mof</td><td>1</td><td/></row>
 		<row><td>register.mof</td><td>AllOtherFiles</td><td>register.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\register.mof</td><td>1</td><td/></row>
 		<row><td>schema.mof</td><td>AllOtherFiles</td><td>schema.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\schema.mof</td><td>1</td><td/></row>
+		<row><td>cimwin32.mof</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\cimwin32.mof</td><td>1</td><td/></row>
 		<row><td>solarflare_nic_provider.dll</td><td>Provider</td><td>SOLARF~1.DLL|solarflare_nic_provider.dll</td><td>0</td><td/><td/><td>0</td><td>1</td><td>&lt;ISProjectFolder&gt;\solarflare_nic_provider.dll</td><td>1</td><td/></row>
 		<row><td>unregister.mof</td><td>AllOtherFiles</td><td>UNREGI~1.MOF|unregister.mof</td><td>0</td><td/><td/><td/><td>1</td><td>&lt;ISProjectFolder&gt;\unregister.mof</td><td>1</td><td/></row>
 	</table>
@@ -4091,9 +4092,11 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="s72">Namespace</col>
 		<col def="i2">Options</col>
 		<col def="i2">Sequence</col>
-		<row><td>NAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>root/cimv2</td><td>6</td><td>200</td></row>
-		<row><td>REGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>root/cimv2</td><td>6</td><td>300</td></row>
-		<row><td>SCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>root/cimv2</td><td>6</td><td>100</td></row>
+		<row><td>NAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>200</td></row>
+		<row><td>REGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>300</td></row>
+		<row><td>SCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>100</td></row>
+		<row><td>WINMOF</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>50</td></row>
+		<row><td>RMNAMESPACE</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>20</td><td>25</td></row>
 	</table>
 
 	<table name="MoveFile">

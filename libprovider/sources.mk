@@ -264,8 +264,11 @@ msi : $(MSI_NAME)
 
 ifeq ($(CIM_INTERFACE),wmi)
 NSIS_DEPENDENCIES = $(libcimobjects_DIR)/schema.mof $(libcimobjects_DIR)/namespace.mof \
-				  $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof
-NSIS_OPTIONS = -DNAMESPACE='\\.\root\cimv2'
+				  $(libprovider_DIR)/register.mof $(libprovider_DIR)/unregister.mof \
+				  $(TOP)/schemas/windows/cimwin32.mof
+NSIS_OPTIONS = -DNAMESPACE='\\.\$(subst /,\,$(IMP_NAMESPACE))' 
+NSIS_OPTIONS += -DWMIC_NAMESPACE='\\$(subst /,\,$(IMP_NAMESPACE))'
+NSIS_OPTIONS += -DNAMESPACE_INSTANCE='$(patsubst root/%,%,$(IMP_NAMESPACE))'
 else
 NSIS_DEPENDENCIES = repository.reg $(libcimobjects_DIR)/namespace.mof \
 					$(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/schema.mof \
@@ -279,6 +282,7 @@ endif
 # just accept your fate
 
 ISM_TRANSFORM = s/&VERSION;/$(PROVIDER_VERSION).$(PROVIDER_REVISION)/;
+ISM_TRANSFORM += s!&NAMESPACE;!$(IMP_NAMESPACE)!;
 ifeq ($(PROVIDER_BITNESS),64)
 MSI64_FLAGS = -DLIBRARY_X64=1
 ISM_TRANSFORM += s/&HARDWARE;/x64/;
