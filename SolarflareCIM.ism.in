@@ -4092,11 +4092,15 @@ UwBJAE4ARwBMAEUAXwBFAFgARQBfAEkATQBBAEcARQABAFAAUgBPAEoARQBDAFQAXwBBAFMAUwBJAFMA
 		<col def="s72">Namespace</col>
 		<col def="i2">Options</col>
 		<col def="i2">Sequence</col>
-		<row><td>NAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>200</td></row>
-		<row><td>REGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>300</td></row>
-		<row><td>SCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>100</td></row>
-		<row><td>WINMOF</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>6</td><td>50</td></row>
-		<row><td>RMNAMESPACE</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>20</td><td>25</td></row>
+		<row><td>NAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>2</td><td>200</td></row>
+		<row><td>UNNAMESPACEMOF</td><td>AllOtherFiles</td><td>namespace.mof</td><td>INSTALLDIR</td><td>&RNAMESPACE;</td><td>4</td><td>200</td></row>
+		<row><td>REGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>2</td><td>300</td></row>
+		<row><td>UNREGISTERMOF</td><td>AllOtherFiles</td><td>register.mof</td><td>INSTALLDIR</td><td>&RNAMESPACE;</td><td>4</td><td>300</td></row>
+		<row><td>SCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>2</td><td>100</td></row>
+		<row><td>UNSCHEMAMOF</td><td>AllOtherFiles</td><td>schema.mof</td><td>INSTALLDIR</td><td>&RNAMESPACE;</td><td>4</td><td>100</td></row>
+		<row><td>WINMOF</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>INSTALLDIR</td><td>&NAMESPACE;</td><td>2</td><td>50</td></row>
+		<row><td>UNWINMOF</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>INSTALLDIR</td><td>&RNAMESPACE;</td><td>4</td><td>50</td></row>
+		<row><td>RMNAMESPACE</td><td>AllOtherFiles</td><td>cimwin32.mof</td><td>INSTALLDIR</td><td>&RNAMESPACE;</td><td>20</td><td>25</td></row>
 	</table>
 
 	<table name="MoveFile">
