@@ -57,6 +57,7 @@ static char *fw_url = NULL;
 static char *interface_name = NULL;
 static int   update_controller = 0;
 static int   update_bootrom = 0;
+static int   yes = 0;
 
 #define DEF_HTTP_PORT "5988"
 #define DEF_HTTPS_PORT "5989"
@@ -75,6 +76,7 @@ enum {
     OPT_IF_NAME,
     OPT_CONTROLLER,
     OPT_BOOTROM,
+    OPT_YES,
 };
 
 int
@@ -92,6 +94,7 @@ parseCmdLine(int argc, const char *argv[])
     char *if_name = NULL;
     int   controller = 0;
     int   bootrom = 0;
+    int   y = 0;
     char  passwd_buf[MAX_PASSWD_LEN];
 
     poptContext     optCon;
@@ -155,6 +158,11 @@ parseCmdLine(int argc, const char *argv[])
           "Process bootrom firmware",
           NULL },
 
+        { "yes", 'y', POPT_ARG_NONE, NULL,
+          OPT_YES,
+          "Do not ask for confirmation before updating firmware",
+          NULL },
+
         POPT_AUTOHELP
         POPT_TABLEEND
     };
@@ -207,6 +215,10 @@ parseCmdLine(int argc, const char *argv[])
 
             case OPT_BOOTROM:
                 bootrom = 1;
+                break;
+
+            case OPT_YES:
+                y = 1;
                 break;
 
             default:
@@ -271,6 +283,7 @@ cleanup:
         interface_name = if_name;
         update_controller = controller;
         update_bootrom = bootrom;
+        yes = y;
     }
 
     return rc;
@@ -1171,6 +1184,8 @@ update_firmware(CURL *curl, const char *namespace,
     memset(&rec_rsp, 0, sizeof(rec_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
 
+    printf("\nUpdating firmware...\n");
+
     CHECK_RESPONSE(
         rc,
         enumerate_instances(curl, namespace,
@@ -1306,6 +1321,8 @@ update_firmware(CURL *curl, const char *namespace,
                 rc = -1;
                 print_err_recs = 1;
             }
+            else
+                printf("Firmware was successfully updated.\n");
             clear_response(&call_rsp);
         }
 
@@ -1617,9 +1634,30 @@ main(int argc, const char *argv[])
             goto cleanup;
         }
 
-        if (fw_url != NULL)
+        if (fw_url != NULL && (update_controller || update_bootrom))
         {
-            if (update_firmware(curl, cim_namespace,
+            if (!yes)
+            {
+                char yes_str[4];
+                int  i;
+
+                printf("\nDo you want to update %s firmware on %s? [yes/no]",
+                       update_controller && update_bootrom ?
+                       "controller and BootROM" :
+                            (update_controller ? "controller" : "BootROM"),
+                        interface_name == NULL ? "all NICs" : interface_name);
+                fgets(yes_str, sizeof(yes_str), stdin);
+                for (i = 0; i < sizeof(yes_str); i++)
+                    if (yes_str[i] == '\n' || yes_str[i] == '\r')
+                        yes_str[i] = '\0';
+
+                if (strncasecmp(yes_str, "yes", sizeof(yes_str)) == 0 ||
+                    strncasecmp(yes_str, "y", sizeof(yes_str)) == 0)
+                    yes = 1;
+            }
+
+            if (yes &&
+                update_firmware(curl, cim_namespace,
                                 interface_name == NULL ? NULL : nic_inst,
                                 update_controller, update_bootrom,
                                 fw_url) < 0)
