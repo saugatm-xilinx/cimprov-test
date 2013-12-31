@@ -37,8 +37,16 @@ else
     fi
 fi
 
+MY_LDFLAGS=
+windows=
+if test x$(echo "$host" | grep ".*-mingw.*") != x ; then
+    MY_LDFLAGS="-L./libs/windows/$host"
+    windows=1
+fi
+
+AC_SUBST([MY_LDFLAGS])
 AM_CONDITIONAL([WINDOWS],
-               [test x$(echo "$host" | grep ".*-mingw.*") != x])
+               [test x$windows != x])
 
 AC_CHECK_HEADER([ncurses/curses.h],[NCURSES_CPPFLAGS=-DNCURSES_CURSES_H],[])
 AC_SUBST([NCURSES_CPPFLAGS])
