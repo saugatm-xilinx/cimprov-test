@@ -16,18 +16,6 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-/** Command line options */
-enum {
-    OPT_CIMOM_ADDR = 1,
-    OPT_CIMOM_USER,
-    OPT_CIMOM_PASSWORD,
-    OPT_PROVIDER_NAMESPACE,
-    OPT_FW_URL,
-    OPT_IF_NAME,
-    OPT_CONTROLLER,
-    OPT_BOOTROM,
-};
-
 #define MAX_PASSWD_LEN 128
 
 #define DEBUG_PRINT(s...) \
@@ -58,14 +46,44 @@ enum {
             node_ = node_->next;                    \
     } while (0)
 
+static char *address = NULL;
+static char *cim_host = NULL;
+static char *cim_port = NULL;
+static int   use_https = 0;
+static char *user = NULL;
+static char *password = NULL;
+static char *cim_namespace = NULL;
+static char *fw_url = NULL;
+static char *interface_name = NULL;
+static int   update_controller = 0;
+static int   update_bootrom = 0;
+
+#define DEF_HTTP_PORT "5988"
+#define DEF_HTTPS_PORT "5989"
+#define MAX_ADDR_LEN 1024
+
+/** Command line options */
+enum {
+    OPT_CIMOM_ADDR = 1,
+    OPT_CIMOM_HOST,
+    OPT_CIMOM_PORT,
+    OPT_HTTPS,
+    OPT_CIMOM_USER,
+    OPT_CIMOM_PASSWORD,
+    OPT_PROVIDER_NAMESPACE,
+    OPT_FW_URL,
+    OPT_IF_NAME,
+    OPT_CONTROLLER,
+    OPT_BOOTROM,
+};
+
 int
-parseCmdLine(int argc, const char *argv[],
-             char **address, char **user, char **password,
-             char **namespace, char **fw_url, 
-             char **interface_name, int *update_controller,
-             int *update_bootrom)
+parseCmdLine(int argc, const char *argv[])
 {
     char *a = NULL;
+    char *host = NULL;
+    char *port = NULL;
+    int   https = 0;
     char *u = NULL;
     char *p = NULL;
     char *ns = NULL;
@@ -84,6 +102,21 @@ parseCmdLine(int argc, const char *argv[],
         { "cimom-address", 'a', POPT_ARG_STRING, NULL,
           OPT_CIMOM_ADDR,
           "Address of CIMOM (e.g. https://hostname:5989",
+          NULL },
+
+        { "cimom-host", '\0', POPT_ARG_STRING, NULL,
+          OPT_CIMOM_HOST,
+          "CIMOM host",
+          NULL },
+
+        { "cimom-port", '\0', POPT_ARG_STRING, NULL,
+          OPT_CIMOM_PORT,
+          "CIMOM port",
+          NULL },
+
+        { "https", 's', POPT_ARG_NONE, NULL,
+          OPT_HTTPS,
+          "Use HTTPS to access CIMOM",
           NULL },
 
         { "cimom-user", 'u', POPT_ARG_STRING, NULL,
@@ -136,6 +169,18 @@ parseCmdLine(int argc, const char *argv[],
                 a = poptGetOptArg(optCon);
                 break;
 
+            case OPT_CIMOM_HOST:
+                host = poptGetOptArg(optCon);
+                break;
+
+            case OPT_CIMOM_PORT:
+                port = poptGetOptArg(optCon);
+                break;
+
+            case OPT_HTTPS:
+                https = 1;
+                break;
+
             case OPT_CIMOM_USER:
                 u = poptGetOptArg(optCon);
                 break;
@@ -185,7 +230,7 @@ parseCmdLine(int argc, const char *argv[],
         goto cleanup;
     }
 
-    if (password == NULL)
+    if (p == NULL)
     {
         initscr();
         noecho();
@@ -201,6 +246,8 @@ cleanup:
     if (rc < 0)
     {
         free(a);
+        free(host);
+        free(port);
         free(u);
         free(p);
         free(ns);
@@ -209,15 +256,21 @@ cleanup:
     }
     else
     {
-        *address = a;
-        *user = u;
-        *password = p;
+        address = a;
+        cim_host = host;
+        cim_port = port;
+        use_https = https;
+        user = u;
+        password = p;
         if (ns != NULL)
-            *namespace = ns;
-        *fw_url = url;
-        *interface_name = if_name;
-        *update_controller = controller;
-        *update_bootrom = bootrom;
+        {
+            free(cim_namespace);
+            cim_namespace = ns;
+        }
+        fw_url = url;
+        interface_name = if_name;
+        update_controller = controller;
+        update_bootrom = bootrom;
     }
 
     return rc;
@@ -1331,15 +1384,6 @@ cleanup:
 int
 main(int argc, const char *argv[])
 {
-    char *address = NULL;
-    char *user = NULL;
-    char *password = NULL;
-    char *namespace = strdup("solarflare/cimv2");
-    char *fw_url = NULL;
-    char *if_name = NULL;
-    int   controller = 0;
-    int   bootrom = 0;
-
     char  passwd_buf[MAX_PASSWD_LEN];
     char *s = NULL;
     int   rc = 0;
@@ -1353,6 +1397,8 @@ main(int argc, const char *argv[])
     CURL        *curl = NULL;
     CURLcode     res;
 
+    cim_namespace = strdup("solarflare/cimv2");
+
     response_descr ei_ports_rsp;
     response_descr assoc_cntr_rsp;
     response_descr assoc_sw_rsp;
@@ -1363,16 +1409,24 @@ main(int argc, const char *argv[])
     memset(&assoc_sw_rsp, 0, sizeof(assoc_sw_rsp));
     memset(&assoc_nic_rsp, 0, sizeof(assoc_nic_rsp));
 
-    if (parseCmdLine(argc, argv,
-                     &address, &user, &password,
-                     &namespace, &fw_url, &if_name,
-                     &controller, &bootrom) < 0)
+    if (parseCmdLine(argc, argv) < 0)
         exit(2);
 
-    if (!controller && !bootrom)
+    if (address == NULL)
     {
-        controller = 1;
-        bootrom = 1;
+        address = calloc(1, MAX_ADDR_LEN);
+        snprintf(
+            address, MAX_ADDR_LEN, "%s://%s:%s",
+            use_https ? "https" : "http",
+            cim_host == NULL ? "localhost" : cim_host,
+            cim_port == NULL ?
+              (use_https ? DEF_HTTPS_PORT : DEF_HTTP_PORT) : cim_port);
+    }
+
+    if (!update_controller && !update_bootrom)
+    {
+        update_controller = 1;
+        update_bootrom = 1;
     }
     setbuf(stderr, NULL);
     setbuf(stdout, NULL);
@@ -1390,7 +1444,7 @@ main(int argc, const char *argv[])
 
         CHECK_RESPONSE(
             rc,
-            enumerate_instances(curl, namespace,
+            enumerate_instances(curl, cim_namespace,
                                 "SF_EthernetPort", 0,
                                 &ei_ports_rsp),
             ei_ports_rsp,
@@ -1415,8 +1469,8 @@ main(int argc, const char *argv[])
                 goto cleanup;
             }
 
-            if (if_name != NULL &&
-                strcmp(if_name, dev_id) != 0)
+            if (interface_name != NULL &&
+                strcmp(interface_name, dev_id) != 0)
             {
                 free(dev_id);
                 continue;
@@ -1438,7 +1492,7 @@ main(int argc, const char *argv[])
 
             CHECK_RESPONSE(
                 rc,
-                associators(curl, namespace, port_inst, "Dependent",
+                associators(curl, cim_namespace, port_inst, "Dependent",
                             "SF_ControlledBy", NULL, NULL, 1,
                             &assoc_cntr_rsp),
                 assoc_cntr_rsp,
@@ -1457,7 +1511,7 @@ main(int argc, const char *argv[])
 
             CHECK_RESPONSE(
                 rc,
-                associators(curl, namespace, controller_inst, "Dependent",
+                associators(curl, cim_namespace, controller_inst, "Dependent",
                             "SF_ControllerSoftwareIdentity", NULL, NULL, 0,
                             &assoc_sw_rsp),
                 assoc_sw_rsp,
@@ -1465,7 +1519,7 @@ main(int argc, const char *argv[])
             if (rc < 0)
                 goto cleanup;
 
-            if (!if_found && if_name != NULL)
+            if (!if_found && interface_name != NULL)
             {
                 clear_response(&assoc_cntr_rsp);
                 controller_inst = NULL;
@@ -1497,12 +1551,12 @@ main(int argc, const char *argv[])
                 }
 
                 if (strcmp(description, "NIC MC Firmware") == 0 &&
-                    controller)
+                    update_controller)
                 {
                     printf("Controller version: %s\n", version); 
                 }
                 else if (strcmp(description, "NIC BootROM") == 0 &&
-                         bootrom)
+                         update_bootrom)
                 {
                     printf("BootROM version:    %s\n", version); 
                 }
@@ -1513,7 +1567,7 @@ main(int argc, const char *argv[])
 
             clear_response(&assoc_sw_rsp);
 
-            if (if_found && if_name != NULL)
+            if (if_found && interface_name != NULL)
                 break;
         }
 
@@ -1522,16 +1576,16 @@ main(int argc, const char *argv[])
         if (!if_found)
         {
             ERROR_MSG("No interface named '%s' was found",
-                      if_name);
+                      interface_name);
             rc = -1;
             goto cleanup;
         }
 
-        if (if_name != NULL)
+        if (interface_name != NULL)
         {
             CHECK_RESPONSE(
                 rc,
-                associators(curl, namespace, controller_inst, "Dependent",
+                associators(curl, cim_namespace, controller_inst, "Dependent",
                             "SF_CardRealizesController", NULL, "SF_NICCard",
                             1, &assoc_nic_rsp),
                 assoc_nic_rsp,
@@ -1552,8 +1606,8 @@ main(int argc, const char *argv[])
 
         if (fw_url != NULL)
         {
-            if (update_firmware(curl, namespace, nic_inst,
-                                controller, bootrom,
+            if (update_firmware(curl, cim_namespace, nic_inst,
+                                update_controller, update_bootrom,
                                 fw_url) < 0)
             {
                 ERROR_MSG_PLAIN("Problems encountered when trying to "
@@ -1568,56 +1622,6 @@ main(int argc, const char *argv[])
 
         clear_response(&assoc_cntr_rsp);
         controller_inst = NULL;
-
-#if 0
-        if (response1.inst_count > 0)
-        {
-            if (associators(curl, "solarflare/cimv2",
-                            response1.inst_list, NULL, NULL,
-                            NULL, NULL, 0, &response2) < 0)
-                ERROR_MSG("associators() failed");
-        }
-
-        if (response2.error_returned)
-        {
-            ERROR_MSG("ERROR_MSG code=%s description='%s'",
-                      (char *)response2.err_code, (char *)response2.err_descr);
-        }
-        else if (response2.imethod_called)
-        {
-            xmlChar *ifName = NULL;
-
-            xmlCimInstance *p;
-
-            p = response2.inst_list;
-            while (p != NULL)
-            {
-                ifName = NULL;
-                xmlCimInstGetProp(p,
-                                  "CreationClassName", &ifName, NULL);
-                printf("%s\n", (char *)ifName);
-                xmlFree(ifName);
-                p = p->next;
-            }
-        }
-#endif
-#if 0
-        if (response.imethod_called)
-        {
-            xmlCimInstance *p;
-
-            p = response.inst_list;
-            while (p != NULL)
-            {
-                xmlChar *c;
-                printf("class=%s\n", (char *)p->class_name);
-                c = xmlNodeGetContent(p->instance_name);
-                printf("Content=%s\n", (char *)c);
-                xmlFree(c);
-                p = p->next;
-            }
-        }
-#endif
 
         curl_easy_cleanup(curl);
         curl = NULL;
@@ -1635,12 +1639,13 @@ cleanup:
     clear_response(&assoc_nic_rsp);
 
     free(address);
+    free(cim_host);
+    free(cim_port);
     free(user);
     free(password);
-    free(namespace);
+    free(cim_namespace);
     free(fw_url);
-    free(if_name);
+    free(interface_name);
 
     return rc;
 }
-
