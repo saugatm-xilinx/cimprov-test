@@ -1460,6 +1460,7 @@ main(int argc, const char *argv[])
         {
             char *dev_id;
             char *perm_addr;
+            char *nic_model;
 
             if (xmlCimInstGetPropTrim(port_inst, "DeviceID",
                                       &dev_id, NULL) < 0)
@@ -1519,10 +1520,45 @@ main(int argc, const char *argv[])
             if (rc < 0)
                 goto cleanup;
 
+            CHECK_RESPONSE(
+                rc,
+                associators(curl, cim_namespace, controller_inst, "Dependent",
+                            "SF_CardRealizesController", NULL, "SF_NICCard",
+                            0, &assoc_nic_rsp),
+                assoc_nic_rsp,
+                "Failed to find associated SF_NICCard instance");
+            if (rc < 0)
+                goto cleanup;
+            if (assoc_nic_rsp.inst_count != 1)
+            {
+                    ERROR_MSG("%d instead of just one associated "
+                              "SF_PortController instances were found",
+                              assoc_nic_rsp.inst_count);
+                    rc = -1;
+                    goto cleanup;
+            }
+
+            nic_inst = assoc_nic_rsp.inst_list;
+
+            if (xmlCimInstGetPropTrim(nic_inst, "Model",
+                                      &nic_model, NULL) < 0 ||
+                nic_model == NULL)
+            {
+                ERROR_MSG("Failed to get Model property value "
+                          "for SF_NICCard instance");
+                rc = -1;
+                goto cleanup;
+            }
+
+            printf("NIC model: %s\n", nic_model);
+            free(nic_model);
+
             if (!if_found && interface_name != NULL)
             {
                 clear_response(&assoc_cntr_rsp);
                 controller_inst = NULL;
+                clear_response(&assoc_nic_rsp);
+                nic_inst = NULL;
             }
 
             for (sw_inst = assoc_sw_rsp.inst_list; sw_inst != NULL;
@@ -1581,32 +1617,10 @@ main(int argc, const char *argv[])
             goto cleanup;
         }
 
-        if (interface_name != NULL)
-        {
-            CHECK_RESPONSE(
-                rc,
-                associators(curl, cim_namespace, controller_inst, "Dependent",
-                            "SF_CardRealizesController", NULL, "SF_NICCard",
-                            1, &assoc_nic_rsp),
-                assoc_nic_rsp,
-                "Failed to find associated SF_NICCard instance");
-            if (rc < 0)
-                goto cleanup;
-            if (assoc_nic_rsp.inst_count != 1)
-            {
-                    ERROR_MSG("%d instead of just one associated "
-                              "SF_PortController instances were found",
-                              assoc_nic_rsp.inst_count);
-                    rc = -1;
-                    goto cleanup;
-            }
-
-            nic_inst = assoc_nic_rsp.inst_list;
-        }
-
         if (fw_url != NULL)
         {
-            if (update_firmware(curl, cim_namespace, nic_inst,
+            if (update_firmware(curl, cim_namespace,
+                                interface_name == NULL ? NULL : nic_inst,
                                 update_controller, update_bootrom,
                                 fw_url) < 0)
             {
