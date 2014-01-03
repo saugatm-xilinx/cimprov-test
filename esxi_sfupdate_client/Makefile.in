@@ -1,0 +1,18 @@
+ifeq (@WINDOWS@,1)
+    MY_LIBS=-lcurl -lz -lpopt \
+	    -lintl -liconv -lcrypt32 -lws2_32 -lncurses @XML2_LIBS@ -llzma
+    MY_CFLAGS=-DCURL_STATICLIB
+    FILE_SUFFIX=.exe
+else
+    MY_LIBS= -Wl,-Bstatic -lpopt -lncurses -ltinfo @XML2_LIBS@ -lcurl \
+	     -lssl -lcrypto -lz -lm -lrt -Wl,-Bdynamic -ldl
+    MY_CFLAGS=
+    FILE_SUFFIX=
+endif
+
+sfupdate_esxi$(FILE_SUFFIX): main.c
+	@CC@ $^ -o $@ @NCURSES_CPPFLAGS@ @MY_LDFLAGS@ \
+	    @XML2_CFLAGS@ $(MY_CFLAGS) $(MY_LIBS)
+
+clean:
+	rm -rf *.o sfupdate_esxi$(FILE_SUFFIX)

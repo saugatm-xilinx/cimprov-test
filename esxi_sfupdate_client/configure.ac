@@ -3,7 +3,6 @@
 
 AC_PREREQ([2.68])
 AC_INIT([sfupdate_esxi], [0.1], [izbitsky@oktetlabs.ru])
-AM_INIT_AUTOMAKE([1.10 foreign])
 AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_HEADERS([config.h])
 
@@ -38,15 +37,18 @@ else
 fi
 
 MY_LDFLAGS=
-windows=
+WINDOWS=
 if test x$(echo "$host" | grep ".*-mingw.*") != x ; then
     MY_LDFLAGS="-L./libs/windows/$host"
-    windows=1
+    WINDOWS=1
+elif test x"$(file /bin/bash | grep 'x86-64')" != x ; then
+    MY_LDFLAGS="-L./libs/linux/64"
+else
+    MY_LDFLAGS="-L./libs/linux/32"
 fi
 
 AC_SUBST([MY_LDFLAGS])
-AM_CONDITIONAL([WINDOWS],
-               [test x$windows != x])
+AC_SUBST([WINDOWS])
 
 AC_CHECK_HEADER([ncurses/curses.h],[NCURSES_CPPFLAGS=-DNCURSES_CURSES_H],[])
 AC_SUBST([NCURSES_CPPFLAGS])
