@@ -1,0 +1,12 @@
+For Windows build, toolchains built with http://mxe.cc/ were used, with
+packages such as popt, libcurl, ncurses, etc installed. Example:
+
+./configure --host=i686-pc-mingw32
+make
+
+For Linux build, simply use
+
+./configure
+make
+
+32bit build in Linux 64bit environment was not tested successfully.
