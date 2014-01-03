@@ -2388,6 +2388,7 @@ curl_fail:
     {
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
+#define HTTP_PROTO "http://"
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
@@ -2422,7 +2423,8 @@ curl_fail:
                 return -1;
             }
         }
-        else if (strcmp_start(fileName, TFTP_PROTO) == 0)
+        else if (strcmp_start(fileName, TFTP_PROTO) == 0 ||
+                 strcmp_start(fileName, HTTP_PROTO) == 0)
         {
             FILE *f;
 
@@ -2488,6 +2490,7 @@ curl_fail:
         return 0;
 #undef FILE_PROTO
 #undef TFTP_PROTO
+#undef HTTP_PROTO
     }
 
     class VMwareDriver : public Driver {
