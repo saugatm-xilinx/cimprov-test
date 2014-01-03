@@ -1067,7 +1067,7 @@ processXmlRequest(CURL *curl, xmlDocPtr doc, const char *method_name,
     xmlFreeDoc(doc);
 
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (char *)data);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data_len);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, NULL);
