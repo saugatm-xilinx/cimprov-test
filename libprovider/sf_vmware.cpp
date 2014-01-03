@@ -106,6 +106,11 @@ extern "C" {
 // Default version string
 #define DEFAULT_VERSION_STR ""
 
+// Protocols to be used to obtain firmware image
+#define FILE_PROTO "file://"
+#define TFTP_PROTO "tftp://"
+#define HTTP_PROTO "http://"
+
 extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
 }
@@ -167,6 +172,20 @@ namespace solarflare
     static inline int strcmp_start(const char *x, const char *y)
     {
         return strncmp(x, y, strlen(y));
+    }
+
+    ///
+    /// Compare the beginning of the first string with
+    /// the second one, ignoring the case of the characters.
+    ///
+    /// @param x   The first string
+    /// @param y   The second string
+    ///
+    /// @return The same as strncasecmp(x, y, strlen(y))
+    ///
+    static inline int strcasecmp_start(const char *x, const char *y)
+    {
+        return strncasecmp(x, y, strlen(y));
     }
 
     ///
@@ -2301,7 +2320,7 @@ fail:
     }
 
     ///
-    /// Get data via TFTP or SFTP (currently not supported) protocol.
+    /// Get data via TFTP or HTTP protocol.
     ///
     /// @param uri         Data URI
     /// @param passwd      Password (NULL if not required)
@@ -2312,8 +2331,10 @@ fail:
     static int uri_get_file(const char *uri, const char *passwd,
                             FILE *f)
     {
-        CURL           *curl;
-        int             rc = 0;
+        CURL          *curl = NULL;
+        CURLcode       rc_curl;
+        int            rc = 0;
+        long int       http_code = 0;
 
         if (uri == NULL || f == NULL)
         {
@@ -2329,45 +2350,65 @@ fail:
             return -1;
         }
 
-        if (curl_easy_setopt(curl, CURLOPT_URL, uri) != CURLE_OK)
+        if ((rc_curl = curl_easy_setopt(curl, CURLOPT_URL,
+                                        uri)) != CURLE_OK)
         {
-            PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_URL) failed, "
-                             "errno %d ('%s')",
-                             errno, strerror(errno));
+            PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_URL) failed: %s",
+                             curl_easy_strerror(rc_curl));
             rc = -1;
             goto curl_fail;
         }
-        if (curl_easy_setopt(curl, CURLOPT_WRITEDATA,
-                             f) != CURLE_OK)
+        if ((rc_curl = 
+              curl_easy_setopt(curl, CURLOPT_WRITEDATA,
+                               f)) != CURLE_OK)
         {
-            PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_WRITEDATA) failed, "
-                             "errno %d ('%s')",
-                             errno, strerror(errno));
+            PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_WRITEDATA) "
+                             "failed: %s",
+                             curl_easy_strerror(rc_curl));
             rc = -1;
             goto curl_fail;
         }
 
         if (passwd != NULL)
         {
-            if (curl_easy_setopt(curl, CURLOPT_PASSWORD,
-                                 passwd) != CURLE_OK)
+            if ((rc_curl = curl_easy_setopt(curl, CURLOPT_PASSWORD,
+                                            passwd)) != CURLE_OK)
             {
                 PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_PASSWORD) "
-                                 "failed, errno %d ('%s')",
-                                 errno, strerror(errno));
+                                 "failed: %s",
+                                 curl_easy_strerror(rc_curl));
                 rc = -1;
                 goto curl_fail;
             }
         }
 
-        CURLcode rc_curl;
         if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
         {
-            PROVIDER_LOG_ERR("curl_easy_perform() failed, "
-                             "errno %d ('%s')",
-                             errno, strerror(errno));
+            PROVIDER_LOG_ERR("curl_easy_perform() failed: %s",
+                             curl_easy_strerror(rc_curl));
             rc = -1;
             goto curl_fail;
+        }
+
+        if (strcasecmp_start(uri, HTTP_PROTO) == 0)
+        {
+            rc_curl = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE,
+                                        &http_code);
+            if (rc_curl != CURLE_OK)
+            {
+                PROVIDER_LOG_ERR("curl_easy_getinfo(CURLINFO_RESPONSE_CODE)"
+                                 " failed: %s",
+                                 curl_easy_strerror(rc_curl));
+                rc = -1;
+                goto curl_fail;
+            }
+            if (http_code >= 400)
+            {
+                PROVIDER_LOG_ERR("Trying to obtain '%s' resulted in %ld "
+                                 "HTTP status code", uri, http_code);
+                rc = -1;
+                goto curl_fail;
+            }
         }
 
 curl_fail:
@@ -2386,9 +2427,6 @@ curl_fail:
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName)
     {
-#define FILE_PROTO "file://"
-#define TFTP_PROTO "tftp://"
-#define HTTP_PROTO "http://"
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
@@ -2411,7 +2449,7 @@ curl_fail:
             return -1;
         }
 
-        if (strcmp_start(fileName, FILE_PROTO) == 0)
+        if (strcasecmp_start(fileName, FILE_PROTO) == 0)
         {
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
@@ -2423,8 +2461,8 @@ curl_fail:
                 return -1;
             }
         }
-        else if (strcmp_start(fileName, TFTP_PROTO) == 0 ||
-                 strcmp_start(fileName, HTTP_PROTO) == 0)
+        else if (strcasecmp_start(fileName, TFTP_PROTO) == 0 ||
+                 strcasecmp_start(fileName, HTTP_PROTO) == 0)
         {
             FILE *f;
 
@@ -2488,9 +2526,6 @@ curl_fail:
             unlink(tmp_file);
 
         return 0;
-#undef FILE_PROTO
-#undef TFTP_PROTO
-#undef HTTP_PROTO
     }
 
     class VMwareDriver : public Driver {
