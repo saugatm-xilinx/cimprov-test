@@ -318,7 +318,7 @@ sort_inst_list(xmlCimInstance **head,
     xmlCimInstance *q;
     int             swapped;
 
-    if (head == NULL)
+    if (head == NULL || *head == NULL)
         return;
     do {
         swapped = 0;
