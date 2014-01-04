@@ -16,13 +16,19 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
+/* Maximum password length */
 #define MAX_PASSWD_LEN 128
 
-#define DEBUG_PRINT(s...) \
-    fprintf(stderr, s)
-
+/* Maximum error message length */
 #define MAX_ERR_STR 1024
 
+/**
+ * Print error message with file name and line number
+ * specified.
+ *
+ * @param s_    Format string
+ * @param ...   Arguments
+ */
 #define ERROR_MSG(s_...) \
     do {                                                    \
         char str_[MAX_ERR_STR];                             \
@@ -31,6 +37,13 @@
                 __FILE__, __LINE__, str_);                  \
     } while (0)
 
+/**
+ * Print error message without file name and line number
+ * specified.
+ *
+ * @param s_    Format string
+ * @param ...   Arguments
+ */
 #define ERROR_MSG_PLAIN(s_...) \
     do {                                                    \
         char str_[MAX_ERR_STR];                             \
@@ -38,6 +51,11 @@
         fprintf(stderr, "%s\n", str_);                      \
     } while (0)
 
+/**
+ * Skip text nodes when enumerating children of an XML node.
+ *
+ * @param node_   Current child node pointer.
+ */
 #define SKIP_TEXT(node_) \
     do {                                            \
         while (node_ != NULL &&                     \
@@ -46,39 +64,80 @@
             node_ = node_->next;                    \
     } while (0)
 
+/** CIMOM address */
 static char *address = NULL;
+
+/** CIMOM host */
 static char *cim_host = NULL;
+
+/** CIMOM port */
 static char *cim_port = NULL;
+
+/** Whether we should use HTTPS or HTTP */
 static int   use_https = 0;
+
+/** CIMOM user name */
 static char *user = NULL;
+
+/** CIMOM user password */
 static char *password = NULL;
+
+/** CIM provider namespace */
 static char *cim_namespace = NULL;
+
+/** URL of firmware image(s) */
 static char *fw_url = NULL;
+
+/** Network interface name */
 static char *interface_name = NULL;
+
+/** Whether we should update controller firmware or not */
 static int   update_controller = 0;
+
+/** Whether we should update BootROM firmware or not */
 static int   update_bootrom = 0;
+
+/**
+ * Whether we can skip asking user for confirmation before firmware update
+ * or not
+ */
 static int   yes = 0;
 
+/* Default HTTP port */
 #define DEF_HTTP_PORT "5988"
+
+/* Default HTTPS port */
 #define DEF_HTTPS_PORT "5989"
+
+/* Maximum length of a string representing CIMOM address */
 #define MAX_ADDR_LEN 1024
 
 /** Command line options */
 enum {
-    OPT_CIMOM_ADDR = 1,
-    OPT_CIMOM_HOST,
-    OPT_CIMOM_PORT,
-    OPT_HTTPS,
-    OPT_CIMOM_USER,
-    OPT_CIMOM_PASSWORD,
-    OPT_PROVIDER_NAMESPACE,
-    OPT_FW_URL,
-    OPT_IF_NAME,
-    OPT_CONTROLLER,
-    OPT_BOOTROM,
-    OPT_YES,
+    OPT_CIMOM_ADDR = 1,       /**< CIMOM address - use either it or 
+                                   HOST/PORT/HTTPS to specify CIMOM */
+    OPT_CIMOM_HOST,           /**< CIMOM host name */
+    OPT_CIMOM_PORT,           /**< CIMOM port number */
+    OPT_HTTPS,                /**< Use HTTPS */
+    OPT_CIMOM_USER,           /**< CIMOM user name */
+    OPT_CIMOM_PASSWORD,       /**< CIMOM user password */
+    OPT_PROVIDER_NAMESPACE,   /**< CIM provider namespace */
+    OPT_FW_URL,               /**< URL of firmware image(s) */
+    OPT_IF_NAME,              /**< Network interface name */
+    OPT_CONTROLLER,           /**< Update controller firmware */
+    OPT_BOOTROM,              /**< Update BootROM firmware */
+    OPT_YES,                  /**< Don't ask user for confirmation when
+                                   updating firmware */
 };
 
+/**
+ * Parse command line options.
+ *
+ * @param argc    Number of arguments
+ * @param argv    Array of arguments
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 parseCmdLine(int argc, const char *argv[])
 {
@@ -289,16 +348,23 @@ cleanup:
     return rc;
 }
 
+/**< CIM instance description got from response XML */
 typedef struct xmlCimInstance {
-    xmlChar     *class_name;
-    xmlNodePtr   namespace_path;
-    xmlNodePtr   instance_name;
-    xmlNodePtr   instance;
+    xmlChar     *class_name;        /**< Class name */
+    xmlNodePtr   namespace_path;    /**< Namespace */
+    xmlNodePtr   instance_name;     /**< Instance name (key values) */
+    xmlNodePtr   instance;          /**< Instance (values of all
+                                         properties) */
 
-    struct xmlCimInstance *prev;
-    struct xmlCimInstance *next;
+    struct xmlCimInstance *prev;    /**< Previous instance in the list */
+    struct xmlCimInstance *next;    /**< Next instance in the list */
 } xmlCimInstance;
 
+/**
+ * Free memory allocated for xmlCimInstance.
+ *
+ * @param p   xmlCimInstance pointer
+ */
 void
 freeXmlCimInstance(xmlCimInstance *p)
 {
@@ -309,6 +375,13 @@ freeXmlCimInstance(xmlCimInstance *p)
     free(p);
 }
 
+/**
+ * Sort a list of CIM instances.
+ *
+ * @param head    List's head
+ * @param f       Comparison function
+ * @param arg     Additional argument to be passed to f()
+ */
 void
 sort_inst_list(xmlCimInstance **head,
                int (*f)(xmlCimInstance *, xmlCimInstance *, void *),
@@ -344,6 +417,16 @@ sort_inst_list(xmlCimInstance **head,
     } while (swapped);
 }
 
+/**
+ * Return property value of a CIM instance.
+ *
+ * @param p                 CIM instance pointer
+ * @param prop_name         Property name
+ * @param value       [out] Property value
+ * @param type        [out] Property type
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 xmlCimInstGetProp(xmlCimInstance *p,
                   const char *prop_name,
@@ -413,6 +496,14 @@ xmlCimInstGetProp(xmlCimInstance *p,
     return 0;
 }
 
+/**
+ * For a given string, return a copy with spaces at the
+ * begin and the end removed.
+ *
+ * @param s     String pointer
+ *
+ * @return  String with spaces removed at the ends
+ */
 char *str_trim(char *s)
 {
     char *result = NULL;
@@ -436,6 +527,14 @@ char *str_trim(char *s)
     return result;
 }
 
+/**
+ * Convert xmlChar string to char string with
+ * spaces removed from the begin and the end.
+ *
+ * @param s   xmlChar string
+ *
+ * @return    char string with spaces removed at the ends
+ */
 char *str_trim_xml_free(xmlChar *s)
 {
     char *result = str_trim((char *)s);
@@ -443,6 +542,17 @@ char *str_trim_xml_free(xmlChar *s)
     return result;
 }
 
+/**
+ * Get property value of a CIM instance and remove spaces
+ * from the ends.
+ *
+ * @param p                 CIM instance pointer
+ * @param prop_name         Property name
+ * @param value       [out] Property value
+ * @param type        [out] Property type
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 xmlCimInstGetPropTrim(xmlCimInstance *p,
                       const char *prop_name,
@@ -460,6 +570,16 @@ xmlCimInstGetPropTrim(xmlCimInstance *p,
     return 0;
 }
 
+/**
+ * Compare instances by value of the specified property.
+ *
+ * @param p     CIM instance 1
+ * @param q     CIM instance 2
+ * @param arg   Property name
+ *
+ * @return result of strcmp() on the property values on success,
+ *         0 on failure
+ */
 int
 compare_by_prop(xmlCimInstance *p, xmlCimInstance *q, void *arg)
 {
@@ -484,6 +604,16 @@ compare_by_prop(xmlCimInstance *p, xmlCimInstance *q, void *arg)
     return result;
 }
 
+/**
+ * Check wether a given property of a CIM instance
+ * has a specified value.
+ *
+ * @param p           CIM instance
+ * @param prop_name   Property name
+ * @param value       Property value
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 xmlCimInstPropCmp(xmlCimInstance *p,
                   const char *prop_name,
@@ -506,6 +636,12 @@ xmlCimInstPropCmp(xmlCimInstance *p,
     return rc;
 }
 
+/**
+ * Fill namespace-describing child nodes in a given XML node.
+ *
+ * @param parent_node     Parent
+ * @param namespace       Namespace
+ */
 void
 fillNamespace(xmlNodePtr parent_node, const char *namespace)
 {
@@ -529,6 +665,11 @@ fillNamespace(xmlNodePtr parent_node, const char *namespace)
     free(namespace_dup);
 }
 
+/**
+ * Construct CIM-XML request down to <SIMPLEREQ> node
+ *
+ * @return XML document pointer for constructed CIM-XML request
+ */
 xmlDocPtr
 xmlReqPrepareSimpleReq(xmlNodePtr *simplereq_node)
 {
@@ -553,6 +694,13 @@ xmlReqPrepareSimpleReq(xmlNodePtr *simplereq_node)
     return doc;
 }
 
+/**
+ * Add local instance path node in a CIM-XML request
+ *
+ * @param parent      Parent node
+ * @param namespace   Namespace
+ * @param inst        Instance pointer
+ */
 void
 addLocalInstPath(xmlNodePtr parent, const char *namespace,
                  xmlCimInstance *inst)
@@ -568,6 +716,18 @@ addLocalInstPath(xmlNodePtr parent, const char *namespace,
     xmlAddChild(localinstpath_node, inst_name_copy_node);
 }
 
+/**
+ * Construct CIM-XML method call request.
+ *
+ * @param imethod                 Whether it is intrinsic or extrinsic
+ *                                method call
+ * @param namespace               Namespace
+ * @param method_name             Method name
+ * @param methodcall_node   [out] <METHODCALL> or <IMETHODCALL> node
+ *                                pointer
+ *
+ * @return  XML document pointer of the constructed CIM-XML request
+ */
 xmlDocPtr
 xmlReqPrepareMethodCall(int imethod, const char *namespace,
                         xmlCimInstance *inst,
@@ -593,6 +753,18 @@ xmlReqPrepareMethodCall(int imethod, const char *namespace,
     return doc;
 }
 
+/**
+ * Add a node storing some value in a CIM-XML request
+ *
+ * @param parent            Parent node pointer
+ * @param name              Child node name
+ * @param name_attr         Value of NAME attribute for the child node
+ * @param value_node_name   Name of a value node to
+ *                          be inserted in the child node
+ * @param value_attr_name   Name of an attribute storing the value
+ *                          (if value is not stored as a text node)
+ * @param value             Value to be stored
+ */
 void
 addNodeWithValue(xmlNodePtr parent,
                  const char *name,
@@ -625,6 +797,17 @@ addNodeWithValue(xmlNodePtr parent,
 
 }
 
+/**
+ * Construct CIM-XML request for calling InstallFromURI() method
+ *
+ * @param namespace     Namespace
+ * @param svc           SF_SoftwareInstallationService instance pointer
+ * @param target        Target parameter (may be instance of SF_NICCard or
+ *                      NULL)
+ * @param url           Firmware image(s) URL
+ *
+ * @return XML document pointer for the constructed CIM-XML request
+ */
 xmlDocPtr
 xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
                      xmlCimInstance *target, const char *url)
@@ -664,6 +847,17 @@ xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
     return doc;
 }
 
+/**
+ * Construct CIM-XML request for
+ * EnumerateInstances()/EnumerateInstanceNames() intrinsic method
+ *
+ * @param namespace     Namespace
+ * @param class_name    Class name
+ * @param ein           Whether we should enumerate instance names or
+ *                      instances
+ *
+ * @return XML document pointer of the constructed CIM-XML request
+ */
 xmlDocPtr
 xmlReqEnumerateInstances(const char *namespace, const char *class_name,
                          int ein)
@@ -693,6 +887,21 @@ xmlReqEnumerateInstances(const char *namespace, const char *class_name,
     return doc;
 }
 
+/**
+ * Construct CIM-XML request for Associators()/AssociatorNames()
+ * intrinsic method
+ *
+ * @param namespace     Namespace
+ * @param inst          CIM instance for which to find associators
+ * @param role          Instance's role in the association
+ * @param assoc_class   Association class name
+ * @param result_role   Result role in the association
+ * @param result_class  Result class name
+ * @param an            Whether we should enumerate associator names
+ *                      or associators
+ *
+ * @return XML document pointer of the constructed CIM-XML request
+ */
 xmlDocPtr
 xmlReqAssociators(const char *namespace, xmlCimInstance *inst,
                   const char *role, const char *assoc_class,
@@ -741,9 +950,21 @@ xmlReqAssociators(const char *namespace, xmlCimInstance *inst,
     return doc;
 }
 
+/** Where to store data received from CURL */
 static char *curl_data = NULL;
+/** Received data length */
 static int curl_data_len = 0;
 
+/**
+ * Data receiving callback for CURL
+ *
+ * @param data    Received data pointer
+ * @param size    Data member size
+ * @param count   Number of members
+ * @param ptr     Unused
+ *
+ * @return Number of bytes stored successfully
+ */
 size_t curl_write(void *data, size_t size, size_t count, void *ptr)
 {
     int nbytes = size * count;
@@ -766,17 +987,28 @@ size_t curl_write(void *data, size_t size, size_t count, void *ptr)
     return nbytes;
 }
 
+/** Structure for storing parsed CIM-XML response */
 typedef struct response_descr {
-    char           *method_name;
-    int             imethod_called;
-    char           *returned_value;
-    int             error_returned;
-    char           *err_code;
-    char           *err_descr;
-    xmlCimInstance *inst_list;
-    int             inst_count;
+    char           *method_name;        /**< Intrinsic or extrinsic
+                                             method name */
+    int             imethod_called;     /**< Whether intrinsic method
+                                             was called or not */
+    char           *returned_value;     /**< Returned value (for extrinsic
+                                             method) */
+    int             error_returned;     /**< Whether an error was returned
+                                             or not */
+    char           *err_code;           /**< Error code */
+    char           *err_descr;          /**< Error description */
+    xmlCimInstance *inst_list;          /**< Returned instances list */
+    int             inst_count;         /**< Number of instances in the
+                                             list */
 } response_descr;
 
+/**
+ * Free memory allocated for storing members of a response_descr structure
+ *
+ * @param rsp   response_descr structure pointer
+ */
 void
 clear_response(response_descr *rsp)
 {
@@ -796,6 +1028,14 @@ clear_response(response_descr *rsp)
     memset(rsp, 0, sizeof(*rsp));
 }
 
+/**
+ * Parse XML representation of a CIM instance
+ *
+ * @param inst    [out] CIM instance pointer
+ * @param parent        Node storing CIM instance XML representation
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 xmlParseInstance(xmlCimInstance *inst, xmlNodePtr parent)
 {
@@ -856,6 +1096,15 @@ xmlParseInstance(xmlCimInstance *inst, xmlNodePtr parent)
     }
 }
 
+/**
+ * Parse CIM-XML response
+ *
+ * @param data                  Data received from CURL
+ * @param data_len              Data length
+ * @param response_descr  [out] response_descr structure to be filled
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 xmlParseCimResponse(const char *data,
                     int data_len,
@@ -1041,6 +1290,16 @@ cleanup:
     return rc;
 }
 
+/**
+ * Send CIM-XML request, receive response and parse it
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param doc               XML document pointer of a CIM request
+ * @param method_name       Intrinsic or extrinsic method name
+ * @param response    [out] response_descr structure to be filled
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 processXmlRequest(CURL *curl, xmlDocPtr doc, const char *method_name,
                   response_descr *response)
@@ -1098,6 +1357,18 @@ processXmlRequest(CURL *curl, xmlDocPtr doc, const char *method_name,
     return 0;
 }
 
+/**
+ * Call EnumerateInstances or EnumerateInstanceNames method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param class_name        Class name
+ * @param ein               Whether we should call EnumerateInstanceNames()
+ *                          or EnumerateInstances() method
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 enumerate_instances(CURL *curl, const char *namespace,
                     const char *class_name, int ein,
@@ -1112,6 +1383,22 @@ enumerate_instances(CURL *curl, const char *namespace,
                              response);
 }
 
+/**
+ * Call Associators() or AssociatorNames() method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param inst              CIM instance for which to find associators
+ * @param role              Instance's role in the association
+ * @param assoc_class       Association class name
+ * @param result_role       Result role in the association
+ * @param result_class      Result class name
+ * @param an                Whether we should enumerate associator names
+ *                          or associators
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 associators(CURL *curl, const char *namespace, xmlCimInstance *inst,
             const char *role, const char *assoc_class,
@@ -1128,6 +1415,19 @@ associators(CURL *curl, const char *namespace, xmlCimInstance *inst,
                              response);
 }
 
+/**
+ * Call InstallFromURI() extrinsic method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param svc               SF_SoftwareInstallationService instance pointer
+ * @param target            Target parameter (may be instance of SF_NICCard
+ *                          or NULL)
+ * @param url               Firmware image(s) URL
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 install_from_uri(CURL *curl, const char *namespace,
                  xmlCimInstance *svc, xmlCimInstance *target,
@@ -1142,6 +1442,15 @@ install_from_uri(CURL *curl, const char *namespace,
                              response);
 }
 
+/**
+ * Call intrinsic or extrinsic CIM method and check response
+ *
+ * @param rc_   Return value to be set on failure
+ * @param f_    Method call
+ * @param rsp_  Response to be filled
+ * @param msg_  Error message format string
+ * @param ...   Error message parameters
+ */
 #define CHECK_RESPONSE(rc_, f_, rsp_, msg_...) \
     do {                                                                \
         int ret_ = (f_);                                                \
@@ -1153,10 +1462,23 @@ install_from_uri(CURL *curl, const char *namespace,
                 ERROR_MSG("CIM ERROR: code='%s', description='%s'",     \
                           (char *)rsp_.err_code,                        \
                           (char *)rsp_.err_descr);                      \
-            rc_ = -1;                                                    \
+            rc_ = -1;                                                   \
         }                                                               \
     } while (0)
 
+/**
+ * Update firmware
+ *
+ * @param curl          CURL pointer returned by curl_easy_init()
+ * @param namespace     Provider namespace
+ * @param nic_inst      SF_NICCard instance as target parameter
+ *                      (or NULL)
+ * @param controller    Whether to update controller firmware or not
+ * @param bootrom       Whether to update BootROM firmware or not
+ * @param firmware_url  Firmware image(s) URL
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 update_firmware(CURL *curl, const char *namespace,
                 xmlCimInstance *nic_inst,
@@ -1398,6 +1720,14 @@ cleanup:
     return rc;
 }
 
+/**
+ * Program entry function
+ *
+ * @param argc    Command line arguments' count
+ * @param argv    Command line arguments
+ * 
+ * @return 0 on success, non-zero on failure
+ */
 int
 main(int argc, const char *argv[])
 {
