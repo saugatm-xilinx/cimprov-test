@@ -110,6 +110,7 @@ extern "C" {
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
 #define HTTP_PROTO "http://"
+#define HTTPS_PROTO "https://"
 
 extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
@@ -2401,7 +2402,8 @@ fail:
             goto curl_fail;
         }
 
-        if (strcasecmp_start(uri, HTTP_PROTO) == 0)
+        if (strcasecmp_start(uri, HTTP_PROTO) == 0 ||
+            strcasecmp_start(uri, HTTPS_PROTO) == 0)
         {
             rc_curl = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE,
                                         &http_code);
@@ -2473,7 +2475,8 @@ curl_fail:
             }
         }
         else if (strcasecmp_start(fileName, TFTP_PROTO) == 0 ||
-                 strcasecmp_start(fileName, HTTP_PROTO) == 0)
+                 strcasecmp_start(fileName, HTTP_PROTO) == 0 ||
+                 strcasecmp_start(fileName, HTTPS_PROTO) == 0)
         {
             FILE *f;
 

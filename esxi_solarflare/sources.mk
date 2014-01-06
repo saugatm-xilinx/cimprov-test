@@ -15,7 +15,7 @@ esxi_archive_DIR = esxi_solarflare
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
 ESXI_EXTRA_LIBDIR = $(libprovider_DIR)/esxi_libs/i386
-ESXI_EXTRA_LIBS = libsfupdate.a libcurl.a libutils.a
+ESXI_EXTRA_LIBS = libsfupdate.a libcurl.a libutils.a libssl.a libcrypto.a
 
 esxi_archive_LIBS = $(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))
 
