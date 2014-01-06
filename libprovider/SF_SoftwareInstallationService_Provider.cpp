@@ -183,7 +183,7 @@ void SF_SoftwareInstallationService_Provider::FwImgInfoGetter::
                                                           imgType,
                                                           imgSubType,
                                                           imgName) == 0);
-    firstRun = true;
+    firstRun = false;
 }
 
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
