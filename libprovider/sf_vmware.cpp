@@ -1227,13 +1227,6 @@ fail:
         return 0;
     }
 
-    /// Types of firmware that can be updated by CIM provider
-    typedef enum {
-        FIRMWARE_UNKNOWN = 0, ///< Unknown firmware
-        FIRMWARE_BOOTROM,     ///< BootROM
-        FIRMWARE_MCFW         ///< MC firmware
-    } UpdatedFirmwareType;
-
     /// Firmware default file names table entry
     typedef struct {
         UpdatedFirmwareType type;     ///< Firmware type
@@ -1313,7 +1306,7 @@ fail:
     /// @return 0 on success, -1 on error
     ///
     static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
-                            int device_type, int &subtype)
+                            int device_type, unsigned int &subtype)
     {
         int       rc;
         int       fd;
@@ -2276,6 +2269,37 @@ fail:
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
 
+    int getFwImageInfo(const NIC *owner, UpdatedFirmwareType fwType,
+                       unsigned int &subType, String &fName)
+    {
+        String defPath;
+        int    i;
+
+        const VMwareNIC *vmwareNIC = dynamic_cast<const VMwareNIC *>(owner);
+
+        fName = String("");
+        subType = 0;
+
+        if (vmwareNIC == NULL || vmwareNIC->ports.size() <= 0)
+            return -1;
+
+        if (getFwSubType(vmwareNIC->ports[0].dev_name.c_str(),
+                         fwType,
+                         SFU_DEVICE_TYPE(vmwareNIC->getPCIDeviceID()),
+                         subType) != 0)
+            return -1;
+
+        for (i = 0; fwFileTable[i].fName != NULL; i++)
+            if (fwFileTable[i].type == fwType &&
+                fwFileTable[i].subtype == subType)
+                break;
+
+        if (fwFileTable[i].fName != NULL)
+            fName = String(fwFileTable[i].fName);
+
+        return 0;
+    }
+
     ///
     /// Get default path for a given firmware type.
     ///
@@ -2286,34 +2310,21 @@ fail:
     ///
     String getDefaultFwPath(const NIC *owner, UpdatedFirmwareType fwType)
     {
-        int    mcfwSubtype;
-        String defPath;
-        int    i;
+        String          fName;
+        unsigned int    subType;
+        String          defPath;
 
-        const VMwareNIC *vmwareNIC = dynamic_cast<const VMwareNIC *>(owner);
-
-        if (vmwareNIC == NULL || vmwareNIC->ports.size() <= 0)
+        if (getFwImageInfo(owner, fwType, subType, fName) < 0)
             return defPath;
 
-        if (getFwSubType(vmwareNIC->ports[0].dev_name.c_str(),
-                         fwType,
-                         SFU_DEVICE_TYPE(vmwareNIC->getPCIDeviceID()),
-                         mcfwSubtype) != 0)
-            return defPath;
-
-        for (i = 0; fwFileTable[i].fName != NULL; i++)
-            if (fwFileTable[i].type == fwType &&
-                fwFileTable[i].subtype == mcfwSubtype)
-                break;
-
-        if (fwFileTable[i].fName != NULL)
+        if (!fName.empty())
         {
             defPath = String("/image/");
             if (fwType == FIRMWARE_BOOTROM)
                 defPath.append("bootrom/");
             else
                 defPath.append("mcfw/");
-            defPath.append(fwFileTable[i].fName);
+            defPath.append(fName);
         }
 
         return defPath;
@@ -2731,6 +2742,12 @@ curl_fail:
         bool forAllNICs(ElementEnumerator& en);
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
+
+        virtual int getRequiredImageName(const NIC &nic,
+                                         UpdatedFirmwareType type,
+                                         unsigned int &img_type,
+                                         unsigned int &img_subtype,
+                                         String &img_name);
     };
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -2773,6 +2790,31 @@ curl_fail:
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
+    }
+
+    int VMwareSystem::getRequiredImageName(const NIC &nic,
+                                           UpdatedFirmwareType type,
+                                           unsigned int &img_type,
+                                           unsigned int &img_subtype,
+                                           String &img_name)
+    {
+        switch (type)
+        {
+            case FIRMWARE_BOOTROM:
+                img_type = IMAGE_TYPE_BOOTROM;
+                break;
+
+            case FIRMWARE_MCFW:
+                img_type = IMAGE_TYPE_MCFW;
+                break;
+
+            default:
+                PROVIDER_LOG_ERR("%s(): unknown firmware type %d",
+                                 __FUNCTION__, type);
+                return -1;
+        }
+
+        return getFwImageInfo(&nic, type, img_subtype, img_name);
     }
 
     VMwareSystem VMwareSystem::target;

@@ -174,6 +174,18 @@ void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::
     runInstallTried = installer.installWasRun();
 }
 
+void SF_SoftwareInstallationService_Provider::FwImgInfoGetter::
+                            handler(solarflare::SystemElement& se, unsigned)
+{
+    solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
+
+    ok = (solarflare::System::target.getRequiredImageName(nic, fw_type,
+                                                          imgType,
+                                                          imgSubType,
+                                                          imgName) == 0);
+    firstRun = true;
+}
+
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     const SF_SoftwareInstallationService* self,
     CIM_ConcreteJob*& Job,
@@ -275,6 +287,85 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
 
     return INVOKE_METHOD_OK;
 }
+
+#ifdef TARGET_CIM_SERVER_esxi
+Invoke_Method_Status
+    SF_SoftwareInstallationService_Provider::GetRequiredImageName(
+        const SF_SoftwareInstallationService* self,
+        const CIM_Card* Target,
+        Property<uint32>& type,
+        Property<uint32>& subtype,
+        Property<String>& name,
+        Property<uint32>& return_value)
+{
+    using namespace solarflare;
+
+    UpdatedFirmwareType fwType;
+
+    enum ReturnValue 
+    {
+        OK = 0,
+        Error = 2,
+        InvalidParameter = 5,
+    };
+
+    if (Target == NULL)
+    {
+        PROVIDER_LOG_ERR("%s(): Target parameter should be specified",
+                         __FUNCTION__);
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (self == NULL || self->Name.null)
+    {
+        PROVIDER_LOG_ERR("%s(): Name property of "
+                         "SF_SoftwareInstallationService is not known",
+                         __FUNCTION__);
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (strcmp(self->Name.value.c_str(), "BootROM") == 0)
+        fwType = FIRMWARE_BOOTROM;
+    else if (strcmp(self->Name.value.c_str(), "Firmware") == 0)
+        fwType = FIRMWARE_MCFW;
+    else
+    {
+        PROVIDER_LOG_ERR("%s(): operation is not supported for "
+                         "SF_SoftwareInstallationService.Name=%s",
+                         __FUNCTION__, self->Name.value.c_str());
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    FwImgInfoGetter getter(fwType, Target);
+
+    getter.forNIC();
+
+    if (!getter.nicFound())
+    {
+        PROVIDER_LOG_ERR("%s(): failed to find NIC", __FUNCTION__);
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+    else if (!getter.isOk())
+    {
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    type.null = false;
+    type.value = getter.getImgType();
+    subtype.null = false;
+    subtype.value = getter.getImgSubType();
+    name.null = false;
+    name.value = getter.getImgName();
+
+    return_value.set(OK);
+    return INVOKE_METHOD_OK;
+}
+#endif
 
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::ChangeAffectedElementsAssignedSequence(
     const SF_SoftwareInstallationService* self,

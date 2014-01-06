@@ -512,6 +512,12 @@ namespace solarflare
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const = 0;
     };
 
+    /// Types of firmware that can be updated by CIM provider
+    typedef enum {
+        FIRMWARE_UNKNOWN = 0, ///< Unknown firmware
+        FIRMWARE_BOOTROM,     ///< BootROM
+        FIRMWARE_MCFW         ///< MC firmware
+    } UpdatedFirmwareType;
 } // namespace
 
 #endif  // SOLARFLARE_SF_CORE_H

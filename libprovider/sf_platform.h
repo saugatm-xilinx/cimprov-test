@@ -768,6 +768,15 @@ namespace solarflare
         static void saveLogReqState(const String &logName,
                                     unsigned requestedState);
         static unsigned getLogReqState(const String &logName);
+
+        virtual int getRequiredImageName(const NIC &nic,
+                                         UpdatedFirmwareType type,
+                                         unsigned int &img_type,
+                                         unsigned int &img_subtype,
+                                         String &img_name)
+        {
+            return -1;
+        }
     };
 
 } // namespace

@@ -13,6 +13,7 @@
 #define _SF_SoftwareInstallationService_Provider_h
 
 #include <cimple/cimple.h>
+#include "CIM_Card.h"
 #include "SF_SoftwareInstallationService.h"
 #include "sf_provider.h"
 
@@ -53,6 +54,31 @@ class SF_SoftwareInstallationService_Provider
         bool isOk() const { return ok; };
         bool installWasRun() const { return runInstallTried; };
     };
+
+    class FwImgInfoGetter : public solarflare::Action
+    {
+        unsigned int imgType;
+        unsigned int imgSubType;
+        String imgName;
+
+        solarflare::UpdatedFirmwareType fw_type;
+        bool ok;
+        bool firstRun;
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        FwImgInfoGetter(solarflare::UpdatedFirmwareType type,
+                        const Instance *inst) :
+            solarflare::Action(inst), fw_type(type), ok(false),
+            firstRun(true) {}
+        bool isOk() const { return ok; };
+        bool nicFound() const { return !firstRun; };
+
+        unsigned int getImgType() { return imgType; };
+        unsigned int getImgSubType() { return imgSubType; };
+        String getImgName() { return imgName; };
+    };
+
 public:
 
     typedef SF_SoftwareInstallationService Class;
@@ -115,6 +141,16 @@ public:
         const CIM_ManagedElement* Target,
         const CIM_Collection* Collection,
         Property<uint32>& return_value);
+
+#ifdef TARGET_CIM_SERVER_esxi
+    Invoke_Method_Status GetRequiredImageName(
+        const SF_SoftwareInstallationService* self,
+        const CIM_Card* Target,
+        Property<uint32>& type,
+        Property<uint32>& subtype,
+        Property<String>& name,
+        Property<uint32>& return_value);
+#endif
 
     Invoke_Method_Status InstallFromURI(
         const SF_SoftwareInstallationService* self,

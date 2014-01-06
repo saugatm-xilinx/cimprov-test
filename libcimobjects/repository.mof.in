@@ -249,9 +249,15 @@ WMIONLY([[
 ]])
 };
 
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
 INSTANCE
 class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
+    uint32 GetRequiredImageName([IN] CIM_Card REF Target,
+                                [OUT] uint32 type,
+                                [OUT] uint32 subtype,
+                                [OUT] string name);
 };
+]])
 
 INSTANCE
 class SF_SoftwareInstallationServiceCapabilities : CIM_SoftwareInstallationServiceCapabilities {
