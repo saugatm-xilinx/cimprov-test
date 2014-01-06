@@ -163,7 +163,7 @@ parseCmdLine(int argc, const char *argv[])
     struct poptOption options_table[] = {
         { "cimom-address", 'a', POPT_ARG_STRING, NULL,
           OPT_CIMOM_ADDR,
-          "Address of CIMOM (e.g. https://hostname:5989",
+          "Address of CIMOM (e.g. https://hostname:5989)",
           NULL },
 
         { "cimom-host", '\0', POPT_ARG_STRING, NULL,
