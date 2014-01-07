@@ -769,11 +769,27 @@ namespace solarflare
                                     unsigned requestedState);
         static unsigned getLogReqState(const String &logName);
 
-        virtual int getRequiredImageName(const NIC &nic,
-                                         UpdatedFirmwareType type,
-                                         unsigned int &img_type,
-                                         unsigned int &img_subtype,
-                                         String &img_name)
+        virtual int getRequiredFwImageName(const NIC &nic,
+                                           UpdatedFirmwareType type,
+                                           unsigned int &img_type,
+                                           unsigned int &img_subtype,
+                                           String &img_name)
+        {
+            return -1;
+        }
+
+        virtual String createTmpFile()
+        {
+            return String(""); 
+        }
+
+        virtual int tmpFileBase64Append(const String &fileName,
+                                        const String &base64Str)
+        {
+            return -1;
+        }
+
+        virtual int removeTmpFile(String fileName)
         {
             return -1;
         }

@@ -179,10 +179,10 @@ void SF_SoftwareInstallationService_Provider::FwImgInfoGetter::
 {
     solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
 
-    ok = (solarflare::System::target.getRequiredImageName(nic, fw_type,
-                                                          imgType,
-                                                          imgSubType,
-                                                          imgName) == 0);
+    ok = (solarflare::System::target.getRequiredFwImageName(nic, fw_type,
+                                                            imgType,
+                                                            imgSubType,
+                                                            imgName) == 0);
     firstRun = false;
 }
 
@@ -290,7 +290,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
 
 #ifdef TARGET_CIM_SERVER_esxi
 Invoke_Method_Status
-    SF_SoftwareInstallationService_Provider::GetRequiredImageName(
+    SF_SoftwareInstallationService_Provider::GetRequiredFwImageName(
         const SF_SoftwareInstallationService* self,
         const CIM_Card* Target,
         Property<uint32>& type,
@@ -363,6 +363,115 @@ Invoke_Method_Status
     name.value = getter.getImgName();
 
     return_value.set(OK);
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status
+    SF_SoftwareInstallationService_Provider::StartFwImageSend(
+        const SF_SoftwareInstallationService* self,
+        Property<String>& file_name,
+        Property<uint32>& return_value)
+{
+    enum ReturnValue 
+    {
+        OK = 0,
+        Error = 2,
+    };
+
+    String fName = solarflare::System::target.createTmpFile();
+
+    if (self->Name.null ||
+        (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
+         strcmp(self->Name.value.c_str(), "Firmware") != 0))
+    {
+        PROVIDER_LOG_ERR("%s() is not supported for this "
+                         "SF_SoftwareInstallationService instance",
+                         __FUNCTION__);
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (fName.empty())
+    {
+        file_name.null = true;
+        return_value.set(Error);
+    }
+    else
+    {
+        file_name.null = false;
+        file_name.value = fName;
+        return_value.set(OK);
+    }
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status
+    SF_SoftwareInstallationService_Provider::SendFwImageData(
+        const SF_SoftwareInstallationService* self,
+        const Property<String>& file_name,
+        const Property<String>& base64_str,
+        Property<uint32>& return_value)
+{
+    enum ReturnValue 
+    {
+        OK = 0,
+        Error = 2,
+        InvalidParameter = 5,
+    };
+
+    if (self->Name.null ||
+        (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
+         strcmp(self->Name.value.c_str(), "Firmware") != 0))
+    {
+        PROVIDER_LOG_ERR("%s() is not supported for this "
+                         "SF_SoftwareInstallationService instance",
+                         __FUNCTION__);
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (file_name.null || base64_str.null)
+    {
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (solarflare::System::
+              target.tmpFileBase64Append(file_name.value,
+                                         base64_str.value) < 0)
+        return_value.set(Error);
+    else
+        return_value.set(OK);
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status
+    SF_SoftwareInstallationService_Provider::RemoveFwImage(
+        const SF_SoftwareInstallationService* self,
+        const Property<String>& file_name,
+        Property<uint32>& return_value)
+{
+    enum ReturnValue 
+    {
+        OK = 0,
+        Error = 2,
+        InvalidParameter = 5,
+    };
+
+    if (file_name.null)
+    {
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (solarflare::System::
+              target.removeTmpFile(file_name.value) < 0)
+        return_value.set(Error);
+    else
+        return_value.set(OK);
+
     return INVOKE_METHOD_OK;
 }
 #endif

@@ -252,10 +252,17 @@ WMIONLY([[
 m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
 INSTANCE
 class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
-    uint32 GetRequiredImageName([IN] CIM_Card REF Target,
-                                [OUT] uint32 type,
-                                [OUT] uint32 subtype,
-                                [OUT] string name);
+    uint32 GetRequiredFwImageName([IN] CIM_Card REF Target,
+                                  [OUT] uint32 type,
+                                  [OUT] uint32 subtype,
+                                  [OUT] string name);
+
+    uint32 StartFwImageSend([OUT] string file_name);
+
+    uint32 SendFwImageData([IN] string file_name,
+                           [IN] string base64);
+
+    uint32 RemoveFwImage([IN] string file_name);
 };
 ]])
 

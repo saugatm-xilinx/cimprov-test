@@ -50,7 +50,7 @@ namespace solarflare
     ///
     /// @return Number of bytes to be allocated for the decoded data
     ///
-    static inline size_t base64_dec_size(char *encoded)
+    static inline ssize_t base64_dec_size(const char *encoded)
     {
         size_t len = strlen(encoded);
         size_t padding = 0;
@@ -60,6 +60,8 @@ namespace solarflare
         if (encoded[len - 2] == '=')
             padding++;
 
+        if ((len - padding) % 4 != 0)
+            return -1;
         return (len - padding) / 4 * 3 - padding;
     }
 
@@ -70,7 +72,8 @@ namespace solarflare
     /// @param src        Data to be encoded
     /// @param src_size   Size of data to be encoded
     ///
-    static inline void base64_encode(char *dst, char *src, size_t src_size)
+    static inline void base64_encode(char *dst, const char *src,
+                                     size_t src_size)
     {
         int i;
         int j;
@@ -135,7 +138,7 @@ namespace solarflare
     ///
     /// @return 0 on success, -1 on failure
     ///
-    static inline int base64_decode(char *dst, char *src)
+    static inline int base64_decode(char *dst, const char *src)
     {
         int i;
         int len = strlen(src);

@@ -14,6 +14,7 @@
 #include <cimple/Strings.h>
 #include <cimple/Array.h>
 #include <cimple/Ref.h>
+#include <cimple/Time.h>
 #include <cimple.h>
 #include "CIM_EthernetPort.h"
 #include "CIM_SoftwareIdentity.h"
@@ -68,6 +69,8 @@ extern "C" {
 #include "sf_mcdi_sensors.h"
 #include "sf_alerts.h"
 #include "sf_pci_ids.h"
+
+#include "sf_base64.h"
 
 #include <sys/syscall.h>
 
@@ -128,6 +131,27 @@ namespace solarflare
     using cimple::cast;
     using cimple::Mutex;
     using cimple::Auto_Mutex;
+    using cimple::Time;
+
+    ///
+    /// Temporary file description
+    ///
+    typedef class TmpFileDescr {
+    public:
+        String    fileName;       ///< File name
+        uint64    creationTime;   ///< Creation time
+
+        // This is required to use cimple::Array
+        bool operator== (const TmpFileDescr &rhs)
+        {
+            return (fileName == rhs.fileName &&
+                    creationTime == rhs.creationTime);
+        }
+    } TmpFileDescr;
+
+    Array<TmpFileDescr> tmpFilesArr;
+
+    static Mutex tmpFilesArrLock(false);
 
     ///
     /// Is a symbol a space?
@@ -2440,6 +2464,8 @@ curl_fail:
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName)
     {
+        Auto_Mutex    guard(tmpFilesArrLock); 
+
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
         int   fd = -1;
@@ -2746,11 +2772,16 @@ curl_fail:
         bool forAllPackages(ConstElementEnumerator& en) const;
         bool forAllPackages(ElementEnumerator& en);
 
-        virtual int getRequiredImageName(const NIC &nic,
-                                         UpdatedFirmwareType type,
-                                         unsigned int &img_type,
-                                         unsigned int &img_subtype,
-                                         String &img_name);
+        virtual int getRequiredFwImageName(const NIC &nic,
+                                           UpdatedFirmwareType type,
+                                           unsigned int &img_type,
+                                           unsigned int &img_subtype,
+                                           String &img_name);
+
+        virtual String createTmpFile();
+        virtual int tmpFileBase64Append(const String &fileName,
+                                        const String &base64Str);
+        virtual int removeTmpFile(String fileName);
     };
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -2795,11 +2826,11 @@ curl_fail:
         return en.process(mgmtPackage);
     }
 
-    int VMwareSystem::getRequiredImageName(const NIC &nic,
-                                           UpdatedFirmwareType type,
-                                           unsigned int &img_type,
-                                           unsigned int &img_subtype,
-                                           String &img_name)
+    int VMwareSystem::getRequiredFwImageName(const NIC &nic,
+                                             UpdatedFirmwareType type,
+                                             unsigned int &img_type,
+                                             unsigned int &img_subtype,
+                                             String &img_name)
     {
         switch (type)
         {
@@ -2818,6 +2849,132 @@ curl_fail:
         }
 
         return getFwImageInfo(&nic, type, img_subtype, img_name);
+    }
+
+    String VMwareSystem::createTmpFile()
+    {
+        Auto_Mutex    guard(tmpFilesArrLock); 
+        char          tmp_file[] = "/tmp/sf_firmware_XXXXXX";
+        int           fd = -1;
+        uint64        now;
+        unsigned int  i;
+        
+        TmpFileDescr fileDescr;
+
+        fd = mkstemp(tmp_file);
+        if (fd < 0)
+            return String("");
+        close(fd);
+
+        now = Time::now();
+
+        fileDescr.fileName = String(tmp_file);
+        fileDescr.creationTime = now;
+        tmpFilesArr.append(fileDescr);
+
+        for (i = 0; i < tmpFilesArr.size(); i++)
+            if (now - tmpFilesArr[i].creationTime > 120000000)
+            {
+                unlink(tmpFilesArr[i].fileName.c_str());
+                tmpFilesArr.remove(i);
+                i--;
+            }
+
+        return String(tmp_file);
+    }
+
+    int VMwareSystem::tmpFileBase64Append(const String &fileName,
+                                          const String &base64Str)
+    {
+        Auto_Mutex    guard(tmpFilesArrLock); 
+        ssize_t       decSize = base64_dec_size(base64Str.c_str());
+        ssize_t       rc;
+        char         *data;
+        int           fd;
+
+        if (decSize < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded data size",
+                             __FUNCTION__);
+            return -1;
+        }
+
+        data = new char[decSize];
+        if (data == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to allocate memory for "
+                             "decoded data",
+                             __FUNCTION__);
+            return -1;
+        }
+
+        if (base64_decode(data, base64Str.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to decode base64 string",
+                             __FUNCTION__);
+            delete[] data;
+            return -1;
+        }
+
+        fd = open(fileName.c_str(), O_WRONLY | O_APPEND);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to open file '%s', "
+                             "errno %d ('%s')",
+                             __FUNCTION__, fileName.c_str(),
+                             errno, strerror(errno));
+            delete[] data;
+            return -1;
+        }
+
+        if ((rc = write(fd, data, decSize)) != decSize)
+        {
+            PROVIDER_LOG_ERR("%s(): write returned %ld instead of %ld",
+                             "errno %d ('%s')",
+                             __FUNCTION__, static_cast<long int>(rc),
+                             static_cast<long int>(decSize),
+                             errno, strerror(errno));
+            close(fd);
+            delete[] data;
+            return -1;
+        }
+
+        delete[] data;
+
+        if (close(fd) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to close a file, "
+                             "errno %d ('%s')",
+                             errno, strerror(errno));
+            return -1;
+        }
+
+        return 0;
+    }
+
+    int VMwareSystem::removeTmpFile(String fileName)
+    {
+        Auto_Mutex    guard(tmpFilesArrLock); 
+        unsigned int  i;
+
+        if (unlink(fileName.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to remove file '%s', "
+                             "errno %d ('%s')",
+                             __FUNCTION__, fileName.c_str(),
+                             errno, strerror(errno));
+            return -1;
+        }
+
+        for (i = 0; i < tmpFilesArr.size(); i++)
+            if (strcmp(fileName.c_str(),
+                       tmpFilesArr[i].fileName.c_str()) == 0)
+            {
+                tmpFilesArr.remove(i);
+                i--;
+            }
+
+        return 0;
     }
 
     VMwareSystem VMwareSystem::target;

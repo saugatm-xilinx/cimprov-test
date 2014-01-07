@@ -143,12 +143,28 @@ public:
         Property<uint32>& return_value);
 
 #ifdef TARGET_CIM_SERVER_esxi
-    Invoke_Method_Status GetRequiredImageName(
+    Invoke_Method_Status GetRequiredFwImageName(
         const SF_SoftwareInstallationService* self,
         const CIM_Card* Target,
         Property<uint32>& type,
         Property<uint32>& subtype,
         Property<String>& name,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status StartFwImageSend(
+        const SF_SoftwareInstallationService* self,
+        Property<String>& file_name,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status SendFwImageData(
+        const SF_SoftwareInstallationService* self,
+        const Property<String>& file_name,
+        const Property<String>& base64_str,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status RemoveFwImage(
+        const SF_SoftwareInstallationService* self,
+        const Property<String>& file_name,
         Property<uint32>& return_value);
 #endif
 
