@@ -16,6 +16,8 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
+#include "../libprovider/sf_base64.h"
+
 /* Maximum password length */
 #define MAX_PASSWD_LEN 128
 
@@ -88,6 +90,9 @@ static char *cim_namespace = NULL;
 /** URL of firmware image(s) */
 static char *fw_url = NULL;
 
+/** Path to firmware image(s) */
+static char *fw_path = NULL;
+
 /** Network interface name */
 static char *interface_name = NULL;
 
@@ -123,6 +128,7 @@ enum {
     OPT_CIMOM_PASSWORD,       /**< CIMOM user password */
     OPT_PROVIDER_NAMESPACE,   /**< CIM provider namespace */
     OPT_FW_URL,               /**< URL of firmware image(s) */
+    OPT_FW_PATH,              /**< Path to firmware image(s) */
     OPT_IF_NAME,              /**< Network interface name */
     OPT_CONTROLLER,           /**< Update controller firmware */
     OPT_BOOTROM,              /**< Update BootROM firmware */
@@ -150,6 +156,7 @@ parseCmdLine(int argc, const char *argv[])
     char *ns = NULL;
     char *s = NULL;
     char *url = NULL;
+    char *path = NULL;
     char *if_name = NULL;
     int   controller = 0;
     int   bootrom = 0;
@@ -198,7 +205,12 @@ parseCmdLine(int argc, const char *argv[])
 
         { "firmware-url", 'f', POPT_ARG_STRING, NULL,
           OPT_FW_URL,
-          "URL of firmware images",
+          "URL of firmware image(s)",
+          NULL },
+
+        { "firmware-path", '\0', POPT_ARG_STRING, NULL,
+          OPT_FW_PATH,
+          "Path firmware image(s)",
           NULL },
 
         { "interface-name", 'i', POPT_ARG_STRING, NULL,
@@ -264,6 +276,10 @@ parseCmdLine(int argc, const char *argv[])
                 url = poptGetOptArg(optCon);
                 break;
 
+            case OPT_FW_PATH:
+                path = poptGetOptArg(optCon);
+                break;
+
             case OPT_IF_NAME:
                 if_name = poptGetOptArg(optCon);
                 break;
@@ -323,6 +339,7 @@ cleanup:
         free(p);
         free(ns);
         free(url);
+        free(path);
         free(if_name);
     }
     else
@@ -339,6 +356,7 @@ cleanup:
             cim_namespace = ns;
         }
         fw_url = url;
+        fw_path = path;
         interface_name = if_name;
         update_controller = controller;
         update_bootrom = bootrom;
@@ -987,6 +1005,60 @@ size_t curl_write(void *data, size_t size, size_t count, void *ptr)
     return nbytes;
 }
 
+/**
+ * Structure for storing named values (for example,
+ * output parameters)
+ */
+typedef struct named_value {
+    char *name;                 /**< Name */
+    char *value;                /**< Value */
+
+    struct named_value *prev;   /**< Previous item in the list */
+    struct named_value *next;   /**< Next item in the list */
+} named_value;
+
+/**
+ * Free memory allocated for a named_value.
+ *
+ * @param val   Memory to be freed
+ */
+void free_named_value(named_value *val)
+{
+    free(val->name);
+    free(val->value);
+    free(val);
+}
+
+/**
+ * Free memory allocated for a list of named_value's.
+ *
+ * @param head      List head
+ */
+void free_named_value_list(named_value *head)
+{
+    named_value *p;
+    named_value *q;
+
+    p = head;
+    while (p != NULL)
+    {
+        q = p;
+        p = p->next;
+        free_named_value(q);
+    }
+}
+
+char *get_named_value(named_value *list, const char *name)
+{
+    named_value *p;
+
+    for (p = list; p != NULL; p = p->next)
+        if (strcmp(p->name, name) == 0)
+            return p->value;
+
+    return NULL;
+}
+
 /** Structure for storing parsed CIM-XML response */
 typedef struct response_descr {
     char           *method_name;        /**< Intrinsic or extrinsic
@@ -995,6 +1067,9 @@ typedef struct response_descr {
                                              was called or not */
     char           *returned_value;     /**< Returned value (for extrinsic
                                              method) */
+    named_value    *out_params_list;    /**< List of output parameters
+                                             (for extrinsic method) */
+    int             out_params_count;   /**< Number of output parameters */
     int             error_returned;     /**< Whether an error was returned
                                              or not */
     char           *err_code;           /**< Error code */
@@ -1025,6 +1100,8 @@ clear_response(response_descr *rsp)
         p = p->next;
         freeXmlCimInstance(q);
     }
+
+    free_named_value_list(rsp->out_params_list);
     memset(rsp, 0, sizeof(*rsp));
 }
 
@@ -1266,7 +1343,9 @@ xmlParseCimResponse(const char *data,
             for ( ; child != NULL; child = child->next)
             {
                 if (xmlStrcmp(child->name,
-                              BAD_CAST "RETURNVALUE") == 0)
+                              BAD_CAST "RETURNVALUE") == 0 ||
+                    xmlStrcmp(child->name,
+                              BAD_CAST "PARAMVALUE") == 0)
                 {
                     aux = child->children;
                     SKIP_TEXT(aux);
@@ -1278,8 +1357,27 @@ xmlParseCimResponse(const char *data,
                         goto cleanup;
                     }
 
-                    response->returned_value =
-                        str_trim_xml_free(xmlNodeGetContent(aux));
+                    if (xmlStrcmp(child->name,
+                                  BAD_CAST "RETURNVALUE") == 0)
+                        response->returned_value =
+                            str_trim_xml_free(xmlNodeGetContent(aux));
+                    else
+                    {
+                        named_value *val = calloc(1, sizeof(named_value));
+
+                        val->name =
+                            str_trim_xml_free(
+                                     xmlGetProp(child, BAD_CAST "NAME"));
+                        val->value =
+                            str_trim_xml_free(xmlNodeGetContent(aux));
+
+                        val->prev = NULL;
+                        val->next = response->out_params_list;
+                        if (response->out_params_list != NULL)
+                            response->out_params_list->prev = val;
+                        response->out_params_list = val;
+                        response->out_params_count++;
+                    }
                 }
             }
         }
@@ -2027,6 +2125,7 @@ cleanup:
     free(password);
     free(cim_namespace);
     free(fw_url);
+    free(fw_path);
     free(interface_name);
 
     return rc;
