@@ -2119,14 +2119,11 @@ install_from_local_path(CURL *curl, const char *namespace,
 
                     base64_encode(encoded, img_chunk, read_len);
                     
-                    snprintf(url, MAX_FILE_PATH, "file://%s",
-                             tmp_file_name);
-
                     CHECK_RESPONSE_EXT(
                         rc_rsp,
                         call_send_fw_image_data(curl, namespace,
                                                 svc,
-                                                url, encoded,
+                                                tmp_file_name, encoded,
                                                 &call_rsp),
                         call_rsp,
                         "Failed to send firmware image data, "
@@ -2169,11 +2166,14 @@ install_from_local_path(CURL *curl, const char *namespace,
         }
         base64_encode(encoded, md_hash, md_len);
 
+        snprintf(url, MAX_FILE_PATH, "file://%s",
+                 tmp_file_name);
+
         CHECK_RESPONSE_EXT(
             rc_rsp,
             call_install_from_uri(curl, namespace,
                                   svc, p,
-                                  tmp_file_name, encoded,
+                                  url, encoded,
                                   &call_rsp),
             call_rsp,
             "InstallFromURI() failed");
