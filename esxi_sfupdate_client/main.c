@@ -10,19 +10,25 @@
 #endif
 
 #include <string.h>
-#include <iconv.h>
 #include <curl/curl.h>
+
+#include <openssl/evp.h>
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
 #include "../libprovider/sf_base64.h"
 
+#include <assert.h>
+
 /* Maximum password length */
 #define MAX_PASSWD_LEN 128
 
 /* Maximum error message length */
 #define MAX_ERR_STR 1024
+
+/* Maximum file path length */
+#define MAX_FILE_PATH 1024
 
 /**
  * Print error message with file name and line number
@@ -753,20 +759,24 @@ xmlReqPrepareMethodCall(int imethod, const char *namespace,
                         xmlNodePtr *methodcall_node)
 {
     xmlDocPtr       doc = NULL;
+    xmlNodePtr      methodcall_node_aux = NULL;
     xmlNodePtr      simplereq_node = NULL;
     xmlNodePtr      localinstpath_node = NULL;
     xmlNodePtr      inst_name_copy_node = NULL;
 
     doc = xmlReqPrepareSimpleReq(&simplereq_node);
-    *methodcall_node =
+    methodcall_node_aux =
         xmlNewChild(simplereq_node, NULL,
                     BAD_CAST (imethod ? "IMETHODCALL" : "METHODCALL"),
                     NULL);
-    xmlNewProp(*methodcall_node, BAD_CAST "NAME", BAD_CAST method_name);
+    xmlNewProp(methodcall_node_aux, BAD_CAST "NAME", BAD_CAST method_name);
     if (imethod)
-        fillNamespace(*methodcall_node, namespace);
+        fillNamespace(methodcall_node_aux, namespace);
     else
-        addLocalInstPath(*methodcall_node, namespace, inst);
+        addLocalInstPath(methodcall_node_aux, namespace, inst);
+
+    if (methodcall_node != NULL)
+        *methodcall_node = methodcall_node_aux;
 
     return doc;
 }
@@ -816,6 +826,33 @@ addNodeWithValue(xmlNodePtr parent,
 }
 
 /**
+ * Add a node for a parameter having "simple" value
+ * (i.e. string, uint32, etc).
+ *
+ * @param parent_node       Where to add an XML node
+ * @param param_name        Name of the parameter
+ * @param param_type        Type of the parameter
+ * @param param_value       Value of the parameter
+ */
+void addSimpleParamValue(xmlNodePtr parent_node,
+                         const char *param_name,
+                         const char *param_type,
+                         const char *param_value)
+{
+   xmlNodePtr paramvalue_node;
+   xmlNodePtr value_node;
+
+   paramvalue_node = xmlNewChild(parent_node, NULL,
+                                 "PARAMVALUE", NULL);
+   xmlNewProp(paramvalue_node, BAD_CAST "NAME",
+              BAD_CAST param_name);
+   xmlNewProp(paramvalue_node, BAD_CAST "PARAMTYPE",
+              BAD_CAST param_type);
+   value_node = xmlNewChild(paramvalue_node, NULL, BAD_CAST "VALUE",
+                            BAD_CAST param_value);
+}
+
+/**
  * Construct CIM-XML request for calling InstallFromURI() method
  *
  * @param namespace     Namespace
@@ -828,24 +865,19 @@ addNodeWithValue(xmlNodePtr parent,
  */
 xmlDocPtr
 xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
-                     xmlCimInstance *target, const char *url)
+                     xmlCimInstance *target, const char *url,
+                     const char *base64_hash)
 {
     xmlDocPtr       doc = NULL;
     xmlNodePtr      methodcall_node = NULL;
     xmlNodePtr      paramvalue_node = NULL;
+    xmlNodePtr      value_arr_node = NULL;
     xmlNodePtr      value_node = NULL;
 
     doc = xmlReqPrepareMethodCall(0, namespace, svc, "InstallFromURI",
                                   &methodcall_node);
 
-    paramvalue_node = xmlNewChild(methodcall_node, NULL,
-                                  "PARAMVALUE", NULL);
-    xmlNewProp(paramvalue_node, BAD_CAST "NAME",
-               BAD_CAST "URI");
-    xmlNewProp(paramvalue_node, BAD_CAST "PARAMTYPE",
-               BAD_CAST "string");
-    value_node = xmlNewChild(paramvalue_node, NULL, BAD_CAST "VALUE",
-                             BAD_CAST url);
+    addSimpleParamValue(methodcall_node, "URI", "string", url);
 
     if (target != NULL)
     {
@@ -861,6 +893,131 @@ xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
                                  NULL);
         addLocalInstPath(value_node, namespace, target);
     }
+
+    if (base64_hash != NULL)
+    {
+        paramvalue_node = xmlNewChild(methodcall_node, NULL,
+                                      "PARAMVALUE", NULL);
+        xmlNewProp(paramvalue_node, BAD_CAST "NAME",
+                   BAD_CAST "InstallOptions");
+        xmlNewProp(paramvalue_node, BAD_CAST "PARAMTYPE",
+                   BAD_CAST "uint16");
+        value_node = xmlNewChild(paramvalue_node, NULL,
+                                 BAD_CAST "VALUE",
+                                 BAD_CAST "32768");
+
+        paramvalue_node = xmlNewChild(methodcall_node, NULL,
+                                      "PARAMVALUE", NULL);
+        xmlNewProp(paramvalue_node, BAD_CAST "NAME",
+                   BAD_CAST "InstallOptionsValues");
+        xmlNewProp(paramvalue_node, BAD_CAST "PARAMTYPE",
+                   BAD_CAST "string");
+        value_arr_node = xmlNewChild(paramvalue_node, NULL,
+                                     BAD_CAST "VALUE.ARRAY",
+                                     NULL);
+        value_node = xmlNewChild(value_arr_node, NULL,
+                                 BAD_CAST "VALUE",
+                                 BAD_CAST base64_hash);
+    }
+
+    return doc;
+}
+
+/**
+ * Construct CIM-XML request for calling GetRequiredFwImageName() method
+ *
+ * @param namespace     Namespace
+ * @param svc           SF_SoftwareInstallationService instance pointer
+ * @param target        Target parameter (should be instance of SF_NICCard)
+ *
+ * @return XML document pointer for the constructed CIM-XML request
+ */
+xmlDocPtr
+xmlReqGetRequiredFwImageName(const char *namespace,
+                             xmlCimInstance *svc,
+                             xmlCimInstance *target)
+{
+    xmlDocPtr       doc = NULL;
+    xmlNodePtr      methodcall_node = NULL;
+    xmlNodePtr      paramvalue_node = NULL;
+    xmlNodePtr      value_node = NULL;
+
+    doc = xmlReqPrepareMethodCall(0, namespace, svc,
+                                  "GetRequiredFwImageName",
+                                  &methodcall_node);
+
+    paramvalue_node = xmlNewChild(methodcall_node, NULL,
+                                  "PARAMVALUE", NULL);
+    xmlNewProp(paramvalue_node, BAD_CAST "NAME",
+               BAD_CAST "Target");
+    xmlNewProp(paramvalue_node, BAD_CAST "PARAMTYPE",
+               BAD_CAST "reference");
+
+    value_node = xmlNewChild(paramvalue_node, NULL,
+                             BAD_CAST "VALUE.REFERENCE",
+                             NULL);
+    addLocalInstPath(value_node, namespace, target);
+
+    return doc;
+}
+
+/**
+ * Construct CIM-XML request for calling SendFwImageData() method
+ *
+ * @param namespace     Namespace
+ * @param svc           SF_SoftwareInstallationService instance pointer
+ * @param file_name     Name of temporary file in which data
+ *                      would be stored
+ * @param base64        Data from firmware image encoded in Base64
+ *
+ * @return XML document pointer for the constructed CIM-XML request
+ */
+xmlDocPtr
+xmlReqSendFwImageData(const char *namespace, xmlCimInstance *svc,
+                      const char *file_name, const char *base64)
+{
+    xmlDocPtr       doc = NULL;
+    xmlNodePtr      methodcall_node = NULL;
+    xmlNodePtr      paramvalue_node = NULL;
+    xmlNodePtr      value_node = NULL;
+
+    doc = xmlReqPrepareMethodCall(0, namespace, svc,
+                                  "SendFwImageData",
+                                  &methodcall_node);
+
+    addSimpleParamValue(methodcall_node, "file_name", "string",
+                        file_name);
+    addSimpleParamValue(methodcall_node, "base64", "string",
+                        base64);
+
+    return doc;
+}
+
+/**
+ * Construct CIM-XML request for calling RemoveFwImage() method
+ *
+ * @param namespace     Namespace
+ * @param svc           SF_SoftwareInstallationService instance pointer
+ * @param file_name     Name of temporary file in which data
+ *                      would be stored
+ *
+ * @return XML document pointer for the constructed CIM-XML request
+ */
+xmlDocPtr
+xmlReqRemoveFwImage(const char *namespace, xmlCimInstance *svc,
+                    const char *file_name)
+{
+    xmlDocPtr       doc = NULL;
+    xmlNodePtr      methodcall_node = NULL;
+    xmlNodePtr      paramvalue_node = NULL;
+    xmlNodePtr      value_node = NULL;
+
+    doc = xmlReqPrepareMethodCall(0, namespace, svc,
+                                  "RemoveFwImage",
+                                  &methodcall_node);
+
+    addSimpleParamValue(methodcall_node, "file_name", "string",
+                        file_name);
 
     return doc;
 }
@@ -1527,16 +1684,120 @@ associators(CURL *curl, const char *namespace, xmlCimInstance *inst,
  * @return 0 on success, -1 on failure
  */
 int
-install_from_uri(CURL *curl, const char *namespace,
-                 xmlCimInstance *svc, xmlCimInstance *target,
-                 const char *url,
-                 response_descr *response)
+call_install_from_uri(CURL *curl, const char *namespace,
+                      xmlCimInstance *svc, xmlCimInstance *target,
+                      const char *url,
+                      const char *base64_hash,
+                      response_descr *response)
 {
     xmlDocPtr doc;
 
-    doc = xmlReqInstallFromURI(namespace, svc, target, url);
+    doc = xmlReqInstallFromURI(namespace, svc, target, url,
+                               base64_hash);
     
     return processXmlRequest(curl, doc, "InstallFromURI",
+                             response);
+}
+
+/**
+ * Call GetRequiredFwImageName() extrinsic method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param svc               SF_SoftwareInstallationService instance pointer
+ * @param target            Target parameter (may be instance of SF_NICCard
+ *                          or NULL)
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
+int
+call_get_required_fw_image_name(CURL *curl, const char *namespace,
+                                xmlCimInstance *svc, xmlCimInstance *target,
+                                response_descr *response)
+{
+    xmlDocPtr doc;
+
+    doc = xmlReqGetRequiredFwImageName(namespace, svc, target);
+    
+    return processXmlRequest(curl, doc, "GetRequiredFwImageName",
+                             response);
+}
+
+/**
+ * Call StartFwImageSend() extrinsic method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param svc               SF_SoftwareInstallationService instance pointer
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
+int
+call_start_fw_image_send(CURL *curl, const char *namespace,
+                         xmlCimInstance *svc,
+                         response_descr *response)
+{
+    xmlDocPtr doc;
+
+    doc = xmlReqPrepareMethodCall(0, namespace, svc,
+                                  "StartFwImageSend",
+                                  NULL);
+    
+    return processXmlRequest(curl, doc, "StartFwImageSend",
+                             response);
+}
+
+/**
+ * Call SendFwImageData() extrinsic method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param svc               SF_SoftwareInstallationService instance pointer
+ * @param file_name         Temporary file name where to store image data
+ * @param base64            Firmware image data encoded in Base64
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
+int
+call_send_fw_image_data(CURL *curl, const char *namespace,
+                        xmlCimInstance *svc,
+                        const char *file_name,
+                        const char *base64,
+                        response_descr *response)
+{
+    xmlDocPtr doc;
+
+    doc = xmlReqSendFwImageData(namespace, svc, file_name, base64);
+    
+    return processXmlRequest(curl, doc, "SendFwImageData",
+                             response);
+}
+
+/**
+ * Call RemoveFwImage() extrinsic method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param svc               SF_SoftwareInstallationService instance pointer
+ * @param file_name         Temporary file name where image was stored
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
+int
+call_remove_fw_image(CURL *curl, const char *namespace,
+                     xmlCimInstance *svc,
+                     const char *file_name,
+                     response_descr *response)
+{
+    xmlDocPtr doc;
+
+    doc = xmlReqRemoveFwImage(namespace, svc, file_name);
+    
+    return processXmlRequest(curl, doc, "RemoveFwImage",
                              response);
 }
 
@@ -1565,6 +1826,408 @@ install_from_uri(CURL *curl, const char *namespace,
     } while (0)
 
 /**
+ * Call extrinsic CIM method and check response and return code
+ *
+ * @param rc_   Return value to be set on failure
+ * @param f_    Method call
+ * @param rsp_  Response to be filled
+ * @param msg_  Error message format string
+ * @param ...   Error message parameters
+ */
+#define CHECK_RESPONSE_EXT(rc_, f_, rsp_, msg_...) \
+    do {                                                                \
+        int ret_ = (f_);                                                \
+                                                                        \
+        if (ret_ < 0 || rsp_.error_returned ||                          \
+            strcmp(rsp_.returned_value, "0") != 0)                      \
+        {                                                               \
+            if (ret_ >= 0)                                              \
+            {                                                           \
+                if (rsp_.error_returned)                                \
+                    ERROR_MSG("CIM ERROR: code='%s', description='%s'", \
+                              (char *)rsp_.err_code,                    \
+                              (char *)rsp_.err_descr);                  \
+                else                                                    \
+                    ERROR_MSG("Extrinsic method returned '%s'",         \
+                              rsp_.returned_value);                     \
+            }                                                           \
+            ERROR_MSG(msg_);                                            \
+            rc_ = -1;                                                   \
+        }                                                               \
+    } while (0)
+
+int
+install_from_local_path(CURL *curl, const char *namespace,
+                        xmlCimInstance *svc, xmlCimInstance *target,
+                        const char *path,
+                        const char *unused,
+                        response_descr *install_response)
+{
+#define MAX_PATH_LEN 1024
+#define CHUNK_LEN 100000
+
+    int             rc = 0;
+    int             rc_rsp = 0;
+    xmlCimInstance  aux_inst;
+    xmlCimInstance *targets_list = NULL;
+    xmlCimInstance *p;
+    response_descr  nics_rsp;
+    response_descr  call_rsp;
+    char           *svc_name = NULL;
+
+    int             not_full_path = 0;
+    char            full_path[MAX_PATH_LEN];
+    char            full_path_prev[MAX_PATH_LEN];
+    char           *tmp_file_name = NULL;
+    char            url[MAX_FILE_PATH];
+
+    EVP_MD_CTX      mdctx;
+    char            md_hash[EVP_MAX_MD_SIZE];
+    int             md_len;
+
+    size_t  enc_size;
+    char   *encoded = NULL;
+
+    char            img_chunk[CHUNK_LEN];
+    size_t          read_len;
+
+    memset(&nics_rsp, 0, sizeof(nics_rsp));
+    memset(&call_rsp, 0, sizeof(call_rsp));
+
+    full_path[0] = '\0';
+    full_path_prev[0] = '\0';
+
+    if (strstr(path, ".dat") != path + (strlen(path) - 4))
+        not_full_path = 1;
+
+    if (target != NULL)
+    {
+        memcpy(&aux_inst, target, sizeof(aux_inst));
+        aux_inst.prev = NULL;
+        aux_inst.next = NULL;
+        targets_list = &aux_inst;
+    }
+    else if (!not_full_path)
+            targets_list = NULL;
+    else
+    {
+        CHECK_RESPONSE(
+            rc,
+            enumerate_instances(curl, namespace,
+                                "SF_NICCard", 0,
+                                &nics_rsp),
+            nics_rsp,
+            "Failed to enumerate SF_NICCard instances");
+        if (rc < 0)
+            goto cleanup;
+
+        targets_list = nics_rsp.inst_list;
+        if (targets_list == NULL)
+        {
+            ERROR_MSG_PLAIN("No SF_NICCard instances were found");
+            goto cleanup;
+        }
+    }
+
+    if (xmlCimInstGetPropTrim(svc, "Name",
+                              &svc_name, NULL) < 0)
+    {
+        ERROR_MSG("Failed to get Name attribute "
+                  "of SF_SoftwareInstallationService instance");
+        rc = -1;
+        goto cleanup;
+    }
+
+    p = targets_list;
+
+    do {
+        strncpy(full_path_prev, full_path, MAX_PATH_LEN);
+        if (not_full_path)
+        {
+            char *tag;
+            char *name;
+            char *subdir = NULL;
+
+            if (xmlCimInstGetPropTrim(p, "Tag",
+                                      &tag, NULL) < 0)
+            {
+                ERROR_MSG("Failed to get Tag attribute "
+                          "of SF_NICCard instance");
+                rc = -1;
+                goto next_target;
+            }
+
+
+            /* FIXME: should we just skip NIC for which
+             * it is impossible to get required firmware
+             * name? */
+            assert(p != NULL);
+            CHECK_RESPONSE_EXT(
+                rc_rsp,
+                call_get_required_fw_image_name(curl, namespace,
+                                                svc, p,
+                                                &call_rsp),
+                call_rsp,
+                "Failed to get required firmware image name for "
+                "SF_NICCard.Tag='%s', firmware='%s'", tag, svc_name);
+
+            if (rc_rsp < 0)
+            {
+                free(tag);
+                rc = -1;
+                goto next_target;
+            }
+
+            name = get_named_value(call_rsp.out_params_list,
+                                   "name");
+            if (name == NULL || strlen(name) == 0)
+            {
+                ERROR_MSG_PLAIN("Failed to get required firmware "
+                                "image name for SF_NICCard.Tag='%s', "
+                                "firmware '%s'",
+                                tag, svc_name);
+                free(tag);
+                rc = -1;
+                goto next_target;
+            }
+
+            if (strcmp(svc_name, "BootROM") == 0)
+                subdir = "bootrom";
+            else
+                subdir = "mcfw";
+#ifdef _WIN32
+            snprintf(full_path, MAX_PATH_LEN, "%s\\image\\%s\\%s",
+                     path, subdir, name);
+#else
+            snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
+                     path, subdir, name);
+#endif
+            free(tag);
+            clear_response(&call_rsp);
+        }
+        else
+            snprintf(full_path, MAX_PATH_LEN, "%s", path);
+
+        if (strcmp(full_path, full_path_prev) != 0)
+        {
+            FILE *f;
+
+            if (tmp_file_name != NULL)
+            {
+                CHECK_RESPONSE_EXT(
+                    rc_rsp,
+                    call_remove_fw_image(curl, namespace,
+                                         svc, tmp_file_name,
+                                         &call_rsp),
+                    call_rsp,
+                    "Failed to remove temporary file '%s'",
+                    tmp_file_name);
+
+                if (rc_rsp < 0)
+                {
+                    free(tmp_file_name);
+                    rc = -1;
+                    goto cleanup;
+                }
+
+                free(tmp_file_name);
+                tmp_file_name = NULL;
+                clear_response(&call_rsp);
+            }
+
+            CHECK_RESPONSE_EXT(
+                rc_rsp,
+                call_start_fw_image_send(curl, namespace,
+                                         svc, &call_rsp),
+                call_rsp,
+                "Failed to create temporary file for "
+                "firmware image transfer, firmware='%s'",
+                svc_name);
+            if (rc_rsp < 0)
+            {
+                rc = -1;
+                goto cleanup;
+            }
+
+            tmp_file_name = get_named_value(call_rsp.out_params_list,
+                                            "file_name");
+            if (tmp_file_name == NULL || strlen(tmp_file_name) == 0)
+            {
+                ERROR_MSG_PLAIN("Failed to get temporary file name "
+                                "for firmware transfer, firmware='%s'",
+                                svc_name);
+                rc = -1;
+                goto cleanup;
+            }
+
+            tmp_file_name = strdup(tmp_file_name);
+            clear_response(&call_rsp);
+
+            f = fopen(full_path, "rb");
+            if (f == NULL)
+            {
+                ERROR_MSG_PLAIN("Failed to open file '%s' for reading",
+                                full_path);
+                rc = -1;
+                goto cleanup;
+            }
+
+            EVP_MD_CTX_init(&mdctx);
+            if (!EVP_DigestInit_ex(&mdctx, EVP_sha1(), NULL))
+            {
+                ERROR_MSG("EVP_DigestInit_ex() failed");
+                fclose(f);
+                rc = -1;
+                goto cleanup;
+            }
+            while (!feof(f))
+            {
+                int ferr;
+
+                read_len = fread(img_chunk, 1, CHUNK_LEN, f); 
+                ferr = ferror(f);
+                if (ferr != 0)
+                {
+                    ERROR_MSG("Read error occured when reading from '%s'",
+                              full_path);
+                    rc = -1;
+                    fclose(f);
+                    goto cleanup;
+                }
+
+                if (read_len > 0)
+                {
+                    enc_size = base64_enc_size(read_len);
+
+                    if (!EVP_DigestUpdate(&mdctx, img_chunk, read_len))
+                    {
+                        ERROR_MSG("EVP_DigestUpdate() failed");
+                        rc = -1;
+                        fclose(f);
+                        goto cleanup;
+                    }
+
+                    encoded = calloc(enc_size, 1);
+                    if (encoded == NULL)
+                    {
+                        ERROR_MSG("Failed to allocate memory for Base64 "
+                                  "string");
+                        rc = -1;
+                        fclose(f);
+                        goto cleanup;
+                    }
+
+                    base64_encode(encoded, img_chunk, read_len);
+                    
+                    snprintf(url, MAX_FILE_PATH, "file://%s",
+                             tmp_file_name);
+
+                    CHECK_RESPONSE_EXT(
+                        rc_rsp,
+                        call_send_fw_image_data(curl, namespace,
+                                                svc,
+                                                url, encoded,
+                                                &call_rsp),
+                        call_rsp,
+                        "Failed to send firmware image data, "
+                        "firmware='%s'", svc_name);
+                    if (rc_rsp < 0)
+                    {
+                        rc = -1;
+                        free(encoded);
+                        fclose(f);
+                        goto cleanup;
+                    }
+                    clear_response(&call_rsp);
+                    free(encoded);
+                }
+            }
+            fclose(f);
+            if (!EVP_DigestFinal_ex(&mdctx, md_hash, &md_len))
+            {
+                ERROR_MSG("Failed to compute SHA1 hash of "
+                          "firmware image");
+                rc = -1;
+                goto cleanup;
+            }
+            if (!EVP_MD_CTX_cleanup(&mdctx))
+            {
+                ERROR_MSG("EVP_MD_CTX_cleanup() failed");
+                rc = -1;
+                goto cleanup;
+            }
+        }
+ 
+        enc_size = base64_enc_size(md_len);
+        encoded = calloc(enc_size, 1);
+        if (encoded == NULL)
+        {
+            ERROR_MSG("Failed to allocate memory for Base64 "
+                      "string");
+            rc = -1;
+            goto cleanup;
+        }
+        base64_encode(encoded, md_hash, md_len);
+
+        CHECK_RESPONSE_EXT(
+            rc_rsp,
+            call_install_from_uri(curl, namespace,
+                                  svc, p,
+                                  tmp_file_name, encoded,
+                                  &call_rsp),
+            call_rsp,
+            "InstallFromURI() failed");
+        if (rc_rsp < 0)
+        {
+            rc = -1;
+            free(encoded);
+            goto cleanup;
+        }
+        free(encoded);
+
+next_target:
+        clear_response(&call_rsp);
+        if (p != NULL)
+            p = p->next;
+    } while (p != NULL);
+
+cleanup:
+
+    if (tmp_file_name != NULL)
+    {
+        CHECK_RESPONSE_EXT(
+            rc_rsp,
+            call_remove_fw_image(curl, namespace,
+                                 svc, tmp_file_name,
+                                 &call_rsp),
+            call_rsp,
+            "Failed to remove temporary file '%s'",
+            tmp_file_name);
+
+        if (rc_rsp < 0)
+            rc = -1;
+
+        free(tmp_file_name);
+        tmp_file_name = NULL;
+    }
+
+    free(svc_name);
+    clear_response(&nics_rsp);
+    clear_response(&call_rsp);
+    return -1;
+    return rc;
+}
+
+/**
+ * Firmware install function pointer type
+ */
+typedef int (*firmware_install_f)(
+                    CURL *, const char *,
+                    xmlCimInstance *, xmlCimInstance *,
+                    const char *, const char *,
+                    response_descr *);
+
+/**
  * Update firmware
  *
  * @param curl          CURL pointer returned by curl_easy_init()
@@ -1581,17 +2244,21 @@ int
 update_firmware(CURL *curl, const char *namespace,
                 xmlCimInstance *nic_inst,
                 int controller, int bootrom,
-                const char *firmware_url)
+                const char *firmware_source,
+                int url_specified)
 {
     response_descr  svcs_rsp;
     response_descr  log_rsp;
     response_descr  rec_rsp;
     response_descr  call_rsp;
     int             rc = 0;
+    int             rc_rsp = 0;
     int             log_available = 0;
     int             print_err_recs = 0;
     char           *recent_rec_id = NULL;
     char           *svc_name = NULL;
+
+    firmware_install_f  func_install;
 
     xmlCimInstance *svc_inst = NULL;
     xmlCimInstance *svc_mcfw_inst = NULL;
@@ -1603,6 +2270,11 @@ update_firmware(CURL *curl, const char *namespace,
     memset(&log_rsp, 0, sizeof(rec_rsp));
     memset(&rec_rsp, 0, sizeof(rec_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
+
+    if (url_specified)
+        func_install = call_install_from_uri;
+    else
+        func_install = install_from_local_path;
 
     printf("\nUpdating firmware...\n");
 
@@ -1703,19 +2375,24 @@ update_firmware(CURL *curl, const char *namespace,
         if (controller)
         {
             CHECK_RESPONSE(
-                    rc,
-                    install_from_uri(curl, namespace,
-                                     svc_mcfw_inst,
-                                     nic_inst, firmware_url,
-                                     &call_rsp),
+                    rc_rsp,
+                    func_install(curl, namespace,
+                                 svc_mcfw_inst,
+                                 nic_inst, firmware_source,
+                                 NULL, &call_rsp),
                     call_rsp,
                     "Call of InstallFromURI() to update "
                     "controller firmware failed");
-            if (strcmp(call_rsp.returned_value, "0") != 0)
+            if (rc_rsp >= 0 && strcmp(call_rsp.returned_value, "0") != 0)
             {
                 ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
                                 "trying to update controller firmware",
                                 call_rsp.returned_value);
+                rc = -1;
+                print_err_recs = 1;
+            }
+            else if (rc_rsp < 0)
+            {
                 rc = -1;
                 print_err_recs = 1;
             }
@@ -1725,15 +2402,15 @@ update_firmware(CURL *curl, const char *namespace,
         if (bootrom)
         {
             CHECK_RESPONSE(
-                    rc,
-                    install_from_uri(curl, namespace,
-                                     svc_bootrom_inst,
-                                     nic_inst, firmware_url,
-                                     &call_rsp),
+                    rc_rsp,
+                    func_install(curl, namespace,
+                                 svc_bootrom_inst,
+                                 nic_inst, firmware_source,
+                                 NULL, &call_rsp),
                     call_rsp,
                     "Call of InstallFromURI() to update "
                     "BootROM firmware failed");
-            if (strcmp(call_rsp.returned_value, "0") != 0)
+            if (rc_rsp >= 0 && strcmp(call_rsp.returned_value, "0") != 0)
             {
                 ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
                                 "trying to update BootROM firmware",
@@ -1741,8 +2418,11 @@ update_firmware(CURL *curl, const char *namespace,
                 rc = -1;
                 print_err_recs = 1;
             }
-            else
-                printf("Firmware was successfully updated.\n");
+            else if (rc_rsp < 0)
+            {
+                rc = -1;
+                print_err_recs = 1;
+            }
             clear_response(&call_rsp);
         }
 
@@ -1810,6 +2490,9 @@ update_firmware(CURL *curl, const char *namespace,
     }
 
 cleanup:
+
+    if (rc >= 0)
+        printf("Firmware was successfully updated!\n");
     clear_response(&svcs_rsp);
     clear_response(&call_rsp);
     clear_response(&log_rsp);
@@ -2062,7 +2745,8 @@ main(int argc, const char *argv[])
             goto cleanup;
         }
 
-        if (fw_url != NULL && (update_controller || update_bootrom))
+        if ((fw_url != NULL || fw_path != NULL)
+            && (update_controller || update_bootrom))
         {
             if (!yes)
             {
@@ -2088,7 +2772,8 @@ main(int argc, const char *argv[])
                 update_firmware(curl, cim_namespace,
                                 interface_name == NULL ? NULL : nic_inst,
                                 update_controller, update_bootrom,
-                                fw_url) < 0)
+                                fw_url == NULL ? fw_path : fw_url,
+                                fw_url == NULL ? 0 : 1) < 0)
             {
                 ERROR_MSG_PLAIN("Problems encountered when trying to "
                                 "update firmware");

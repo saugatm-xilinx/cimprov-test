@@ -1,6 +1,6 @@
 ifeq (@WINDOWS@,1)
-    MY_LIBS=-lcurl -lz -lpopt \
-	    -lintl -liconv -lcrypt32 -lws2_32 -lncurses @XML2_LIBS@ -llzma
+    MY_LIBS=-lcurl -lz -lpopt -lcrypto -lgdi32 \
+	    -lintl -lcrypt32 -lws2_32 -lncurses @XML2_LIBS@ -llzma
     MY_CFLAGS=-DCURL_STATICLIB
     FILE_SUFFIX=.exe
 else
