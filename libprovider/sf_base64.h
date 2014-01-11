@@ -178,6 +178,8 @@ namespace solarflare
                 dst[3 * i + 2] = ((c << 6) & 0xc0)
                                  + (d & 0x3f);
         }
+
+        return 0;
     }
 
 #ifdef __cplusplus
