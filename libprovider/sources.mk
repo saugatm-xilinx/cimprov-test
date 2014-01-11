@@ -129,7 +129,8 @@ endif
 
 
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
-CI_INCLUDES = libprovider/v5_import libprovider/v5_import/tlv libprovider/v5_import/endianness/ \
+libprovider_INCLUDES += libprovider/v5_import libprovider/v5_import/tlv \
+		libprovider/v5_import/endianness/ \
 		libprovider/v5_import/ci libprovider/v5_import/ci/app \
 		libprovider/v5_import/ci/app/platform \
 		libprovider/v5_import/ci/compat libprovider/v5_import/ci/driver \
@@ -143,10 +144,13 @@ CI_INCLUDES = libprovider/v5_import libprovider/v5_import/tlv libprovider/v5_imp
 		libprovider/v5_import/ci/internal libprovider/v5_import/ci/iscsi \
 		libprovider/v5_import/ci/mgmt libprovider/v5_import/ci/net \
 		libprovider/v5_import/ci/tools \
-		libprovider/v5_import/ci/tools/platform libprovider/curl \
-		libprovider/openssl
+		libprovider/v5_import/ci/tools/platform
+endif
 
-libprovider_INCLUDES += $(CI_INCLUDES)
+ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM), vmware))
+libprovider_INCLUDES += libprovider/esxi_includes/curl \
+			libprovider/esxi_includes/openssl \
+			libprovider/esxi_includes/
 endif
 
 ##! Generate CIMPLE module definition 
