@@ -1860,8 +1860,8 @@ int
 install_from_local_path(CURL *curl, const char *namespace,
                         xmlCimInstance *svc, xmlCimInstance *target,
                         const char *path,
-                        const char *unused,
-                        response_descr *install_response)
+                        const char *unused1,
+                        response_descr *unused2)
 {
 #define MAX_PATH_LEN 1024
 #define CHUNK_LEN 100000
@@ -1969,7 +1969,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                                                 &call_rsp),
                 call_rsp,
                 "Failed to get required firmware image name for "
-                "SF_NICCard.Tag='%s', firmware='%s'", tag, svc_name);
+                "SF_NICCard.Tag='%s'", tag);
 
             if (rc_rsp < 0)
             {
@@ -1983,9 +1983,8 @@ install_from_local_path(CURL *curl, const char *namespace,
             if (name == NULL || strlen(name) == 0)
             {
                 ERROR_MSG_PLAIN("Failed to get required firmware "
-                                "image name for SF_NICCard.Tag='%s', "
-                                "firmware '%s'",
-                                tag, svc_name);
+                                "image name for SF_NICCard.Tag='%s'",
+                                tag);
                 free(tag);
                 rc = -1;
                 goto next_target;
@@ -2041,8 +2040,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                                          svc, &call_rsp),
                 call_rsp,
                 "Failed to create temporary file for "
-                "firmware image transfer, firmware='%s'",
-                svc_name);
+                "firmware image transfer");
             if (rc_rsp < 0)
             {
                 rc = -1;
@@ -2054,8 +2052,7 @@ install_from_local_path(CURL *curl, const char *namespace,
             if (tmp_file_name == NULL || strlen(tmp_file_name) == 0)
             {
                 ERROR_MSG_PLAIN("Failed to get temporary file name "
-                                "for firmware transfer, firmware='%s'",
-                                svc_name);
+                                "for firmware transfer");
                 rc = -1;
                 goto cleanup;
             }
@@ -2126,8 +2123,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                                                 tmp_file_name, encoded,
                                                 &call_rsp),
                         call_rsp,
-                        "Failed to send firmware image data, "
-                        "firmware='%s'", svc_name);
+                        "Failed to send firmware image data");
                     if (rc_rsp < 0)
                     {
                         rc = -1;
@@ -2177,7 +2173,16 @@ install_from_local_path(CURL *curl, const char *namespace,
                                   &call_rsp),
             call_rsp,
             "InstallFromURI() failed");
-        if (rc_rsp < 0)
+        if (rc_rsp >= 0 && strcmp(call_rsp.returned_value, "0") != 0)
+        {
+            ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
+                            "trying to update firmware",
+                            call_rsp.returned_value);
+            rc = -1;
+            free(encoded);
+            goto cleanup;
+        }
+        else if (rc_rsp < 0)
         {
             rc = -1;
             free(encoded);
@@ -2214,7 +2219,6 @@ cleanup:
     free(svc_name);
     clear_response(&nics_rsp);
     clear_response(&call_rsp);
-    return -1;
     return rc;
 }
 
@@ -2381,9 +2385,10 @@ update_firmware(CURL *curl, const char *namespace,
                                  nic_inst, firmware_source,
                                  NULL, &call_rsp),
                     call_rsp,
-                    "Call of InstallFromURI() to update "
+                    "Attempt to update "
                     "controller firmware failed");
-            if (rc_rsp >= 0 && strcmp(call_rsp.returned_value, "0") != 0)
+            if (rc_rsp >= 0 && func_install != install_from_local_path &&
+                strcmp(call_rsp.returned_value, "0") != 0)
             {
                 ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
                                 "trying to update controller firmware",
@@ -2408,9 +2413,10 @@ update_firmware(CURL *curl, const char *namespace,
                                  nic_inst, firmware_source,
                                  NULL, &call_rsp),
                     call_rsp,
-                    "Call of InstallFromURI() to update "
+                    "Attempt to update "
                     "BootROM firmware failed");
-            if (rc_rsp >= 0 && strcmp(call_rsp.returned_value, "0") != 0)
+            if (rc_rsp >= 0 && func_install != install_from_local_path &&
+                strcmp(call_rsp.returned_value, "0") != 0)
             {
                 ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
                                 "trying to update BootROM firmware",
