@@ -143,7 +143,8 @@ CI_INCLUDES = libprovider/v5_import libprovider/v5_import/tlv libprovider/v5_imp
 		libprovider/v5_import/ci/internal libprovider/v5_import/ci/iscsi \
 		libprovider/v5_import/ci/mgmt libprovider/v5_import/ci/net \
 		libprovider/v5_import/ci/tools \
-		libprovider/v5_import/ci/tools/platform libprovider/curl
+		libprovider/v5_import/ci/tools/platform libprovider/curl \
+		libprovider/openssl
 
 libprovider_INCLUDES += $(CI_INCLUDES)
 endif
