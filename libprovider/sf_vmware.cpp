@@ -74,6 +74,8 @@ extern "C" {
 
 #include <sys/syscall.h>
 
+#include "openssl/evp.h"
+
 // Common paths for obtaining information about devices
 #define PROC_BUS_PATH       "/proc/bus/pci/"
 #define DEV_PATH            "/dev/"
@@ -1436,7 +1438,8 @@ fail:
 
     // Forward-declaration
     static int vmwareInstallFirmware(const NIC *owner,
-                                     const char *fileName);
+                                     const char *fileName,
+                                     const char *base64_hash);
 
     // Forward-declaration
     String getDefaultFwPath(const NIC *owner, UpdatedFirmwareType fwType);
@@ -1445,15 +1448,18 @@ fail:
     /// Install firmware of a given type on a given NIC
     /// from a specified location.
     ///
-    /// @param path     Where to find firmware image
-    /// @param owner    NIC on which to install firmware
-    /// @param fwType   Firmware type
+    /// @param path         Where to find firmware image
+    /// @param owner        NIC on which to install firmware
+    /// @param fwType       Firmware type
+    /// @param base64_hash  SHA-1 hash of firmware image,
+    ///                     encoded in Base64
     ///
     /// @return true on sucess, false on failure
     ///
     bool vmwareInstallFirmwareType(const char *path,
                                    const NIC *owner,
-                                   UpdatedFirmwareType fwType)
+                                   UpdatedFirmwareType fwType,
+                                   const char *base64_hash)
     {
         String strPath;
         String strDefPath;
@@ -1462,7 +1468,8 @@ fail:
         strPath = fixFwImagePath(path,
                                  strDefPath.c_str());
 
-        if (vmwareInstallFirmware(owner, strPath.c_str()) < 0)
+        if (vmwareInstallFirmware(owner, strPath.c_str(),
+                                  base64_hash) < 0)
             return false;
 
         return true;
@@ -2060,10 +2067,12 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *file_name)
+        virtual bool syncInstall(const char *file_name,
+                                 const char *base64_hash)
         {
             return vmwareInstallFirmwareType(file_name, owner,
-                                             FIRMWARE_MCFW);
+                                             FIRMWARE_MCFW,
+                                             base64_hash);
         }
         virtual void initialize() {};
     };
@@ -2075,10 +2084,12 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *file_name)
+        virtual bool syncInstall(const char *file_name,
+                                 const char *base64_hash)
         {
             return vmwareInstallFirmwareType(file_name, owner,
-                                             FIRMWARE_BOOTROM);
+                                             FIRMWARE_BOOTROM,
+                                             base64_hash);
         }
         virtual void initialize() {};
     };
@@ -2454,15 +2465,142 @@ curl_fail:
     }
 
     ///
+    /// Check file SHA-1 hash.
+    ///
+    /// @param file_name    File to be checked
+    /// @param base64_hash  Expected hash, encoded in Base64
+    ///
+    /// @return true on success, false on failure
+    ///
+    static bool checkFileHash(const char *file_name,
+                              const char *base64_hash)
+    {
+#define CHUNK_SIZE 10000
+        ssize_t  dec_size;
+        char    *hash = NULL;
+        FILE    *f = NULL;
+        char     chunk[CHUNK_SIZE];
+        size_t   read_len;
+        bool     result = true;
+
+        EVP_MD_CTX    mdctx;
+        unsigned char md_hash[EVP_MAX_MD_SIZE];
+        unsigned int  md_len = 0;
+
+        if (base64_hash == NULL || strlen(base64_hash) == 0)
+            return true;
+
+        dec_size = base64_dec_size(base64_hash);
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "hash size", __FUNCTION__);
+            return false;
+        }
+
+        hash = new char[dec_size];
+        if (hash == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to allocate memory "
+                             "for decoded hash", __FUNCTION__);
+            return false;
+        }
+
+        if (base64_decode(hash, base64_hash) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to decode hash",
+                             __FUNCTION__);
+            result = false;
+            goto cleanup;
+        }
+
+        f = fopen(file_name, "r");
+        if (f == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to open '%s' for reading",
+                             __FUNCTION__, file_name);
+            result = false;
+            goto cleanup;
+        }
+
+        EVP_MD_CTX_init(&mdctx);
+        if (!EVP_DigestInit_ex(&mdctx, EVP_sha1(), NULL))
+        {
+            PROVIDER_LOG_ERR("%s(): EVP_DigestInit_ex() failed",
+                             __FUNCTION__);
+            result = false;
+            EVP_MD_CTX_cleanup(&mdctx);
+            goto cleanup;
+        }
+
+        while (!feof(f))
+        {
+            int ferr;
+
+            read_len = fread(chunk, 1, CHUNK_SIZE, f);
+            ferr = ferror(f);
+            if (ferr != 0)
+            {
+                PROVIDER_LOG_ERR("%s(): read error encountered",
+                                 __FUNCTION__);
+                result = false;
+                goto cleanup;
+            }
+
+            if (read_len > 0)
+            {
+                if (!EVP_DigestUpdate(&mdctx, chunk, read_len))
+                {
+                    PROVIDER_LOG_ERR("%s(): EVP_DigestUpdate() failed",
+                                     __FUNCTION__);
+                    result = false;
+                    EVP_MD_CTX_cleanup(&mdctx);
+                    goto cleanup;
+                }
+            }
+        }
+
+        if (!EVP_DigestFinal_ex(&mdctx, md_hash, &md_len))
+        {
+            PROVIDER_LOG_ERR("%s(): EVP_DigestFinal_ex() failed",
+                             __FUNCTION__);
+            result = false;
+            EVP_MD_CTX_cleanup(&mdctx);
+            goto cleanup;
+        }
+        if (!EVP_MD_CTX_cleanup(&mdctx))
+        {
+            PROVIDER_LOG_ERR("%s(): EVP_MD_CTX_cleanup() failed",
+                             __FUNCTION__);
+            result = false;
+            goto cleanup;
+        }
+
+        if (md_len != dec_size ||
+            memcmp(md_hash, hash, md_len) != 0)
+            result = false;
+
+cleanup:
+
+        free(hash);
+        if (f != NULL)
+          fclose(f);
+        return result;
+    }
+
+    ///
     /// Install firmware on a NIC from given image.
     ///
-    /// @param owner       NIC class pointer
-    /// @param fileName    From where to get firmware image
+    /// @param owner        NIC class pointer
+    /// @param fileName     From where to get firmware image
+    /// @param base64_hash  SHA-1 hash of firmware image,
+    ///                     encoded in Base64
     ///
     /// @return 0 on success, < 0 on failure
     ///
     static int vmwareInstallFirmware(const NIC *owner,
-                                     const char *fileName)
+                                     const char *fileName,
+                                     const char *base64_hash)
     {
         Auto_Mutex    guard(tmpFilesArrLock); 
 
@@ -2490,6 +2628,13 @@ curl_fail:
 
         if (strcasecmp_start(fileName, FILE_PROTO) == 0)
         {
+            if (!checkFileHash(fileName + strlen(FILE_PROTO),
+                               base64_hash))
+            {
+                PROVIDER_LOG_ERR("Firmware image hash check failed");
+                return -1;
+            }
+
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
                           ((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
@@ -2530,6 +2675,12 @@ curl_fail:
                 return -1;
             }
             fclose(f);
+
+            if (!checkFileHash(tmp_file, base64_hash))
+            {
+                PROVIDER_LOG_ERR("Firmware image hash check failed");
+                return -1;
+            }
 
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s",
@@ -2577,7 +2728,10 @@ curl_fail:
             Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return false;
+        }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
@@ -2671,7 +2825,10 @@ curl_fail:
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return false;
+        }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
@@ -2692,7 +2849,10 @@ curl_fail:
         {
             return kernelDriver.version();
         }
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return true;
+        }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(kernelDriver);
@@ -2720,7 +2880,10 @@ curl_fail:
         {
             return VersionInfo(SF_LIBPROV_VERSION);
         }
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return true;
+        }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(providerLibrary);

@@ -1573,7 +1573,7 @@ cleanup:
             owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *)
+        virtual bool syncInstall(const char *, const char *)
         {
             return true;
         }
@@ -1589,7 +1589,10 @@ cleanup:
             owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return true;
+        }
         virtual void initialize() {};
     };
 
@@ -1603,7 +1606,10 @@ cleanup:
         static WindowsDriver byDevInstName(const char *name);
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return false;
+        }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return NULL; }
 
@@ -1955,7 +1961,10 @@ cleanup:
         static WindowsLibrary moduleLibrary(const Package *pkg);
         virtual VersionInfo version() const { return vers; };
         virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return false;
+        }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
@@ -2042,7 +2051,10 @@ cleanup:
         {
             return providerLibrary.version();
         }
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return true;
+        }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(providerLibrary);

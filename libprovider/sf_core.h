@@ -164,6 +164,8 @@ namespace solarflare
         class InstallThread : public Thread {
             SWElement *owner;
             String filename;
+            String hash;
+            
         protected:
             virtual Thread *dup() const;
             virtual bool threadProc();
@@ -176,6 +178,11 @@ namespace solarflare
             void setFilename(const char *f)
             {
                 filename = f;
+            }
+            void setHash(const char *base64_hash)
+            {
+                if (base64_hash != NULL)
+                    hash = String(base64_hash);
             }
         };
         InstallThread installer;
@@ -220,15 +227,19 @@ namespace solarflare
         /// This method is only responsible for proper handling of
         /// asynchronous call; all real work is done in syncInstall()
         ///
-        /// @param filename Filename with new SW version 
-        /// @param sync If @p sync is false, a separate thread shall be
-        ///             created and true will be returned. The corresponding
-        ///             thread may be then obtained by calling
-        ///             installThread().
+        /// @param filename     Filename with new SW version 
+        /// @param sync         If @p sync is false, a separate thread
+        ///                     shall be created and true will be
+        ///                     returned. The corresponding thread may
+        ///                     be then obtained by calling
+        ///                     installThread().
+        /// @param base64_hash  SHA-1 hash of firmware image,
+        ///                     encoded in Base64 string
         ///
         /// @return FALSE if the installation failed, TRUE if it succeeds or
         /// we're in async mode.
-        bool install(const char *filename, bool sync = true);
+        bool install(const char *filename, bool sync = true,
+                     const char *base64_hash = NULL);
 
         /// Actually updates a software component from @p filename.
         /// The method shall be overriden in platform-specific subclasses.
@@ -236,7 +247,8 @@ namespace solarflare
         /// @note It's not intended to be called directly; it is made public
         /// because it shall be callable from InstallThread. 
         /// But it shall do no harm if called from some other context.
-        virtual bool syncInstall(const char *filename) = 0;
+        virtual bool syncInstall(const char *filename,
+                                 const char *base64_hash) = 0;
 
         /// Method returns system name of the component (e.g. object's file
         /// name, rpm name etc.). This is required so that we can relate to
@@ -317,7 +329,8 @@ namespace solarflare
             return VersionInfo();
         }
 
-        virtual bool syncInstall(const char *filename)
+        virtual bool syncInstall(const char *filename,
+                                 const char *base64_hash)
         {
             return false;
         }
@@ -372,7 +385,8 @@ namespace solarflare
             return vers;
         }
 
-        virtual bool syncInstall(const char *filename)
+        virtual bool syncInstall(const char *filename,
+                                 const char *base64_hash)
         {
             return false;
         }

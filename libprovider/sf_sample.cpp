@@ -119,7 +119,7 @@ namespace solarflare
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const { return vers; }
-        virtual bool syncInstall(const char *)
+        virtual bool syncInstall(const char *, const char *)
         {
             PROVIDER_LOG_DBG("syncInstall() is called for "
                              "NICFirmware on NIC %d",
@@ -137,7 +137,7 @@ namespace solarflare
             owner(o), vers(v) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const { return vers; }
-        virtual bool syncInstall(const char *)
+        virtual bool syncInstall(const char *, const char *)
         {
             PROVIDER_LOG_DBG("syncInstall() is called for "
                              "NICBootROM on NIC %d",
@@ -283,7 +283,10 @@ namespace solarflare
             Driver(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return false;
+        }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
@@ -298,7 +301,10 @@ namespace solarflare
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *) { return false; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return false;
+        }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
     };
@@ -316,7 +322,10 @@ namespace solarflare
             kernelDriver(this, "NET Driver", "sfc", "3.3") {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("3.3"); }
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return true;
+        }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(kernelDriver);
@@ -340,7 +349,10 @@ namespace solarflare
             providerLibrary(this, "CIM Provider library", "libSolarflare.so", "0.1") {}
         virtual PkgType type() const { return RPM; }
         virtual VersionInfo version() const { return VersionInfo("0.1"); }
-        virtual bool syncInstall(const char *) { return true; }
+        virtual bool syncInstall(const char *, const char *)
+        {
+            return true;
+        }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
             return en.process(providerLibrary);

@@ -32,7 +32,7 @@ namespace solarflare
 
     bool SWElement::InstallThread::threadProc()
     {
-        return owner->syncInstall(filename.c_str());
+        return owner->syncInstall(filename.c_str(), hash.c_str());
     }
 
     void SWElement::InstallThread::update(Thread *tempThr)
@@ -41,14 +41,16 @@ namespace solarflare
     }
 
 
-    bool SWElement::install(const char *filename, bool sync)
+    bool SWElement::install(const char *filename, bool sync,
+                            const char *base64_hash)
     {
         if (sync)
-            return syncInstall(filename);
+            return syncInstall(filename, base64_hash);
         if (installer.currentState() == Thread::Running ||
             installer.currentState() == Thread::Aborting)
             return false;
         installer.setFilename(filename);
+        installer.setHash(base64_hash);
         installer.start();
         return true;
     }

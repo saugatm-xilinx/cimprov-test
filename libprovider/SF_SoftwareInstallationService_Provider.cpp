@@ -161,14 +161,14 @@ void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::Sys
         ok = true;
         firstRun = false;
     }
-    ok = ok && sw.install(uri);
+    ok = ok && sw.install(uri, base64_hash);
 }
 
 void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::SystemElement& se,
                                                                     unsigned)
 {
     solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
-    Installer installer(uri, service);
+    Installer installer(uri, service, base64_hash);
     installer.forSoftware(nic);
     ok = installer.isOk();
     runInstallTried = installer.installWasRun();
@@ -196,6 +196,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     Property<uint32>& return_value)
 {
     const CIM_ComputerSystem *sys = NULL;
+
+    String base64_hash;
 
     /// CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
@@ -228,6 +230,23 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
                 case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_AdministrativeMode:
                     /* option is supported, do nothing */
                     break;
+
+                case SF_SoftwareInstallationServiceCapabilities::
+                        _SupportedInstallOptions::enum_Vendor_Specific:
+
+                        if (InstallOptionsValues.null ||
+                            InstallOptionsValues.value[i].size() <= i)
+                        {
+                            PROVIDER_LOG_ERR("%s(): vendor-specific "
+                                             "option supplied without "
+                                             "value", __FUNCTION__);
+                            return_value.set(InvalidParameter);
+                            return INVOKE_METHOD_OK;
+                        }
+                        base64_hash = InstallOptionsValues.value[i];
+                    break;
+
+                    /* option is supported, do nothing */
                 default:
                     PROVIDER_LOG_ERR("%s(): unsupported option value %u "
                                      "specified", __FUNCTION__,
@@ -250,7 +269,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
             return_value.set(InvalidParameter);
             return INVOKE_METHOD_OK;
         }
-        Installer installer(URI.value.c_str(), self);
+        Installer installer(URI.value.c_str(), self,
+                            base64_hash.c_str());
         installer.forSoftware();
         if (installer.isOk())
             return_value.set(OK);
@@ -264,7 +284,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     }
     else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
     {
-        NICInstaller installer(URI.value.c_str(), self, card);
+        NICInstaller installer(URI.value.c_str(), self, card,
+                               base64_hash.c_str());
         installer.forNIC();
         if (installer.isOk())
             return_value.set(OK);
