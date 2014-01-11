@@ -1454,6 +1454,7 @@ fail:
     // Forward-declaration
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName,
+                                     bool force,
                                      const char *base64_hash);
 
     // Forward-declaration
@@ -1474,6 +1475,7 @@ fail:
     bool vmwareInstallFirmwareType(const char *path,
                                    const NIC *owner,
                                    UpdatedFirmwareType fwType,
+                                   bool force,
                                    const char *base64_hash)
     {
         String strPath;
@@ -1484,7 +1486,7 @@ fail:
                                  strDefPath.c_str());
 
         if (vmwareInstallFirmware(owner, strPath.c_str(),
-                                  base64_hash) < 0)
+                                  force, base64_hash) < 0)
             return false;
 
         return true;
@@ -2083,10 +2085,12 @@ fail:
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *file_name,
+                                 bool force,
                                  const char *base64_hash)
         {
             return vmwareInstallFirmwareType(file_name, owner,
                                              FIRMWARE_MCFW,
+                                             force,
                                              base64_hash);
         }
         virtual void initialize() {};
@@ -2100,10 +2104,12 @@ fail:
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
         virtual bool syncInstall(const char *file_name,
+                                 bool force,
                                  const char *base64_hash)
         {
             return vmwareInstallFirmwareType(file_name, owner,
                                              FIRMWARE_BOOTROM,
+                                             force,
                                              base64_hash);
         }
         virtual void initialize() {};
@@ -2615,6 +2621,7 @@ cleanup:
     ///
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName,
+                                     bool force,
                                      const char *base64_hash)
     {
         Auto_Mutex    guard(tmpFilesArrLock); 
@@ -2651,9 +2658,10 @@ cleanup:
             }
 
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
-                          "--write --image=%s",
+                          "--write --image=%s%s",
                           ((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
-                          fileName + strlen(FILE_PROTO));
+                          fileName + strlen(FILE_PROTO),
+                          force ? " --force" : "");
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
                 PROVIDER_LOG_ERR("Failed to format sfupdate command");
@@ -2698,9 +2706,9 @@ cleanup:
             }
 
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
-                          "--write --image=%s",
+                          "--write --image=%s%s",
                           ((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
-                          tmp_file);
+                          tmp_file, force ? " --force" : "");
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
                 PROVIDER_LOG_ERR("Failed to format sfupdate command");
@@ -2743,7 +2751,7 @@ cleanup:
             Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return false;
         }
@@ -2840,7 +2848,7 @@ cleanup:
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return false;
         }
@@ -2864,7 +2872,7 @@ cleanup:
         {
             return kernelDriver.version();
         }
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }
@@ -2895,7 +2903,7 @@ cleanup:
         {
             return VersionInfo(SF_LIBPROV_VERSION);
         }
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }

@@ -164,6 +164,7 @@ namespace solarflare
         class InstallThread : public Thread {
             SWElement *owner;
             String filename;
+            bool force;
             String hash;
             
         protected:
@@ -178,6 +179,10 @@ namespace solarflare
             void setFilename(const char *f)
             {
                 filename = f;
+            }
+            void setForce(bool f)
+            {
+                force = f;
             }
             void setHash(const char *base64_hash)
             {
@@ -233,13 +238,16 @@ namespace solarflare
         ///                     returned. The corresponding thread may
         ///                     be then obtained by calling
         ///                     installThread().
+        /// @param force        Do update even if it is actually a
+        ///                     downgrade to lower version (or reinstalling
+        ///                     the same version)
         /// @param base64_hash  SHA-1 hash of firmware image,
         ///                     encoded in Base64 string
         ///
         /// @return FALSE if the installation failed, TRUE if it succeeds or
         /// we're in async mode.
         bool install(const char *filename, bool sync = true,
-                     const char *base64_hash = NULL);
+                     bool force = false, const char *base64_hash = NULL);
 
         /// Actually updates a software component from @p filename.
         /// The method shall be overriden in platform-specific subclasses.
@@ -248,6 +256,7 @@ namespace solarflare
         /// because it shall be callable from InstallThread. 
         /// But it shall do no harm if called from some other context.
         virtual bool syncInstall(const char *filename,
+                                 bool force,
                                  const char *base64_hash) = 0;
 
         /// Method returns system name of the component (e.g. object's file
@@ -330,6 +339,7 @@ namespace solarflare
         }
 
         virtual bool syncInstall(const char *filename,
+                                 bool force,
                                  const char *base64_hash)
         {
             return false;
@@ -386,6 +396,7 @@ namespace solarflare
         }
 
         virtual bool syncInstall(const char *filename,
+                                 bool force,
                                  const char *base64_hash)
         {
             return false;

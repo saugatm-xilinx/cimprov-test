@@ -802,7 +802,7 @@ namespace solarflare
             owner(o), boundIface(bi) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }
@@ -832,7 +832,7 @@ namespace solarflare
             owner(o), boundIface(bi) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }
@@ -1313,7 +1313,7 @@ namespace solarflare
             Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return false;
         }
@@ -1403,7 +1403,7 @@ namespace solarflare
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return false;
         }
@@ -1427,7 +1427,7 @@ namespace solarflare
         {
             return kernelDriver.version();
         }
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }
@@ -1458,7 +1458,7 @@ namespace solarflare
         {
             return VersionInfo(SF_LIBPROV_VERSION);
         }
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }

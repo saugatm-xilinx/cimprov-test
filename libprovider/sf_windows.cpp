@@ -1573,7 +1573,7 @@ cleanup:
             owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }
@@ -1589,7 +1589,7 @@ cleanup:
             owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }
@@ -1606,7 +1606,7 @@ cleanup:
         static WindowsDriver byDevInstName(const char *name);
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return false;
         }
@@ -1961,7 +1961,7 @@ cleanup:
         static WindowsLibrary moduleLibrary(const Package *pkg);
         virtual VersionInfo version() const { return vers; };
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return false;
         }
@@ -2051,7 +2051,7 @@ cleanup:
         {
             return providerLibrary.version();
         }
-        virtual bool syncInstall(const char *, const char *)
+        virtual bool syncInstall(const char *, bool, const char *)
         {
             return true;
         }

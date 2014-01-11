@@ -24,15 +24,17 @@ class SF_SoftwareInstallationService_Provider
     class Installer : public solarflare::ActionForAll
     {
         const char *uri;
-        const char *base64_hash;
         bool ok;
         bool firstRun;
+        bool force;
+        const char *base64_hash;
     protected:
         virtual void handler(solarflare::SystemElement& se, unsigned);
     public:
-        Installer(const char *u, const Instance *inst, const char *hash) :
+        Installer(const char *u, const Instance *inst, bool f,
+                  const char *hash) :
             solarflare::ActionForAll(inst), uri(u), ok(false),
-            firstRun(true), base64_hash(hash) {}
+            firstRun(true), force(f), base64_hash(hash) {}
         bool isOk() const { return ok; };
         bool installWasRun() const { return !firstRun; };
         virtual bool process(solarflare::SystemElement& el);
@@ -41,19 +43,22 @@ class SF_SoftwareInstallationService_Provider
     class NICInstaller : public solarflare::ActionForAll
     {
         const char *uri;
-        const char *base64_hash;
         const SF_SoftwareInstallationService *service;
         bool ok;
         bool runInstallTried;
+        bool force;
+        const char *base64_hash;
     protected:
         virtual void handler(solarflare::SystemElement& se, unsigned);
     public:
         NICInstaller(const char *u, 
                      const SF_SoftwareInstallationService *svc,
                      const Instance *inst,
+                     bool f,
                      const char *hash) :  
             solarflare::ActionForAll(inst), uri(u), service(svc),
-            ok(false), runInstallTried(false), base64_hash(hash) {}
+            ok(false), runInstallTried(false), force(f),
+            base64_hash(hash) {}
         bool isOk() const { return ok; };
         bool installWasRun() const { return runInstallTried; };
     };

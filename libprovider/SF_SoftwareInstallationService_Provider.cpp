@@ -161,14 +161,14 @@ void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::Sys
         ok = true;
         firstRun = false;
     }
-    ok = ok && sw.install(uri, base64_hash);
+    ok = ok && sw.install(uri, true, force, base64_hash);
 }
 
 void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::SystemElement& se,
                                                                     unsigned)
 {
     solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
-    Installer installer(uri, service, base64_hash);
+    Installer installer(uri, service, force, base64_hash);
     installer.forSoftware(nic);
     ok = installer.isOk();
     runInstallTried = installer.installWasRun();
@@ -198,6 +198,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     const CIM_ComputerSystem *sys = NULL;
 
     String base64_hash;
+    bool   force = false;
 
     /// CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
@@ -221,9 +222,11 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
         {
             switch (InstallOptions.value[i])
             {
+                case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Force_installation:
+                    force = true;
+                    break;
                 case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Update:
                 case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Repair:
-                case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Force_installation:
                 case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Defer_target_system_reset:
                 case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_Log:
                 case SF_SoftwareInstallationServiceCapabilities::_SupportedInstallOptions::enum_SilentMode:
@@ -270,7 +273,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
             return INVOKE_METHOD_OK;
         }
         Installer installer(URI.value.c_str(), self,
-                            base64_hash.c_str());
+                            force, base64_hash.c_str());
         installer.forSoftware();
         if (installer.isOk())
             return_value.set(OK);
@@ -285,7 +288,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     else if (const CIM_Card *card = cast<const CIM_Card *>(Target))
     {
         NICInstaller installer(URI.value.c_str(), self, card,
-                               base64_hash.c_str());
+                               force, base64_hash.c_str());
         installer.forNIC();
         if (installer.isOk())
             return_value.set(OK);
