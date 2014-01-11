@@ -1424,12 +1424,27 @@ fail:
     {
         char    *fn = strdup(path);
         String   strPath;
+        bool     local_path = false;
+        bool     dir_path = false;
 
         if (fn == NULL)
             return String("");
         trim(fn);
         strPath = String(fn);
-        if (strstr(fn, ".dat") != fn + (strlen(fn) - 4))
+
+        if (strcasecmp_start(fn, FILE_PROTO) == 0)
+        {
+            local_path = true;
+            int fd = open(fn, O_RDONLY | O_DIRECTORY);
+            if (fd >= 0)
+            {
+                dir_path = true;
+                close(fd);
+            }
+        }
+
+        if (!(local_path && !dir_path) &&
+            strstr(fn, ".dat") != fn + (strlen(fn) - 4))
             strPath.append(String(defPath));
         free(fn);
 
