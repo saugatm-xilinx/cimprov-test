@@ -264,6 +264,10 @@ class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
 
     uint32 RemoveFwImage([IN] string file_name);
 };
+]], [[
+INSTANCE
+class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
+};
 ]])
 
 INSTANCE
