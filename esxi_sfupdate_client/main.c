@@ -99,6 +99,13 @@ static char *fw_url = NULL;
 /** Path to firmware image(s) */
 static char *fw_path = NULL;
 
+/**
+ * Force firmware update even if version of
+ * the firmware image is lower than or the same as
+ * already installed.
+ */
+static int force_update = 0;
+
 /** Network interface name */
 static char *interface_name = NULL;
 
@@ -135,6 +142,10 @@ enum {
     OPT_PROVIDER_NAMESPACE,   /**< CIM provider namespace */
     OPT_FW_URL,               /**< URL of firmware image(s) */
     OPT_FW_PATH,              /**< Path to firmware image(s) */
+    OPT_FORCE,                /**< Force firmware update even
+                                   if version of the image is
+                                   lower than or the same as already
+                                   installed */
     OPT_IF_NAME,              /**< Network interface name */
     OPT_CONTROLLER,           /**< Update controller firmware */
     OPT_BOOTROM,              /**< Update BootROM firmware */
@@ -163,6 +174,7 @@ parseCmdLine(int argc, const char *argv[])
     char *s = NULL;
     char *url = NULL;
     char *path = NULL;
+    int   force = 0;
     char *if_name = NULL;
     int   controller = 0;
     int   bootrom = 0;
@@ -217,6 +229,12 @@ parseCmdLine(int argc, const char *argv[])
         { "firmware-path", '\0', POPT_ARG_STRING, NULL,
           OPT_FW_PATH,
           "Path firmware image(s)",
+          NULL },
+
+        { "force", '\0', POPT_ARG_NONE, NULL,
+          OPT_FORCE,
+          "Update firmware even if version of the "
+          "image is lower than or the same as already installed",
           NULL },
 
         { "interface-name", 'i', POPT_ARG_STRING, NULL,
@@ -284,6 +302,10 @@ parseCmdLine(int argc, const char *argv[])
 
             case OPT_FW_PATH:
                 path = poptGetOptArg(optCon);
+                break;
+
+            case OPT_FORCE:
+                force = 1;
                 break;
 
             case OPT_IF_NAME:
@@ -363,6 +385,7 @@ cleanup:
         }
         fw_url = url;
         fw_path = path;
+        force_update = force;
         interface_name = if_name;
         update_controller = controller;
         update_bootrom = bootrom;
@@ -859,6 +882,9 @@ void addSimpleParamValue(xmlNodePtr parent_node,
  * @param svc           SF_SoftwareInstallationService instance pointer
  * @param target        Target parameter (may be instance of SF_NICCard or
  *                      NULL)
+ * @param force         Update firmware even if verion of the image is
+ *                      the same or earlier than already installed
+ * @param base64_hash   SHA-1 hash of firmware image, encoded in Base64
  * @param url           Firmware image(s) URL
  *
  * @return XML document pointer for the constructed CIM-XML request
@@ -866,7 +892,7 @@ void addSimpleParamValue(xmlNodePtr parent_node,
 xmlDocPtr
 xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
                      xmlCimInstance *target, const char *url,
-                     const char *base64_hash)
+                     int force, const char *base64_hash)
 {
     xmlDocPtr       doc = NULL;
     xmlNodePtr      methodcall_node = NULL;
@@ -894,7 +920,7 @@ xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
         addLocalInstPath(value_node, namespace, target);
     }
 
-    if (base64_hash != NULL)
+    if (force || base64_hash != NULL)
     {
         paramvalue_node = xmlNewChild(methodcall_node, NULL,
                                       "PARAMVALUE", NULL);
@@ -902,9 +928,17 @@ xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
                    BAD_CAST "InstallOptions");
         xmlNewProp(paramvalue_node, BAD_CAST "PARAMTYPE",
                    BAD_CAST "uint16");
-        value_node = xmlNewChild(paramvalue_node, NULL,
-                                 BAD_CAST "VALUE",
-                                 BAD_CAST "32768");
+        value_arr_node = xmlNewChild(paramvalue_node, NULL,
+                                     BAD_CAST "VALUE.ARRAY",
+                                     NULL);
+        if (base64_hash != NULL)
+            value_node = xmlNewChild(value_arr_node, NULL,
+                                     BAD_CAST "VALUE",
+                                     BAD_CAST "32768");
+        if (force)
+            value_node = xmlNewChild(value_arr_node, NULL,
+                                     BAD_CAST "VALUE",
+                                     BAD_CAST "3");
 
         paramvalue_node = xmlNewChild(methodcall_node, NULL,
                                       "PARAMVALUE", NULL);
@@ -915,9 +949,14 @@ xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
         value_arr_node = xmlNewChild(paramvalue_node, NULL,
                                      BAD_CAST "VALUE.ARRAY",
                                      NULL);
-        value_node = xmlNewChild(value_arr_node, NULL,
-                                 BAD_CAST "VALUE",
-                                 BAD_CAST base64_hash);
+        if (base64_hash != NULL)
+            value_node = xmlNewChild(value_arr_node, NULL,
+                                     BAD_CAST "VALUE",
+                                     BAD_CAST base64_hash);
+        if (force)
+            value_node = xmlNewChild(value_arr_node, NULL,
+                                     BAD_CAST "VALUE",
+                                     NULL);
     }
 
     return doc;
@@ -1679,6 +1718,9 @@ associators(CURL *curl, const char *namespace, xmlCimInstance *inst,
  * @param target            Target parameter (may be instance of SF_NICCard
  *                          or NULL)
  * @param url               Firmware image(s) URL
+ * @param force             Update firmware even if verion of the image is
+ *                          the same or earlier than already installed
+ * @param base64_hash       SHA-1 hash of firmware image, encoded in Base64
  * @param response    [out] Parsed CIM-XML response
  *
  * @return 0 on success, -1 on failure
@@ -1687,13 +1729,14 @@ int
 call_install_from_uri(CURL *curl, const char *namespace,
                       xmlCimInstance *svc, xmlCimInstance *target,
                       const char *url,
+                      int force,
                       const char *base64_hash,
                       response_descr *response)
 {
     xmlDocPtr doc;
 
     doc = xmlReqInstallFromURI(namespace, svc, target, url,
-                               base64_hash);
+                               force, base64_hash);
     
     return processXmlRequest(curl, doc, "InstallFromURI",
                              response);
@@ -1856,10 +1899,29 @@ call_remove_fw_image(CURL *curl, const char *namespace,
         }                                                               \
     } while (0)
 
+/**
+ * Install firmware from an image stored locally on a host
+ * where this program is run.
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param svc               SF_SoftwareInstallationService instance pointer
+ * @param target            Target parameter (may be instance of SF_NICCard
+ *                          or NULL)
+ * @param path              Firmware image(s) local path
+ * @param force             Update firmware even if verion of the image is
+ *                          the same or earlier than already installed
+ * @param unused1           Unused parameter (for compatibility with
+ *                          call_install_from_uri() function signature)
+ * @param unused2           Another unused parameter for the same reason
+ *
+ * @return 0 on success, -1 on failure
+ */
 int
 install_from_local_path(CURL *curl, const char *namespace,
                         xmlCimInstance *svc, xmlCimInstance *target,
                         const char *path,
+                        int force,
                         const char *unused1,
                         response_descr *unused2)
 {
@@ -2169,7 +2231,7 @@ install_from_local_path(CURL *curl, const char *namespace,
             rc_rsp,
             call_install_from_uri(curl, namespace,
                                   svc, p,
-                                  url, encoded,
+                                  url, force, encoded,
                                   &call_rsp),
             call_rsp,
             "InstallFromURI() failed");
@@ -2228,19 +2290,21 @@ cleanup:
 typedef int (*firmware_install_f)(
                     CURL *, const char *,
                     xmlCimInstance *, xmlCimInstance *,
-                    const char *, const char *,
+                    const char *, int, const char *,
                     response_descr *);
 
 /**
  * Update firmware
  *
- * @param curl          CURL pointer returned by curl_easy_init()
- * @param namespace     Provider namespace
- * @param nic_inst      SF_NICCard instance as target parameter
- *                      (or NULL)
- * @param controller    Whether to update controller firmware or not
- * @param bootrom       Whether to update BootROM firmware or not
- * @param firmware_url  Firmware image(s) URL
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Provider namespace
+ * @param nic_inst          SF_NICCard instance as target parameter
+ *                          (or NULL)
+ * @param controller        Whether to update controller firmware or not
+ * @param bootrom           Whether to update BootROM firmware or not
+ * @param firmware_source   Firmware image(s) URL
+ * @param url_specified     Firmware URL was specified (not local path)
+ * @param force             --force option was specified
  *
  * @return 0 on success, -1 on failure
  */
@@ -2249,7 +2313,8 @@ update_firmware(CURL *curl, const char *namespace,
                 xmlCimInstance *nic_inst,
                 int controller, int bootrom,
                 const char *firmware_source,
-                int url_specified)
+                int url_specified,
+                int force)
 {
     response_descr  svcs_rsp;
     response_descr  log_rsp;
@@ -2383,7 +2448,7 @@ update_firmware(CURL *curl, const char *namespace,
                     func_install(curl, namespace,
                                  svc_mcfw_inst,
                                  nic_inst, firmware_source,
-                                 NULL, &call_rsp),
+                                 force, NULL, &call_rsp),
                     call_rsp,
                     "Attempt to update "
                     "controller firmware failed");
@@ -2411,7 +2476,7 @@ update_firmware(CURL *curl, const char *namespace,
                     func_install(curl, namespace,
                                  svc_bootrom_inst,
                                  nic_inst, firmware_source,
-                                 NULL, &call_rsp),
+                                 force, NULL, &call_rsp),
                     call_rsp,
                     "Attempt to update "
                     "BootROM firmware failed");
@@ -2779,7 +2844,8 @@ main(int argc, const char *argv[])
                                 interface_name == NULL ? NULL : nic_inst,
                                 update_controller, update_bootrom,
                                 fw_url == NULL ? fw_path : fw_url,
-                                fw_url == NULL ? 0 : 1) < 0)
+                                fw_url == NULL ? 0 : 1,
+                                force_update) < 0)
             {
                 ERROR_MSG_PLAIN("Problems encountered when trying to "
                                 "update firmware");
