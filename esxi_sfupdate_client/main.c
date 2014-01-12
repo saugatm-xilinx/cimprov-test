@@ -956,7 +956,11 @@ xmlReqInstallFromURI(const char *namespace, xmlCimInstance *svc,
         if (force)
             value_node = xmlNewChild(value_arr_node, NULL,
                                      BAD_CAST "VALUE",
-                                     NULL);
+                                     /*
+                                      * For some reason sfcb does not
+                                      * digest <VALUE/>
+                                      */
+                                     BAD_CAST "x");
     }
 
     return doc;
