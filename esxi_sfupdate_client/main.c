@@ -73,13 +73,7 @@
     } while (0)
 
 /** CIMOM address */
-static char *address = NULL;
-
-/** CIMOM host */
-static char *cim_host = NULL;
-
-/** CIMOM port */
-static char *cim_port = NULL;
+static char *cim_address = NULL;
 
 /** Whether we should use HTTPS or HTTP */
 static int   use_https = 0;
@@ -134,8 +128,6 @@ static int   yes = 0;
 enum {
     OPT_CIMOM_ADDR = 1,       /**< CIMOM address - use either it or 
                                    HOST/PORT/HTTPS to specify CIMOM */
-    OPT_CIMOM_HOST,           /**< CIMOM host name */
-    OPT_CIMOM_PORT,           /**< CIMOM port number */
     OPT_HTTPS,                /**< Use HTTPS */
     OPT_CIMOM_USER,           /**< CIMOM user name */
     OPT_CIMOM_PASSWORD,       /**< CIMOM user password */
@@ -165,8 +157,6 @@ int
 parseCmdLine(int argc, const char *argv[])
 {
     char *a = NULL;
-    char *host = NULL;
-    char *port = NULL;
     int   https = 0;
     char *u = NULL;
     char *p = NULL;
@@ -186,19 +176,9 @@ parseCmdLine(int argc, const char *argv[])
     int             rc = 0;
 
     struct poptOption options_table[] = {
-        { "cimom-address", 'a', POPT_ARG_STRING, NULL,
+        { "cim-address", 'a', POPT_ARG_STRING, NULL,
           OPT_CIMOM_ADDR,
-          "Address of CIMOM (e.g. https://hostname:5989)",
-          NULL },
-
-        { "cimom-host", '\0', POPT_ARG_STRING, NULL,
-          OPT_CIMOM_HOST,
-          "CIMOM host",
-          NULL },
-
-        { "cimom-port", '\0', POPT_ARG_STRING, NULL,
-          OPT_CIMOM_PORT,
-          "CIMOM port",
+          "Address of CIM Server (e.g. https://hostname:5989)",
           NULL },
 
         { "https", 's', POPT_ARG_NONE, NULL,
@@ -206,12 +186,12 @@ parseCmdLine(int argc, const char *argv[])
           "Use HTTPS to access CIMOM",
           NULL },
 
-        { "cimom-user", 'u', POPT_ARG_STRING, NULL,
+        { "cim-user", 'u', POPT_ARG_STRING, NULL,
           OPT_CIMOM_USER,
           "CIMOM user's name",
           NULL },
 
-        { "cimom-password", 'p', POPT_ARG_STRING, NULL,
+        { "cim-password", 'p', POPT_ARG_STRING, NULL,
           OPT_CIMOM_PASSWORD,
           "CIMOM user's password",
           NULL },
@@ -270,14 +250,6 @@ parseCmdLine(int argc, const char *argv[])
         {
             case OPT_CIMOM_ADDR:
                 a = poptGetOptArg(optCon);
-                break;
-
-            case OPT_CIMOM_HOST:
-                host = poptGetOptArg(optCon);
-                break;
-
-            case OPT_CIMOM_PORT:
-                port = poptGetOptArg(optCon);
                 break;
 
             case OPT_HTTPS:
@@ -361,8 +333,6 @@ cleanup:
     if (rc < 0)
     {
         free(a);
-        free(host);
-        free(port);
         free(u);
         free(p);
         free(ns);
@@ -372,9 +342,7 @@ cleanup:
     }
     else
     {
-        address = a;
-        cim_host = host;
-        cim_port = port;
+        cim_address = a;
         use_https = https;
         user = u;
         password = p;
@@ -2693,6 +2661,11 @@ main(int argc, const char *argv[])
     CURL        *curl = NULL;
     CURLcode     res;
 
+    char    address[MAX_ADDR_LEN];
+    int     add_proto = 1;
+    int     add_port = 1;
+    int     i;
+
     cim_namespace = strdup("solarflare/cimv2");
 
     response_descr ei_ports_rsp;
@@ -2708,16 +2681,45 @@ main(int argc, const char *argv[])
     if (parseCmdLine(argc, argv) < 0)
         exit(2);
 
-    if (address == NULL)
+    if (cim_address == NULL)
     {
-        address = calloc(1, MAX_ADDR_LEN);
-        snprintf(
-            address, MAX_ADDR_LEN, "%s://%s:%s",
-            use_https ? "https" : "http",
-            cim_host == NULL ? "localhost" : cim_host,
-            cim_port == NULL ?
-              (use_https ? DEF_HTTPS_PORT : DEF_HTTP_PORT) : cim_port);
+        ERROR_MSG_PLAIN("Please, specify an address of CIM Server");
+        rc = -1;
+        goto cleanup;
     }
+
+    for (i = 0; i < strlen(cim_address); i++)
+    {
+        if (strncmp(cim_address + i, "://", 3) == 0)
+        {
+            add_proto = 0;
+            break;
+        }
+
+        if (!((cim_address[i] >= 'A' && cim_address[i] <= 'Z') ||
+            (cim_address[i] >= 'a' && cim_address[i] <= 'z') ||
+            (cim_address[i] >= '0' && cim_address[i] <= '9')))
+            break;
+    }
+
+    for (i = strlen(cim_address) - 1; i >= 0; i--)
+    {
+        if (cim_address[i] == ':')
+        {
+            add_port = 0;
+            break;
+        }
+
+        if (!(cim_address[i] >= '0' && cim_address[i] <= '9'))
+            break;
+    }
+
+    snprintf(
+        address, MAX_ADDR_LEN, "%s%s%s%s",
+        add_proto ? (use_https ? "https://" : "http://") : "",
+        cim_address,
+        add_port ? ":" : "",
+        add_port ? (use_https ? DEF_HTTPS_PORT : DEF_HTTP_PORT) : "");
 
     if (!update_controller && !update_bootrom)
     {
@@ -2972,9 +2974,6 @@ cleanup:
     clear_response(&assoc_sw_rsp);
     clear_response(&assoc_nic_rsp);
 
-    free(address);
-    free(cim_host);
-    free(cim_port);
     free(user);
     free(password);
     free(cim_namespace);
