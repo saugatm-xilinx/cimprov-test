@@ -21,6 +21,8 @@
 
 #include <assert.h>
 
+#include "fw_images.h"
+
 /* Maximum password length */
 #define MAX_PASSWD_LEN 128
 
