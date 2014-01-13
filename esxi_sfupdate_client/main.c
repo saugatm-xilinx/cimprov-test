@@ -1714,6 +1714,61 @@ associators(CURL *curl, const char *namespace, xmlCimInstance *inst,
 }
 
 /**
+ * Call intrinsic or extrinsic CIM method and check response
+ *
+ * @param rc_   Return value to be set on failure
+ * @param f_    Method call
+ * @param rsp_  Response to be filled
+ * @param msg_  Error message format string
+ * @param ...   Error message parameters
+ */
+#define CHECK_RESPONSE(rc_, f_, rsp_, msg_...) \
+    do {                                                                \
+        int ret_ = (f_);                                                \
+                                                                        \
+        if (ret_ < 0 || rsp_.error_returned)                            \
+        {                                                               \
+            ERROR_MSG(msg_);                                            \
+            if (ret_ >= 0)                                              \
+                ERROR_MSG("CIM ERROR: code='%s', description='%s'",     \
+                          (char *)rsp_.err_code,                        \
+                          (char *)rsp_.err_descr);                      \
+            rc_ = -1;                                                   \
+        }                                                               \
+    } while (0)
+
+/**
+ * Call extrinsic CIM method and check response and return code
+ *
+ * @param rc_   Return value to be set on failure
+ * @param f_    Method call
+ * @param rsp_  Response to be filled
+ * @param msg_  Error message format string
+ * @param ...   Error message parameters
+ */
+#define CHECK_RESPONSE_EXT(rc_, f_, rsp_, msg_...) \
+    do {                                                                \
+        int ret_ = (f_);                                                \
+                                                                        \
+        if (ret_ < 0 || rsp_.error_returned ||                          \
+            strcmp(rsp_.returned_value, "0") != 0)                      \
+        {                                                               \
+            if (ret_ >= 0)                                              \
+            {                                                           \
+                if (rsp_.error_returned)                                \
+                    ERROR_MSG("CIM ERROR: code='%s', description='%s'", \
+                              (char *)rsp_.err_code,                    \
+                              (char *)rsp_.err_descr);                  \
+                else                                                    \
+                    ERROR_MSG("Extrinsic method returned '%s'",         \
+                              rsp_.returned_value);                     \
+            }                                                           \
+            ERROR_MSG(msg_);                                            \
+            rc_ = -1;                                                   \
+        }                                                               \
+    } while (0)
+
+/**
  * Call InstallFromURI() extrinsic method
  *
  * @param curl              CURL pointer returned by curl_easy_init()
@@ -1739,11 +1794,104 @@ call_install_from_uri(CURL *curl, const char *namespace,
 {
     xmlDocPtr doc;
 
+    char       *svc_name = NULL;
+    const char *firmware_type = NULL;
+    int         rc = 0;
+
+    xmlCimInstance *port_inst = NULL;
+
+    response_descr assoc_cntr_rsp;
+    response_descr assoc_ports_rsp;
+
+    memset(&assoc_cntr_rsp, 0, sizeof(assoc_cntr_rsp));
+    memset(&assoc_ports_rsp, 0, sizeof(assoc_ports_rsp));
+
+    if (xmlCimInstGetPropTrim(svc, "Name",
+                              &svc_name, NULL) < 0 ||
+        svc_name == NULL)
+    {
+        ERROR_MSG("Failed to get Name attribute "
+                  "of SF_SoftwareInstallationService instance");
+        return -1;
+    }
+
+    if (strcmp(svc_name, "BootROM") == 0)
+        firmware_type = "BootROM";
+    else
+        firmware_type = "Controller";
+
+    printf("Updating %s firmware for ", firmware_type);
+    if (target == NULL)
+        printf("all interfaces");
+    else
+    {
+        CHECK_RESPONSE(
+            rc,
+            associators(curl, cim_namespace, target,
+                        "Antecedent", "SF_CardRealizesController",
+                        NULL, "SF_PortController",
+                        0, &assoc_cntr_rsp),
+            assoc_cntr_rsp,
+            "Failed to find associated SF_PortController instance");
+        if (rc < 0)
+            goto cleanup;
+        if (assoc_cntr_rsp.inst_count != 1)
+        {
+                ERROR_MSG("%d instead of just one associated "
+                          "SF_PortController instances were found",
+                          assoc_cntr_rsp.inst_count);
+                rc = -1;
+                goto cleanup;
+        }
+
+        CHECK_RESPONSE(
+            rc,
+            associators(curl, cim_namespace, assoc_cntr_rsp.inst_list,
+                        "Antecedent", "SF_ControlledBy",
+                        NULL, "SF_EthernetPort",
+                        0, &assoc_ports_rsp),
+            assoc_ports_rsp,
+            "Failed to find associated SF_PortController instances");
+        if (rc < 0)
+            goto cleanup;
+
+        for (port_inst = assoc_ports_rsp.inst_list;
+             port_inst != NULL; port_inst = port_inst->next)
+        {
+            char *device_id = NULL;
+
+            if (xmlCimInstGetPropTrim(port_inst, "DeviceID",
+                                      &device_id, NULL) < 0 ||
+                device_id == NULL)
+            {
+                ERROR_MSG("Failed to get DeviceID attribute "
+                          "of SF_EthernetPort instance");
+                rc = -1;
+                goto cleanup;
+            }
+
+            if (port_inst->prev == NULL)
+                printf("%s", device_id);
+            else
+                printf(", %s", device_id);
+
+            free(device_id);
+        }
+    }
+    printf("...\n");
+
     doc = xmlReqInstallFromURI(namespace, svc, target, url,
                                force, base64_hash);
     
-    return processXmlRequest(curl, doc, "InstallFromURI",
-                             response);
+    rc = processXmlRequest(curl, doc, "InstallFromURI",
+                           response);
+
+cleanup:
+
+    clear_response(&assoc_cntr_rsp);
+    clear_response(&assoc_ports_rsp);
+    free(svc_name);
+    return rc;
 }
 
 /**
@@ -1847,61 +1995,6 @@ call_remove_fw_image(CURL *curl, const char *namespace,
     return processXmlRequest(curl, doc, "RemoveFwImage",
                              response);
 }
-
-/**
- * Call intrinsic or extrinsic CIM method and check response
- *
- * @param rc_   Return value to be set on failure
- * @param f_    Method call
- * @param rsp_  Response to be filled
- * @param msg_  Error message format string
- * @param ...   Error message parameters
- */
-#define CHECK_RESPONSE(rc_, f_, rsp_, msg_...) \
-    do {                                                                \
-        int ret_ = (f_);                                                \
-                                                                        \
-        if (ret_ < 0 || rsp_.error_returned)                            \
-        {                                                               \
-            ERROR_MSG(msg_);                                            \
-            if (ret_ >= 0)                                              \
-                ERROR_MSG("CIM ERROR: code='%s', description='%s'",     \
-                          (char *)rsp_.err_code,                        \
-                          (char *)rsp_.err_descr);                      \
-            rc_ = -1;                                                   \
-        }                                                               \
-    } while (0)
-
-/**
- * Call extrinsic CIM method and check response and return code
- *
- * @param rc_   Return value to be set on failure
- * @param f_    Method call
- * @param rsp_  Response to be filled
- * @param msg_  Error message format string
- * @param ...   Error message parameters
- */
-#define CHECK_RESPONSE_EXT(rc_, f_, rsp_, msg_...) \
-    do {                                                                \
-        int ret_ = (f_);                                                \
-                                                                        \
-        if (ret_ < 0 || rsp_.error_returned ||                          \
-            strcmp(rsp_.returned_value, "0") != 0)                      \
-        {                                                               \
-            if (ret_ >= 0)                                              \
-            {                                                           \
-                if (rsp_.error_returned)                                \
-                    ERROR_MSG("CIM ERROR: code='%s', description='%s'", \
-                              (char *)rsp_.err_code,                    \
-                              (char *)rsp_.err_descr);                  \
-                else                                                    \
-                    ERROR_MSG("Extrinsic method returned '%s'",         \
-                              rsp_.returned_value);                     \
-            }                                                           \
-            ERROR_MSG(msg_);                                            \
-            rc_ = -1;                                                   \
-        }                                                               \
-    } while (0)
 
 /**
  * Install firmware from an image stored locally on a host
@@ -2455,12 +2548,12 @@ update_firmware(CURL *curl, const char *namespace,
                                  force, NULL, &call_rsp),
                     call_rsp,
                     "Attempt to update "
-                    "controller firmware failed");
+                    "Controller firmware failed");
             if (rc_rsp >= 0 && func_install != install_from_local_path &&
                 strcmp(call_rsp.returned_value, "0") != 0)
             {
                 ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
-                                "trying to update controller firmware",
+                                "trying to update Controller firmware",
                                 call_rsp.returned_value);
                 rc = -1;
                 print_err_recs = 1;
@@ -2831,7 +2924,7 @@ main(int argc, const char *argv[])
                 printf("\nDo you want to update %s firmware on %s? [yes/no]",
                        update_controller && update_bootrom ?
                        "controller and BootROM" :
-                            (update_controller ? "controller" : "BootROM"),
+                            (update_controller ? "Controller" : "BootROM"),
                         interface_name == NULL ? "all NICs" : interface_name);
                 fgets(yes_str, sizeof(yes_str), stdin);
                 for (i = 0; i < sizeof(yes_str); i++)
