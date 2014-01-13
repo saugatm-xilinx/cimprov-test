@@ -78,6 +78,12 @@ static char *cim_address = NULL;
 /** Whether we should use HTTPS or HTTP */
 static int   use_https = 0;
 
+/**
+ * If set, we not only show currently installed firmware
+ * but also try to update it
+ */
+static int   do_update = 0;
+
 /** CIMOM user name */
 static char *user = NULL;
 
@@ -139,10 +145,11 @@ enum {
                                    lower than or the same as already
                                    installed */
     OPT_IF_NAME,              /**< Network interface name */
-    OPT_CONTROLLER,           /**< Update controller firmware */
-    OPT_BOOTROM,              /**< Update BootROM firmware */
+    OPT_CONTROLLER,           /**< Process controller firmware */
+    OPT_BOOTROM,              /**< Process BootROM firmware */
     OPT_YES,                  /**< Don't ask user for confirmation when
                                    updating firmware */
+    OPT_WRITE,                /**< Perform firmware update */
 };
 
 /**
@@ -169,6 +176,7 @@ parseCmdLine(int argc, const char *argv[])
     int   controller = 0;
     int   bootrom = 0;
     int   y = 0;
+    int   w = 0;
     char  passwd_buf[MAX_PASSWD_LEN];
 
     poptContext     optCon;
@@ -178,43 +186,31 @@ parseCmdLine(int argc, const char *argv[])
     struct poptOption options_table[] = {
         { "cim-address", 'a', POPT_ARG_STRING, NULL,
           OPT_CIMOM_ADDR,
-          "Address of CIM Server (e.g. https://hostname:5989)",
+          "Address of CIM Server (e.g. 'https://hostname:5989' or "
+          "'hostname' or 'hostname:5988' - default protocol is HTTP, "
+          "default port for HTTP is 5988, default port for HTTPS is "
+          "5989)",
           NULL },
 
         { "https", 's', POPT_ARG_NONE, NULL,
           OPT_HTTPS,
-          "Use HTTPS to access CIMOM",
+          "Use HTTPS to access CIM Server (has no effect if you "
+          "specified protocol in --cim-address parameter)",
           NULL },
 
         { "cim-user", 'u', POPT_ARG_STRING, NULL,
           OPT_CIMOM_USER,
-          "CIMOM user's name",
+          "CIM Server user's name",
           NULL },
 
         { "cim-password", 'p', POPT_ARG_STRING, NULL,
           OPT_CIMOM_PASSWORD,
-          "CIMOM user's password",
+          "CIM Server user's password",
           NULL },
 
-        { "provider-namespace", 'n', POPT_ARG_STRING, NULL,
+        { "cim-namespace", 'n', POPT_ARG_STRING, NULL,
           OPT_PROVIDER_NAMESPACE,
-          "Provider namespace (solarflare/cimv2 by default)",
-          NULL },
-
-        { "firmware-url", 'f', POPT_ARG_STRING, NULL,
-          OPT_FW_URL,
-          "URL of firmware image(s)",
-          NULL },
-
-        { "firmware-path", '\0', POPT_ARG_STRING, NULL,
-          OPT_FW_PATH,
-          "Path firmware image(s)",
-          NULL },
-
-        { "force", '\0', POPT_ARG_NONE, NULL,
-          OPT_FORCE,
-          "Update firmware even if version of the "
-          "image is lower than or the same as already installed",
+          "CIM Provider namespace (solarflare/cimv2 by default)",
           NULL },
 
         { "interface-name", 'i', POPT_ARG_STRING, NULL,
@@ -236,6 +232,27 @@ parseCmdLine(int argc, const char *argv[])
         { "yes", 'y', POPT_ARG_NONE, NULL,
           OPT_YES,
           "Do not ask for confirmation before updating firmware",
+          NULL },
+
+        { "write", 'w', POPT_ARG_NONE, NULL,
+          OPT_WRITE,
+          "Perform firmware update",
+          NULL },
+
+        { "firmware-url", 'f', POPT_ARG_STRING, NULL,
+          OPT_FW_URL,
+          "URL of firmware image(s) to be used instead of internal ones",
+          NULL },
+
+        { "firmware-path", '\0', POPT_ARG_STRING, NULL,
+          OPT_FW_PATH,
+          "Path to firmware image(s) to be used instead of internal ones",
+          NULL },
+
+        { "force", '\0', POPT_ARG_NONE, NULL,
+          OPT_FORCE,
+          "Update firmware even if version of the "
+          "image is lower than or the same as already installed",
           NULL },
 
         POPT_AUTOHELP
@@ -294,6 +311,10 @@ parseCmdLine(int argc, const char *argv[])
 
             case OPT_YES:
                 y = 1;
+                break;
+
+            case OPT_WRITE:
+                w = 1;
                 break;
 
             default:
@@ -358,6 +379,7 @@ cleanup:
         update_controller = controller;
         update_bootrom = bootrom;
         yes = y;
+        do_update = w;
     }
 
     return rc;
@@ -2915,7 +2937,7 @@ main(int argc, const char *argv[])
             goto cleanup;
         }
 
-        if ((fw_url != NULL || fw_path != NULL)
+        if (do_update && (fw_url != NULL || fw_path != NULL)
             && (update_controller || update_bootrom))
         {
             if (!yes)
