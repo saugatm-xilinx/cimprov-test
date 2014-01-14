@@ -1454,11 +1454,21 @@ fail:
     // Forward-declaration
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName,
+                                     UpdatedFirmwareType fwType,
+                                     unsigned int subType,
+                                     const VersionInfo &curVersion,
                                      bool force,
                                      const char *base64_hash);
 
     // Forward-declaration
-    String getDefaultFwPath(const NIC *owner, UpdatedFirmwareType fwType);
+    static String getDefaultFwPath(const NIC *owner,
+                                   UpdatedFirmwareType fwType,
+                                   const String &fName);
+
+    // Forward-declaration
+    static int getFwImageInfo(const NIC *owner,
+                              UpdatedFirmwareType fwType,
+                              unsigned int &subType, String &fName);
 
     ///
     /// Install firmware of a given type on a given NIC
@@ -1467,6 +1477,7 @@ fail:
     /// @param path         Where to find firmware image
     /// @param owner        NIC on which to install firmware
     /// @param fwType       Firmware type
+    /// @param curVersion   Version of the currently installed firmware
     /// @param base64_hash  SHA-1 hash of firmware image,
     ///                     encoded in Base64
     ///
@@ -1475,17 +1486,25 @@ fail:
     bool vmwareInstallFirmwareType(const char *path,
                                    const NIC *owner,
                                    UpdatedFirmwareType fwType,
+                                   const VersionInfo &curVersion,
                                    bool force,
                                    const char *base64_hash)
     {
-        String strPath;
-        String strDefPath;
+        String          strPath;
+        String          strDefPath;
+        unsigned int    subType;
+        String          fName;
 
-        strDefPath = getDefaultFwPath(owner, fwType);
+        if (getFwImageInfo(owner, fwType, subType, fName) < 0)
+            return false;
+
+        strDefPath = getDefaultFwPath(owner, fwType, fName);
         strPath = fixFwImagePath(path,
                                  strDefPath.c_str());
 
         if (vmwareInstallFirmware(owner, strPath.c_str(),
+                                  fwType, subType,
+                                  curVersion,
                                   force, base64_hash) < 0)
             return false;
 
@@ -2090,6 +2109,7 @@ fail:
         {
             return vmwareInstallFirmwareType(file_name, owner,
                                              FIRMWARE_MCFW,
+                                             version(),
                                              force,
                                              base64_hash);
         }
@@ -2109,6 +2129,7 @@ fail:
         {
             return vmwareInstallFirmwareType(file_name, owner,
                                              FIRMWARE_BOOTROM,
+                                             version(),
                                              force,
                                              base64_hash);
         }
@@ -2326,8 +2347,18 @@ fail:
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
 
-    int getFwImageInfo(const NIC *owner, UpdatedFirmwareType fwType,
-                       unsigned int &subType, String &fName)
+    ///
+    /// Get information about required firmware image.
+    ///
+    /// @param owner          NIC object pointer
+    /// @param fwType         Firmware type
+    /// @param subType  [out] Firmware subtype
+    /// @param fName    [out] Firmware image default file name
+    ///
+    /// @return 0 on success, -1 on failure
+    ///
+    static int getFwImageInfo(const NIC *owner, UpdatedFirmwareType fwType,
+                              unsigned int &subType, String &fName)
     {
         String defPath;
         int    i;
@@ -2362,17 +2393,15 @@ fail:
     ///
     /// @param owner    NIC object
     /// @param fwType   Firmware type
+    /// @param fName    Firmware image file name
     ///
     /// @return default path
     ///
-    String getDefaultFwPath(const NIC *owner, UpdatedFirmwareType fwType)
+    static String getDefaultFwPath(const NIC *owner,
+                                   UpdatedFirmwareType fwType,
+                                   const String &fName)
     {
-        String          fName;
-        unsigned int    subType;
         String          defPath;
-
-        if (getFwImageInfo(owner, fwType, subType, fName) < 0)
-            return defPath;
 
         if (!fName.empty())
         {
@@ -2610,10 +2639,91 @@ cleanup:
     }
 
     ///
+    /// Check that firmware image is applicable according
+    /// to firmware type, subtype and version.
+    ///
+    /// @param filename     Where firmware image is stored
+    /// @param fwType       Firmware type
+    /// @param subType      Firmware subtype
+    /// @param curVersion   Version of the currently installed firmware
+    /// @param force        Will --force option be specified for sfupdate
+    ///
+    /// @return true if firmware is applicable, false otherwise
+    ///
+    static bool checkImageApplicability(const char *filename,
+                                        UpdatedFirmwareType fwType,
+                                        unsigned int subType,
+                                        const VersionInfo &curVersion,
+                                        bool force)
+    {
+        image_header_t    header;
+        FILE             *f;
+
+        memset(&header, 0, sizeof(header));
+
+        f = fopen(filename, "r");
+        if (f == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): attempt to open '%s' failed",
+                             __FUNCTION__, filename);
+            return false;
+        }
+
+        if (fread(&header, 1, sizeof(header), f) != sizeof(header))
+        {
+            PROVIDER_LOG_ERR("%s(): failed to read firmware image "
+                             "header from '%s'",
+                             __FUNCTION__, filename);
+            fclose(f);
+            return false;
+        }
+        fclose(f);
+
+        if (!((header.ih_type == IMAGE_TYPE_BOOTROM &&
+               fwType == FIRMWARE_BOOTROM) ||
+              (header.ih_type == IMAGE_TYPE_MCFW &&
+               fwType == FIRMWARE_MCFW)))
+        {
+            PROVIDER_LOG_ERR("%s(): firmware image type mismatch",
+                             __FUNCTION__);
+            return false;
+        }
+
+        if (header.ih_subtype == subType)
+        {
+            PROVIDER_LOG_ERR("%s(): firmware image subtype mismatch",
+                             __FUNCTION__);
+            return false;
+        }
+
+        if (!force)
+        {
+            VersionInfo newVersion(header.ih_code_version_a,
+                                   header.ih_code_version_b,
+                                   header.ih_code_version_c,
+                                   header.ih_code_version_d);
+
+            if (newVersion <= curVersion)
+            {
+                PROVIDER_LOG_ERR("%s(): firmware of the same or newer "
+                                 "version is installed already",
+                                 __FUNCTION__);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    ///
     /// Install firmware on a NIC from given image.
     ///
     /// @param owner        NIC class pointer
     /// @param fileName     From where to get firmware image
+    /// @param fwType       Firmware type (BootROM or Controller)
+    /// @param subType      Firmware subtype
+    /// @param curVersion   Version of the currently installed firmware
+    /// @param force        Use sfupdate with --force option
     /// @param base64_hash  SHA-1 hash of firmware image,
     ///                     encoded in Base64
     ///
@@ -2621,6 +2731,9 @@ cleanup:
     ///
     static int vmwareInstallFirmware(const NIC *owner,
                                      const char *fileName,
+                                     UpdatedFirmwareType fwType,
+                                     unsigned int subType,
+                                     const VersionInfo &curVersion,
                                      bool force,
                                      const char *base64_hash)
     {
@@ -2631,6 +2744,8 @@ cleanup:
         int   fd = -1;
         char  tmp_file[] = "/tmp/sf_firmware_XXXXXX";
         int   tmp_file_used = 0;
+
+        const char *sfupdate_image_fn = NULL;
 
         VitalProductData vpd = ((VMwareNIC *)owner)->vitalProductData();
 
@@ -2650,12 +2765,7 @@ cleanup:
 
         if (strcasecmp_start(fileName, FILE_PROTO) == 0)
         {
-            if (!checkFileHash(fileName + strlen(FILE_PROTO),
-                               base64_hash))
-            {
-                PROVIDER_LOG_ERR("Firmware image hash check failed");
-                return -1;
-            }
+            sfupdate_image_fn = fileName + strlen(FILE_PROTO);
 
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s%s",
@@ -2699,12 +2809,6 @@ cleanup:
             }
             fclose(f);
 
-            if (!checkFileHash(tmp_file, base64_hash))
-            {
-                PROVIDER_LOG_ERR("Firmware image hash check failed");
-                return -1;
-            }
-
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
                           "--write --image=%s%s",
                           ((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
@@ -2717,10 +2821,30 @@ cleanup:
             }
 
             tmp_file_used = 1;
+            sfupdate_image_fn = tmp_file;
         }
         else // Protocol not supported
         {
             PROVIDER_LOG_ERR("Unknown protocol for path '%s'", fileName);
+            return -1;
+        }
+
+        if (!checkFileHash(sfupdate_image_fn,
+                           base64_hash))
+        {
+            PROVIDER_LOG_ERR("Firmware image hash check failed");
+            if (tmp_file_used)
+                unlink(tmp_file);
+            return -1;
+        }
+
+        if (!checkImageApplicability(sfupdate_image_fn, fwType, subType,
+                                     curVersion, force))
+        {
+            PROVIDER_LOG_ERR("Firmware image applicability "
+                             "check failed");
+            if (tmp_file_used)
+                unlink(tmp_file);
             return -1;
         }
 

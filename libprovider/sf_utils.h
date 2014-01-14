@@ -61,13 +61,35 @@ namespace solarflare
         /// The versionStr field itself is set to @p s
         VersionInfo(const char *s);
 
-        /// @return true iff two version data are equivalent
+        /// @return true if two version data are equivalent
         bool operator == (const VersionInfo& v) const;
 
-        /// @return true iff two version data are not equivalent
+        /// @return true if two version data are not equivalent
         bool operator != (const VersionInfo& v) const
         {
             return !(*this == v);
+        }
+
+        /// @return true if this version is less than or
+        ///              equal to the other one
+        bool operator <= (const VersionInfo& v) const
+        {
+            if (this->vmajor < v.vmajor)
+                return true;
+            else if (this->vmajor == v.vmajor &&
+                     this->vminor < v.vminor)
+                return true;
+            else if (this->vmajor == v.vmajor &&
+                     this->vminor == v.vminor &&
+                     this->revisionNo < v.revisionNo)
+                return true;
+            else if (this->vmajor == v.vmajor &&
+                     this->vminor == v.vminor &&
+                     this->revisionNo == v.revisionNo &&
+                     this->buildNo <= v.buildNo)
+               return true;
+
+            return false;
         }
 
         /// @return major version number
