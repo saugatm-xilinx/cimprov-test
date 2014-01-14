@@ -19,8 +19,9 @@ typedef struct image_header_s {
     unsigned short  ih_code_version_d;
 } image_header_t;
 
-typedef struct fw_image_descr {
-    uint8_t *image;
-} fw_image_descr;
+typedef struct fw_img_descr {
+    const uint8_t *data;
+    size_t         size;
+} fw_img_descr;
 
 #endif // SOLARFLARE_FW_IMAGES_H

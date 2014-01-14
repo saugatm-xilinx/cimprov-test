@@ -53,5 +53,8 @@ AC_SUBST([WINDOWS])
 AC_CHECK_HEADER([ncurses/curses.h],[NCURSES_CPPFLAGS=-DNCURSES_CURSES_H],[])
 AC_SUBST([NCURSES_CPPFLAGS])
 
+AC_ARG_VAR([FIRMWARE_IMG_PATHS],
+           [Locations of folders with the firmware images to be incorporated])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

@@ -10,9 +10,13 @@ else
     FILE_SUFFIX=
 endif
 
-sfupdate_esxi$(FILE_SUFFIX): main.c
+sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c
 	@CC@ -g $^ -o $@ @NCURSES_CPPFLAGS@ @MY_LDFLAGS@ \
 	    @XML2_CFLAGS@ $(MY_CFLAGS) $(MY_LIBS)
+
+.PHONY : fw_images.c
+fw_images.c :
+	./include_fw_imgs.pl @FIRMWARE_IMG_PATHS@
 
 clean:
 	rm -rf *.o sfupdate_esxi$(FILE_SUFFIX)

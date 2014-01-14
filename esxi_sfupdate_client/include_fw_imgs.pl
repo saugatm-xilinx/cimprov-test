@@ -23,7 +23,7 @@ sub list_all_c_files
         {
             @result_arr = (@result_arr, list_all_c_files($full_path));
         }
-        elsif ($fn =~ m/^(.*)[.]c$/)
+        elsif ($fn =~ m/^(.*)[.]dat$/)
         {
             push(@result_arr, $full_path);
         }
@@ -45,14 +45,16 @@ print FILE "#include \"fw_images.h\"\n\n";
 
 for $i (0 .. $#all_c_files)
 {
-    print FILE "uint8_t img${i}[] = {\n";
-    print FILE "#include \"".$all_c_files[$i]."\"\n";
+    print FILE "const uint8_t img${i}[] __attribute__((aligned(4))) = {\n";
+    print FILE qx(hexdump '$all_c_files[$i]' -v -e '/1 \"0x%02X, \"')."\n";
     print FILE "};\n\n";
 }
 
-print FILE "fw_image_descr firmware_images[] = {\n";
+print FILE "const fw_img_descr firmware_images[] = {\n";
 for $i (0 .. $#all_c_files)
 {
-    print FILE "{ img$i },\n";
+    print FILE "    { img$i, sizeof(img$i) },\n";
 }
-print FILE "};\n";
+print FILE "};\n\n";
+
+print FILE "unsigned int fw_images_count = ".($#all_c_files + 1).";\n";

@@ -23,6 +23,9 @@
 
 #include "fw_images.h"
 
+extern fw_img_descr firmware_images[];
+extern unsigned int fw_images_count;
+
 /* Maximum password length */
 #define MAX_PASSWD_LEN 128
 
@@ -2029,6 +2032,8 @@ install_from_local_path(CURL *curl, const char *namespace,
     int             not_full_path = 0;
     char            full_path[MAX_PATH_LEN];
     char            full_path_prev[MAX_PATH_LEN];
+    int             img_idx = -1;
+    int             img_idx_prev = -1;
     char           *tmp_file_name = NULL;
     char            url[MAX_FILE_PATH];
 
@@ -2041,6 +2046,7 @@ install_from_local_path(CURL *curl, const char *namespace,
 
     char            img_chunk[CHUNK_LEN];
     size_t          read_len;
+    size_t          was_sent;
 
     memset(&nics_rsp, 0, sizeof(nics_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
@@ -2048,7 +2054,8 @@ install_from_local_path(CURL *curl, const char *namespace,
     full_path[0] = '\0';
     full_path_prev[0] = '\0';
 
-    if (strstr(path, ".dat") != path + (strlen(path) - 4))
+    if (path == NULL ||
+        strstr(path, ".dat") != path + (strlen(path) - 4))
         not_full_path = 1;
 
     if (target != NULL)
@@ -2092,23 +2099,10 @@ install_from_local_path(CURL *curl, const char *namespace,
     p = targets_list;
 
     do {
+        img_idx_prev = img_idx;
         strncpy(full_path_prev, full_path, MAX_PATH_LEN);
         if (not_full_path)
         {
-            char *tag;
-            char *name;
-            char *subdir = NULL;
-
-            if (xmlCimInstGetPropTrim(p, "Tag",
-                                      &tag, NULL) < 0)
-            {
-                ERROR_MSG("Failed to get Tag attribute "
-                          "of SF_NICCard instance");
-                rc = -1;
-                goto next_target;
-            }
-
-
             /* FIXME: should we just skip NIC for which
              * it is impossible to get required firmware
              * name? */
@@ -2119,46 +2113,92 @@ install_from_local_path(CURL *curl, const char *namespace,
                                                 svc, p,
                                                 &call_rsp),
                 call_rsp,
-                "Failed to get required firmware image name for "
-                "SF_NICCard.Tag='%s'", tag);
+                "Failed to get required firmware image name");
 
             if (rc_rsp < 0)
             {
-                free(tag);
                 rc = -1;
                 goto next_target;
             }
 
-            name = get_named_value(call_rsp.out_params_list,
-                                   "name");
-            if (name == NULL || strlen(name) == 0)
+            if (path != NULL)
             {
-                ERROR_MSG_PLAIN("Failed to get required firmware "
-                                "image name for SF_NICCard.Tag='%s'",
-                                tag);
-                free(tag);
-                rc = -1;
-                goto next_target;
+                char *name;
+                char *subdir = NULL;
+
+                name = get_named_value(call_rsp.out_params_list,
+                                       "name");
+                if (name == NULL || strlen(name) == 0)
+                {
+                    ERROR_MSG_PLAIN("Failed to get required firmware "
+                                    "image name");
+                    rc = -1;
+                    goto next_target;
+                }
+
+                if (strcmp(svc_name, "BootROM") == 0)
+                    subdir = "bootrom";
+                else
+                    subdir = "mcfw";
+#ifdef _WIN32
+                snprintf(full_path, MAX_PATH_LEN, "%s\\image\\%s\\%s",
+                         path, subdir, name);
+#else
+                snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
+                         path, subdir, name);
+#endif
+            }
+            else
+            {
+                char *type;
+                char *subtype;
+                
+                unsigned int   int_type;
+                unsigned int   int_subtype;
+                unsigned int   i;
+
+                type = get_named_value(call_rsp.out_params_list,
+                                       "type");
+                subtype = get_named_value(call_rsp.out_params_list,
+                                          "subtype");
+                if (type == NULL || strlen(type) == 0 ||
+                    subtype == NULL || strlen(subtype) == 0)
+                {
+                    ERROR_MSG_PLAIN("Failed to get required firmware "
+                                    "image type/subtype");
+                    rc = -1;
+                    goto next_target;
+                }
+ 
+                int_type = strtol(type, NULL, 10);
+                int_subtype = strtol(subtype, NULL, 10);
+
+                for (i = 0; i < fw_images_count; i++)
+                {
+                    image_header_t *header =
+                        (image_header_t*)firmware_images[i].data;
+                    if (header->ih_type == int_type &&
+                        header->ih_subtype == int_subtype)
+                        break;
+                }
+
+                if (i < fw_images_count)
+                    img_idx = i;
+                else
+                {
+                    ERROR_MSG_PLAIN("Inbuilt image not found");
+                    rc = -1;
+                    goto next_target;
+                }
             }
 
-            if (strcmp(svc_name, "BootROM") == 0)
-                subdir = "bootrom";
-            else
-                subdir = "mcfw";
-#ifdef _WIN32
-            snprintf(full_path, MAX_PATH_LEN, "%s\\image\\%s\\%s",
-                     path, subdir, name);
-#else
-            snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
-                     path, subdir, name);
-#endif
-            free(tag);
             clear_response(&call_rsp);
         }
         else
             snprintf(full_path, MAX_PATH_LEN, "%s", path);
 
-        if (strcmp(full_path, full_path_prev) != 0)
+        if ((path == NULL && img_idx != img_idx_prev) ||
+            (path != NULL && strcmp(full_path, full_path_prev) != 0))
         {
             FILE *f;
 
@@ -2211,36 +2251,55 @@ install_from_local_path(CURL *curl, const char *namespace,
             tmp_file_name = strdup(tmp_file_name);
             clear_response(&call_rsp);
 
-            f = fopen(full_path, "rb");
-            if (f == NULL)
+            if (path != NULL)
             {
-                ERROR_MSG_PLAIN("Failed to open file '%s' for reading",
-                                full_path);
-                rc = -1;
-                goto cleanup;
+                f = fopen(full_path, "rb");
+                if (f == NULL)
+                {
+                    ERROR_MSG_PLAIN("Failed to open file '%s' for reading",
+                                    full_path);
+                    rc = -1;
+                    goto next_target;
+                }
             }
 
             EVP_MD_CTX_init(&mdctx);
             if (!EVP_DigestInit_ex(&mdctx, EVP_sha1(), NULL))
             {
                 ERROR_MSG("EVP_DigestInit_ex() failed");
-                fclose(f);
+                if (path != NULL)
+                    fclose(f);
                 rc = -1;
                 goto cleanup;
             }
-            while (!feof(f))
-            {
+
+            was_sent = 0;
+            do {
                 int ferr;
 
-                read_len = fread(img_chunk, 1, CHUNK_LEN, f); 
-                ferr = ferror(f);
-                if (ferr != 0)
+                if (path != NULL)
                 {
-                    ERROR_MSG("Read error occured when reading from '%s'",
-                              full_path);
-                    rc = -1;
-                    fclose(f);
-                    goto cleanup;
+                    read_len = fread(img_chunk, 1, CHUNK_LEN, f); 
+                    ferr = ferror(f);
+                    if (ferr != 0)
+                    {
+                        ERROR_MSG("Read error occured when reading "
+                                  "from '%s'",
+                                  full_path);
+                        rc = -1;
+                        fclose(f);
+                        goto cleanup;
+                    }
+                }
+                else
+                {
+                    read_len = firmware_images[img_idx].size - was_sent;
+                    if (read_len > CHUNK_LEN)
+                        read_len = CHUNK_LEN;
+
+                    memcpy(img_chunk,
+                           firmware_images[img_idx].data + was_sent,
+                           read_len);
                 }
 
                 if (read_len > 0)
@@ -2251,7 +2310,8 @@ install_from_local_path(CURL *curl, const char *namespace,
                     {
                         ERROR_MSG("EVP_DigestUpdate() failed");
                         rc = -1;
-                        fclose(f);
+                        if (path != NULL)
+                            fclose(f);
                         goto cleanup;
                     }
 
@@ -2261,7 +2321,8 @@ install_from_local_path(CURL *curl, const char *namespace,
                         ERROR_MSG("Failed to allocate memory for Base64 "
                                   "string");
                         rc = -1;
-                        fclose(f);
+                        if (path != NULL)
+                            fclose(f);
                         goto cleanup;
                     }
 
@@ -2279,14 +2340,21 @@ install_from_local_path(CURL *curl, const char *namespace,
                     {
                         rc = -1;
                         free(encoded);
-                        fclose(f);
+                        if (path != NULL)
+                            fclose(f);
                         goto cleanup;
                     }
                     clear_response(&call_rsp);
                     free(encoded);
+
+                    was_sent += read_len;
                 }
-            }
-            fclose(f);
+            } while ((path != NULL && !feof(f)) ||
+                     (path == NULL && read_len != 0));
+
+            if (path != NULL)
+                fclose(f);
+
             if (!EVP_DigestFinal_ex(&mdctx, md_hash, &md_len))
             {
                 ERROR_MSG("Failed to compute SHA1 hash of "
@@ -2429,7 +2497,7 @@ update_firmware(CURL *curl, const char *namespace,
     memset(&rec_rsp, 0, sizeof(rec_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
 
-    if (url_specified)
+    if (url_specified && firmware_source != NULL)
         func_install = call_install_from_uri;
     else
         func_install = install_from_local_path;
@@ -2939,8 +3007,8 @@ main(int argc, const char *argv[])
             goto cleanup;
         }
 
-        if (do_update && (fw_url != NULL || fw_path != NULL)
-            && (update_controller || update_bootrom))
+        if (do_update &&
+            (update_controller || update_bootrom))
         {
             if (!yes)
             {
