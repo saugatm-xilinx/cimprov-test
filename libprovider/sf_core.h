@@ -232,6 +232,10 @@ namespace solarflare
         enum InstallRC {
             Install_OK = 1,           ///< Installation successeded
             Install_NA,               ///< Firmware image is not applicable
+            Install_Not_Found,        ///< Applicable firmware image
+                                      ///  was not found (when we specified
+                                      ///  a path to a folder with images,
+                                      ///  not to a concrete image)
             Install_Error,            ///< Error occured during installation
         };
 

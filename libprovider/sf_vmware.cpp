@@ -1413,19 +1413,25 @@ fail:
     ///
     /// Check firmware path, fix it if necessary and return it.
     ///
-    /// @param path     Path to firmware image
-    /// @param defPath  What to add to the path if it does not
-    ///                 end with firmware image file name (*.dat)
+    /// @param path                 Path to firmware image
+    /// @param defPath              What to add to the path if it
+    ///                             does not end with firmware image
+    ///                             file name (*.dat)
+    /// @param was_completed  [out] Whether path completion was actually
+    ///                             performed
     ///
     /// @return Fixed firmware image path
     ///
     static String fixFwImagePath(const char *path,
-                                 const char *defPath)
+                                 const char *defPath,
+                                 bool &was_completed)
     {
         char    *fn = strdup(path);
         String   strPath;
         bool     local_path = false;
         bool     dir_path = false;
+
+        was_completed = false;
 
         if (fn == NULL)
             return String("");
@@ -1445,7 +1451,10 @@ fail:
 
         if (!(local_path && !dir_path) &&
             strstr(fn, ".dat") != fn + (strlen(fn) - 4))
+        {
             strPath.append(String(defPath));
+            was_completed = true;
+        }
         free(fn);
 
         return strPath;
@@ -1455,6 +1464,7 @@ fail:
     static SWElement::InstallRC vmwareInstallFirmware(
                                         const NIC *owner,
                                         const char *fileName,
+                                        bool pathCompleted,
                                         UpdatedFirmwareType fwType,
                                         unsigned int subType,
                                         const VersionInfo &curVersion,
@@ -1482,7 +1492,7 @@ fail:
     /// @param base64_hash  SHA-1 hash of firmware image,
     ///                     encoded in Base64
     ///
-    /// @return true on sucess, false on failure
+    /// @return Install_OK on sucess, error code on failure
     ///
     static SWElement::InstallRC vmwareInstallFirmwareType(
                                               const char *path,
@@ -1496,15 +1506,18 @@ fail:
         String          strDefPath;
         unsigned int    subType;
         String          fName;
+        bool            was_completed;
 
         if (getFwImageInfo(owner, fwType, subType, fName) < 0)
             return SWElement::Install_Error;
 
         strDefPath = getDefaultFwPath(owner, fwType, fName);
         strPath = fixFwImagePath(path,
-                                 strDefPath.c_str());
+                                 strDefPath.c_str(),
+                                 was_completed);
 
         return vmwareInstallFirmware(owner, strPath.c_str(),
+                                     was_completed,
                                      fwType, subType,
                                      curVersion,
                                      force, base64_hash);
@@ -2422,20 +2435,22 @@ fail:
     /// @param passwd      Password (NULL if not required)
     /// @param f           File to write loaded data
     ///
-    /// @return 0 on success, < 0 on failure
+    /// @return Install_OK on success, error code on failure
     ///
-    static int uri_get_file(const char *uri, const char *passwd,
-                            FILE *f)
+    static SWElement::InstallRC uri_get_file(const char *uri,
+                                             const char *passwd,
+                                             FILE *f)
     {
         CURL          *curl = NULL;
         CURLcode       rc_curl;
-        int            rc = 0;
         long int       http_code = 0;
+
+        SWElement::InstallRC  rc = SWElement::Install_OK;
 
         if (uri == NULL || f == NULL)
         {
             PROVIDER_LOG_ERR("%s(): incorrect arguments", __FUNCTION__);
-            return -1;
+            return SWElement::Install_Error;
         }
 
         curl = curl_easy_init();
@@ -2443,7 +2458,7 @@ fail:
         {
             PROVIDER_LOG_ERR("curl_easy_init() failed, errno %d ('%s')",
                              errno, strerror(errno));
-            return -1;
+            return SWElement::Install_Error;
         }
 
         if ((rc_curl = curl_easy_setopt(curl, CURLOPT_URL,
@@ -2451,7 +2466,7 @@ fail:
         {
             PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_URL) failed: %s",
                              curl_easy_strerror(rc_curl));
-            rc = -1;
+            rc = SWElement::Install_Error;
             goto curl_fail;
         }
         if ((rc_curl = 
@@ -2461,7 +2476,7 @@ fail:
             PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_WRITEDATA) "
                              "failed: %s",
                              curl_easy_strerror(rc_curl));
-            rc = -1;
+            rc = SWElement::Install_Error;
             goto curl_fail;
         }
 
@@ -2473,7 +2488,7 @@ fail:
                 PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_PASSWORD) "
                                  "failed: %s",
                                  curl_easy_strerror(rc_curl));
-                rc = -1;
+                rc = SWElement::Install_Error;
                 goto curl_fail;
             }
         }
@@ -2482,7 +2497,11 @@ fail:
         {
             PROVIDER_LOG_ERR("curl_easy_perform() failed: %s",
                              curl_easy_strerror(rc_curl));
-            rc = -1;
+            if (rc_curl == CURLE_TFTP_NOTFOUND ||
+                rc_curl == CURLE_REMOTE_FILE_NOT_FOUND)
+                rc = SWElement::Install_Not_Found;
+            else
+                rc = SWElement::Install_Error;
             goto curl_fail;
         }
 
@@ -2496,14 +2515,17 @@ fail:
                 PROVIDER_LOG_ERR("curl_easy_getinfo(CURLINFO_RESPONSE_CODE)"
                                  " failed: %s",
                                  curl_easy_strerror(rc_curl));
-                rc = -1;
+                rc = SWElement::Install_Error;
                 goto curl_fail;
             }
             if (http_code >= 400)
             {
                 PROVIDER_LOG_ERR("Trying to obtain '%s' resulted in %ld "
                                  "HTTP status code", uri, http_code);
-                rc = -1;
+                if (http_code == 404)
+                    rc = SWElement::Install_Not_Found;
+                else
+                    rc = SWElement::Install_Error;
                 goto curl_fail;
             }
         }
@@ -2717,20 +2739,23 @@ cleanup:
     ///
     /// Install firmware on a NIC from given image.
     ///
-    /// @param owner        NIC class pointer
-    /// @param fileName     From where to get firmware image
-    /// @param fwType       Firmware type (BootROM or Controller)
-    /// @param subType      Firmware subtype
-    /// @param curVersion   Version of the currently installed firmware
-    /// @param force        Use sfupdate with --force option
-    /// @param base64_hash  SHA-1 hash of firmware image,
-    ///                     encoded in Base64
+    /// @param owner          NIC class pointer
+    /// @param fileName       From where to get firmware image
+    /// @param pathCompleted  Whether path completion with default
+    ///                       image name was used or not
+    /// @param fwType         Firmware type (BootROM or Controller)
+    /// @param subType        Firmware subtype
+    /// @param curVersion     Version of the currently installed firmware
+    /// @param force          Use sfupdate with --force option
+    /// @param base64_hash    SHA-1 hash of firmware image,
+    ///                       encoded in Base64
     ///
-    /// @return 0 on success, < 0 on failure
+    /// @return Install_OK on success, error code on failure
     ///
     static SWElement::InstallRC vmwareInstallFirmware(
                                           const NIC *owner,
                                           const char *fileName,
+                                          bool pathCompleted,
                                           UpdatedFirmwareType fwType,
                                           unsigned int subType,
                                           const VersionInfo &curVersion,
@@ -2744,6 +2769,8 @@ cleanup:
         int   fd = -1;
         char  tmp_file[] = "/tmp/sf_firmware_XXXXXX";
         int   tmp_file_used = 0;
+
+        SWElement::InstallRC install_rc;
 
         const char *sfupdate_image_fn = NULL;
 
@@ -2765,6 +2792,8 @@ cleanup:
 
         if (strcasecmp_start(fileName, FILE_PROTO) == 0)
         {
+            int fd_aux;
+
             sfupdate_image_fn = fileName + strlen(FILE_PROTO);
 
             rc = snprintf(cmd, CMD_MAX_LEN, "sfupdate --adapter=%s "
@@ -2777,6 +2806,30 @@ cleanup:
                 PROVIDER_LOG_ERR("Failed to format sfupdate command");
                 return SWElement::Install_Error;
             }
+
+            fd_aux = open(sfupdate_image_fn, O_RDONLY);
+            if (fd_aux < 0)
+            {
+                if (errno == ENOENT)
+                {
+                    PROVIDER_LOG_ERR("File '%s' not found",
+                                     sfupdate_image_fn);
+                    if (pathCompleted)
+                        return SWElement::Install_Not_Found;
+                    else
+                        return SWElement::Install_Error;
+                }
+                else
+                {
+                    PROVIDER_LOG_ERR("File '%s' cannot be opened "
+                                     "for reading, errno = %d ('%s')",
+                                     sfupdate_image_fn, errno,
+                                     strerror(errno));
+                    return SWElement::Install_Error;
+                }
+            }
+            else
+                close(fd_aux);
         }
         else if (strcasecmp_start(fileName, TFTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, HTTP_PROTO) == 0 ||
@@ -2801,11 +2854,15 @@ cleanup:
                 return SWElement::Install_Error;
             }
 
-            rc = uri_get_file(fileName, NULL, f);
-            if (rc != 0)
+            install_rc = uri_get_file(fileName, NULL, f);
+            if (install_rc != SWElement::Install_OK)
             {
                 fclose(f);
-                return SWElement::Install_Error;
+                if (pathCompleted &&
+                    install_rc == SWElement::Install_Not_Found)
+                    return SWElement::Install_Not_Found;
+                else
+                    return SWElement::Install_Error;
             }
             fclose(f);
 

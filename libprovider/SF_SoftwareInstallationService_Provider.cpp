@@ -168,9 +168,12 @@ void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::Sys
     {
         installRC = sw.install(uri, true, force, base64_hash);
         if (!(installRC == SWElement::Install_OK ||
-              (installRC == SWElement::Install_NA && skipNotApplicable)))
+              ((installRC == SWElement::Install_NA ||
+                installRC == SWElement::Install_Not_Found)
+               && skipNoMatchingImage)))
             ok = false;
-        if (installRC != SWElement::Install_NA)
+        if (installRC != SWElement::Install_NA &&
+            installRC != SWElement::Install_Not_Found)
             firstRun = false;
     }
 }
