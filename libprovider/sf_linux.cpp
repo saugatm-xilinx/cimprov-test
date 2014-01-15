@@ -802,9 +802,9 @@ namespace solarflare
             owner(o), boundIface(bi) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual void initialize() {};
     };
@@ -832,9 +832,9 @@ namespace solarflare
             owner(o), boundIface(bi) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual void initialize() {};
     };
@@ -1313,9 +1313,9 @@ namespace solarflare
             Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return false;
+            return Install_Error;
         }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
@@ -1403,9 +1403,9 @@ namespace solarflare
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return false;
+            return Install_Error;
         }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
@@ -1427,9 +1427,9 @@ namespace solarflare
         {
             return kernelDriver.version();
         }
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
@@ -1458,9 +1458,9 @@ namespace solarflare
         {
             return VersionInfo(SF_LIBPROV_VERSION);
         }
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {

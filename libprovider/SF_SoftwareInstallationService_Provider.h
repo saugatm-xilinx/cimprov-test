@@ -28,14 +28,16 @@ class SF_SoftwareInstallationService_Provider
         bool firstRun;
         bool force;
         const char *base64_hash;
+        bool skipNotApplicable;
     protected:
         virtual void handler(solarflare::SystemElement& se, unsigned);
     public:
         Installer(const char *u, const Instance *inst, bool f,
-                  const char *hash) :
+                  const char *hash, bool skipNA = false) :
             solarflare::ActionForAll(inst), uri(u), ok(false),
-            firstRun(true), force(f), base64_hash(hash) {}
-        bool isOk() const { return ok; };
+            firstRun(true), force(f), base64_hash(hash),
+            skipNotApplicable(skipNA) {}
+        bool isOk() const { return ok && !firstRun; };
         bool installWasRun() const { return !firstRun; };
         virtual bool process(solarflare::SystemElement& el);
     };

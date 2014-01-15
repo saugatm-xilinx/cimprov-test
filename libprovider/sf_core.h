@@ -228,6 +228,13 @@ namespace solarflare
         /// not installed (currently impossible).
         virtual VersionInfo version() const = 0;
 
+        /// Return code of install() and syncInstall()
+        enum InstallRC {
+            Install_OK = 1,           ///< Installation successeded
+            Install_NA,               ///< Firmware image is not applicable
+            Install_Error,            ///< Error occured during installation
+        };
+
         /// Updates a software component from @p filename.
         /// This method is only responsible for proper handling of
         /// asynchronous call; all real work is done in syncInstall()
@@ -244,10 +251,12 @@ namespace solarflare
         /// @param base64_hash  SHA-1 hash of firmware image,
         ///                     encoded in Base64 string
         ///
-        /// @return FALSE if the installation failed, TRUE if it succeeds or
-        /// we're in async mode.
-        bool install(const char *filename, bool sync = true,
-                     bool force = false, const char *base64_hash = NULL);
+        /// @return Install_OK if the installation successed or we are in
+        ///         async mode, Install_NA if firmware image is not
+        ///         applicable, Install_Error in case of error
+        InstallRC install(const char *filename, bool sync = true,
+                          bool force = false,
+                          const char *base64_hash = NULL);
 
         /// Actually updates a software component from @p filename.
         /// The method shall be overriden in platform-specific subclasses.
@@ -255,9 +264,9 @@ namespace solarflare
         /// @note It's not intended to be called directly; it is made public
         /// because it shall be callable from InstallThread. 
         /// But it shall do no harm if called from some other context.
-        virtual bool syncInstall(const char *filename,
-                                 bool force,
-                                 const char *base64_hash) = 0;
+        virtual InstallRC syncInstall(const char *filename,
+                                      bool force,
+                                      const char *base64_hash) = 0;
 
         /// Method returns system name of the component (e.g. object's file
         /// name, rpm name etc.). This is required so that we can relate to
@@ -338,11 +347,11 @@ namespace solarflare
             return VersionInfo();
         }
 
-        virtual bool syncInstall(const char *filename,
-                                 bool force,
-                                 const char *base64_hash)
+        virtual InstallRC syncInstall(const char *filename,
+                                      bool force,
+                                      const char *base64_hash)
         {
-            return false;
+            return Install_Error;
         }
 
         virtual SWClass classify() const
@@ -395,11 +404,11 @@ namespace solarflare
             return vers;
         }
 
-        virtual bool syncInstall(const char *filename,
-                                 bool force,
-                                 const char *base64_hash)
+        virtual InstallRC syncInstall(const char *filename,
+                                      bool force,
+                                      const char *base64_hash)
         {
-            return false;
+            return Install_Error;
         }
 
         virtual SWClass classify() const

@@ -32,8 +32,8 @@ namespace solarflare
 
     bool SWElement::InstallThread::threadProc()
     {
-        return owner->syncInstall(filename.c_str(), force,
-                                  hash.c_str());
+        return (owner->syncInstall(filename.c_str(), force,
+                                   hash.c_str()) == Install_OK);
     }
 
     void SWElement::InstallThread::update(Thread *tempThr)
@@ -42,20 +42,20 @@ namespace solarflare
     }
 
 
-    bool SWElement::install(const char *filename, bool sync,
-                            bool force,
-                            const char *base64_hash)
+    SWElement::InstallRC SWElement::install(const char *filename, bool sync,
+                                            bool force,
+                                            const char *base64_hash)
     {
         if (sync)
             return syncInstall(filename, force, base64_hash);
         if (installer.currentState() == Thread::Running ||
             installer.currentState() == Thread::Aborting)
-            return false;
+            return Install_Error;
         installer.setFilename(filename);
         installer.setForce(force);
         installer.setHash(base64_hash);
         installer.start();
-        return true;
+        return Install_OK;
     }
 
     String OrderedElement::name(const String& prefix) const

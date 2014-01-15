@@ -1452,13 +1452,14 @@ fail:
     }
 
     // Forward-declaration
-    static int vmwareInstallFirmware(const NIC *owner,
-                                     const char *fileName,
-                                     UpdatedFirmwareType fwType,
-                                     unsigned int subType,
-                                     const VersionInfo &curVersion,
-                                     bool force,
-                                     const char *base64_hash);
+    static SWElement::InstallRC vmwareInstallFirmware(
+                                        const NIC *owner,
+                                        const char *fileName,
+                                        UpdatedFirmwareType fwType,
+                                        unsigned int subType,
+                                        const VersionInfo &curVersion,
+                                        bool force,
+                                        const char *base64_hash);
 
     // Forward-declaration
     static String getDefaultFwPath(const NIC *owner,
@@ -1483,12 +1484,13 @@ fail:
     ///
     /// @return true on sucess, false on failure
     ///
-    bool vmwareInstallFirmwareType(const char *path,
-                                   const NIC *owner,
-                                   UpdatedFirmwareType fwType,
-                                   const VersionInfo &curVersion,
-                                   bool force,
-                                   const char *base64_hash)
+    static SWElement::InstallRC vmwareInstallFirmwareType(
+                                              const char *path,
+                                              const NIC *owner,
+                                              UpdatedFirmwareType fwType,
+                                              const VersionInfo &curVersion,
+                                              bool force,
+                                              const char *base64_hash)
     {
         String          strPath;
         String          strDefPath;
@@ -1496,19 +1498,16 @@ fail:
         String          fName;
 
         if (getFwImageInfo(owner, fwType, subType, fName) < 0)
-            return false;
+            return SWElement::Install_Error;
 
         strDefPath = getDefaultFwPath(owner, fwType, fName);
         strPath = fixFwImagePath(path,
                                  strDefPath.c_str());
 
-        if (vmwareInstallFirmware(owner, strPath.c_str(),
-                                  fwType, subType,
-                                  curVersion,
-                                  force, base64_hash) < 0)
-            return false;
-
-        return true;
+        return vmwareInstallFirmware(owner, strPath.c_str(),
+                                     fwType, subType,
+                                     curVersion,
+                                     force, base64_hash);
     }
 
     ///
@@ -2103,9 +2102,9 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *file_name,
-                                 bool force,
-                                 const char *base64_hash)
+        virtual InstallRC syncInstall(const char *file_name,
+                                      bool force,
+                                      const char *base64_hash)
         {
             return vmwareInstallFirmwareType(file_name, owner,
                                              FIRMWARE_MCFW,
@@ -2123,9 +2122,9 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *file_name,
-                                 bool force,
-                                 const char *base64_hash)
+        virtual InstallRC syncInstall(const char *file_name,
+                                      bool force,
+                                      const char *base64_hash)
         {
             return vmwareInstallFirmwareType(file_name, owner,
                                              FIRMWARE_BOOTROM,
@@ -2729,13 +2728,14 @@ cleanup:
     ///
     /// @return 0 on success, < 0 on failure
     ///
-    static int vmwareInstallFirmware(const NIC *owner,
-                                     const char *fileName,
-                                     UpdatedFirmwareType fwType,
-                                     unsigned int subType,
-                                     const VersionInfo &curVersion,
-                                     bool force,
-                                     const char *base64_hash)
+    static SWElement::InstallRC vmwareInstallFirmware(
+                                          const NIC *owner,
+                                          const char *fileName,
+                                          UpdatedFirmwareType fwType,
+                                          unsigned int subType,
+                                          const VersionInfo &curVersion,
+                                          bool force,
+                                          const char *base64_hash)
     {
         Auto_Mutex    guard(tmpFilesArrLock); 
 
@@ -2754,13 +2754,13 @@ cleanup:
         // skipping any other
         if (strcmp(vpd.part().c_str(), "SFN6122F") != 0 &&
             strcmp(vpd.part().c_str(), "SFN5162F") != 0)
-            return 0;
+            return SWElement::Install_NA;
 #endif
 
         if (((VMwareNIC *)owner)->ports.size() <= 0)
         {
             PROVIDER_LOG_ERR("No ports found");
-            return -1;
+            return SWElement::Install_Error;
         }
 
         if (strcasecmp_start(fileName, FILE_PROTO) == 0)
@@ -2775,7 +2775,7 @@ cleanup:
             if (rc < 0 || rc >= CMD_MAX_LEN)
             {
                 PROVIDER_LOG_ERR("Failed to format sfupdate command");
-                return -1;
+                return SWElement::Install_Error;
             }
         }
         else if (strcasecmp_start(fileName, TFTP_PROTO) == 0 ||
@@ -2789,7 +2789,7 @@ cleanup:
             {
                 PROVIDER_LOG_ERR("mkstemp('%s') failed, errno %d ('%s')",
                                  tmp_file, errno, strerror(errno));
-                return -1;
+                return SWElement::Install_Error;
             }
 
             f = fdopen(fd, "w");
@@ -2798,14 +2798,14 @@ cleanup:
                 PROVIDER_LOG_ERR("fdopen() failed, errno %d ('%s')",
                                  errno, strerror(errno));
                 close(fd);
-                return -1;
+                return SWElement::Install_Error;
             }
 
             rc = uri_get_file(fileName, NULL, f);
             if (rc != 0)
             {
                 fclose(f);
-                return -1;
+                return SWElement::Install_Error;
             }
             fclose(f);
 
@@ -2817,7 +2817,7 @@ cleanup:
             {
                 PROVIDER_LOG_ERR("Failed to format sfupdate command");
                 unlink(tmp_file);
-                return -1;
+                return SWElement::Install_Error;
             }
 
             tmp_file_used = 1;
@@ -2826,7 +2826,7 @@ cleanup:
         else // Protocol not supported
         {
             PROVIDER_LOG_ERR("Unknown protocol for path '%s'", fileName);
-            return -1;
+            return SWElement::Install_Error;
         }
 
         if (!checkFileHash(sfupdate_image_fn,
@@ -2835,7 +2835,7 @@ cleanup:
             PROVIDER_LOG_ERR("Firmware image hash check failed");
             if (tmp_file_used)
                 unlink(tmp_file);
-            return -1;
+            return SWElement::Install_Error;
         }
 
         if (!checkImageApplicability(sfupdate_image_fn, fwType, subType,
@@ -2845,7 +2845,7 @@ cleanup:
                              "check failed");
             if (tmp_file_used)
                 unlink(tmp_file);
-            return -1;
+            return SWElement::Install_NA;
         }
 
         PROVIDER_LOG_DBG("Run sfupdate command '%s'", cmd);
@@ -2854,7 +2854,7 @@ cleanup:
         {
             if (tmp_file_used)
                 unlink(tmp_file);
-            return -1;
+            return SWElement::Install_Error;
         }
 
         sfupdateLogOutput(fd);
@@ -2863,7 +2863,7 @@ cleanup:
         if (tmp_file_used)
             unlink(tmp_file);
 
-        return 0;
+        return SWElement::Install_OK;
     }
 
     class VMwareDriver : public Driver {
@@ -2875,9 +2875,9 @@ cleanup:
             Driver(d, sn), owner(pkg) {}
         virtual VersionInfo version() const;
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return false;
+            return Install_Error;
         }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
@@ -2972,9 +2972,9 @@ cleanup:
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return false;
+            return Install_Error;
         }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
@@ -2996,9 +2996,9 @@ cleanup:
         {
             return kernelDriver.version();
         }
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
@@ -3027,9 +3027,9 @@ cleanup:
         {
             return VersionInfo(SF_LIBPROV_VERSION);
         }
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {

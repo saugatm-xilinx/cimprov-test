@@ -155,13 +155,24 @@ bool SF_SoftwareInstallationService_Provider::Installer::process(
 void SF_SoftwareInstallationService_Provider::Installer::handler(solarflare::SystemElement& se,
                                                                  unsigned)
 {
-    solarflare::SWElement& sw = static_cast<solarflare::SWElement&>(se);
+    using namespace solarflare;
+
+    SWElement::InstallRC installRC;
+
+    SWElement& sw = static_cast<SWElement&>(se);
+
     if (firstRun)
-    {
         ok = true;
-        firstRun = false;
+
+    if (ok || firstRun)
+    {
+        installRC = sw.install(uri, true, force, base64_hash);
+        if (!(installRC == SWElement::Install_OK ||
+              (installRC == SWElement::Install_NA && skipNotApplicable)))
+            ok = false;
+        if (installRC != SWElement::Install_NA)
+            firstRun = false;
     }
-    ok = ok && sw.install(uri, true, force, base64_hash);
 }
 
 void SF_SoftwareInstallationService_Provider::NICInstaller::handler(solarflare::SystemElement& se,
@@ -273,7 +284,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
             return INVOKE_METHOD_OK;
         }
         Installer installer(URI.value.c_str(), self,
-                            force, base64_hash.c_str());
+                            force, base64_hash.c_str(), true);
         installer.forSoftware();
         if (installer.isOk())
             return_value.set(OK);

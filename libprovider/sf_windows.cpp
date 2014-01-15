@@ -1573,9 +1573,9 @@ cleanup:
             owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual void initialize() {};
     };
@@ -1589,9 +1589,9 @@ cleanup:
             owner(o), versGot(false) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual void initialize() {};
     };
@@ -1606,9 +1606,9 @@ cleanup:
         static WindowsDriver byDevInstName(const char *name);
         virtual VersionInfo version() const { return vers; }
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return false;
+            return Install_Error;
         }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return NULL; }
@@ -1961,9 +1961,9 @@ cleanup:
         static WindowsLibrary moduleLibrary(const Package *pkg);
         virtual VersionInfo version() const { return vers; };
         virtual void initialize() {};
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return false;
+            return Install_Error;
         }
         virtual const String& genericName() const { return description(); }
         virtual const Package *package() const { return owner; }
@@ -2051,9 +2051,9 @@ cleanup:
         {
             return providerLibrary.version();
         }
-        virtual bool syncInstall(const char *, bool, const char *)
+        virtual InstallRC syncInstall(const char *, bool, const char *)
         {
-            return true;
+            return Install_Error;
         }
         virtual bool forAllSoftware(ElementEnumerator& en)
         {
