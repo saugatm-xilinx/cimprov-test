@@ -135,6 +135,9 @@ static int   yes = 0;
 /* Maximum length of a string representing CIMOM address */
 #define MAX_ADDR_LEN 1024
 
+#define SVC_BOOTROM_NAME "BootROM"
+#define SVC_MCFW_NAME "Firmware"
+
 /** Command line options */
 enum {
     OPT_CIMOM_ADDR = 1,       /**< CIMOM address - use either it or 
@@ -1810,7 +1813,7 @@ call_install_from_uri(CURL *curl, const char *namespace,
         return -1;
     }
 
-    if (strcmp(svc_name, "BootROM") == 0)
+    if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
         firmware_type = "BootROM";
     else
         firmware_type = "Controller";
@@ -2136,7 +2139,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                     goto next_target;
                 }
 
-                if (strcmp(svc_name, "BootROM") == 0)
+                if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
                     subdir = "bootrom";
                 else
                     subdir = "mcfw";
@@ -2527,9 +2530,9 @@ update_firmware(CURL *curl, const char *namespace,
             goto cleanup;
         }
 
-        if (strcmp(name, "Firmware") == 0)
+        if (strcmp(name, SVC_MCFW_NAME) == 0)
             svc_mcfw_inst = svc_inst;
-        else if (strcmp(name, "BootROM") == 0)
+        else if (strcmp(name, SVC_BOOTROM_NAME) == 0)
             svc_bootrom_inst = svc_inst;
     }
 
@@ -3019,7 +3022,7 @@ main(int argc, const char *argv[])
                        update_controller && update_bootrom ?
                        "controller and BootROM" :
                             (update_controller ? "Controller" : "BootROM"),
-                        interface_name == NULL ? "all NICs" : interface_name);
+                       interface_name == NULL ? "all NICs" : interface_name);
                 fgets(yes_str, sizeof(yes_str), stdin);
                 for (i = 0; i < sizeof(yes_str); i++)
                     if (yes_str[i] == '\n' || yes_str[i] == '\r')
