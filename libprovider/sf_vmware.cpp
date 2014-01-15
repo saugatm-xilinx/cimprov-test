@@ -2689,7 +2689,7 @@ cleanup:
             return false;
         }
 
-        if (header.ih_subtype == subType)
+        if (header.ih_subtype != subType)
         {
             PROVIDER_LOG_ERR("%s(): firmware image subtype mismatch",
                              __FUNCTION__);
