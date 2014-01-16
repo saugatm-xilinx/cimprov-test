@@ -3125,7 +3125,8 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                    curl_data, curl_data_len);
             downloaded_fw_imgs[downloaded_count].size = curl_data_len;
 
-            header = (image_header_t*)downloaded_fw_imgs[i].data;
+            header = (image_header_t*)
+                            downloaded_fw_imgs[downloaded_count].data;
             *ver_a = header->ih_code_version_a;
             *ver_b = header->ih_code_version_b;
             *ver_c = header->ih_code_version_c;
