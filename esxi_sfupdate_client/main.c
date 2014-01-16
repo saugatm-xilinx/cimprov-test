@@ -3168,6 +3168,49 @@ cleanup:
 }
 
 /**
+ * Checking whether current version is lower than
+ * new one.
+ *
+ * @param cur_version       Current version
+ * @param new_ver_a         First number of the new version
+ * @param new_ver_b         Second number of the new version
+ * @param new_ver_c         Third number of the new version
+ * @param new_ver_d         Fourth number of the new version
+ *
+ * @return 1 if current version is lower, 0 otherwise
+ */
+int
+checkVersion(const char *cur_version,
+             int new_ver_a, int new_ver_b,
+             int new_ver_c, int new_ver_d)
+{
+    int old_ver_a = 0;
+    int old_ver_b = 0;
+    int old_ver_c = 0;
+    int old_ver_d = 0;
+
+    sscanf(cur_version, "%d.%d.%d.%d", 
+           &old_ver_a, &old_ver_b, &old_ver_c, &old_ver_d);
+
+    if (old_ver_a < new_ver_a)
+        return 1;
+    else if (old_ver_a == new_ver_a &&
+             old_ver_b < new_ver_b)
+        return 1;
+    else if (old_ver_a == new_ver_a &&
+             old_ver_b == new_ver_b &&
+             old_ver_c < new_ver_c)
+        return 1;
+    else if (old_ver_a == new_ver_a &&
+             old_ver_b == new_ver_b &&
+             old_ver_c == new_ver_c &&
+             old_ver_d < new_ver_d)
+        return 1;
+
+    return 0;
+}
+
+/**
  * Program entry function
  *
  * @param argc    Command line arguments' count
@@ -3200,6 +3243,7 @@ main(int argc, const char *argv[])
     int bootrom_ver_b = 0;
     int bootrom_ver_c = 0;
     int bootrom_ver_d = 0;
+    int ver_check;
 
     char nic_tag_prev[MAX_NIC_TAG_LEN] = "";
     int  have_applicable_imgs = 0;
@@ -3437,10 +3481,6 @@ main(int argc, const char *argv[])
                                     &bootrom_ver_b,
                                     &bootrom_ver_c,
                                     &bootrom_ver_d);
-
-                if (controller_applicable_found ||
-                    bootrom_applicable_found)
-                    have_applicable_imgs = 1;
             }
 
             snprintf(nic_tag_prev, MAX_NIC_TAG_LEN, "%s",
@@ -3483,28 +3523,52 @@ main(int argc, const char *argv[])
                 if (strcmp(description, "NIC MC Firmware") == 0 &&
                     update_controller)
                 {
+                    ver_check = checkVersion(version,
+                                             controller_ver_a,
+                                             controller_ver_b,
+                                             controller_ver_c,
+                                             controller_ver_d);
                     printf("Controller version: %s\n", version); 
                     if (controller_applicable_found)
-                        printf("    Available update: %d.%d.%d.%d\n",
-                               controller_ver_a,
-                               controller_ver_b,
-                               controller_ver_c,
-                               controller_ver_d);
+                        printf(
+                            "    Available update: %d.%d.%d.%d%s\n",
+                            controller_ver_a,
+                            controller_ver_b,
+                            controller_ver_c,
+                            controller_ver_d,
+                            ver_check == 0 && !force_update?
+                               " (won't be applied without --force)" : "");
                     else
                         printf("    No update available\n");
+
+                    if (controller_applicable_found &&
+                        (ver_check == 1 || force_update))
+                        have_applicable_imgs = 1;
                 }
                 else if (strcmp(description, "NIC BootROM") == 0 &&
                          update_bootrom)
                 {
-                    printf("BootROM version:    %s\n", version); 
+                    ver_check = checkVersion(version,
+                                             bootrom_ver_a,
+                                             bootrom_ver_b,
+                                             bootrom_ver_c,
+                                             bootrom_ver_d);
+                    printf("Controller version: %s\n", version); 
                     if (bootrom_applicable_found)
-                        printf("    Available update: %d.%d.%d.%d\n",
-                               bootrom_ver_a,
-                               bootrom_ver_b,
-                               bootrom_ver_c,
-                               bootrom_ver_d);
+                        printf(
+                            "    Available update: %d.%d.%d.%d%s\n",
+                            bootrom_ver_a,
+                            bootrom_ver_b,
+                            bootrom_ver_c,
+                            bootrom_ver_d,
+                            ver_check == 0 && !force_update?
+                               " (won't be applied without --force)" : "");
                     else
                         printf("    No update available\n");
+
+                    if (bootrom_applicable_found &&
+                        (ver_check == 1 || force_update))
+                        have_applicable_imgs = 1;
                 }
 
                 free(description);
@@ -3521,12 +3585,15 @@ main(int argc, const char *argv[])
 
         if (!if_found)
         {
-            ERROR_MSG("No interface named '%s' was found",
+            ERROR_MSG("\nNo interface named '%s' was found",
                       interface_name);
             rc = -1;
             goto cleanup;
         }
 
+        if (!have_applicable_imgs)
+            printf("\nThere is no firmware images which can be "
+                   "used for update\n");
         if (do_update && have_applicable_imgs &&
             (update_controller || update_bootrom))
         {
