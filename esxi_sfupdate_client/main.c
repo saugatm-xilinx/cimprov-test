@@ -2305,11 +2305,8 @@ install_from_local_path(CURL *curl, const char *namespace,
                 if (i < imgs_count)
                     img_idx = i;
                 else
-                {
-                    ERROR_MSG_PLAIN("Inbuilt image not found");
-                    rc = -1;
+                    /** Skip not found image */
                     goto next_target;
-                }
             }
 
             clear_response(&call_rsp);
@@ -2382,12 +2379,8 @@ install_from_local_path(CURL *curl, const char *namespace,
             {
                 f = fopen(full_path, "rb");
                 if (f == NULL)
-                {
-                    ERROR_MSG_PLAIN("Failed to open file '%s' for reading",
-                                    full_path);
-                    rc = -1;
+                    /* Skip not found firmware image */
                     goto next_target;
-                }
             }
 
             EVP_MD_CTX_init(&mdctx);
