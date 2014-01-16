@@ -3063,7 +3063,8 @@ findAvailableUpdate(CURL *curl, const char *namespace,
             {
                 long int       http_code = 0;
 
-                curl_rc = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE,
+                curl_rc = curl_easy_getinfo(curl_fw,
+                                            CURLINFO_RESPONSE_CODE,
                                             &http_code);
                 if (curl_rc != CURLE_OK)
                 {
@@ -3120,7 +3121,7 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                 rc = -1;
                 goto cleanup;
             }
-            
+ 
             memcpy(downloaded_fw_imgs[downloaded_count].data,
                    curl_data, curl_data_len);
             downloaded_fw_imgs[downloaded_count].size = curl_data_len;
