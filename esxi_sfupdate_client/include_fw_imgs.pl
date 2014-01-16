@@ -45,7 +45,7 @@ print FILE "#include \"fw_images.h\"\n\n";
 
 for $i (0 .. $#all_c_files)
 {
-    print FILE "const uint8_t img${i}[] __attribute__((aligned(4))) = {\n";
+    print FILE "uint8_t img${i}[] __attribute__((aligned(4))) = {\n";
     print FILE qx(hexdump '$all_c_files[$i]' -v -e '/1 \"0x%02X, \"')."\n";
     print FILE "};\n\n";
 }

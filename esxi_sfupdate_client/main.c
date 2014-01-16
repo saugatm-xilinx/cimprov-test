@@ -16,6 +16,7 @@
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <libxml/xmlstring.h>
 
 #include "../libprovider/sf_base64.h"
 
@@ -26,6 +27,10 @@
 extern fw_img_descr firmware_images[];
 extern unsigned int fw_images_count;
 
+static fw_img_descr *downloaded_fw_imgs = NULL;
+static unsigned int  downloaded_count = 0;
+static unsigned int  downloaded_max_count = 0;
+
 /* Maximum password length */
 #define MAX_PASSWD_LEN 128
 
@@ -33,7 +38,13 @@ extern unsigned int fw_images_count;
 #define MAX_ERR_STR 1024
 
 /* Maximum file path length */
-#define MAX_FILE_PATH 1024
+#define MAX_PATH_LEN 1024
+
+/* Maximum NIC tag length */
+#define MAX_NIC_TAG_LEN 1024
+
+#define HTTP_PROTO "http://"
+#define HTTPS_PROTO "https://"
 
 /**
  * Print error message with file name and line number
@@ -126,6 +137,12 @@ static int   update_bootrom = 0;
  */
 static int   yes = 0;
 
+/**
+ * Whether downloading firmware images by this program from an URL
+ * specified should be disabled or not
+ */
+static int no_url_downloads = 0;
+
 /* Default HTTP port */
 #define DEF_HTTP_PORT "5988"
 
@@ -158,6 +175,9 @@ enum {
     OPT_YES,                  /**< Don't ask user for confirmation when
                                    updating firmware */
     OPT_WRITE,                /**< Perform firmware update */
+    OPT_NO_URL_DOWNLOADS,     /**< Do not download firmware images if
+                                   URL is specified, but pass URL
+                                   directly to CIM provider */
 };
 
 /**
@@ -185,6 +205,7 @@ parseCmdLine(int argc, const char *argv[])
     int   bootrom = 0;
     int   y = 0;
     int   w = 0;
+    int   no_url_dwnlds = 0;
     char  passwd_buf[MAX_PASSWD_LEN];
 
     poptContext     optCon;
@@ -263,6 +284,14 @@ parseCmdLine(int argc, const char *argv[])
           "image is lower than or the same as already installed",
           NULL },
 
+        { "no-url-downloads", '\0', POPT_ARG_NONE, NULL,
+          OPT_NO_URL_DOWNLOADS,
+          "Do not download firmware images from a specified "
+          "URL location, but pass this URL directly to "
+          "CIM provider",
+          NULL },
+
+
         POPT_AUTOHELP
         POPT_TABLEEND
     };
@@ -323,6 +352,10 @@ parseCmdLine(int argc, const char *argv[])
 
             case OPT_WRITE:
                 w = 1;
+                break;
+
+            case OPT_NO_URL_DOWNLOADS:
+                no_url_dwnlds = 1;
                 break;
 
             default:
@@ -388,6 +421,7 @@ cleanup:
         update_bootrom = bootrom;
         yes = y;
         do_update = w;
+        no_url_downloads = no_url_dwnlds;
     }
 
     return rc;
@@ -413,11 +447,38 @@ typedef struct xmlCimInstance {
 void
 freeXmlCimInstance(xmlCimInstance *p)
 {
+    if (p == NULL)
+        return;
     xmlFree(p->class_name);
     xmlFreeNode(p->namespace_path);
     xmlFreeNode(p->instance_name);
     xmlFreeNode(p->instance);
     free(p);
+}
+
+/**
+ * Free memory allocated for xmlCimInstance.
+ *
+ * @param p   xmlCimInstance pointer
+ */
+xmlCimInstance *
+xmlCimInstanceDup(xmlCimInstance *p)
+{
+    xmlCimInstance *q;
+
+    if (p == NULL)
+        return NULL;
+
+    q = calloc(1, sizeof(xmlCimInstance));
+    if (q == NULL)
+        return NULL;
+
+    q->class_name = xmlStrdup(p->class_name);
+    q->namespace_path = xmlCopyNode(p->namespace_path, 1);
+    q->instance_name = xmlCopyNode(p->instance_name, 1);
+    q->instance = xmlCopyNode(p->instance, 1);
+
+    return q;
 }
 
 /**
@@ -1632,7 +1693,7 @@ processXmlRequest(CURL *curl, xmlDocPtr doc, const char *method_name,
     curl_data_len = 0;
 
     res = curl_easy_perform(curl);
-    if(res != CURLE_OK)
+    if (res != CURLE_OK)
     {
           ERROR_MSG("curl_easy_perform() failed: %s",
                     curl_easy_strerror(res));
@@ -1775,6 +1836,8 @@ associators(CURL *curl, const char *namespace, xmlCimInstance *inst,
  * @param target            Target parameter (may be instance of SF_NICCard
  *                          or NULL)
  * @param url               Firmware image(s) URL
+ * @param unused            Unused parameter (for compatibility with
+ *                          install_from_local_path() signature)
  * @param force             Update firmware even if verion of the image is
  *                          the same or earlier than already installed
  * @param base64_hash       SHA-1 hash of firmware image, encoded in Base64
@@ -1786,6 +1849,7 @@ int
 call_install_from_uri(CURL *curl, const char *namespace,
                       xmlCimInstance *svc, xmlCimInstance *target,
                       const char *url,
+                      int unused,
                       int force,
                       const char *base64_hash,
                       response_descr *response)
@@ -1994,6 +2058,43 @@ call_remove_fw_image(CURL *curl, const char *namespace,
                              response);
 }
 
+static int
+pathCompletion(const char *fw_source, const char *svc_name,
+               int url_specified,
+               const char *img_def_name, char *full_path)
+{
+    char *subdir = NULL;
+
+    if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
+        subdir = "bootrom";
+    else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
+        subdir = "mcfw";
+    else
+    {
+        ERROR_MSG("'%s' service name is not supported",
+                  svc_name);
+        return -1;
+    }
+
+    if (strstr(fw_source, ".dat") !=
+        fw_source + (strlen(fw_source) - 4))
+    {
+#ifdef _WIN32
+        if (!url_specified)
+            snprintf(full_path, MAX_PATH_LEN, "%s\\image\\%s\\%s",
+                     fw_source, subdir, img_def_name);
+        else
+            snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
+                     fw_source, subdir, img_def_name);
+#else
+        snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
+                 fw_source, subdir, img_def_name);
+#endif
+    }
+
+    return 0;
+}
+
 /**
  * Install firmware from an image stored locally on a host
  * where this program is run.
@@ -2003,7 +2104,8 @@ call_remove_fw_image(CURL *curl, const char *namespace,
  * @param svc               SF_SoftwareInstallationService instance pointer
  * @param target            Target parameter (may be instance of SF_NICCard
  *                          or NULL)
- * @param path              Firmware image(s) local path
+ * @param path              Firmware image(s) path
+ * @param url_specified     Whether path is URL or not
  * @param force             Update firmware even if verion of the image is
  *                          the same or earlier than already installed
  * @param unused1           Unused parameter (for compatibility with
@@ -2016,11 +2118,11 @@ int
 install_from_local_path(CURL *curl, const char *namespace,
                         xmlCimInstance *svc, xmlCimInstance *target,
                         const char *path,
+                        int url_specified,
                         int force,
                         const char *unused1,
                         response_descr *unused2)
 {
-#define MAX_PATH_LEN 1024
 #define CHUNK_LEN 100000
 
     int             rc = 0;
@@ -2038,7 +2140,7 @@ install_from_local_path(CURL *curl, const char *namespace,
     int             img_idx = -1;
     int             img_idx_prev = -1;
     char           *tmp_file_name = NULL;
-    char            url[MAX_FILE_PATH];
+    char            url[MAX_PATH_LEN];
 
     EVP_MD_CTX      mdctx;
     char            md_hash[EVP_MAX_MD_SIZE];
@@ -2051,8 +2153,27 @@ install_from_local_path(CURL *curl, const char *namespace,
     size_t          read_len;
     size_t          was_sent;
 
+    fw_img_descr    *imgs_array = NULL;
+    unsigned int     imgs_count = 0;
+
+    int use_local_path = 0;
+
     memset(&nics_rsp, 0, sizeof(nics_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
+
+    if (path != NULL && !url_specified)
+        use_local_path = 1;
+
+    if (url_specified)
+    {
+        imgs_array = downloaded_fw_imgs;
+        imgs_count = downloaded_count;
+    }
+    else
+    {
+        imgs_array = firmware_images;
+        imgs_count = fw_images_count;
+    }
 
     full_path[0] = '\0';
     full_path_prev[0] = '\0';
@@ -2124,10 +2245,9 @@ install_from_local_path(CURL *curl, const char *namespace,
                 goto next_target;
             }
 
-            if (path != NULL)
+            if (path != NULL && !url_specified)
             {
                 char *name;
-                char *subdir = NULL;
 
                 name = get_named_value(call_rsp.out_params_list,
                                        "name");
@@ -2139,23 +2259,20 @@ install_from_local_path(CURL *curl, const char *namespace,
                     goto next_target;
                 }
 
-                if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
-                    subdir = "bootrom";
-                else
-                    subdir = "mcfw";
-#ifdef _WIN32
-                snprintf(full_path, MAX_PATH_LEN, "%s\\image\\%s\\%s",
-                         path, subdir, name);
-#else
-                snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
-                         path, subdir, name);
-#endif
+                if (pathCompletion(path, svc_name, 0, name,
+                                   full_path) < 0)
+                {
+                    ERROR_MSG("Failed to complete path '%s'",
+                              path);
+                    rc = -1;
+                    goto next_target;
+                }
             }
             else
             {
                 char *type;
                 char *subtype;
-                
+ 
                 unsigned int   int_type;
                 unsigned int   int_subtype;
                 unsigned int   i;
@@ -2176,16 +2293,16 @@ install_from_local_path(CURL *curl, const char *namespace,
                 int_type = strtol(type, NULL, 10);
                 int_subtype = strtol(subtype, NULL, 10);
 
-                for (i = 0; i < fw_images_count; i++)
+                for (i = 0; i < imgs_count; i++)
                 {
                     image_header_t *header =
-                        (image_header_t*)firmware_images[i].data;
+                        (image_header_t*)imgs_array[i].data;
                     if (header->ih_type == int_type &&
                         header->ih_subtype == int_subtype)
                         break;
                 }
 
-                if (i < fw_images_count)
+                if (i < imgs_count)
                     img_idx = i;
                 else
                 {
@@ -2198,7 +2315,14 @@ install_from_local_path(CURL *curl, const char *namespace,
             clear_response(&call_rsp);
         }
         else
+        {
             snprintf(full_path, MAX_PATH_LEN, "%s", path);
+            if (url_specified && !not_full_path)
+            {
+                assert(imgs_count == 1);
+                img_idx = 0;
+            }
+        }
 
         if ((path == NULL && img_idx != img_idx_prev) ||
             (path != NULL && strcmp(full_path, full_path_prev) != 0))
@@ -2254,7 +2378,7 @@ install_from_local_path(CURL *curl, const char *namespace,
             tmp_file_name = strdup(tmp_file_name);
             clear_response(&call_rsp);
 
-            if (path != NULL)
+            if (use_local_path)
             {
                 f = fopen(full_path, "rb");
                 if (f == NULL)
@@ -2270,7 +2394,7 @@ install_from_local_path(CURL *curl, const char *namespace,
             if (!EVP_DigestInit_ex(&mdctx, EVP_sha1(), NULL))
             {
                 ERROR_MSG("EVP_DigestInit_ex() failed");
-                if (path != NULL)
+                if (use_local_path)
                     fclose(f);
                 rc = -1;
                 goto cleanup;
@@ -2280,7 +2404,7 @@ install_from_local_path(CURL *curl, const char *namespace,
             do {
                 int ferr;
 
-                if (path != NULL)
+                if (use_local_path)
                 {
                     read_len = fread(img_chunk, 1, CHUNK_LEN, f); 
                     ferr = ferror(f);
@@ -2296,12 +2420,12 @@ install_from_local_path(CURL *curl, const char *namespace,
                 }
                 else
                 {
-                    read_len = firmware_images[img_idx].size - was_sent;
+                    read_len = imgs_array[img_idx].size - was_sent;
                     if (read_len > CHUNK_LEN)
                         read_len = CHUNK_LEN;
 
                     memcpy(img_chunk,
-                           firmware_images[img_idx].data + was_sent,
+                           imgs_array[img_idx].data + was_sent,
                            read_len);
                 }
 
@@ -2313,7 +2437,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                     {
                         ERROR_MSG("EVP_DigestUpdate() failed");
                         rc = -1;
-                        if (path != NULL)
+                        if (use_local_path)
                             fclose(f);
                         goto cleanup;
                     }
@@ -2324,7 +2448,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                         ERROR_MSG("Failed to allocate memory for Base64 "
                                   "string");
                         rc = -1;
-                        if (path != NULL)
+                        if (use_local_path)
                             fclose(f);
                         goto cleanup;
                     }
@@ -2343,7 +2467,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                     {
                         rc = -1;
                         free(encoded);
-                        if (path != NULL)
+                        if (use_local_path)
                             fclose(f);
                         goto cleanup;
                     }
@@ -2352,10 +2476,10 @@ install_from_local_path(CURL *curl, const char *namespace,
 
                     was_sent += read_len;
                 }
-            } while ((path != NULL && !feof(f)) ||
-                     (path == NULL && read_len != 0));
+            } while ((use_local_path && !feof(f)) ||
+                     (!use_local_path && read_len != 0));
 
-            if (path != NULL)
+            if (use_local_path)
                 fclose(f);
 
             if (!EVP_DigestFinal_ex(&mdctx, md_hash, &md_len))
@@ -2384,14 +2508,14 @@ install_from_local_path(CURL *curl, const char *namespace,
         }
         base64_encode(encoded, md_hash, md_len);
 
-        snprintf(url, MAX_FILE_PATH, "file://%s",
+        snprintf(url, MAX_PATH_LEN, "file://%s",
                  tmp_file_name);
 
         CHECK_RESPONSE_EXT(
             rc_rsp,
             call_install_from_uri(curl, namespace,
                                   svc, p,
-                                  url, force, encoded,
+                                  url, 1, force, encoded,
                                   &call_rsp),
             call_rsp,
             "InstallFromURI() failed");
@@ -2450,8 +2574,74 @@ cleanup:
 typedef int (*firmware_install_f)(
                     CURL *, const char *,
                     xmlCimInstance *, xmlCimInstance *,
-                    const char *, int, const char *,
+                    const char *, int, int, const char *,
                     response_descr *);
+
+/**
+ * Get SF_SofwareInstallationService instances responsible for
+ * updating BootROM and Controller firmware.
+ *
+ * @param curl                     CURL pointer returned by curl_easy_init()
+ * @param namespace                Provider namespace
+ * @param svc_mcfw_inst      [out] Service instance responsible for
+ *                                 Controller firmware update
+ * @param svc_bootrom_inst   [out] Service instance responsible for
+ *                                 Controller firmware update
+ *
+ * @return 0 on success, -1 on failure
+ */
+static int
+getInstServices(CURL *curl, const char *namespace,
+                xmlCimInstance **svc_mcfw_inst,
+                xmlCimInstance **svc_bootrom_inst)
+{
+    response_descr  svcs_rsp;
+    xmlCimInstance *svc_inst = NULL;
+    int             rc;
+
+    memset(&svcs_rsp, 0, sizeof(svcs_rsp));
+
+    CHECK_RESPONSE(
+        rc,
+        enumerate_instances(curl, namespace,
+                            "SF_SoftwareInstallationService", 0,
+                            &svcs_rsp),
+        svcs_rsp,
+        "Failed to enumerate SF_SoftwareInstallationService instances");
+    if (rc < 0)
+        return -1;
+
+    for (svc_inst = svcs_rsp.inst_list; svc_inst != NULL;
+         svc_inst = svc_inst->next)
+    {
+        char *name = NULL;
+
+        if (xmlCimInstGetPropTrim(svc_inst, "Name", &name, NULL) < 0 ||
+            name == NULL)
+        {
+            ERROR_MSG("Failed to get Name property of "
+                      "SF_SoftwareInstallationService");
+            clear_response(&svcs_rsp);
+            return -1;
+        }
+
+        if (strcmp(name, SVC_MCFW_NAME) == 0 &&
+            svc_mcfw_inst != NULL)
+            *svc_mcfw_inst = svc_inst;
+        else if (strcmp(name, SVC_BOOTROM_NAME) == 0 &&
+                 svc_bootrom_inst != NULL)
+            *svc_bootrom_inst = svc_inst;
+        free(name);
+    }
+
+    if (svc_mcfw_inst != NULL)
+        *svc_mcfw_inst = xmlCimInstanceDup(*svc_mcfw_inst);
+    if (svc_bootrom_inst != NULL)
+        *svc_bootrom_inst = xmlCimInstanceDup(*svc_mcfw_inst);
+
+    clear_response(&svcs_rsp);
+    return 0;
+}
 
 /**
  * Update firmware
@@ -2476,7 +2666,6 @@ update_firmware(CURL *curl, const char *namespace,
                 int url_specified,
                 int force)
 {
-    response_descr  svcs_rsp;
     response_descr  log_rsp;
     response_descr  rec_rsp;
     response_descr  call_rsp;
@@ -2489,52 +2678,27 @@ update_firmware(CURL *curl, const char *namespace,
 
     firmware_install_f  func_install;
 
-    xmlCimInstance *svc_inst = NULL;
     xmlCimInstance *svc_mcfw_inst = NULL;
     xmlCimInstance *svc_bootrom_inst = NULL;
     xmlCimInstance *log_inst = NULL;
     xmlCimInstance *rec_inst = NULL;
 
-    memset(&svcs_rsp, 0, sizeof(svcs_rsp));
     memset(&log_rsp, 0, sizeof(rec_rsp));
     memset(&rec_rsp, 0, sizeof(rec_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
 
-    if (url_specified && firmware_source != NULL)
+    if (url_specified && firmware_source != NULL &&
+        no_url_downloads)
         func_install = call_install_from_uri;
     else
         func_install = install_from_local_path;
 
     printf("\nUpdating firmware...\n");
 
-    CHECK_RESPONSE(
-        rc,
-        enumerate_instances(curl, namespace,
-                            "SF_SoftwareInstallationService", 0,
-                            &svcs_rsp),
-        svcs_rsp,
-        "Failed to enumerate SF_SoftwareInstallationService instances");
-    if (rc < 0)
+    if ((rc = getInstServices(curl, namespace,
+                              &svc_mcfw_inst,
+                              &svc_bootrom_inst)) != 0)
         goto cleanup;
-
-    for (svc_inst = svcs_rsp.inst_list; svc_inst != NULL;
-         svc_inst = svc_inst->next)
-    {
-        char *name;
-
-        if (xmlCimInstGetPropTrim(svc_inst, "Name", &name, NULL) < 0)
-        {
-            ERROR_MSG("Failed to get Name property of "
-                      "SF_SoftwareInstallationService");
-            rc = -1;
-            goto cleanup;
-        }
-
-        if (strcmp(name, SVC_MCFW_NAME) == 0)
-            svc_mcfw_inst = svc_inst;
-        else if (strcmp(name, SVC_BOOTROM_NAME) == 0)
-            svc_bootrom_inst = svc_inst;
-    }
 
     if ((svc_mcfw_inst == NULL && controller) ||
         (svc_bootrom_inst == NULL && bootrom))
@@ -2608,6 +2772,7 @@ update_firmware(CURL *curl, const char *namespace,
                     func_install(curl, namespace,
                                  svc_mcfw_inst,
                                  nic_inst, firmware_source,
+                                 url_specified,
                                  force, NULL, &call_rsp),
                     call_rsp,
                     "Attempt to update "
@@ -2636,6 +2801,7 @@ update_firmware(CURL *curl, const char *namespace,
                     func_install(curl, namespace,
                                  svc_bootrom_inst,
                                  nic_inst, firmware_source,
+                                 url_specified,
                                  force, NULL, &call_rsp),
                     call_rsp,
                     "Attempt to update "
@@ -2724,11 +2890,285 @@ cleanup:
 
     if (rc >= 0)
         printf("Firmware was successfully updated!\n");
-    clear_response(&svcs_rsp);
+    freeXmlCimInstance(svc_mcfw_inst);
+    freeXmlCimInstance(svc_bootrom_inst);
     clear_response(&call_rsp);
     clear_response(&log_rsp);
     clear_response(&rec_rsp);
     free(recent_rec_id);
+    return rc;
+}
+
+/**
+ * Find available update for a given firmware installation
+ * service and target NIC.
+ *
+ * @param curl                   CURL handle used to communicate with
+ *                               CIM server
+ * @param namespace              Our provider's namespace
+ * @param svc_inst               SF_SoftwareInstallationService instance
+ * @param nic_inst               SF_NICCard instance
+ * @param firmware_source        Firmware image(s) source
+ * @param url_specified          Is firmware_source an URL address
+ * @param applicable_found [out] Whether applicable firmware image
+ *                               for update was found
+ * @param ver_a                  The first number of applicable image
+ *                               version
+ * @param ver_b                  The second number of applicable image
+ *                               version
+ * @param ver_c                  The third number of applicable image
+ *                               version
+ * @param ver_d                  The fourth number of applicable image
+ *                               version
+ *
+ * @return 0 on success, -1 on failure
+ */
+static int
+findAvailableUpdate(CURL *curl, const char *namespace,
+                    xmlCimInstance *svc_inst,
+                    xmlCimInstance *nic_inst,
+                    const char *firmware_source,
+                    int url_specified,
+                    int *applicable_found,
+                    int *ver_a, int *ver_b,
+                    int *ver_c, int *ver_d)
+{
+    response_descr  call_rsp;
+    int             rc_rsp = 0;
+    int             rc = 0;
+
+    char            *svc_name = NULL;
+    char            *img_name = NULL;
+    char            *img_type_str = NULL;
+    char            *img_subtype_str = NULL;
+    unsigned int     img_type = 0;
+    unsigned int     img_subtype = 0;
+
+    image_header_t *header = NULL;
+    int             i;
+
+    memset(&call_rsp, 0, sizeof(call_rsp));
+
+    *applicable_found = 0;
+
+    if (xmlCimInstGetPropTrim(svc_inst, "Name",
+                              &svc_name, NULL) < 0 ||
+        svc_name == NULL)
+    {
+        ERROR_MSG("Failed to get Name attribute "
+                  "of SF_SoftwareInstallationService instance");
+        return -1;
+    }
+
+    CHECK_RESPONSE_EXT(
+        rc_rsp,
+        call_get_required_fw_image_name(curl, namespace,
+                                        svc_inst, nic_inst,
+                                        &call_rsp),
+        call_rsp,
+        "Failed to get required firmware image name");
+    if (rc_rsp < 0)
+    {
+        rc = -1;
+        goto cleanup;
+    }
+
+    img_name = get_named_value(call_rsp.out_params_list,
+                               "name");
+    img_type_str = get_named_value(call_rsp.out_params_list,
+                                   "type");
+    img_subtype_str = get_named_value(call_rsp.out_params_list,
+                                      "subtype");
+    img_type = strtol(img_type_str, NULL, 10);
+    img_subtype = strtol(img_subtype_str, NULL, 10);
+
+    if (firmware_source == NULL)
+    {
+        for (i = 0; i < fw_images_count; i++)
+        {
+            header = (image_header_t*)firmware_images[i].data;
+            if (header->ih_type == img_type &&
+                header->ih_subtype == img_subtype)
+                break;
+        }
+
+        if (i >= fw_images_count)
+            *applicable_found = 0;
+        else
+        {
+            *applicable_found = 1;
+            *ver_a = header->ih_code_version_a;
+            *ver_b = header->ih_code_version_b;
+            *ver_c = header->ih_code_version_c;
+            *ver_d = header->ih_code_version_d;
+        }
+    }
+    else
+    {
+        char    full_path[MAX_PATH_LEN];
+
+        if (pathCompletion(firmware_source, svc_name,
+                           url_specified, img_name,
+                           full_path) < 0)
+        {
+            ERROR_MSG("Failed to complete path '%s'",
+                      firmware_source);
+            rc = -1;
+            goto cleanup;
+        }
+
+        if (url_specified)
+        {
+            CURL           *curl_fw = NULL;
+            CURLcode        curl_rc;
+
+            curl_fw = curl_easy_init();
+            if (curl_fw == NULL)
+            {
+                ERROR_MSG_PLAIN("%s(): failed to initialize CURL",
+                                __FUNCTION__);
+                rc = -1;
+                goto cleanup;
+            }
+
+            curl_easy_setopt(curl_fw, CURLOPT_URL, full_path);
+            curl_easy_setopt(curl_fw, CURLOPT_WRITEFUNCTION, curl_write);
+            curl_easy_setopt(curl_fw, CURLOPT_WRITEDATA, NULL);
+            curl_easy_setopt(curl_fw, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl_fw, CURLOPT_SSL_VERIFYHOST, 0L);
+
+            free(curl_data);
+            curl_data = NULL;
+            curl_data_len = 0;
+
+            curl_rc = curl_easy_perform(curl_fw);
+            if (curl_rc != CURLE_OK)
+            {
+                if (curl_rc == CURLE_TFTP_NOTFOUND ||
+                    curl_rc == CURLE_REMOTE_FILE_NOT_FOUND)
+                    *applicable_found = 0;
+                else
+                {
+                    ERROR_MSG("curl_easy_perform() failed: %s",
+                              curl_easy_strerror(curl_rc));
+                    rc = -1;
+                }
+                curl_easy_cleanup(curl_fw);
+                goto cleanup;
+            }
+            if (strncasecmp(full_path, HTTP_PROTO,
+                            strlen(HTTP_PROTO)) == 0 ||
+                strncasecmp(full_path, HTTPS_PROTO,
+                            strlen(HTTPS_PROTO)) == 0)
+            {
+                long int       http_code = 0;
+
+                curl_rc = curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE,
+                                            &http_code);
+                if (curl_rc != CURLE_OK)
+                {
+                    ERROR_MSG("curl_easy_getinfo(CURLINFO_RESPONSE_CODE)"
+                              " failed: %s",
+                              curl_easy_strerror(curl_rc));
+                    rc = -1;
+                    curl_easy_cleanup(curl_fw);
+                    goto cleanup;
+                }
+                if (http_code >= 400)
+                {
+                    if (http_code == 404)
+                        *applicable_found = 0;
+                    else
+                    {
+                        ERROR_MSG("Trying to obtain '%s' resulted in %ld "
+                                  "HTTP status code", full_path, http_code);
+                        rc = -1;
+                    }
+                    curl_easy_cleanup(curl_fw);
+                    goto cleanup;
+                }
+
+            }
+            curl_easy_cleanup(curl_fw);
+
+            if (downloaded_count >= downloaded_max_count)
+            {
+                fw_img_descr    *imgs;
+                unsigned int     new_size;
+
+                new_size = (downloaded_max_count + 1) * 2;
+
+                imgs = realloc(downloaded_fw_imgs,
+                               new_size * sizeof(fw_img_descr));
+                if (imgs == NULL)
+                {
+                    ERROR_MSG("Failed to reallocate array of downloaded "
+                              "images");
+                    rc = -1;
+                    goto cleanup;
+                }
+                downloaded_fw_imgs = imgs;
+                downloaded_max_count = new_size;
+            }
+
+            downloaded_fw_imgs[downloaded_count].data =
+                                               calloc(1, curl_data_len);
+            if (downloaded_fw_imgs[downloaded_count].data == NULL)
+            {
+                ERROR_MSG("Failed to allocate memory for downloaded "
+                          "image");
+                rc = -1;
+                goto cleanup;
+            }
+            
+            memcpy(downloaded_fw_imgs[downloaded_count].data,
+                   curl_data, curl_data_len);
+            downloaded_fw_imgs[downloaded_count].size = curl_data_len;
+
+            header = (image_header_t*)downloaded_fw_imgs[i].data;
+            *ver_a = header->ih_code_version_a;
+            *ver_b = header->ih_code_version_b;
+            *ver_c = header->ih_code_version_c;
+            *ver_d = header->ih_code_version_d;
+            *applicable_found = 1;
+
+            downloaded_count++;
+        }
+        else
+        {
+            FILE *f = fopen(full_path, "r");
+
+            if (f == NULL)
+                *applicable_found = 0;
+            else
+            {
+                image_header_t header_aux;
+
+                memset(&header_aux, 0, sizeof(header_aux));
+
+                if (fread(&header_aux, 1, sizeof(header_aux), f) !=
+                    sizeof(header_aux))
+                {
+                    ERROR_MSG("Failed to read image header");
+                    rc = -1;
+                    fclose(f);
+                    goto cleanup;
+                }
+                fclose(f);
+
+                *applicable_found = 1;
+                *ver_a = header_aux.ih_code_version_a;
+                *ver_b = header_aux.ih_code_version_b;
+                *ver_c = header_aux.ih_code_version_c;
+                *ver_d = header_aux.ih_code_version_d;
+            }
+        }
+    }
+
+cleanup:
+
+    clear_response(&call_rsp);
+    free(svc_name);
     return rc;
 }
 
@@ -2752,6 +3192,22 @@ main(int argc, const char *argv[])
     xmlCimInstance *controller_inst = NULL;
     xmlCimInstance *sw_inst = NULL;
     xmlCimInstance *nic_inst = NULL;
+    xmlCimInstance *svc_mcfw_inst = NULL;
+    xmlCimInstance *svc_bootrom_inst = NULL;
+
+    int controller_applicable_found = 0;
+    int controller_ver_a = 0;
+    int controller_ver_b = 0;
+    int controller_ver_c = 0;
+    int controller_ver_d = 0;
+    int bootrom_applicable_found = 0;
+    int bootrom_ver_a = 0;
+    int bootrom_ver_b = 0;
+    int bootrom_ver_c = 0;
+    int bootrom_ver_d = 0;
+
+    char nic_tag_prev[MAX_NIC_TAG_LEN] = "";
+    int  have_applicable_imgs = 0;
 
     CURL        *curl = NULL;
     CURLcode     res;
@@ -2811,7 +3267,7 @@ main(int argc, const char *argv[])
 
     snprintf(
         address, MAX_ADDR_LEN, "%s%s%s%s",
-        add_proto ? (use_https ? "https://" : "http://") : "",
+        add_proto ? (use_https ? HTTPS_PROTO : HTTP_PROTO) : "",
         cim_address,
         add_port ? ":" : "",
         add_port ? (use_https ? DEF_HTTPS_PORT : DEF_HTTP_PORT) : "");
@@ -2835,6 +3291,11 @@ main(int argc, const char *argv[])
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 
+        if ((rc = getInstServices(curl, cim_namespace,
+                                  &svc_mcfw_inst,
+                                  &svc_bootrom_inst)) != 0)
+            goto cleanup;
+
         CHECK_RESPONSE(
             rc,
             enumerate_instances(curl, cim_namespace,
@@ -2854,6 +3315,7 @@ main(int argc, const char *argv[])
             char *dev_id;
             char *perm_addr;
             char *nic_model;
+            char *nic_tag;
 
             if (xmlCimInstGetPropTrim(port_inst, "DeviceID",
                                       &dev_id, NULL) < 0)
@@ -2946,6 +3408,50 @@ main(int argc, const char *argv[])
             printf("NIC model: %s\n", nic_model);
             free(nic_model);
 
+            if (xmlCimInstGetPropTrim(nic_inst, "Model",
+                                      &nic_tag, NULL) < 0 ||
+                nic_tag == NULL)
+            {
+                ERROR_MSG("Failed to get Tag property value "
+                          "for SF_NICCard instance");
+                rc = -1;
+                goto cleanup;
+            }
+
+            if (strcmp(nic_tag, nic_tag_prev) != 0 &&
+                !(fw_url != NULL && no_url_downloads))
+            {
+                findAvailableUpdate(curl, cim_namespace,
+                                    svc_bootrom_inst,
+                                    nic_inst,
+                                    fw_url == NULL ? fw_path : fw_url,
+                                    fw_url == NULL ? 0 : 1,
+                                    &controller_applicable_found,
+                                    &controller_ver_a,
+                                    &controller_ver_b,
+                                    &controller_ver_c,
+                                    &controller_ver_d);
+
+                findAvailableUpdate(curl, cim_namespace,
+                                    svc_bootrom_inst,
+                                    nic_inst,
+                                    fw_url == NULL ? fw_path : fw_url,
+                                    fw_url == NULL ? 0 : 1,
+                                    &bootrom_applicable_found,
+                                    &bootrom_ver_a,
+                                    &bootrom_ver_b,
+                                    &bootrom_ver_c,
+                                    &bootrom_ver_d);
+
+                if (controller_applicable_found &&
+                    bootrom_applicable_found)
+                    have_applicable_imgs = 1;
+            }
+
+            snprintf(nic_tag_prev, MAX_NIC_TAG_LEN, "%s",
+                     nic_tag);
+            free(nic_tag);
+
             if (!if_found && interface_name != NULL)
             {
                 clear_response(&assoc_cntr_rsp);
@@ -2983,11 +3489,27 @@ main(int argc, const char *argv[])
                     update_controller)
                 {
                     printf("Controller version: %s\n", version); 
+                    if (controller_applicable_found)
+                        printf("    Available update: %d.%d.%d.%d\n",
+                               controller_ver_a,
+                               controller_ver_b,
+                               controller_ver_c,
+                               controller_ver_d);
+                    else
+                        printf("    No update available\n");
                 }
                 else if (strcmp(description, "NIC BootROM") == 0 &&
                          update_bootrom)
                 {
                     printf("BootROM version:    %s\n", version); 
+                    if (bootrom_applicable_found)
+                        printf("    Available update: %d.%d.%d.%d\n",
+                               bootrom_ver_a,
+                               bootrom_ver_b,
+                               bootrom_ver_c,
+                               bootrom_ver_d);
+                    else
+                        printf("    No update available\n");
                 }
 
                 free(description);
@@ -3010,7 +3532,7 @@ main(int argc, const char *argv[])
             goto cleanup;
         }
 
-        if (do_update &&
+        if (do_update && have_applicable_imgs &&
             (update_controller || update_bootrom))
         {
             if (!yes)
@@ -3064,6 +3586,9 @@ cleanup:
     curl_global_cleanup();
     free(curl_data);
 
+    freeXmlCimInstance(svc_mcfw_inst);
+    freeXmlCimInstance(svc_bootrom_inst);
+
     clear_response(&ei_ports_rsp);
     clear_response(&assoc_cntr_rsp);
     clear_response(&assoc_sw_rsp);
@@ -3075,6 +3600,10 @@ cleanup:
     free(fw_url);
     free(fw_path);
     free(interface_name);
+
+    for (i = 0; i < downloaded_count; i++)
+        free(downloaded_fw_imgs[i].data);
+    free(downloaded_fw_imgs);
 
     return rc;
 }

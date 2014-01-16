@@ -20,7 +20,7 @@ typedef struct image_header_s {
 } image_header_t;
 
 typedef struct fw_img_descr {
-    const uint8_t *data;
+    uint8_t       *data;
     size_t         size;
 } fw_img_descr;
 
