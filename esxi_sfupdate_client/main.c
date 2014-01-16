@@ -2245,7 +2245,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                 goto next_target;
             }
 
-            if (path != NULL && !url_specified)
+            if (use_local_path)
             {
                 char *name;
 
@@ -2321,8 +2321,8 @@ install_from_local_path(CURL *curl, const char *namespace,
             }
         }
 
-        if ((path == NULL && img_idx != img_idx_prev) ||
-            (path != NULL && strcmp(full_path, full_path_prev) != 0))
+        if ((!use_local_path && img_idx != img_idx_prev) ||
+            (use_local_path && strcmp(full_path, full_path_prev) != 0))
         {
             FILE *f;
 
