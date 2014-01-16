@@ -3445,7 +3445,7 @@ main(int argc, const char *argv[])
                                     &bootrom_ver_c,
                                     &bootrom_ver_d);
 
-                if (controller_applicable_found &&
+                if (controller_applicable_found ||
                     bootrom_applicable_found)
                     have_applicable_imgs = 1;
             }
