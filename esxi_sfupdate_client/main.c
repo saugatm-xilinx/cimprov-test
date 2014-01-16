@@ -2637,7 +2637,7 @@ getInstServices(CURL *curl, const char *namespace,
     if (svc_mcfw_inst != NULL)
         *svc_mcfw_inst = xmlCimInstanceDup(*svc_mcfw_inst);
     if (svc_bootrom_inst != NULL)
-        *svc_bootrom_inst = xmlCimInstanceDup(*svc_mcfw_inst);
+        *svc_bootrom_inst = xmlCimInstanceDup(*svc_bootrom_inst);
 
     clear_response(&svcs_rsp);
     return 0;
@@ -3424,7 +3424,7 @@ main(int argc, const char *argv[])
                 !(fw_url != NULL && no_url_downloads))
             {
                 findAvailableUpdate(curl, cim_namespace,
-                                    svc_bootrom_inst,
+                                    svc_mcfw_inst,
                                     nic_inst,
                                     fw_url == NULL ? fw_path : fw_url,
                                     fw_url == NULL ? 0 : 1,
