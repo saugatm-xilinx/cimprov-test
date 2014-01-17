@@ -43,6 +43,9 @@ static unsigned int  downloaded_max_count = 0;
 /* Maximum NIC tag length */
 #define MAX_NIC_TAG_LEN 1024
 
+/* Maximum version string length */
+#define MAX_VER_LEN 256
+
 #define HTTP_PROTO "http://"
 #define HTTPS_PROTO "https://"
 
@@ -2096,6 +2099,49 @@ pathCompletion(const char *fw_source, const char *svc_name,
 }
 
 /**
+ * Checking whether current version is lower than
+ * new one.
+ *
+ * @param cur_version       Current version
+ * @param new_ver_a         First number of the new version
+ * @param new_ver_b         Second number of the new version
+ * @param new_ver_c         Third number of the new version
+ * @param new_ver_d         Fourth number of the new version
+ *
+ * @return 1 if current version is lower, 0 otherwise
+ */
+int
+checkVersion(const char *cur_version,
+             int new_ver_a, int new_ver_b,
+             int new_ver_c, int new_ver_d)
+{
+    int old_ver_a = 0;
+    int old_ver_b = 0;
+    int old_ver_c = 0;
+    int old_ver_d = 0;
+
+    sscanf(cur_version, "%d.%d.%d.%d", 
+           &old_ver_a, &old_ver_b, &old_ver_c, &old_ver_d);
+
+    if (old_ver_a < new_ver_a)
+        return 1;
+    else if (old_ver_a == new_ver_a &&
+             old_ver_b < new_ver_b)
+        return 1;
+    else if (old_ver_a == new_ver_a &&
+             old_ver_b == new_ver_b &&
+             old_ver_c < new_ver_c)
+        return 1;
+    else if (old_ver_a == new_ver_a &&
+             old_ver_b == new_ver_b &&
+             old_ver_c == new_ver_c &&
+             old_ver_d < new_ver_d)
+        return 1;
+
+    return 0;
+}
+
+/**
  * Install firmware from an image stored locally on a host
  * where this program is run.
  *
@@ -2157,6 +2203,11 @@ install_from_local_path(CURL *curl, const char *namespace,
     unsigned int     imgs_count = 0;
 
     int use_local_path = 0;
+
+    image_header_t   update_img_header;
+    int              no_cur_ver = 0;
+    int              no_img_ver = 0;
+    char             cur_version[MAX_VER_LEN];
 
     memset(&nics_rsp, 0, sizeof(nics_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
@@ -2225,12 +2276,11 @@ install_from_local_path(CURL *curl, const char *namespace,
     do {
         img_idx_prev = img_idx;
         strncpy(full_path_prev, full_path, MAX_PATH_LEN);
-        if (not_full_path)
+
+        if (p != NULL)
         {
-            /* FIXME: should we just skip NIC for which
-             * it is impossible to get required firmware
-             * name? */
-            assert(p != NULL);
+            char *ver = NULL;
+
             CHECK_RESPONSE_EXT(
                 rc_rsp,
                 call_get_required_fw_image_name(curl, namespace,
@@ -2244,6 +2294,25 @@ install_from_local_path(CURL *curl, const char *namespace,
                 rc = -1;
                 goto next_target;
             }
+
+            ver = get_named_value(call_rsp.out_params_list,
+                                  "current_version");
+            if (ver == NULL || strlen(ver) == 0)
+            {
+                ERROR_MSG_PLAIN("Failed to get current firmware "
+                                "version");
+                no_cur_ver = 1;
+            }
+            else
+            {
+                strncpy(cur_version, ver, MAX_VER_LEN);
+                no_cur_ver = 0;
+            }
+        }
+
+        if (not_full_path)
+        {
+            assert(p != NULL);
 
             if (use_local_path)
             {
@@ -2424,6 +2493,23 @@ install_from_local_path(CURL *curl, const char *namespace,
 
                 if (read_len > 0)
                 {
+                    if (was_sent == 0)
+                    {
+                        if (read_len < sizeof(update_img_header))
+                        {
+                            ERROR_MSG("Unexpectedly small first chunk "
+                                      "of image was read, so version was "
+                                      "not determined");
+                            no_img_ver = 1;
+                        }
+                        else
+                        {
+                            memcpy(&update_img_header,
+                                   img_chunk, sizeof(update_img_header));
+                            no_img_ver = 0;
+                        }
+                    }
+
                     enc_size = base64_enc_size(read_len);
 
                     if (!EVP_DigestUpdate(&mdctx, img_chunk, read_len))
@@ -2488,6 +2574,20 @@ install_from_local_path(CURL *curl, const char *namespace,
                 rc = -1;
                 goto cleanup;
             }
+        }
+
+        if (!(no_cur_ver || no_img_ver || force))
+        {
+            /* 
+             * Skip firmware image with lower version unless
+             * force is specified.
+             */
+            if (!checkVersion(cur_version,
+                              update_img_header.ih_code_version_a,
+                              update_img_header.ih_code_version_b,
+                              update_img_header.ih_code_version_c,
+                              update_img_header.ih_code_version_d))
+                goto next_target;
         }
  
         enc_size = base64_enc_size(md_len);
@@ -3165,49 +3265,6 @@ cleanup:
     clear_response(&call_rsp);
     free(svc_name);
     return rc;
-}
-
-/**
- * Checking whether current version is lower than
- * new one.
- *
- * @param cur_version       Current version
- * @param new_ver_a         First number of the new version
- * @param new_ver_b         Second number of the new version
- * @param new_ver_c         Third number of the new version
- * @param new_ver_d         Fourth number of the new version
- *
- * @return 1 if current version is lower, 0 otherwise
- */
-int
-checkVersion(const char *cur_version,
-             int new_ver_a, int new_ver_b,
-             int new_ver_c, int new_ver_d)
-{
-    int old_ver_a = 0;
-    int old_ver_b = 0;
-    int old_ver_c = 0;
-    int old_ver_d = 0;
-
-    sscanf(cur_version, "%d.%d.%d.%d", 
-           &old_ver_a, &old_ver_b, &old_ver_c, &old_ver_d);
-
-    if (old_ver_a < new_ver_a)
-        return 1;
-    else if (old_ver_a == new_ver_a &&
-             old_ver_b < new_ver_b)
-        return 1;
-    else if (old_ver_a == new_ver_a &&
-             old_ver_b == new_ver_b &&
-             old_ver_c < new_ver_c)
-        return 1;
-    else if (old_ver_a == new_ver_a &&
-             old_ver_b == new_ver_b &&
-             old_ver_c == new_ver_c &&
-             old_ver_d < new_ver_d)
-        return 1;
-
-    return 0;
 }
 
 /**
