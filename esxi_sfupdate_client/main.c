@@ -3580,52 +3580,60 @@ main(int argc, const char *argv[])
                 if (strcmp(description, "NIC MC Firmware") == 0 &&
                     update_controller)
                 {
-                    ver_check = checkVersion(version,
-                                             controller_ver_a,
-                                             controller_ver_b,
-                                             controller_ver_c,
-                                             controller_ver_d);
                     printf("Controller version: %s\n", version); 
-                    if (controller_applicable_found)
-                        printf(
-                            "    Available update: %d.%d.%d.%d%s\n",
-                            controller_ver_a,
-                            controller_ver_b,
-                            controller_ver_c,
-                            controller_ver_d,
-                            ver_check == 0 && !force_update?
-                               " (won't be applied without --force)" : "");
-                    else
-                        printf("    No update available\n");
+                    if (!(fw_url != NULL && no_url_downloads))
+                    {
+                        ver_check = checkVersion(version,
+                                                 controller_ver_a,
+                                                 controller_ver_b,
+                                                 controller_ver_c,
+                                                 controller_ver_d);
+                        if (controller_applicable_found)
+                            printf(
+                                "    Available update: %d.%d.%d.%d%s\n",
+                                controller_ver_a,
+                                controller_ver_b,
+                                controller_ver_c,
+                                controller_ver_d,
+                                ver_check == 0 && !force_update?
+                                   " (won't be applied without --force)" :
+                                   "");
+                        else
+                            printf("    No update available\n");
 
-                    if (controller_applicable_found &&
-                        (ver_check == 1 || force_update))
-                        have_applicable_imgs = 1;
+                        if (controller_applicable_found &&
+                            (ver_check == 1 || force_update))
+                            have_applicable_imgs = 1;
+                    }
                 }
                 else if (strcmp(description, "NIC BootROM") == 0 &&
                          update_bootrom)
                 {
-                    ver_check = checkVersion(version,
-                                             bootrom_ver_a,
-                                             bootrom_ver_b,
-                                             bootrom_ver_c,
-                                             bootrom_ver_d);
                     printf("Controller version: %s\n", version); 
-                    if (bootrom_applicable_found)
-                        printf(
-                            "    Available update: %d.%d.%d.%d%s\n",
-                            bootrom_ver_a,
-                            bootrom_ver_b,
-                            bootrom_ver_c,
-                            bootrom_ver_d,
-                            ver_check == 0 && !force_update?
-                               " (won't be applied without --force)" : "");
-                    else
-                        printf("    No update available\n");
+                    if (!(fw_url != NULL && no_url_downloads))
+                    {
+                        ver_check = checkVersion(version,
+                                                 bootrom_ver_a,
+                                                 bootrom_ver_b,
+                                                 bootrom_ver_c,
+                                                 bootrom_ver_d);
+                        if (bootrom_applicable_found)
+                            printf(
+                                "    Available update: %d.%d.%d.%d%s\n",
+                                bootrom_ver_a,
+                                bootrom_ver_b,
+                                bootrom_ver_c,
+                                bootrom_ver_d,
+                                ver_check == 0 && !force_update?
+                                   " (won't be applied without --force)" :
+                                   "");
+                        else
+                            printf("    No update available\n");
 
-                    if (bootrom_applicable_found &&
-                        (ver_check == 1 || force_update))
-                        have_applicable_imgs = 1;
+                        if (bootrom_applicable_found &&
+                            (ver_check == 1 || force_update))
+                            have_applicable_imgs = 1;
+                    }
                 }
 
                 free(description);
@@ -3647,6 +3655,9 @@ main(int argc, const char *argv[])
             rc = -1;
             goto cleanup;
         }
+
+        if (fw_url != NULL && no_url_downloads)
+            have_applicable_imgs = 1;
 
         if (!have_applicable_imgs)
             printf("\nThere is no firmware images which can be "
