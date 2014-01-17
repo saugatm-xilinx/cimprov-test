@@ -48,6 +48,7 @@ static unsigned int  downloaded_max_count = 0;
 
 #define HTTP_PROTO "http://"
 #define HTTPS_PROTO "https://"
+#define FILE_PROTO "file://"
 
 /**
  * Print error message with file name and line number
@@ -3373,6 +3374,11 @@ main(int argc, const char *argv[])
         update_controller = 1;
         update_bootrom = 1;
     }
+
+    if (fw_url != NULL &&
+        strncasecmp(fw_url, FILE_PROTO, strlen(FILE_PROTO)) == 0)
+        no_url_downloads = 1;
+
     setbuf(stderr, NULL);
     setbuf(stdout, NULL);
     curl_global_init(CURL_GLOBAL_ALL);
