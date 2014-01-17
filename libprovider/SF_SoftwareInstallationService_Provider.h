@@ -70,7 +70,7 @@ class SF_SoftwareInstallationService_Provider
         unsigned int imgType;
         unsigned int imgSubType;
         String imgName;
-        String curVersion;
+        solarflare::VersionInfo curVersion;
 
         solarflare::UpdatedFirmwareType fw_type;
         bool ok;
@@ -88,7 +88,31 @@ class SF_SoftwareInstallationService_Provider
         unsigned int getImgType() { return imgType; };
         unsigned int getImgSubType() { return imgSubType; };
         String getImgName() { return imgName; };
-        String getCurVersion() { return curVersion; };
+        solarflare::VersionInfo getCurVersion() { return curVersion; };
+    };
+
+    class LocalFwImgChecker : public solarflare::Action
+    {
+        bool applicable;
+        solarflare::VersionInfo imgVersion;
+
+        solarflare::UpdatedFirmwareType fw_type;
+        String filename;
+        bool ok;
+        bool firstRun;
+    protected:
+        virtual void handler(solarflare::SystemElement& se, unsigned);
+    public:
+        LocalFwImgChecker(solarflare::UpdatedFirmwareType type,
+                          String fn,
+                          const Instance *inst) :
+            solarflare::Action(inst), fw_type(type), filename(fn),
+            ok(false), firstRun(true) {}
+        bool isOk() const { return ok; };
+        bool nicFound() const { return !firstRun; };
+
+        bool getApplicable() { return applicable; };
+        solarflare::VersionInfo getImgVersion() { return imgVersion; };
     };
 
 public:
@@ -158,26 +182,34 @@ public:
     Invoke_Method_Status GetRequiredFwImageName(
         const SF_SoftwareInstallationService* self,
         const CIM_Card* Target,
-        Property<uint32>& type,
-        Property<uint32>& subtype,
-        Property<String>& name,
-        Property<String>& current_version,
+        Property<uint32>& Type,
+        Property<uint32>& Subtype,
+        Property<String>& Name,
+        Property<String>& CurrentVersion,
         Property<uint32>& return_value);
 
     Invoke_Method_Status StartFwImageSend(
         const SF_SoftwareInstallationService* self,
-        Property<String>& file_name,
+        Property<String>& FileName,
         Property<uint32>& return_value);
 
     Invoke_Method_Status SendFwImageData(
         const SF_SoftwareInstallationService* self,
-        const Property<String>& file_name,
-        const Property<String>& base64_str,
+        const Property<String>& FileName,
+        const Property<String>& Base64Str,
         Property<uint32>& return_value);
 
     Invoke_Method_Status RemoveFwImage(
         const SF_SoftwareInstallationService* self,
-        const Property<String>& file_name,
+        const Property<String>& FileName,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status GetLocalFwImageVersion(
+        const SF_SoftwareInstallationService* self,
+        const CIM_Card* Target,
+        const Property<String>& FileName,
+        Property<boolean>& ApplicableFound,
+        Property<String>& Version,
         Property<uint32>& return_value);
 #endif
 

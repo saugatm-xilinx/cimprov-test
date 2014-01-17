@@ -769,12 +769,44 @@ namespace solarflare
                                     unsigned requestedState);
         static unsigned getLogReqState(const String &logName);
 
+        /// Get information required to know whether  a firmware
+        /// image would be accepted for update of a given firmware
+        /// type on a given NIC.
+        ///
+        /// @param nic                     NIC object
+        /// @param type                    Firmware type
+        /// @param img_type          [out] Firmware image type
+        /// @param img_subtype       [out] Firmware image subtype
+        /// @param img_name          [out] Firmware image default file name
+        /// @param current_version   [out] Current version of installed
+        ///                                firmware
+        ///
+        /// @return 0 on success, -1 on error
         virtual int getRequiredFwImageName(const NIC &nic,
                                            UpdatedFirmwareType type,
                                            unsigned int &img_type,
                                            unsigned int &img_subtype,
                                            String &img_name,
-                                           String &current_version)
+                                           VersionInfo &current_version)
+        {
+            return -1;
+        }
+
+        /// Check whether a given file contains applicable firmware
+        /// image, and if it does, obtain firmware image version
+        ///
+        /// @param nic              NIC object
+        /// @param type             Firmware type
+        /// @param filename         File name
+        /// @param applicable [out] Whether firmware image is applicable
+        /// @param imgVersion [out] Firwmare image version
+        ///
+        /// @return 0 on success, -1 on error
+        virtual int getLocalFwImageVersion(const NIC &nic,
+                                           UpdatedFirmwareType type,
+                                           const char *filename,
+                                           bool &applicable,
+                                           VersionInfo &imgVersion)
         {
             return -1;
         }

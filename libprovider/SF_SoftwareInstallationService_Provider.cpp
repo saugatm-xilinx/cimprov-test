@@ -202,6 +202,19 @@ void SF_SoftwareInstallationService_Provider::FwImgInfoGetter::
     firstRun = false;
 }
 
+void SF_SoftwareInstallationService_Provider::LocalFwImgChecker::
+                            handler(solarflare::SystemElement& se, unsigned)
+{
+    solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
+
+    ok = (solarflare::System::target.getLocalFwImageVersion(
+                                                      nic, fw_type,
+                                                      filename.c_str(),
+                                                      applicable,
+                                                      imgVersion) == 0);
+    firstRun = false;
+}
+
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     const SF_SoftwareInstallationService* self,
     CIM_ConcreteJob*& Job,
@@ -333,10 +346,10 @@ Invoke_Method_Status
     SF_SoftwareInstallationService_Provider::GetRequiredFwImageName(
         const SF_SoftwareInstallationService* self,
         const CIM_Card* Target,
-        Property<uint32>& type,
-        Property<uint32>& subtype,
-        Property<String>& name,
-        Property<String>& current_version,
+        Property<uint32>& Type,
+        Property<uint32>& Subtype,
+        Property<String>& Name,
+        Property<String>& CurrentVersion,
         Property<uint32>& return_value)
 {
     using namespace solarflare;
@@ -396,14 +409,14 @@ Invoke_Method_Status
         return INVOKE_METHOD_OK;
     }
 
-    type.null = false;
-    type.value = getter.getImgType();
-    subtype.null = false;
-    subtype.value = getter.getImgSubType();
-    name.null = false;
-    name.value = getter.getImgName();
-    current_version.null = false;
-    current_version.value = getter.getCurVersion();
+    Type.null = false;
+    Type.value = getter.getImgType();
+    Subtype.null = false;
+    Subtype.value = getter.getImgSubType();
+    Name.null = false;
+    Name.value = getter.getImgName();
+    CurrentVersion.null = false;
+    CurrentVersion.value = getter.getCurVersion().string();
 
     return_value.set(OK);
     return INVOKE_METHOD_OK;
@@ -412,7 +425,7 @@ Invoke_Method_Status
 Invoke_Method_Status
     SF_SoftwareInstallationService_Provider::StartFwImageSend(
         const SF_SoftwareInstallationService* self,
-        Property<String>& file_name,
+        Property<String>& FileName,
         Property<uint32>& return_value)
 {
     enum ReturnValue 
@@ -436,13 +449,13 @@ Invoke_Method_Status
 
     if (fName.empty())
     {
-        file_name.null = true;
+        FileName.null = true;
         return_value.set(Error);
     }
     else
     {
-        file_name.null = false;
-        file_name.value = fName;
+        FileName.null = false;
+        FileName.value = fName;
         return_value.set(OK);
     }
 
@@ -452,8 +465,8 @@ Invoke_Method_Status
 Invoke_Method_Status
     SF_SoftwareInstallationService_Provider::SendFwImageData(
         const SF_SoftwareInstallationService* self,
-        const Property<String>& file_name,
-        const Property<String>& base64_str,
+        const Property<String>& FileName,
+        const Property<String>& Base64Str,
         Property<uint32>& return_value)
 {
     enum ReturnValue 
@@ -474,15 +487,15 @@ Invoke_Method_Status
         return INVOKE_METHOD_OK;
     }
 
-    if (file_name.null || base64_str.null)
+    if (FileName.null || Base64Str.null)
     {
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
     }
 
     if (solarflare::System::
-              target.tmpFileBase64Append(file_name.value,
-                                         base64_str.value) < 0)
+              target.tmpFileBase64Append(FileName.value,
+                                         Base64Str.value) < 0)
         return_value.set(Error);
     else
         return_value.set(OK);
@@ -493,7 +506,7 @@ Invoke_Method_Status
 Invoke_Method_Status
     SF_SoftwareInstallationService_Provider::RemoveFwImage(
         const SF_SoftwareInstallationService* self,
-        const Property<String>& file_name,
+        const Property<String>& FileName,
         Property<uint32>& return_value)
 {
     enum ReturnValue 
@@ -503,20 +516,97 @@ Invoke_Method_Status
         InvalidParameter = 5,
     };
 
-    if (file_name.null)
+    if (FileName.null)
     {
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
     }
 
     if (solarflare::System::
-              target.removeTmpFile(file_name.value) < 0)
+              target.removeTmpFile(FileName.value) < 0)
         return_value.set(Error);
     else
         return_value.set(OK);
 
     return INVOKE_METHOD_OK;
 }
+
+Invoke_Method_Status
+    SF_SoftwareInstallationService_Provider::GetLocalFwImageVersion(
+        const SF_SoftwareInstallationService* self,
+        const CIM_Card* Target,
+        const Property<String>& FileName,
+        Property<boolean>& ApplicableFound,
+        Property<String>& Version,
+        Property<uint32>& return_value)
+{
+    using namespace solarflare;
+
+    UpdatedFirmwareType fwType;
+
+    enum ReturnValue 
+    {
+        OK = 0,
+        Error = 2,
+        InvalidParameter = 5,
+    };
+
+    if (Target == NULL || FileName.null || FileName.value.empty())
+    {
+        PROVIDER_LOG_ERR("%s(): Target and FileName parameters "
+                         "should be specified",
+                         __FUNCTION__);
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (self == NULL || self->Name.null)
+    {
+        PROVIDER_LOG_ERR("%s(): Name property of "
+                         "SF_SoftwareInstallationService is not known",
+                         __FUNCTION__);
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    if (strcmp(self->Name.value.c_str(), "BootROM") == 0)
+        fwType = FIRMWARE_BOOTROM;
+    else if (strcmp(self->Name.value.c_str(), "Firmware") == 0)
+        fwType = FIRMWARE_MCFW;
+    else
+    {
+        PROVIDER_LOG_ERR("%s(): operation is not supported for "
+                         "SF_SoftwareInstallationService.Name=%s",
+                         __FUNCTION__, self->Name.value.c_str());
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    LocalFwImgChecker checker(fwType, FileName.value, Target);
+
+    checker.forNIC();
+
+    if (!checker.nicFound())
+    {
+        PROVIDER_LOG_ERR("%s(): failed to find NIC", __FUNCTION__);
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+    else if (!checker.isOk())
+    {
+        return_value.set(Error);
+        return INVOKE_METHOD_OK;
+    }
+
+    ApplicableFound.null = false;
+    ApplicableFound.value = checker.getApplicable();
+    Version.null = false;
+    Version.value = checker.getImgVersion().string();
+
+    return_value.set(OK);
+    return INVOKE_METHOD_OK;
+}
+
 #endif
 
 Invoke_Method_Status SF_SoftwareInstallationService_Provider::ChangeAffectedElementsAssignedSequence(

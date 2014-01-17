@@ -253,17 +253,22 @@ m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
 INSTANCE
 class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
     uint32 GetRequiredFwImageName([IN] CIM_Card REF Target,
-                                  [OUT] uint32 type,
-                                  [OUT] uint32 subtype,
-                                  [OUT] string name,
-                                  [OUT] string current_version);
+                                  [OUT] uint32 Type,
+                                  [OUT] uint32 Subtype,
+                                  [OUT] string Name,
+                                  [OUT] string CurrentVersion);
 
-    uint32 StartFwImageSend([OUT] string file_name);
+    uint32 StartFwImageSend([OUT] string FileName);
 
-    uint32 SendFwImageData([IN] string file_name,
-                           [IN] string base64);
+    uint32 SendFwImageData([IN] string FileName,
+                           [IN] string Base64Str);
 
-    uint32 RemoveFwImage([IN] string file_name);
+    uint32 RemoveFwImage([IN] string FileName);
+
+    uint32 GetLocalFwImageVersion([IN] CIM_Card REF Target,
+                                  [IN] string FileName,
+                                  [OUT] boolean ApplicableFound,
+                                  [OUT] string Version);
 };
 ]], [[
 INSTANCE

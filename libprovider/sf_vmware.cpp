@@ -1481,6 +1481,14 @@ fail:
                               UpdatedFirmwareType fwType,
                               unsigned int &subType, String &fName);
 
+    // Forward-declaration
+    static int vmwareGetLocalFwImageVersion(const char *path,
+                                            const NIC *owner,
+                                            UpdatedFirmwareType fwType,
+                                            const VersionInfo &curVersion,
+                                            bool &applicable,
+                                            VersionInfo &imgVersion);
+
     ///
     /// Install firmware of a given type on a given NIC
     /// from a specified location.
@@ -1522,6 +1530,7 @@ fail:
                                      curVersion,
                                      force, base64_hash);
     }
+
 
     ///
     /// Log sfupdate output for debugging purposes.
@@ -2115,6 +2124,7 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
+
         virtual InstallRC syncInstall(const char *file_name,
                                       bool force,
                                       const char *base64_hash)
@@ -2125,6 +2135,7 @@ fail:
                                              force,
                                              base64_hash);
         }
+
         virtual void initialize() {};
     };
 
@@ -2135,6 +2146,7 @@ fail:
             owner(o) {}
         virtual const NIC *nic() const { return owner; }
         virtual VersionInfo version() const;
+
         virtual InstallRC syncInstall(const char *file_name,
                                       bool force,
                                       const char *base64_hash)
@@ -2145,6 +2157,7 @@ fail:
                                              force,
                                              base64_hash);
         }
+
         virtual void initialize() {};
     };
 
@@ -2663,11 +2676,13 @@ cleanup:
     /// Check that firmware image is applicable according
     /// to firmware type, subtype and version.
     ///
-    /// @param filename     Where firmware image is stored
-    /// @param fwType       Firmware type
-    /// @param subType      Firmware subtype
-    /// @param curVersion   Version of the currently installed firmware
-    /// @param force        Will --force option be specified for sfupdate
+    /// @param filename         Where firmware image is stored
+    /// @param fwType           Firmware type
+    /// @param subType          Firmware subtype
+    /// @param curVersion       Version of the currently installed firmware
+    /// @param imgVersion [out] Version of the firmware image
+    /// @param force            Will --force option be specified for
+    ///                         sfupdate
     ///
     /// @return true if firmware is applicable, false otherwise
     ///
@@ -2675,6 +2690,7 @@ cleanup:
                                         UpdatedFirmwareType fwType,
                                         unsigned int subType,
                                         const VersionInfo &curVersion,
+                                        VersionInfo *imgVersion,
                                         bool force)
     {
         image_header_t    header;
@@ -2699,6 +2715,13 @@ cleanup:
             return false;
         }
         fclose(f);
+
+        if (header.ih_magic != IMAGE_HEADER_MAGIC)
+        {
+            PROVIDER_LOG_ERR("%s(): firmware image header magic mismatch",
+                             __FUNCTION__);
+            return false;
+        }
 
         if (!((header.ih_type == IMAGE_TYPE_BOOTROM &&
                fwType == FIRMWARE_BOOTROM) ||
@@ -2731,9 +2754,55 @@ cleanup:
                                  __FUNCTION__);
                 return false;
             }
+
+            if (imgVersion != NULL)
+                *imgVersion = newVersion;
         }
 
         return true;
+    }
+
+    ///
+    /// Check whether local file contains an applicable firmware image,
+    /// and if it does, return its version.
+    ///
+    /// @param path               Where to find firmware image
+    /// @param owner              NIC on which firmware resides
+    /// @param fwType             Firmware type
+    /// @param curVersion         Version of the currently installed
+    ///                           firmware
+    /// @param applicable   [out] Whether firmware image is applicable or
+    ///                           not
+    /// @param imgVersion   [out] Version of the firmware image (if it is
+    ///                           applicable)
+    ///
+    /// @return 0 on sucess, -1 on failure
+    ///
+    static int vmwareGetLocalFwImageVersion(const char *path,
+                                          const NIC *owner,
+                                          UpdatedFirmwareType fwType,
+                                          const VersionInfo &curVersion,
+                                          bool &applicable,
+                                          VersionInfo &imgVersion)
+    {
+        String          strPath;
+        String          strDefPath;
+        unsigned int    subType;
+        String          fName;
+        bool            was_completed;
+
+        if (getFwImageInfo(owner, fwType, subType, fName) < 0)
+            return -1;
+
+        strDefPath = getDefaultFwPath(owner, fwType, fName);
+        strPath = fixFwImagePath(path,
+                                 strDefPath.c_str(),
+                                 was_completed);
+
+        applicable = checkImageApplicability(path, fwType,
+                                             subType, curVersion,
+                                             &imgVersion, true);
+        return 0;
     }
 
     ///
@@ -2896,7 +2965,7 @@ cleanup:
         }
 
         if (!checkImageApplicability(sfupdate_image_fn, fwType, subType,
-                                     curVersion, force))
+                                     curVersion, NULL, force))
         {
             PROVIDER_LOG_ERR("Firmware image applicability "
                              "check failed");
@@ -3144,7 +3213,12 @@ cleanup:
                                            unsigned int &img_type,
                                            unsigned int &img_subtype,
                                            String &img_name,
-                                           String &current_version);
+                                           VersionInfo &current_version);
+        virtual int getLocalFwImageVersion(const NIC &nic,
+                                           UpdatedFirmwareType type,
+                                           const char *filename,
+                                           bool &applicable,
+                                           VersionInfo &imgVersion);
         virtual String createTmpFile();
         virtual int tmpFileBase64Append(const String &fileName,
                                         const String &base64Str);
@@ -3193,28 +3267,23 @@ cleanup:
         return en.process(mgmtPackage);
     }
 
-    int VMwareSystem::getRequiredFwImageName(const NIC &nic,
-                                             UpdatedFirmwareType type,
-                                             unsigned int &img_type,
-                                             unsigned int &img_subtype,
-                                             String &img_name,
-                                             String &current_version)
+    static int getNICFwVersion(const NIC &nic,
+                               UpdatedFirmwareType type,
+                               VersionInfo &version)
     {
         switch (type)
         {
             case FIRMWARE_BOOTROM:
             {
                 VMwareBootROM bootrom(&nic);
-                img_type = IMAGE_TYPE_BOOTROM;
-                current_version = bootrom.version().string();
+                version = bootrom.version();
                 break;
             }
 
             case FIRMWARE_MCFW:
             {
                 VMwareNICFirmware firmware(&nic);
-                img_type = IMAGE_TYPE_MCFW;
-                current_version = firmware.version().string();
+                version = firmware.version();
                 break;
             }
 
@@ -3224,7 +3293,52 @@ cleanup:
                 return -1;
         }
 
+        return 0;
+    }
+
+    int VMwareSystem::getRequiredFwImageName(const NIC &nic,
+                                             UpdatedFirmwareType type,
+                                             unsigned int &img_type,
+                                             unsigned int &img_subtype,
+                                             String &img_name,
+                                             VersionInfo &current_version)
+    {
+        switch (type)
+        {
+            case FIRMWARE_BOOTROM:
+                img_type = IMAGE_TYPE_BOOTROM;
+                break;
+
+            case FIRMWARE_MCFW:
+                img_type = IMAGE_TYPE_MCFW;
+                break;
+
+            default:
+                PROVIDER_LOG_ERR("%s(): unknown firmware type %d",
+                                 __FUNCTION__, type);
+                return -1;
+        }
+
+        if (getNICFwVersion(nic, type, current_version) < 0)
+            return -1;
+
         return getFwImageInfo(&nic, type, img_subtype, img_name);
+    }
+
+    int VMwareSystem::getLocalFwImageVersion(const NIC &nic,
+                                             UpdatedFirmwareType type,
+                                             const char *filename,
+                                             bool &applicable,
+                                             VersionInfo &imgVersion)
+    {
+        VersionInfo currentVersion;
+    
+        if (getNICFwVersion(nic, type, currentVersion) < 0)
+            return -1;
+
+        return vmwareGetLocalFwImageVersion(filename, &nic,
+                                            type, currentVersion,
+                                            applicable, imgVersion);
     }
 
     String VMwareSystem::createTmpFile()
