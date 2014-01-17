@@ -3305,6 +3305,8 @@ main(int argc, const char *argv[])
 
     char nic_tag_prev[MAX_NIC_TAG_LEN] = "";
     int  have_applicable_imgs = 0;
+    int  have_applicable_bootrom = 0;
+    int  have_applicable_controller = 0;
 
     CURL        *curl = NULL;
     CURLcode     res;
@@ -3609,7 +3611,10 @@ main(int argc, const char *argv[])
 
                         if (controller_applicable_found &&
                             (ver_check == 1 || force_update))
+                        {
                             have_applicable_imgs = 1;
+                            have_applicable_controller = 1;
+                        }
                     }
                 }
                 else if (strcmp(description, "NIC BootROM") == 0 &&
@@ -3638,7 +3643,10 @@ main(int argc, const char *argv[])
 
                         if (bootrom_applicable_found &&
                             (ver_check == 1 || force_update))
+                        {
                             have_applicable_imgs = 1;
+                            have_applicable_bootrom = 1;
+                        }
                     }
                 }
 
@@ -3664,6 +3672,13 @@ main(int argc, const char *argv[])
 
         if (fw_url != NULL && no_url_downloads)
             have_applicable_imgs = 1;
+        else
+        {
+            update_controller = update_controller &&
+                                have_applicable_controller;
+            update_bootrom = update_bootrom &&
+                             have_applicable_bootrom;
+        }
 
         if (!have_applicable_imgs)
             printf("\nThere is no firmware images which can be "
