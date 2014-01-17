@@ -70,6 +70,7 @@ class SF_SoftwareInstallationService_Provider
         unsigned int imgType;
         unsigned int imgSubType;
         String imgName;
+        String curVersion;
 
         solarflare::UpdatedFirmwareType fw_type;
         bool ok;
@@ -87,6 +88,7 @@ class SF_SoftwareInstallationService_Provider
         unsigned int getImgType() { return imgType; };
         unsigned int getImgSubType() { return imgSubType; };
         String getImgName() { return imgName; };
+        String getCurVersion() { return curVersion; };
     };
 
 public:
@@ -159,6 +161,7 @@ public:
         Property<uint32>& type,
         Property<uint32>& subtype,
         Property<String>& name,
+        Property<String>& current_version,
         Property<uint32>& return_value);
 
     Invoke_Method_Status StartFwImageSend(

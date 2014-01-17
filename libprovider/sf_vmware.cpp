@@ -3143,8 +3143,8 @@ cleanup:
                                            UpdatedFirmwareType type,
                                            unsigned int &img_type,
                                            unsigned int &img_subtype,
-                                           String &img_name);
-
+                                           String &img_name,
+                                           String &current_version);
         virtual String createTmpFile();
         virtual int tmpFileBase64Append(const String &fileName,
                                         const String &base64Str);
@@ -3197,17 +3197,26 @@ cleanup:
                                              UpdatedFirmwareType type,
                                              unsigned int &img_type,
                                              unsigned int &img_subtype,
-                                             String &img_name)
+                                             String &img_name,
+                                             String &current_version)
     {
         switch (type)
         {
             case FIRMWARE_BOOTROM:
+            {
+                VMwareBootROM bootrom(&nic);
                 img_type = IMAGE_TYPE_BOOTROM;
+                current_version = bootrom.version().string();
                 break;
+            }
 
             case FIRMWARE_MCFW:
+            {
+                VMwareNICFirmware firmware(&nic);
                 img_type = IMAGE_TYPE_MCFW;
+                current_version = firmware.version().string();
                 break;
+            }
 
             default:
                 PROVIDER_LOG_ERR("%s(): unknown firmware type %d",

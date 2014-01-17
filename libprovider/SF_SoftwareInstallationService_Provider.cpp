@@ -193,10 +193,12 @@ void SF_SoftwareInstallationService_Provider::FwImgInfoGetter::
 {
     solarflare::NIC& nic = static_cast<solarflare::NIC&>(se);
 
-    ok = (solarflare::System::target.getRequiredFwImageName(nic, fw_type,
-                                                            imgType,
-                                                            imgSubType,
-                                                            imgName) == 0);
+    ok = (solarflare::System::target.getRequiredFwImageName(
+                                                      nic, fw_type,
+                                                      imgType,
+                                                      imgSubType,
+                                                      imgName,
+                                                      curVersion) == 0);
     firstRun = false;
 }
 
@@ -334,6 +336,7 @@ Invoke_Method_Status
         Property<uint32>& type,
         Property<uint32>& subtype,
         Property<String>& name,
+        Property<String>& current_version,
         Property<uint32>& return_value)
 {
     using namespace solarflare;
@@ -399,6 +402,8 @@ Invoke_Method_Status
     subtype.value = getter.getImgSubType();
     name.null = false;
     name.value = getter.getImgName();
+    current_version.null = false;
+    current_version.value = getter.getCurVersion();
 
     return_value.set(OK);
     return INVOKE_METHOD_OK;

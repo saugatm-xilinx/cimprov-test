@@ -773,7 +773,8 @@ namespace solarflare
                                            UpdatedFirmwareType type,
                                            unsigned int &img_type,
                                            unsigned int &img_subtype,
-                                           String &img_name)
+                                           String &img_name,
+                                           String &current_version)
         {
             return -1;
         }
