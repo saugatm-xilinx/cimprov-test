@@ -1091,9 +1091,9 @@ xmlReqSendFwImageData(const char *namespace, xmlCimInstance *svc,
                                   "SendFwImageData",
                                   &methodcall_node);
 
-    addSimpleParamValue(methodcall_node, "file_name", "string",
+    addSimpleParamValue(methodcall_node, "FileName", "string",
                         file_name);
-    addSimpleParamValue(methodcall_node, "base64", "string",
+    addSimpleParamValue(methodcall_node, "Base64Str", "string",
                         base64);
 
     return doc;
@@ -1115,14 +1115,57 @@ xmlReqRemoveFwImage(const char *namespace, xmlCimInstance *svc,
 {
     xmlDocPtr       doc = NULL;
     xmlNodePtr      methodcall_node = NULL;
-    xmlNodePtr      paramvalue_node = NULL;
-    xmlNodePtr      value_node = NULL;
 
     doc = xmlReqPrepareMethodCall(0, namespace, svc,
                                   "RemoveFwImage",
                                   &methodcall_node);
 
-    addSimpleParamValue(methodcall_node, "file_name", "string",
+    addSimpleParamValue(methodcall_node, "FileName", "string",
+                        file_name);
+
+    return doc;
+}
+
+/**
+ * Construct CIM-XML request for calling GetLocalFwImageVersion() method
+ *
+ * @param namespace     Namespace
+ * @param svc           SF_SoftwareInstallationService instance pointer
+ * @param target        Target parameter (should be instance of SF_NICCard)
+ * @param file_name     Name of temporary file in which data
+ *                      would be stored
+ *
+ * @return XML document pointer for the constructed CIM-XML request
+ */
+xmlDocPtr
+xmlReqGetLocalFwImageVersion(const char *namespace, xmlCimInstance *svc,
+                             xmlCimInstance *target, const char *file_name)
+{
+    xmlDocPtr       doc = NULL;
+    xmlNodePtr      methodcall_node = NULL;
+    xmlNodePtr      paramvalue_node = NULL;
+    xmlNodePtr      value_node = NULL;
+
+    doc = xmlReqPrepareMethodCall(0, namespace, svc,
+                                  "GetLocalFwImageVersion",
+                                  &methodcall_node);
+
+    if (target != NULL)
+    {
+        paramvalue_node = xmlNewChild(methodcall_node, NULL,
+                                      "PARAMVALUE", NULL);
+        xmlNewProp(paramvalue_node, BAD_CAST "NAME",
+                   BAD_CAST "Target");
+        xmlNewProp(paramvalue_node, BAD_CAST "PARAMTYPE",
+                   BAD_CAST "reference");
+   
+        value_node = xmlNewChild(paramvalue_node, NULL,
+                                 BAD_CAST "VALUE.REFERENCE",
+                                 NULL);
+        addLocalInstPath(value_node, namespace, target);
+    }
+
+    addSimpleParamValue(methodcall_node, "FileName", "string",
                         file_name);
 
     return doc;
@@ -2062,6 +2105,33 @@ call_remove_fw_image(CURL *curl, const char *namespace,
                              response);
 }
 
+/**
+ * Call GetLocalFwImageVersion() extrinsic method
+ *
+ * @param curl              CURL pointer returned by curl_easy_init()
+ * @param namespace         Namespace
+ * @param svc               SF_SoftwareInstallationService instance pointer
+ * @param target        Target parameter (should be instance of SF_NICCard)
+ * @param file_name         Temporary file name where image was stored
+ * @param response    [out] Parsed CIM-XML response
+ *
+ * @return 0 on success, -1 on failure
+ */
+int
+call_get_local_fw_image_version(CURL *curl, const char *namespace,
+                                xmlCimInstance *svc,
+                                xmlCimInstance *target,
+                                const char *file_name,
+                                response_descr *response)
+{
+    xmlDocPtr doc;
+
+    doc = xmlReqGetLocalFwImageVersion(namespace, svc, target, file_name);
+    
+    return processXmlRequest(curl, doc, "GetLocalFwImageVersion",
+                             response);
+}
+
 static int
 pathCompletion(const char *fw_source, const char *svc_name,
                int url_specified,
@@ -2297,7 +2367,7 @@ install_from_local_path(CURL *curl, const char *namespace,
             }
 
             ver = get_named_value(call_rsp.out_params_list,
-                                  "current_version");
+                                  "CurrentVersion");
             if (ver == NULL || strlen(ver) == 0)
             {
                 ERROR_MSG_PLAIN("Failed to get current firmware "
@@ -2320,7 +2390,7 @@ install_from_local_path(CURL *curl, const char *namespace,
                 char *name;
 
                 name = get_named_value(call_rsp.out_params_list,
-                                       "name");
+                                       "Name");
                 if (name == NULL || strlen(name) == 0)
                 {
                     ERROR_MSG_PLAIN("Failed to get required firmware "
@@ -2348,9 +2418,9 @@ install_from_local_path(CURL *curl, const char *namespace,
                 unsigned int   i;
 
                 type = get_named_value(call_rsp.out_params_list,
-                                       "type");
+                                       "Type");
                 subtype = get_named_value(call_rsp.out_params_list,
-                                          "subtype");
+                                          "Subtype");
                 if (type == NULL || strlen(type) == 0 ||
                     subtype == NULL || strlen(subtype) == 0)
                 {
@@ -2433,7 +2503,7 @@ install_from_local_path(CURL *curl, const char *namespace,
             }
 
             tmp_file_name = get_named_value(call_rsp.out_params_list,
-                                            "file_name");
+                                            "FileName");
             if (tmp_file_name == NULL || strlen(tmp_file_name) == 0)
             {
                 ERROR_MSG_PLAIN("Failed to get temporary file name "
@@ -3068,11 +3138,11 @@ findAvailableUpdate(CURL *curl, const char *namespace,
     }
 
     img_name = get_named_value(call_rsp.out_params_list,
-                               "name");
+                               "Name");
     img_type_str = get_named_value(call_rsp.out_params_list,
-                                   "type");
+                                   "Type");
     img_subtype_str = get_named_value(call_rsp.out_params_list,
-                                      "subtype");
+                                      "Subtype");
     img_type = strtol(img_type_str, NULL, 10);
     img_subtype = strtol(img_subtype_str, NULL, 10);
 
@@ -3620,7 +3690,7 @@ main(int argc, const char *argv[])
                 else if (strcmp(description, "NIC BootROM") == 0 &&
                          update_bootrom)
                 {
-                    printf("Controller version: %s\n", version); 
+                    printf("BootROM version: %s\n", version); 
                     if (!(fw_url != NULL && no_url_downloads))
                     {
                         ver_check = checkVersion(version,
@@ -3674,10 +3744,10 @@ main(int argc, const char *argv[])
             have_applicable_imgs = 1;
         else
         {
-            update_controller = update_controller &&
-                                have_applicable_controller;
-            update_bootrom = update_bootrom &&
-                             have_applicable_bootrom;
+            update_controller = (update_controller &&
+                                 have_applicable_controller);
+            update_bootrom = (update_bootrom &&
+                              have_applicable_bootrom);
         }
 
         if (!have_applicable_imgs)
