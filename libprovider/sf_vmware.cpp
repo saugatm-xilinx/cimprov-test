@@ -1441,7 +1441,8 @@ fail:
         if (strcasecmp_start(fn, FILE_PROTO) == 0)
         {
             local_path = true;
-            int fd = open(fn, O_RDONLY | O_DIRECTORY);
+            int fd = open(fn + strlen(FILE_PROTO),
+                          O_RDONLY | O_DIRECTORY);
             if (fd >= 0)
             {
                 dir_path = true;
@@ -2695,6 +2696,7 @@ cleanup:
     {
         image_header_t    header;
         FILE             *f;
+        VersionInfo       newVersion;
 
         memset(&header, 0, sizeof(header));
 
@@ -2740,23 +2742,19 @@ cleanup:
             return false;
         }
 
-        if (!force)
+        newVersion = VersionInfo(header.ih_code_version_a,
+                                 header.ih_code_version_b,
+                                 header.ih_code_version_c,
+                                 header.ih_code_version_d);
+        if (imgVersion != NULL)
+            *imgVersion = newVersion;
+
+        if (!force && newVersion <= curVersion)
         {
-            VersionInfo newVersion(header.ih_code_version_a,
-                                   header.ih_code_version_b,
-                                   header.ih_code_version_c,
-                                   header.ih_code_version_d);
-
-            if (newVersion <= curVersion)
-            {
-                PROVIDER_LOG_ERR("%s(): firmware of the same or newer "
-                                 "version is installed already",
-                                 __FUNCTION__);
-                return false;
-            }
-
-            if (imgVersion != NULL)
-                *imgVersion = newVersion;
+            PROVIDER_LOG_ERR("%s(): firmware of the same or newer "
+                             "version is installed already",
+                             __FUNCTION__);
+            return false;
         }
 
         return true;
@@ -2779,11 +2777,11 @@ cleanup:
     /// @return 0 on sucess, -1 on failure
     ///
     static int vmwareGetLocalFwImageVersion(const char *path,
-                                          const NIC *owner,
-                                          UpdatedFirmwareType fwType,
-                                          const VersionInfo &curVersion,
-                                          bool &applicable,
-                                          VersionInfo &imgVersion)
+                                            const NIC *owner,
+                                            UpdatedFirmwareType fwType,
+                                            const VersionInfo &curVersion,
+                                            bool &applicable,
+                                            VersionInfo &imgVersion)
     {
         String          strPath;
         String          strDefPath;
@@ -2799,8 +2797,10 @@ cleanup:
                                  strDefPath.c_str(),
                                  was_completed);
 
-        applicable = checkImageApplicability(path, fwType,
-                                             subType, curVersion,
+        applicable = checkImageApplicability(strPath.c_str() +
+                                             strlen(FILE_PROTO),
+                                             fwType, subType,
+                                             curVersion,
                                              &imgVersion, true);
         return 0;
     }
