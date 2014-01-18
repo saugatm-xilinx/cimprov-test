@@ -2852,7 +2852,9 @@ update_firmware(CURL *curl, const char *namespace,
     memset(&call_rsp, 0, sizeof(call_rsp));
 
     if (url_specified && firmware_source != NULL &&
-        no_url_downloads)
+        (no_url_downloads ||
+         strncasecmp(firmware_source, FILE_PROTO,
+                     strlen(FILE_PROTO)) == 0))
         func_install = call_install_from_uri;
     else
         func_install = install_from_local_path;
@@ -3102,11 +3104,6 @@ findAvailableUpdate(CURL *curl, const char *namespace,
     int             rc = 0;
 
     char            *svc_name = NULL;
-    char            *img_name = NULL;
-    char            *img_type_str = NULL;
-    char            *img_subtype_str = NULL;
-    unsigned int     img_type = 0;
-    unsigned int     img_subtype = 0;
 
     image_header_t *header = NULL;
     int             i;
@@ -3124,209 +3121,274 @@ findAvailableUpdate(CURL *curl, const char *namespace,
         return -1;
     }
 
-    CHECK_RESPONSE_EXT(
-        rc_rsp,
-        call_get_required_fw_image_name(curl, namespace,
-                                        svc_inst, nic_inst,
-                                        &call_rsp),
-        call_rsp,
-        "Failed to get required firmware image name");
-    if (rc_rsp < 0)
+    if (firmware_source != NULL &&
+        url_specified &&
+        strncasecmp(firmware_source, FILE_PROTO,
+                    strlen(FILE_PROTO)) == 0)
     {
-        rc = -1;
-        goto cleanup;
-    }
+        char *applicable = NULL;
+        char *version = NULL;
 
-    img_name = get_named_value(call_rsp.out_params_list,
-                               "Name");
-    img_type_str = get_named_value(call_rsp.out_params_list,
-                                   "Type");
-    img_subtype_str = get_named_value(call_rsp.out_params_list,
-                                      "Subtype");
-    img_type = strtol(img_type_str, NULL, 10);
-    img_subtype = strtol(img_subtype_str, NULL, 10);
-
-    if (firmware_source == NULL)
-    {
-        for (i = 0; i < fw_images_count; i++)
+        CHECK_RESPONSE_EXT(
+            rc_rsp,
+            call_get_local_fw_image_version(curl, namespace,
+                                            svc_inst, nic_inst,
+                                            firmware_source,
+                                            &call_rsp),
+            call_rsp,
+            "Failed to get local firmware image version");
+        if (rc_rsp < 0)
         {
-            header = (image_header_t*)firmware_images[i].data;
-            if (header->ih_type == img_type &&
-                header->ih_subtype == img_subtype)
-                break;
+            rc = -1;
+            goto cleanup;
         }
-
-        if (i >= fw_images_count)
-            *applicable_found = 0;
-        else
+   
+        applicable = get_named_value(call_rsp.out_params_list,
+                                     "ApplicableFound");
+        version = get_named_value(call_rsp.out_params_list,
+                                  "Version");
+        if (applicable == NULL || version == NULL)
         {
-            *applicable_found = 1;
-            *ver_a = header->ih_code_version_a;
-            *ver_b = header->ih_code_version_b;
-            *ver_c = header->ih_code_version_c;
-            *ver_d = header->ih_code_version_d;
-        }
-    }
-    else
-    {
-        char    full_path[MAX_PATH_LEN];
-
-        if (pathCompletion(firmware_source, svc_name,
-                           url_specified, img_name,
-                           full_path) < 0)
-        {
-            ERROR_MSG("Failed to complete path '%s'",
-                      firmware_source);
+            ERROR_MSG("Failed to get information about local "
+                      "firmware image");
             rc = -1;
             goto cleanup;
         }
 
-        if (url_specified)
+        if (strcasecmp(applicable, "FALSE") == 0)
+            *applicable_found = 0;
+        else
         {
-            CURL           *curl_fw = NULL;
-            CURLcode        curl_rc;
+            *applicable_found = 1;
+            sscanf(version, "%d.%d.%d.%d",
+                   ver_a, ver_b, ver_c, ver_d);
+        }
+    }
+    else
+    {
+        char            *img_name = NULL;
+        char            *img_type_str = NULL;
+        char            *img_subtype_str = NULL;
+        unsigned int     img_type = 0;
+        unsigned int     img_subtype = 0;
 
-            curl_fw = curl_easy_init();
-            if (curl_fw == NULL)
+        CHECK_RESPONSE_EXT(
+            rc_rsp,
+            call_get_required_fw_image_name(curl, namespace,
+                                            svc_inst, nic_inst,
+                                            &call_rsp),
+            call_rsp,
+            "Failed to get required firmware image name");
+        if (rc_rsp < 0)
+        {
+            rc = -1;
+            goto cleanup;
+        }
+
+        img_name = get_named_value(call_rsp.out_params_list,
+                                   "Name");
+        img_type_str = get_named_value(call_rsp.out_params_list,
+                                       "Type");
+        img_subtype_str = get_named_value(call_rsp.out_params_list,
+                                          "Subtype");
+
+        if (img_name == NULL || img_type_str == NULL ||
+            img_subtype_str == NULL)
+        {
+            ERROR_MSG("Failed to get information about required "
+                      "firmware image");
+            rc = -1;
+            goto cleanup;
+        }
+
+        img_type = strtol(img_type_str, NULL, 10);
+        img_subtype = strtol(img_subtype_str, NULL, 10);
+
+        if (firmware_source == NULL)
+        {
+            for (i = 0; i < fw_images_count; i++)
             {
-                ERROR_MSG_PLAIN("%s(): failed to initialize CURL",
-                                __FUNCTION__);
+                header = (image_header_t*)firmware_images[i].data;
+                if (header->ih_type == img_type &&
+                    header->ih_subtype == img_subtype)
+                    break;
+            }
+
+            if (i >= fw_images_count)
+                *applicable_found = 0;
+            else
+            {
+                *applicable_found = 1;
+                *ver_a = header->ih_code_version_a;
+                *ver_b = header->ih_code_version_b;
+                *ver_c = header->ih_code_version_c;
+                *ver_d = header->ih_code_version_d;
+            }
+        }
+        else
+        {
+            char    full_path[MAX_PATH_LEN];
+
+            if (pathCompletion(firmware_source, svc_name,
+                               url_specified, img_name,
+                               full_path) < 0)
+            {
+                ERROR_MSG("Failed to complete path '%s'",
+                          firmware_source);
                 rc = -1;
                 goto cleanup;
             }
 
-            curl_easy_setopt(curl_fw, CURLOPT_URL, full_path);
-            curl_easy_setopt(curl_fw, CURLOPT_WRITEFUNCTION, curl_write);
-            curl_easy_setopt(curl_fw, CURLOPT_WRITEDATA, NULL);
-            curl_easy_setopt(curl_fw, CURLOPT_SSL_VERIFYPEER, 0L);
-            curl_easy_setopt(curl_fw, CURLOPT_SSL_VERIFYHOST, 0L);
-
-            free(curl_data);
-            curl_data = NULL;
-            curl_data_len = 0;
-
-            curl_rc = curl_easy_perform(curl_fw);
-            if (curl_rc != CURLE_OK)
+            if (url_specified)
             {
-                if (curl_rc == CURLE_TFTP_NOTFOUND ||
-                    curl_rc == CURLE_REMOTE_FILE_NOT_FOUND)
-                    *applicable_found = 0;
-                else
-                {
-                    ERROR_MSG("curl_easy_perform() failed: %s",
-                              curl_easy_strerror(curl_rc));
-                    rc = -1;
-                }
-                curl_easy_cleanup(curl_fw);
-                goto cleanup;
-            }
-            if (strncasecmp(full_path, HTTP_PROTO,
-                            strlen(HTTP_PROTO)) == 0 ||
-                strncasecmp(full_path, HTTPS_PROTO,
-                            strlen(HTTPS_PROTO)) == 0)
-            {
-                long int       http_code = 0;
+                CURL           *curl_fw = NULL;
+                CURLcode        curl_rc;
 
-                curl_rc = curl_easy_getinfo(curl_fw,
-                                            CURLINFO_RESPONSE_CODE,
-                                            &http_code);
-                if (curl_rc != CURLE_OK)
+                curl_fw = curl_easy_init();
+                if (curl_fw == NULL)
                 {
-                    ERROR_MSG("curl_easy_getinfo(CURLINFO_RESPONSE_CODE)"
-                              " failed: %s",
-                              curl_easy_strerror(curl_rc));
+                    ERROR_MSG_PLAIN("%s(): failed to initialize CURL",
+                                    __FUNCTION__);
                     rc = -1;
-                    curl_easy_cleanup(curl_fw);
                     goto cleanup;
                 }
-                if (http_code >= 400)
+
+                curl_easy_setopt(curl_fw, CURLOPT_URL, full_path);
+                curl_easy_setopt(curl_fw, CURLOPT_WRITEFUNCTION,
+                                 curl_write);
+                curl_easy_setopt(curl_fw, CURLOPT_WRITEDATA, NULL);
+                curl_easy_setopt(curl_fw, CURLOPT_SSL_VERIFYPEER, 0L);
+                curl_easy_setopt(curl_fw, CURLOPT_SSL_VERIFYHOST, 0L);
+
+                free(curl_data);
+                curl_data = NULL;
+                curl_data_len = 0;
+
+                curl_rc = curl_easy_perform(curl_fw);
+                if (curl_rc != CURLE_OK)
                 {
-                    if (http_code == 404)
+                    if (curl_rc == CURLE_TFTP_NOTFOUND ||
+                        curl_rc == CURLE_REMOTE_FILE_NOT_FOUND)
                         *applicable_found = 0;
                     else
                     {
-                        ERROR_MSG("Trying to obtain '%s' resulted in %ld "
-                                  "HTTP status code", full_path, http_code);
+                        ERROR_MSG("curl_easy_perform() failed: %s",
+                                  curl_easy_strerror(curl_rc));
                         rc = -1;
                     }
                     curl_easy_cleanup(curl_fw);
                     goto cleanup;
                 }
-
-            }
-            curl_easy_cleanup(curl_fw);
-
-            if (downloaded_count >= downloaded_max_count)
-            {
-                fw_img_descr    *imgs;
-                unsigned int     new_size;
-
-                new_size = (downloaded_max_count + 1) * 2;
-
-                imgs = realloc(downloaded_fw_imgs,
-                               new_size * sizeof(fw_img_descr));
-                if (imgs == NULL)
+                if (strncasecmp(full_path, HTTP_PROTO,
+                                strlen(HTTP_PROTO)) == 0 ||
+                    strncasecmp(full_path, HTTPS_PROTO,
+                                strlen(HTTPS_PROTO)) == 0)
                 {
-                    ERROR_MSG("Failed to reallocate array of downloaded "
-                              "images");
+                    long int       http_code = 0;
+
+                    curl_rc = curl_easy_getinfo(curl_fw,
+                                                CURLINFO_RESPONSE_CODE,
+                                                &http_code);
+                    if (curl_rc != CURLE_OK)
+                    {
+                        ERROR_MSG(
+                            "curl_easy_getinfo(CURLINFO_RESPONSE_CODE)"
+                            " failed: %s",
+                            curl_easy_strerror(curl_rc));
+                        rc = -1;
+                        curl_easy_cleanup(curl_fw);
+                        goto cleanup;
+                    }
+                    if (http_code >= 400)
+                    {
+                        if (http_code == 404)
+                            *applicable_found = 0;
+                        else
+                        {
+                            ERROR_MSG("Trying to obtain '%s' resulted "
+                                      "in %ld HTTP status code",
+                                      full_path, http_code);
+                            rc = -1;
+                        }
+                        curl_easy_cleanup(curl_fw);
+                        goto cleanup;
+                    }
+
+                }
+                curl_easy_cleanup(curl_fw);
+
+                if (downloaded_count >= downloaded_max_count)
+                {
+                    fw_img_descr    *imgs;
+                    unsigned int     new_size;
+
+                    new_size = (downloaded_max_count + 1) * 2;
+
+                    imgs = realloc(downloaded_fw_imgs,
+                                   new_size * sizeof(fw_img_descr));
+                    if (imgs == NULL)
+                    {
+                        ERROR_MSG("Failed to reallocate array "
+                                  "of downloaded images");
+                        rc = -1;
+                        goto cleanup;
+                    }
+                    downloaded_fw_imgs = imgs;
+                    downloaded_max_count = new_size;
+                }
+
+                downloaded_fw_imgs[downloaded_count].data =
+                                                   calloc(1, curl_data_len);
+                if (downloaded_fw_imgs[downloaded_count].data == NULL)
+                {
+                    ERROR_MSG("Failed to allocate memory for downloaded "
+                              "image");
                     rc = -1;
                     goto cleanup;
                 }
-                downloaded_fw_imgs = imgs;
-                downloaded_max_count = new_size;
+     
+                memcpy(downloaded_fw_imgs[downloaded_count].data,
+                       curl_data, curl_data_len);
+                downloaded_fw_imgs[downloaded_count].size = curl_data_len;
+
+                header = (image_header_t*)
+                                downloaded_fw_imgs[downloaded_count].data;
+                *ver_a = header->ih_code_version_a;
+                *ver_b = header->ih_code_version_b;
+                *ver_c = header->ih_code_version_c;
+                *ver_d = header->ih_code_version_d;
+                *applicable_found = 1;
+
+                downloaded_count++;
             }
-
-            downloaded_fw_imgs[downloaded_count].data =
-                                               calloc(1, curl_data_len);
-            if (downloaded_fw_imgs[downloaded_count].data == NULL)
-            {
-                ERROR_MSG("Failed to allocate memory for downloaded "
-                          "image");
-                rc = -1;
-                goto cleanup;
-            }
- 
-            memcpy(downloaded_fw_imgs[downloaded_count].data,
-                   curl_data, curl_data_len);
-            downloaded_fw_imgs[downloaded_count].size = curl_data_len;
-
-            header = (image_header_t*)
-                            downloaded_fw_imgs[downloaded_count].data;
-            *ver_a = header->ih_code_version_a;
-            *ver_b = header->ih_code_version_b;
-            *ver_c = header->ih_code_version_c;
-            *ver_d = header->ih_code_version_d;
-            *applicable_found = 1;
-
-            downloaded_count++;
-        }
-        else
-        {
-            FILE *f = fopen(full_path, "r");
-
-            if (f == NULL)
-                *applicable_found = 0;
             else
             {
-                image_header_t header_aux;
+                FILE *f = fopen(full_path, "r");
 
-                memset(&header_aux, 0, sizeof(header_aux));
-
-                if (fread(&header_aux, 1, sizeof(header_aux), f) !=
-                    sizeof(header_aux))
+                if (f == NULL)
+                    *applicable_found = 0;
+                else
                 {
-                    ERROR_MSG("Failed to read image header");
-                    rc = -1;
-                    fclose(f);
-                    goto cleanup;
-                }
-                fclose(f);
+                    image_header_t header_aux;
 
-                *applicable_found = 1;
-                *ver_a = header_aux.ih_code_version_a;
-                *ver_b = header_aux.ih_code_version_b;
-                *ver_c = header_aux.ih_code_version_c;
-                *ver_d = header_aux.ih_code_version_d;
+                    memset(&header_aux, 0, sizeof(header_aux));
+
+                    if (fread(&header_aux, 1, sizeof(header_aux), f) !=
+                        sizeof(header_aux))
+                    {
+                        ERROR_MSG("Failed to read image header");
+                        rc = -1;
+                        fclose(f);
+                        goto cleanup;
+                    }
+                    fclose(f);
+
+                    *applicable_found = 1;
+                    *ver_a = header_aux.ih_code_version_a;
+                    *ver_b = header_aux.ih_code_version_b;
+                    *ver_c = header_aux.ih_code_version_c;
+                    *ver_d = header_aux.ih_code_version_d;
+                }
             }
         }
     }
@@ -3447,12 +3509,9 @@ main(int argc, const char *argv[])
         update_bootrom = 1;
     }
 
-    if (fw_url != NULL &&
-        strncasecmp(fw_url, FILE_PROTO, strlen(FILE_PROTO)) == 0)
-        no_url_downloads = 1;
-
     setbuf(stderr, NULL);
     setbuf(stdout, NULL);
+
     curl_global_init(CURL_GLOBAL_ALL);
 
     curl = curl_easy_init();
