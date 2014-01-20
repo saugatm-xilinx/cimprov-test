@@ -2507,6 +2507,26 @@ fail:
             }
         }
 
+        // Disable SSL certificates checking
+        if ((rc_curl = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER,
+                                        0L)) != CURLE_OK)
+        {
+            PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_SSL_VERIFYPEER) "
+                             "failed: %s",
+                             curl_easy_strerror(rc_curl));
+            rc = SWElement::Install_Error;
+            goto curl_fail;
+        }
+        if ((rc_curl = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST,
+                                        0L)) != CURLE_OK)
+        {
+            PROVIDER_LOG_ERR("curl_easy_setopt(CURLOPT_SSL_VERIFYHOST) "
+                             "failed: %s",
+                             curl_easy_strerror(rc_curl));
+            rc = SWElement::Install_Error;
+            goto curl_fail;
+        }
+
         if ((rc_curl = curl_easy_perform(curl)) != CURLE_OK)
         {
             PROVIDER_LOG_ERR("curl_easy_perform() failed: %s",
