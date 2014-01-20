@@ -2153,16 +2153,31 @@ pathCompletion(const char *fw_source, const char *svc_name,
     if (strstr(fw_source, ".dat") !=
         fw_source + (strlen(fw_source) - 4))
     {
+        char *add_delimeter = "";
+
+#ifdef _WIN32
+        if (!url_specified && strlen(fw_source) > 0 &&
+            fw_source[strlen(fw_source) - 1] != '\\')
+            add_delimeter = "\\";
+        else if (url_specified && strlen(fw_source) > 0 &&
+                 fw_source[strlen(fw_source) - 1] != '/')
+            add_delimeter = "/";
+#else
+        if (!strlen(fw_source) > 0 &&
+            fw_source[strlen(fw_source) - 1] != '/')
+            add_delimeter = "/";
+#endif
+
 #ifdef _WIN32
         if (!url_specified)
-            snprintf(full_path, MAX_PATH_LEN, "%s\\image\\%s\\%s",
-                     fw_source, subdir, img_def_name);
+            snprintf(full_path, MAX_PATH_LEN, "%s%simage\\%s\\%s",
+                     fw_source, add_delimeter, subdir, img_def_name);
         else
-            snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
-                     fw_source, subdir, img_def_name);
+            snprintf(full_path, MAX_PATH_LEN, "%s%simage/%s/%s",
+                     fw_source, add_delimeter, subdir, img_def_name);
 #else
-        snprintf(full_path, MAX_PATH_LEN, "%s/image/%s/%s",
-                 fw_source, subdir, img_def_name);
+        snprintf(full_path, MAX_PATH_LEN, "%s%simage/%s/%s",
+                 fw_source, add_delimeter, subdir, img_def_name);
 #endif
     }
 
@@ -3363,7 +3378,7 @@ findAvailableUpdate(CURL *curl, const char *namespace,
             }
             else
             {
-                FILE *f = fopen(full_path, "r");
+                FILE *f = fopen(full_path, "rb");
 
                 if (f == NULL)
                     *applicable_found = 0;
