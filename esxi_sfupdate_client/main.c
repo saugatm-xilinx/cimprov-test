@@ -254,12 +254,12 @@ parseCmdLine(int argc, const char *argv[])
 
         { "controller", '\0', POPT_ARG_NONE, NULL,
           OPT_CONTROLLER,
-          "Process controller firmware",
+          "Process Controller firmware",
           NULL },
 
         { "bootrom", '\0', POPT_ARG_NONE, NULL,
           OPT_BOOTROM,
-          "Process bootrom firmware",
+          "Process BootROM firmware",
           NULL },
 
         { "yes", 'y', POPT_ARG_NONE, NULL,
@@ -3837,7 +3837,7 @@ main(int argc, const char *argv[])
 
                 printf("\nDo you want to update %s firmware on %s? [yes/no]",
                        update_controller && update_bootrom ?
-                       "controller and BootROM" :
+                       "Controller and BootROM" :
                             (update_controller ? "Controller" : "BootROM"),
                        interface_name == NULL ? "all NICs" : interface_name);
                 fgets(yes_str, sizeof(yes_str), stdin);
