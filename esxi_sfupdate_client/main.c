@@ -46,6 +46,9 @@ static unsigned int  downloaded_max_count = 0;
 /* Maximum version string length */
 #define MAX_VER_LEN 256
 
+/* Maximum image name length */
+#define MAX_IMG_NAME_LEN 256
+
 #define HTTP_PROTO "http://"
 #define HTTPS_PROTO "https://"
 #define FILE_PROTO "file://"
@@ -2132,6 +2135,19 @@ call_get_local_fw_image_version(CURL *curl, const char *namespace,
                              response);
 }
 
+const char *
+getFwSubdirName(const char *svc_name)
+{
+    const char *subdir = NULL;
+
+    if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
+        subdir = "bootrom";
+    else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
+        subdir = "mcfw";
+
+    return subdir;
+}
+
 static int
 pathCompletion(const char *fw_source, const char *svc_name,
                int url_specified,
@@ -2140,14 +2156,11 @@ pathCompletion(const char *fw_source, const char *svc_name,
     if (strstr(fw_source, ".dat") !=
         fw_source + (strlen(fw_source) - 4))
     {
-        char *add_delimeter = "";
-        char *subdir = NULL;
+        const char *add_delimeter = "";
+        const char *subdir = NULL;
 
-        if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
-            subdir = "bootrom";
-        else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
-            subdir = "mcfw";
-        else
+        subdir = getFwSubdirName(svc_name);
+        if (subdir == NULL)
         {
             ERROR_MSG("'%s' service name is not supported",
                       svc_name);
@@ -3113,18 +3126,27 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                     int url_specified,
                     int *applicable_found,
                     int *ver_a, int *ver_b,
-                    int *ver_c, int *ver_d)
+                    int *ver_c, int *ver_d,
+                    char *req_img_name)
 {
     response_descr  call_rsp;
+    response_descr  call_rsp_aux;
     int             rc_rsp = 0;
     int             rc = 0;
 
     char            *svc_name = NULL;
+    char            *img_name = NULL;
+    const char      *subdir = NULL;
+    char            *img_type_str = NULL;
+    char            *img_subtype_str = NULL;
+    unsigned int     img_type = 0;
+    unsigned int     img_subtype = 0;
 
     image_header_t *header = NULL;
     int             i;
 
     memset(&call_rsp, 0, sizeof(call_rsp));
+    memset(&call_rsp_aux, 0, sizeof(call_rsp_aux));
 
     *applicable_found = 0;
 
@@ -3136,6 +3158,44 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                   "of SF_SoftwareInstallationService instance");
         return -1;
     }
+
+    CHECK_RESPONSE_EXT(
+        rc_rsp,
+        call_get_required_fw_image_name(curl, namespace,
+                                        svc_inst, nic_inst,
+                                        &call_rsp),
+        call_rsp,
+        "Failed to get required firmware image name");
+    if (rc_rsp < 0)
+    {
+        rc = -1;
+        goto cleanup;
+    }
+
+    img_name = get_named_value(call_rsp.out_params_list,
+                               "Name");
+    img_type_str = get_named_value(call_rsp.out_params_list,
+                                   "Type");
+    img_subtype_str = get_named_value(call_rsp.out_params_list,
+                                      "Subtype");
+
+    if (img_name == NULL || img_type_str == NULL ||
+        img_subtype_str == NULL)
+    {
+        ERROR_MSG("Failed to get information about required "
+                  "firmware image");
+        rc = -1;
+        goto cleanup;
+    }
+
+    img_type = strtol(img_type_str, NULL, 10);
+    img_subtype = strtol(img_subtype_str, NULL, 10);
+
+    subdir = getFwSubdirName(svc_name);
+    if (subdir != NULL && strlen(img_name) != 0 &&
+        req_img_name != NULL)
+        snprintf(req_img_name, MAX_IMG_NAME_LEN,
+                 "%s/%s", subdir, img_name);
 
     if (firmware_source != NULL &&
         url_specified &&
@@ -3150,8 +3210,8 @@ findAvailableUpdate(CURL *curl, const char *namespace,
             call_get_local_fw_image_version(curl, namespace,
                                             svc_inst, nic_inst,
                                             firmware_source,
-                                            &call_rsp),
-            call_rsp,
+                                            &call_rsp_aux),
+            call_rsp_aux,
             "Failed to get local firmware image version");
         if (rc_rsp < 0)
         {
@@ -3159,9 +3219,9 @@ findAvailableUpdate(CURL *curl, const char *namespace,
             goto cleanup;
         }
    
-        applicable = get_named_value(call_rsp.out_params_list,
+        applicable = get_named_value(call_rsp_aux.out_params_list,
                                      "ApplicableFound");
-        version = get_named_value(call_rsp.out_params_list,
+        version = get_named_value(call_rsp_aux.out_params_list,
                                   "Version");
         if (applicable == NULL || version == NULL)
         {
@@ -3182,44 +3242,6 @@ findAvailableUpdate(CURL *curl, const char *namespace,
     }
     else
     {
-        char            *img_name = NULL;
-        char            *img_type_str = NULL;
-        char            *img_subtype_str = NULL;
-        unsigned int     img_type = 0;
-        unsigned int     img_subtype = 0;
-
-        CHECK_RESPONSE_EXT(
-            rc_rsp,
-            call_get_required_fw_image_name(curl, namespace,
-                                            svc_inst, nic_inst,
-                                            &call_rsp),
-            call_rsp,
-            "Failed to get required firmware image name");
-        if (rc_rsp < 0)
-        {
-            rc = -1;
-            goto cleanup;
-        }
-
-        img_name = get_named_value(call_rsp.out_params_list,
-                                   "Name");
-        img_type_str = get_named_value(call_rsp.out_params_list,
-                                       "Type");
-        img_subtype_str = get_named_value(call_rsp.out_params_list,
-                                          "Subtype");
-
-        if (img_name == NULL || img_type_str == NULL ||
-            img_subtype_str == NULL)
-        {
-            ERROR_MSG("Failed to get information about required "
-                      "firmware image");
-            rc = -1;
-            goto cleanup;
-        }
-
-        img_type = strtol(img_type_str, NULL, 10);
-        img_subtype = strtol(img_subtype_str, NULL, 10);
-
         if (firmware_source == NULL)
         {
             for (i = 0; i < fw_images_count; i++)
@@ -3428,6 +3450,7 @@ findAvailableUpdate(CURL *curl, const char *namespace,
 
 cleanup:
 
+    clear_response(&call_rsp_aux);
     clear_response(&call_rsp);
     free(svc_name);
     return rc;
@@ -3461,11 +3484,13 @@ main(int argc, const char *argv[])
     int controller_ver_b = 0;
     int controller_ver_c = 0;
     int controller_ver_d = 0;
+    char controller_exp_img_name[MAX_IMG_NAME_LEN];
     int bootrom_applicable_found = 0;
     int bootrom_ver_a = 0;
     int bootrom_ver_b = 0;
     int bootrom_ver_c = 0;
     int bootrom_ver_d = 0;
+    char bootrom_exp_img_name[MAX_IMG_NAME_LEN];
     int ver_check;
 
     char nic_tag_prev[MAX_NIC_TAG_LEN] = "";
@@ -3687,6 +3712,7 @@ main(int argc, const char *argv[])
             if (strcmp(nic_tag, nic_tag_prev) != 0 &&
                 !(fw_url != NULL && no_url_downloads))
             {
+                controller_exp_img_name[0] = '\0';
                 findAvailableUpdate(curl, cim_namespace,
                                     svc_mcfw_inst,
                                     nic_inst,
@@ -3696,8 +3722,10 @@ main(int argc, const char *argv[])
                                     &controller_ver_a,
                                     &controller_ver_b,
                                     &controller_ver_c,
-                                    &controller_ver_d);
+                                    &controller_ver_d,
+                                    controller_exp_img_name);
 
+                bootrom_exp_img_name[0] = '\0';
                 findAvailableUpdate(curl, cim_namespace,
                                     svc_bootrom_inst,
                                     nic_inst,
@@ -3707,7 +3735,8 @@ main(int argc, const char *argv[])
                                     &bootrom_ver_a,
                                     &bootrom_ver_b,
                                     &bootrom_ver_c,
-                                    &bootrom_ver_d);
+                                    &bootrom_ver_d,
+                                    bootrom_exp_img_name);
             }
 
             snprintf(nic_tag_prev, MAX_NIC_TAG_LEN, "%s",
@@ -3768,8 +3797,12 @@ main(int argc, const char *argv[])
                                 ver_check == 0 && !force_update?
                                    " (won't be applied without --force)" :
                                    "");
-                        else
+                        else if (strlen(controller_exp_img_name) == 0)
                             printf("    No update available\n");
+                        else
+                            printf("    No update available "
+                                   "(you may look for %s)\n",
+                                   controller_exp_img_name);
 
                         if (controller_applicable_found &&
                             (ver_check == 1 || force_update))
@@ -3800,8 +3833,12 @@ main(int argc, const char *argv[])
                                 ver_check == 0 && !force_update?
                                    " (won't be applied without --force)" :
                                    "");
-                        else
+                        else if (strlen(bootrom_exp_img_name) == 0)
                             printf("    No update available\n");
+                        else
+                            printf("    No update available "
+                                   "(you may look for %s)\n",
+                                   bootrom_exp_img_name);
 
                         if (bootrom_applicable_found &&
                             (ver_check == 1 || force_update))
