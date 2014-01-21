@@ -3369,13 +3369,24 @@ findAvailableUpdate(CURL *curl, const char *namespace,
 
                 header = (image_header_t*)
                                 downloaded_fw_imgs[downloaded_count].data;
-                *ver_a = header->ih_code_version_a;
-                *ver_b = header->ih_code_version_b;
-                *ver_c = header->ih_code_version_c;
-                *ver_d = header->ih_code_version_d;
-                *applicable_found = 1;
 
-                downloaded_count++;
+                if (header->ih_type != img_type ||
+                    header->ih_subtype != img_subtype)
+                {
+                    *applicable_found = 0;
+                    free(downloaded_fw_imgs[downloaded_count].data);
+                    downloaded_fw_imgs[downloaded_count].size = 0;
+                }
+                else
+                {
+                    *ver_a = header->ih_code_version_a;
+                    *ver_b = header->ih_code_version_b;
+                    *ver_c = header->ih_code_version_c;
+                    *ver_d = header->ih_code_version_d;
+                    *applicable_found = 1;
+
+                    downloaded_count++;
+                }
             }
             else
             {
@@ -3399,11 +3410,17 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                     }
                     fclose(f);
 
-                    *applicable_found = 1;
-                    *ver_a = header_aux.ih_code_version_a;
-                    *ver_b = header_aux.ih_code_version_b;
-                    *ver_c = header_aux.ih_code_version_c;
-                    *ver_d = header_aux.ih_code_version_d;
+                    if (header_aux.ih_type != img_type ||
+                        header_aux.ih_subtype != img_subtype)
+                        *applicable_found = 0;
+                    else
+                    {
+                        *applicable_found = 1;
+                        *ver_a = header_aux.ih_code_version_a;
+                        *ver_b = header_aux.ih_code_version_b;
+                        *ver_c = header_aux.ih_code_version_c;
+                        *ver_d = header_aux.ih_code_version_d;
+                    }
                 }
             }
         }
