@@ -1357,6 +1357,14 @@ void free_named_value_list(named_value *head)
     }
 }
 
+/**
+ * Get named value by its name from the list of named values.
+ *
+ * @param list      List of named values
+ * @param name      Name
+ *
+ * @return Value of interest or NULL if not found
+ */
 char *get_named_value(named_value *list, const char *name)
 {
     named_value *p;
@@ -2135,6 +2143,14 @@ call_get_local_fw_image_version(CURL *curl, const char *namespace,
                              response);
 }
 
+/**
+ * Get default firmware subdir.
+ *
+ * @param svc_name      Name of SF_SoftwareInstallationService class
+ *                      instance
+ *
+ * @return Subdir's name on success or NULL on error
+ */
 const char *
 getFwSubdirName(const char *svc_name)
 {
@@ -2148,6 +2164,20 @@ getFwSubdirName(const char *svc_name)
     return subdir;
 }
 
+/**
+ * Complete firmare image path if it is a path to directory rather
+ * than to concrete image.
+ *
+ * @param fw_source           Path to be completed
+ * @param svc_name            Name of SF_SoftwareInstallationService
+ *                            class instance
+ * @param url_specified       Whether a given path is URL or nor
+ * @param img_def_name        Default firmware image name
+ * @param full_path     [out] Path to firmware image (completed if
+ *                            it was necessary)
+ *
+ * @return 0 on success, -1 on failure
+ */
 static int
 pathCompletion(const char *fw_source, const char *svc_name,
                int url_specified,
