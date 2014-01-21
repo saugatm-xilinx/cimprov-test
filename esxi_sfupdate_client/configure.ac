@@ -40,14 +40,19 @@ MY_LDFLAGS=
 WINDOWS=
 if test x$(echo "$host" | grep ".*-mingw.*") != x ; then
     MY_LDFLAGS="-L./libs/windows/$host"
+    MY_CPPFLAGS=
     WINDOWS=1
-elif test x"$(file /bin/bash | grep 'x86-64')" != x ; then
+else
+    MY_CPPFLAGS=-I./libs_includes/linux/
+if test x"$(file /bin/bash | grep 'x86-64')" != x ; then
     MY_LDFLAGS="-L./libs/linux/64"
 else
     MY_LDFLAGS="-L./libs/linux/32"
 fi
+fi
 
 AC_SUBST([MY_LDFLAGS])
+AC_SUBST([MY_CPPFLAGS])
 AC_SUBST([WINDOWS])
 
 AC_CHECK_HEADER([ncurses/curses.h],[NCURSES_CPPFLAGS=-DNCURSES_CURSES_H],[])

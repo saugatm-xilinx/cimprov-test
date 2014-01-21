@@ -11,7 +11,7 @@ else
 endif
 
 sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c
-	@CC@ -g $^ -o $@ @NCURSES_CPPFLAGS@ @MY_LDFLAGS@ \
+	@CC@ -g $^ -o $@ @MY_CPPFLAGS@ @NCURSES_CPPFLAGS@ @MY_LDFLAGS@ \
 	    @XML2_CFLAGS@ $(MY_CFLAGS) $(MY_LIBS)
 
 .PHONY : fw_images.c
