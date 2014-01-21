@@ -2137,23 +2137,22 @@ pathCompletion(const char *fw_source, const char *svc_name,
                int url_specified,
                const char *img_def_name, char *full_path)
 {
-    char *subdir = NULL;
-
-    if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
-        subdir = "bootrom";
-    else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
-        subdir = "mcfw";
-    else
-    {
-        ERROR_MSG("'%s' service name is not supported",
-                  svc_name);
-        return -1;
-    }
-
     if (strstr(fw_source, ".dat") !=
         fw_source + (strlen(fw_source) - 4))
     {
         char *add_delimeter = "";
+        char *subdir = NULL;
+
+        if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
+            subdir = "bootrom";
+        else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
+            subdir = "mcfw";
+        else
+        {
+            ERROR_MSG("'%s' service name is not supported",
+                      svc_name);
+            return -1;
+        }
 
 #ifdef _WIN32
         if (!url_specified && strlen(fw_source) > 0 &&
@@ -2180,6 +2179,8 @@ pathCompletion(const char *fw_source, const char *svc_name,
                  fw_source, add_delimeter, subdir, img_def_name);
 #endif
     }
+    else
+        snprintf(full_path, MAX_PATH_LEN, "%s", fw_source);
 
     return 0;
 }
