@@ -16,7 +16,7 @@ sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c
 
 .PHONY : fw_images.c
 fw_images.c :
-	./include_fw_imgs.pl @FIRMWARE_IMG_PATHS@
+	./include_fw_imgs.sh @FIRMWARE_IMG_PATHS@
 
 clean:
 	rm -rf *.o sfupdate_esxi$(FILE_SUFFIX)
