@@ -20,3 +20,16 @@ fw_images.c :
 
 clean:
 	rm -rf *.o sfupdate_esxi$(FILE_SUFFIX)
+
+distclean : clean
+	rm -rf esxi_sfupdate-1.0.tar.gz Makefile config.h fw_images.c config.log config.status
+
+.PHONY : dist
+dist: esxi_sfupdate-1.0.tar.gz
+
+esxi_sfupdate-1.0.tar.gz :
+	rm -rf .esxi_sfupdate-1.0 esxi_sfupdate-1.0
+	mkdir -p .esxi_sfupdate-1.0
+	cp -a * .esxi_sfupdate-1.0
+	mv .esxi_sfupdate-1.0 esxi_sfupdate-1.0
+	tar czf $@  esxi_sfupdate-1.0

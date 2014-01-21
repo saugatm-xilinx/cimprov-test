@@ -18,7 +18,7 @@
 #include <libxml/tree.h>
 #include <libxml/xmlstring.h>
 
-#include "../libprovider/sf_base64.h"
+#include "sf_base64.h"
 
 #include <assert.h>
 
