@@ -381,11 +381,18 @@ parseCmdLine(int argc, const char *argv[])
     }
     if ((s = (char *)poptGetArg(optCon)) != NULL)
     {
-        ERROR_MSG("Unexpected arguments in command line: %s", s);
+        ERROR_MSG_PLAIN("Unexpected arguments in command line: %s", s);
         rc = -1;
         goto cleanup;
     }
 
+    if (a == NULL || strlen(a) == 0)
+    {
+        ERROR_MSG_PLAIN("Address of CIM server was not specified "
+                        "(--cim-address=?)");
+        rc = -1;
+        goto cleanup;
+    }
     if (p == NULL)
     {
         initscr();
