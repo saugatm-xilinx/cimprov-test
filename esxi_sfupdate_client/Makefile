@@ -11,15 +11,16 @@ ifneq (,$(findstring mingw,$(PLATFORM)))
     CPP=$(PLATFORM)-cpp
     MY_CPPFLAGS=-I./libs_includes/windows/$(PLATFORM)/
 
-    TMPFILE:=$(shell mktemp)
-    RESULT:=$(shell echo "\#include <stdio.h>;" >$(TMPFILE); \
-                    echo "\#include <stdlib.h>;" >>$(TMPFILE); \
-                    echo "int main() { " >>$(TMPFILE); \
+    TMPIN:=$(shell mktemp --suffix=.c)
+    TMPOUT:=$(shell mktemp)
+    RESULT:=$(shell echo "\#include <stdio.h>" >$(TMPIN); \
+                    echo "\#include <stdlib.h>" >>$(TMPIN); \
+                    echo "int main() { " >>$(TMPIN); \
                     echo "void *p = (void *)__ms_vsnprintf; return 0; }" \
-                    >>$(TMPFILE); \
-                    $(CC) $(TMPFILE) -o /dev/null 2>/dev/null; \
+                    >>$(TMPIN); \
+                    $(CC) $(TMPIN) -o $(TMPOUT) 2>/dev/null; \
                     echo $$?; \
-                    rm $(TMPFILE))
+                    rm $(TMPIN); rm $(TMPOUT))
 
     ifneq (0,$(RESULT))
         VSNPRINTF_FIX=vsnprintf_fix.o
