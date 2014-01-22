@@ -58,7 +58,8 @@ fw_images.c :
 
 DISTDIR = esxi_sfupdate-1.0
 
-DISTFILES = main.c Makefile README esxi_sfupdate_client.spec \
+DISTFILES = main.c vsnprintf_fix.c Makefile README \
+	    		esxi_sfupdate_client.spec \
 			fw_images.h include_fw_imgs.sh sf_base64.h \
 			libs libs_includes
 
