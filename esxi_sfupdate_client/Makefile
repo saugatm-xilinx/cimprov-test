@@ -21,7 +21,6 @@ ifneq (,$(findstring mingw,$(PLATFORM)))
                     echo $$?; \
                     rm $(TMPFILE))
 
-
     ifneq (0,$(RESULT))
         VSNPRINTF_FIX=vsnprintf_fix.o
     endif
