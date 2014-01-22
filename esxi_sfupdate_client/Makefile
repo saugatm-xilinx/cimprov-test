@@ -51,6 +51,7 @@ endif
 sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c $(VSNPRINTF_FIX)
 	$(CC) -g main.c fw_images.c -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
 	      $(XML2_CFLAGS) $(MY_LIBS) $(VSNPRINTF_FIX)
+	rm $(VSNPRINTF_FIX)
 
 .PHONY : fw_images.c
 fw_images.c :
