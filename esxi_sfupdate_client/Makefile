@@ -1,35 +1,18 @@
 ifneq (,$(findstring mingw,$(PLATFORM)))
     CC=$(PLATFORM)-gcc
-else
-    CC=gcc
-endif
-
-SEARCH_PATH:=$(shell $(CC) --print-search-dirs | grep "programs: =" | \
-                     sed "s/programs: =//" | sed "s/:/ /g")
-SEARCH_PATH:="$(SEARCH_PATH) $(shell echo $$PATH | sed "s/:/ /g")"
-XML2_CONFIG:=$(shell for d in "$(SEARCH_PATH)" ; do \
-                       if test -f $$d/xml2-config ; then \
-                         echo $$d/xml2-config ; \
-                         break ; \
-                       fi ; \
-                     done)
-
-ifeq (,$(XML2_CONFIG))
-    $(error Failed to find xml2-config)
-endif
-
-XML2_LIBS:=$(shell $(XML2_CONFIG) --libs)
-XML2_CFLAGS:=$(shell $(XML2_CONFIG) --cflags)
-
-ifneq (,$(findstring mingw,$(PLATFORM)))
+    XML2_LIBS=-lxml2 -lz -liconv -lws2_32
+    XML2_CFLAGS=
     MY_LIBS=-lcurl -lz -lpopt -lcrypto -lgdi32 \
             -lintl -lcrypt32 -lws2_32 -lncurses  \
             $(XML2_LIBS) -llzma
     MY_CFLAGS=-DCURL_STATICLIB -L./libs/windows/$(PLATFORM)/
     FILE_SUFFIX=.exe
     CPP=$(PLATFORM)-cpp
-    MY_CPPFLAGS=
+    MY_CPPFLAGS=-I./libs_includes/windows/$(PLATFORM)/
 else
+    CC=gcc
+    XML2_LIBS=-lxml2
+    XML2_CFLAGS=
     MY_LIBS= -Wl,-Bstatic -lpopt -lncurses -ltinfo $(XML2_LIBS) -llzma \
              -lcurl -lssl -lcrypto -lz -lm -lrt -Wl,-Bdynamic -ldl
     ifeq (,$(shell file /bin/bash | grep 'x86-64'))
