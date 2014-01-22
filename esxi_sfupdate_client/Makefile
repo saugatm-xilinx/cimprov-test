@@ -1,3 +1,4 @@
+VSNPRINTF_FIX=
 ifneq (,$(findstring mingw,$(PLATFORM)))
     CC=$(PLATFORM)-gcc
     XML2_LIBS=-lxml2 -lz -liconv -lws2_32
@@ -9,6 +10,21 @@ ifneq (,$(findstring mingw,$(PLATFORM)))
     FILE_SUFFIX=.exe
     CPP=$(PLATFORM)-cpp
     MY_CPPFLAGS=-I./libs_includes/windows/$(PLATFORM)/
+
+    TMPFILE:=$(shell mktemp)
+    RESULT:=$(shell echo "\#include <stdio.h>;" >$(TMPFILE); \
+                    echo "\#include <stdlib.h>;" >>$(TMPFILE); \
+                    echo "int main() { " >>$(TMPFILE); \
+                    echo "void *p = (void *)__ms_vsnprintf; return 0; }" \
+                    >>$(TMPFILE); \
+                    $(CC) $(TMPFILE) -o /dev/null 2>/dev/null; \
+                    echo $$?; \
+                    rm $(TMPFILE))
+
+
+    ifneq (0,$(RESULT))
+        VSNPRINTF_FIX=vsnprintf_fix.o
+    endif
 else
     CC=gcc
     XML2_LIBS=-lxml2
@@ -32,9 +48,9 @@ ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
     MY_CPPFLAGS:=$(MY_CPPFLAGS) -DNCURSES_CURSES_H
 endif
 
-sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c
-	$(CC) -g $^ -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
-	      $(XML2_CFLAGS) $(MY_LIBS)
+sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c $(VSNPRINTF_FIX)
+	$(CC) -g main.c fw_images.c -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
+	      $(XML2_CFLAGS) $(MY_LIBS) $(VSNPRINTF_FIX)
 
 .PHONY : fw_images.c
 fw_images.c :
