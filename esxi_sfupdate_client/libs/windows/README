@@ -9,3 +9,5 @@ passed to configure:
 --disable-shared --with-winssl -without-ssl
 
 together with --host= depending on mingw version used.
+
+Other libraries were taken from packets built with MXE (http://mxe.cc).

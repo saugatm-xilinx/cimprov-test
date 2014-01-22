@@ -1,0 +1,6 @@
+For Linux, all headers except that of curl were copied from
+Debian 7 (wheezy). Headers of libcurl were taken from libcurl
+after building it (see libs/linux/README for details).
+
+For Windows, all headers were taken from packages build
+by MXE (http://mxe.cc).
