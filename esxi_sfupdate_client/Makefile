@@ -34,12 +34,13 @@ else
              -lcurl -lssl -lcrypto -lz -lm -lrt -Wl,-Bdynamic -ldl
     ifeq (,$(shell file /bin/bash | grep 'x86-64'))
         MY_CFLAGS=-L./libs/linux/32/
+        MY_CPPFLAGS=-I./libs_includes/linux/32/
     else
         MY_CFLAGS=-L./libs/linux/64/
+        MY_CPPFLAGS=-I./libs_includes/linux/64/
     endif
     FILE_SUFFIX=
     CPP=cpp
-    MY_CPPFLAGS=-I./libs_includes/linux/
 endif
 MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC
 
