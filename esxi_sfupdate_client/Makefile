@@ -57,5 +57,22 @@ sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c
 fw_images.c :
 	./include_fw_imgs.sh $(FIRMWARE_REPO)
 
+
+DISTDIR = esxi_sfupdate-1.0
+
+DISTFILES = main.c Makefile README esxi_sfupdate_client.spec \
+			fw_images.h include_fw_imgs.sh sf_base64.h \
+			libs libs_includes
+
+.PHONY : clean
 clean:
-	rm -rf *.o sfupdate_esxi$(FILE_SUFFIX)
+	rm -rf *.o sfupdate_esxi$(FILE_SUFFIX) $(DISTDIR) $(DISTDIR).tar.gz
+
+.PHONY : dist
+dist: $(DISTDIR).tar.gz
+
+$(DISTDIR).tar.gz : $(DISTFILES)
+	rm -rf $(DISTDIR)
+	mkdir -p $(DISTDIR)
+	cp -a $^ $(DISTDIR)
+	tar czf $@ $(DISTDIR)
