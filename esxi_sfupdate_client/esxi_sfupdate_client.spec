@@ -15,7 +15,6 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %setup -q -n esxi_sfupdate-1.0
 
 %build
-./configure
 make %{?_smp_mflags}
 
 %install
