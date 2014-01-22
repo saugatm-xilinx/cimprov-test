@@ -2827,7 +2827,7 @@ getInstServices(CURL *curl, const char *namespace,
 {
     response_descr  svcs_rsp;
     xmlCimInstance *svc_inst = NULL;
-    int             rc;
+    int             rc = 0;
 
     memset(&svcs_rsp, 0, sizeof(svcs_rsp));
 
