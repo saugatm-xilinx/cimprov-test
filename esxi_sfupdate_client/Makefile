@@ -28,7 +28,7 @@ endif
 MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC
 
 ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
-                $(CPP) 1>/dev/null 2>/dev/null; echo $$?))
+                $(CPP) $(MY_CPPFLAGS) 1>/dev/null 2>/dev/null; echo $$?))
     MY_CPPFLAGS:=$(MY_CPPFLAGS) -DNCURSES_CURSES_H
 endif
 
