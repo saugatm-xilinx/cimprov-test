@@ -420,7 +420,10 @@ cleanup:
     {
         cim_address = a;
         use_https = https;
-        user = u;
+        if (u == NULL || strlen(u) == 0)
+            user = strdup("root");
+        else
+            user = u;
         password = p;
         if (ns != NULL)
         {
