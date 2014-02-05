@@ -61,11 +61,13 @@ def checkEnum(conn, checkKeys=False):
         # Check uniqness of instances
         uniqueList = []
         for inst in instNameList:
-            if inst.path not in uniqueList:
-                uniqueList.append(inst.path)
+            instStr = str(inst)
+            logger.info("%s", instStr)
+            if instStr not in uniqueList:
+                uniqueList.append(instStr)
             else:
                 logger.error("Found instances with duplicated object "
-                             "paths %(path)s", {'inst': inst.path})
+                             "paths %(path)s", {'inst': instStr})
                 passed = False
         
         #  Check that keys are non-empty if needed
@@ -619,21 +621,26 @@ def checkDisabledIntf(conn):
 
     for inst in instList:
         deviceId = WBEMConn.getPropVal(inst, 'DeviceID')
-        guid = conn.DeviceIdToGUID(deviceId)
-        if guid:
-            logger.info("GUID: %(guid)s", {'guid': guid})
+        if deviceId:
+            logger.info("DeviceId: %(id)s", {'id': deviceId})
         else:
-            logger.error("Failed to get GUID from device ID")
-            return False
-
-        # Disable interface
-        try:
-            conn.SetIntfState(guid, False)
-        except Exception, e:
-            logger.error("Failed to set interface state:\n%(error)s",
-                         {'error': e})
+            logger.error("Failed to get device ID")
             passed = False
             continue
+       
+        # Disable interface
+        rc = changeState(conn, inst.path,
+                         WBEMConn.uint16(RequestState.DISABLED))
+        if (rc != WBEMConn.RC_OK and rc != WBEMConn.RC_NO_CHANGE):
+            # If failed to change via RequestStateChange method,
+            # try to change it via internal method (if supported).
+            try:
+                conn.SetIntfState(deviceId, False)
+            except Exception, e:
+                logger.error("Failed to set interface state:\n%(error)s",
+                             {'error': e})
+                passed = False
+                continue
         
         try:
             instListNew = conn.EnumerateInstances('SF_EthernetPort')
@@ -649,14 +656,19 @@ def checkDisabledIntf(conn):
                               'after': len(instListNew)})
          
         # Enable interface
-        try:
-            conn.SetIntfState(guid, True)
-        except Exception, e:
-            logger.error("Failed to set interface state:\n%(error)s",
-                         {'error': e})
-            passed = False
-            continue
-    
+        rc = changeState(conn, inst.path,
+                         WBEMConn.uint16(RequestState.ENABLED))
+        if (rc != WBEMConn.RC_OK and rc != WBEMConn.RC_NO_CHANGE):
+            # If failed to change via RequestStateChange method,
+            # try to change it via internal method (if supported).
+            try:
+                conn.SetIntfState(deviceId, True)
+            except Exception, e:
+                logger.error("Failed to set interface state:\n%(error)s",
+                             {'error': e})
+                passed = False
+                continue
+     
     return passed
 
    

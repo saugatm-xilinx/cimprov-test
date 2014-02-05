@@ -2,7 +2,6 @@
 #
 # Disabled interface test
 #
-# fixme: support for Linux
 
 from test_lib import checkDisabledIntf
 from defs import *
@@ -22,8 +21,7 @@ def disabledIntfMain(conn, params):
     return checkDisabledIntf(conn)
 
 def disabledIntfIter(self, params={}):
-    if getTesterCfg().isWMI:
-        self.testRun(params)
+    self.testRun(params)
 
 Test(name='disabled_intf',
      desc=testDesc,

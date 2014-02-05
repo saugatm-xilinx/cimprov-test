@@ -98,7 +98,11 @@ class WBEMConnection(object):
         else:
             return None
 
-    def SetIntfState(self, guid, state):
+    def SetIntfState(self, deviceId, state):
+        guid = self.DeviceIdToGUID(deviceId)
+        if not guid:
+            raise Exception("failed to get GUID from device ID")
+        
         cmd = ['wmic.exe', 'path', 'Win32_NetworkAdapter', 'WHERE',
                "GUID='%s'" % guid, 'call',
                state and 'enable' or 'disable']
@@ -107,6 +111,5 @@ class WBEMConnection(object):
         if proc.returncode != 0:
             raise Exception(("wmic exited with status %r:\n%r\n" +
                             "cmd was: %s") % (proc.returncode, err, cmd))
-        return True
        
 
