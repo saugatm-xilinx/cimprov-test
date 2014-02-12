@@ -77,3 +77,20 @@ $(DISTDIR).tar.gz : $(DISTFILES)
 	mkdir -p $(DISTDIR)
 	cp -a $^ $(DISTDIR)
 	tar czf $@ $(DISTDIR)
+
+MSI_BITNESS = $(if $(findstring x86_64,$(PLATFORM)),64,32)
+MSI_VERSION = 1.0.0.0
+MSI_VENDOR = Solarflare Communications
+MSI_TOOLNAME = remote sfupdate for ESXi
+MSI_TOOLDESC = $(MSI_TOOLNAME)
+MSI_INSTALLER = sfupdate_esxi-$(MSI_VERSION)-windows$(MSI_BITNESS)$(FILE_SUFFIX)
+
+NSIS = makensis
+
+.PHONY : msi 
+
+msi : $(MSI_INSTALLER)
+
+$(MSI_INSTALLER) : sfupdate.nsi sfupdate_esxi$(FILE_SUFFIX) Makefile
+	$(NSIS) -DBITNESS=$(MSI_BITNESS) -DINSTALLERNAME=$@ -DTOOLNAME="$(MSI_TOOLNAME)" \
+			-DTOOLDESC="$(MSI_TOOLDESC)" -DVENDORNAME="$(MSI_VENDOR)" -DTOOLFILE=$(word 2,$^) -DTOP=.. $<
