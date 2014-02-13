@@ -302,7 +302,7 @@ parseCmdLine(int argc, const char *argv[])
           "image is lower than or the same as already installed",
           NULL },
 
-        { "fw-url-no-local-access", '\0', POPT_ARG_NONE, NULL,
+        { "firmware-url-no-local-access", '\0', POPT_ARG_NONE, NULL,
           OPT_FW_URL_NO_LOCAL_ACCESS,
           "Do not try to access firmware images from an URL specified "
           "from this tool, just pass URL to CIM provider. Version "
@@ -310,7 +310,7 @@ parseCmdLine(int argc, const char *argv[])
           "cannot be used together with this option",
           NULL },
 
-        { "fw-url-use-cim-transfer", '\0', POPT_ARG_NONE, NULL,
+        { "firmware-url-use-cim-transfer", '\0', POPT_ARG_NONE, NULL,
           OPT_FW_URL_USE_CIM_TRANSF,
           "Do not pass firmware URL to CIM provider but transfer "
           "downloaded firmware images via private CIM methods. May "
