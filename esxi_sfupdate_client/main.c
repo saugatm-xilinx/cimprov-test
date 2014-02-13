@@ -31,14 +31,14 @@ static fw_img_descr *downloaded_fw_imgs = NULL;
 static unsigned int  downloaded_count = 0;
 static unsigned int  downloaded_max_count = 0;
 
+/* Maximum file path length */
+#define MAX_PATH_LEN 1024
+
 /* Maximum password length */
 #define MAX_PASSWD_LEN 128
 
 /* Maximum error message length */
 #define MAX_ERR_STR 1024
-
-/* Maximum file path length */
-#define MAX_PATH_LEN 1024
 
 /* Maximum NIC tag length */
 #define MAX_NIC_TAG_LEN 1024
@@ -145,10 +145,17 @@ static int   update_bootrom = 0;
 static int   yes = 0;
 
 /**
- * Whether downloading firmware images by this program from an URL
- * specified should be disabled or not
+ * Do not try to download firmware image from an URL
+ * specified on a host where this tool is run.
  */
-static int no_url_downloads = 0;
+static int   fw_url_no_local_access = 0;
+
+/**
+ * Do not pass URL to CIM provider but transfer
+ * downloaded firmware images via CIM private methods
+ * instead.
+ */
+static int   fw_url_use_cim_transf = 0;
 
 /* Default HTTP port */
 #define DEF_HTTP_PORT "5988"
@@ -164,27 +171,30 @@ static int no_url_downloads = 0;
 
 /** Command line options */
 enum {
-    OPT_CIMOM_ADDR = 1,       /**< CIMOM address - use either it or 
-                                   HOST/PORT/HTTPS to specify CIMOM */
-    OPT_HTTPS,                /**< Use HTTPS */
-    OPT_CIMOM_USER,           /**< CIMOM user name */
-    OPT_CIMOM_PASSWORD,       /**< CIMOM user password */
-    OPT_PROVIDER_NAMESPACE,   /**< CIM provider namespace */
-    OPT_FW_URL,               /**< URL of firmware image(s) */
-    OPT_FW_PATH,              /**< Path to firmware image(s) */
-    OPT_FORCE,                /**< Force firmware update even
-                                   if version of the image is
-                                   lower than or the same as already
-                                   installed */
-    OPT_IF_NAME,              /**< Network interface name */
-    OPT_CONTROLLER,           /**< Process controller firmware */
-    OPT_BOOTROM,              /**< Process BootROM firmware */
-    OPT_YES,                  /**< Don't ask user for confirmation when
-                                   updating firmware */
-    OPT_WRITE,                /**< Perform firmware update */
-    OPT_NO_URL_DOWNLOADS,     /**< Do not download firmware images if
-                                   URL is specified, but pass URL
-                                   directly to CIM provider */
+    OPT_CIMOM_ADDR = 1,         /**< CIMOM address - use either it or 
+                                     HOST/PORT/HTTPS to specify CIMOM */
+    OPT_HTTPS,                  /**< Use HTTPS */
+    OPT_CIMOM_USER,             /**< CIMOM user name */
+    OPT_CIMOM_PASSWORD,         /**< CIMOM user password */
+    OPT_PROVIDER_NAMESPACE,     /**< CIM provider namespace */
+    OPT_FW_URL,                 /**< URL of firmware image(s) */
+    OPT_FW_PATH,                /**< Path to firmware image(s) */
+    OPT_FORCE,                  /**< Force firmware update even
+                                     if version of the image is
+                                     lower than or the same as already
+                                     installed */
+    OPT_IF_NAME,                /**< Network interface name */
+    OPT_CONTROLLER,             /**< Process controller firmware */
+    OPT_BOOTROM,                /**< Process BootROM firmware */
+    OPT_YES,                    /**< Don't ask user for confirmation when
+                                     updating firmware */
+    OPT_WRITE,                  /**< Perform firmware update */
+    OPT_FW_URL_NO_LOCAL_ACCESS, /**< Don't try to download firmware
+                                     image on a host where this tool
+                                     is run */
+    OPT_FW_URL_USE_CIM_TRANSF,  /**< Do not pass URL to CIM provider
+                                     but transfer donwloaded firmare
+                                     images to it via private CIM methods */
 };
 
 /**
@@ -212,7 +222,8 @@ parseCmdLine(int argc, const char *argv[])
     int   bootrom = 0;
     int   y = 0;
     int   w = 0;
-    int   no_url_dwnlds = 0;
+    int   url_no_local_access = 0;
+    int   url_use_cim_transf = 0;
     char  passwd_buf[MAX_PASSWD_LEN];
 
     poptContext     optCon;
@@ -291,13 +302,21 @@ parseCmdLine(int argc, const char *argv[])
           "image is lower than or the same as already installed",
           NULL },
 
-        { "no-url-downloads", '\0', POPT_ARG_NONE, NULL,
-          OPT_NO_URL_DOWNLOADS,
-          "Do not download firmware images from a specified "
-          "URL location, but pass this URL directly to "
-          "CIM provider",
+        { "fw-url-no-local-access", '\0', POPT_ARG_NONE, NULL,
+          OPT_FW_URL_NO_LOCAL_ACCESS,
+          "Do not try to access firmware images from an URL specified "
+          "from this tool, just pass URL to CIM provider. Version "
+          "checks will be disabled; --fw-url-use-cim-transfer "
+          "cannot be used together with this option",
           NULL },
 
+        { "fw-url-use-cim-transfer", '\0', POPT_ARG_NONE, NULL,
+          OPT_FW_URL_USE_CIM_TRANSF,
+          "Do not pass firmware URL to CIM provider but transfer "
+          "downloaded firmware images via private CIM methods. May "
+          "be useful if you have issues with ESXi firewall or if "
+          "URL specified is not available on the ESXi target host",
+          NULL },
 
         POPT_AUTOHELP
         POPT_TABLEEND
@@ -361,8 +380,12 @@ parseCmdLine(int argc, const char *argv[])
                 w = 1;
                 break;
 
-            case OPT_NO_URL_DOWNLOADS:
-                no_url_dwnlds = 1;
+            case OPT_FW_URL_NO_LOCAL_ACCESS:
+                url_no_local_access = 1;
+                break;
+
+            case OPT_FW_URL_USE_CIM_TRANSF:
+                url_use_cim_transf = 1;
                 break;
 
             default:
@@ -390,6 +413,14 @@ parseCmdLine(int argc, const char *argv[])
     {
         ERROR_MSG_PLAIN("Address of CIM server was not specified "
                         "(--cim-address=?)");
+        rc = -1;
+        goto cleanup;
+    }
+    if (url_no_local_access && url_use_cim_transf)
+    {
+        ERROR_MSG_PLAIN("Options --fw-url-no-local-access and "
+                        "--fw-url-use-cim-transfer cannot be used "
+                        "simultaneously");
         rc = -1;
         goto cleanup;
     }
@@ -438,7 +469,8 @@ cleanup:
         update_bootrom = bootrom;
         yes = y;
         do_update = w;
-        no_url_downloads = no_url_dwnlds;
+        fw_url_no_local_access = url_no_local_access;
+        fw_url_use_cim_transf = url_use_cim_transf;
     }
 
     return rc;
@@ -1905,7 +1937,7 @@ associators(CURL *curl, const char *namespace, xmlCimInstance *inst,
  *                          or NULL)
  * @param url               Firmware image(s) URL
  * @param unused            Unused parameter (for compatibility with
- *                          install_from_local_path() signature)
+ *                          install_from_local_source() signature)
  * @param force             Update firmware even if verion of the image is
  *                          the same or earlier than already installed
  * @param base64_hash       SHA-1 hash of firmware image, encoded in Base64
@@ -2301,13 +2333,13 @@ checkVersion(const char *cur_version,
  * @return 0 on success, -1 on failure
  */
 int
-install_from_local_path(CURL *curl, const char *namespace,
-                        xmlCimInstance *svc, xmlCimInstance *target,
-                        const char *path,
-                        int url_specified,
-                        int force,
-                        const char *unused1,
-                        response_descr *unused2)
+install_from_local_source(CURL *curl, const char *namespace,
+                          xmlCimInstance *svc, xmlCimInstance *target,
+                          const char *path,
+                          int url_specified,
+                          int force,
+                          const char *unused1,
+                          response_descr *unused2)
 {
 #define CHUNK_LEN 100000
 
@@ -2921,12 +2953,13 @@ update_firmware(CURL *curl, const char *namespace,
     memset(&call_rsp, 0, sizeof(call_rsp));
 
     if (url_specified && firmware_source != NULL &&
-        (no_url_downloads ||
+        (fw_url_no_local_access ||
          strncasecmp(firmware_source, FILE_PROTO,
-                     strlen(FILE_PROTO)) == 0))
+                     strlen(FILE_PROTO)) == 0) ||
+         !fw_url_use_cim_transf)
         func_install = call_install_from_uri;
     else
-        func_install = install_from_local_path;
+        func_install = install_from_local_source;
 
     printf("\nUpdating firmware...\n");
 
@@ -3012,7 +3045,7 @@ update_firmware(CURL *curl, const char *namespace,
                     call_rsp,
                     "Attempt to update "
                     "Controller firmware failed");
-            if (rc_rsp >= 0 && func_install != install_from_local_path &&
+            if (rc_rsp >= 0 && func_install != install_from_local_source &&
                 strcmp(call_rsp.returned_value, "0") != 0)
             {
                 ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
@@ -3041,7 +3074,7 @@ update_firmware(CURL *curl, const char *namespace,
                     call_rsp,
                     "Attempt to update "
                     "BootROM firmware failed");
-            if (rc_rsp >= 0 && func_install != install_from_local_path &&
+            if (rc_rsp >= 0 && func_install != install_from_local_source &&
                 strcmp(call_rsp.returned_value, "0") != 0)
             {
                 ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
@@ -3750,7 +3783,7 @@ main(int argc, const char *argv[])
             }
 
             if (strcmp(nic_tag, nic_tag_prev) != 0 &&
-                !(fw_url != NULL && no_url_downloads))
+                !(fw_url != NULL && fw_url_no_local_access))
             {
                 controller_exp_img_name[0] = '\0';
                 findAvailableUpdate(curl, cim_namespace,
@@ -3820,7 +3853,7 @@ main(int argc, const char *argv[])
                     update_controller)
                 {
                     printf("Controller version: %s\n", version); 
-                    if (!(fw_url != NULL && no_url_downloads))
+                    if (!(fw_url != NULL && fw_url_no_local_access))
                     {
                         ver_check = checkVersion(version,
                                                  controller_ver_a,
@@ -3856,7 +3889,7 @@ main(int argc, const char *argv[])
                          update_bootrom)
                 {
                     printf("BootROM version: %s\n", version); 
-                    if (!(fw_url != NULL && no_url_downloads))
+                    if (!(fw_url != NULL && fw_url_no_local_access))
                     {
                         ver_check = checkVersion(version,
                                                  bootrom_ver_a,
@@ -3909,7 +3942,10 @@ main(int argc, const char *argv[])
             goto cleanup;
         }
 
-        if (fw_url != NULL && no_url_downloads)
+        if (fw_url != NULL && fw_url_no_local_access)
+        /* If we could not examine firmware images,
+         * we cannot know whether there was no available
+         * ones or not */
             have_applicable_imgs = 1;
         else
         {

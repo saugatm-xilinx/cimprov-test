@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#ifndef SOLARFLARE_FW_IMAGE_H
-#define SOLARFLARE_FW_IMAGE_H
+#ifndef SOLARFLARE_FW_IMAGES_H
+#define SOLARFLARE_FW_IMAGES_H
 
 typedef struct image_header_s {
     unsigned int    ih_magic;
