@@ -57,4 +57,9 @@ else
     echo "copy_static_std_cpp:" >>Makefile
     echo "	\${CP} \`\${CXX} -print-file-name=\"libstdc++.a\"\` \${SRCDIR}" >>Makefile
     make copy_static_std_cpp
+
+    # Using libdir as destination for our provider library
+    echo "usrdestdir = \$(libdir)" >solarflare/Makefile_fixed
+    cat solarflare/Makefile.am | sed "s/bin_PROGRAMS/usrdest_PROGRAMS/" >>solarflare/Makefile_fixed
+    mv solarflare/Makefile_fixed solarflare/Makefile.am
 fi
