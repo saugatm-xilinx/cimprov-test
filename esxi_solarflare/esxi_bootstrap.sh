@@ -44,9 +44,14 @@ else
     sed -i "s/DESC_SUMMARY=.*/DESC_SUMMARY=Solarflare NIC CIM provider/g" Makefile
     sed -i "s/DESC_DESCRIPTION=.*/DESC_DESCRIPTION=Solarflare NIC CIM provider for VMware ESXi/g" Makefile
     sed -i "s/DESC_URLS=.*/DESC_URLS=oem\/descriptor-urls.xml/g" Makefile
-    sed -i "s/DESC_DEPENDS=.*/DESC_URLS=oem\/solarflare-vib-depends.xml/g" Makefile
+    sed -i "s/DESC_DEPENDS=.*/DESC_DEPENDS=oem\/solarflare-vib-depends.xml/g" Makefile
     sed -i "s/libacmeprovider.so/libsolarflare_nic_provider.so/g" Makefile
     sed -i "s/\<CFLAGS=\"\(.*\)/CFLAGS=\"-D__USE_XOPEN2K8=1 \1/g" Makefile
+    sed -i "s/\${CURRENT_DIR}\/descriptor.xml/\${CURRENT_DIR}\/oem\/descriptor.xml/g" Makefile
+    sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
+
+    # This fixes the bug with renaming our provider to li.so
+    sed -i "s/\/\\.so/\/[.]so/g" Makefile
 
     echo "" >>Makefile
     echo "copy_static_std_cpp:" >>Makefile

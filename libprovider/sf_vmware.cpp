@@ -19,6 +19,8 @@
 #include "CIM_EthernetPort.h"
 #include "CIM_SoftwareIdentity.h"
 
+#include <stdint.h>
+
 #include "efx_ioctl.h"
 #include "ci/mgmt/mc_flash_layout.h"
 #include "efx_regs_mcdi.h"
@@ -778,7 +780,7 @@ fail:
             if (getDirContents(device_path, devDirList) < 0)
                 continue;
 
-            str = strchr(busName, ':');
+            str = const_cast<char *>(strchr(busName, ':'));
             if (str == NULL)
             {
                 cur_domain = 0;
