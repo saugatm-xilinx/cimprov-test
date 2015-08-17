@@ -51,7 +51,7 @@ else
     sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
 
     # This fixes the bug with renaming our provider to li.so
-    sed -i "s/\/\\.so/\/[.]so/g" Makefile
+    sed -i "s/\/\\\\.so/\/[.]so/g" Makefile
 
     echo "" >>Makefile
     echo "copy_static_std_cpp:" >>Makefile
