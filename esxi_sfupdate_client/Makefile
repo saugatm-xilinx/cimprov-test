@@ -48,8 +48,10 @@ ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
     MY_CPPFLAGS:=$(MY_CPPFLAGS) -DNCURSES_CURSES_H
 endif
 
-sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c $(VSNPRINTF_FIX)
-	$(CC) -g main.c fw_images.c -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
+sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c cim_client.c \
+  			curl_aux.c $(VSNPRINTF_FIX)
+	$(CC) -g main.c fw_images.c cim_client.c curl_aux.c \
+	      -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
 	      $(XML2_CFLAGS) $(MY_LIBS) $(VSNPRINTF_FIX)
 	if test x != x$(VSNPRINTF_FIX) ; then rm $(VSNPRINTF_FIX); fi
 
@@ -60,10 +62,11 @@ fw_images.c :
 
 DISTDIR = esxi_sfupdate-1.0
 
-DISTFILES = main.c vsnprintf_fix.c Makefile README \
+DISTFILES = main.c vsnprintf_fix.c curl_aux.c curl_aux.h \
+	    		cim_client.c cim_client.h Makefile README \
 	    		esxi_sfupdate_client.spec \
 			fw_images.h include_fw_imgs.sh sf_base64.h \
-			libs libs_includes
+			log.h libs libs_includes
 
 .PHONY : clean
 clean:
