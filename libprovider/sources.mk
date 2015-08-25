@@ -130,6 +130,7 @@ endif
 
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 libprovider_INCLUDES += libprovider/v5_import libprovider/v5_import/tlv \
+		libprovider/v5_import/libutils/ \
 		libprovider/v5_import/endianness/ \
 		libprovider/v5_import/ci libprovider/v5_import/ci/app \
 		libprovider/v5_import/ci/app/platform \

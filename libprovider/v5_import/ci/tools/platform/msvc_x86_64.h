@@ -14,41 +14,6 @@
 #ifndef __CI_TOOLS_MSVC_X86_H__
 #define __CI_TOOLS_MSVC_X86_H__
 
-#pragma warning(disable : 4244)
-#pragma warning(disable : 4267)
-
-/* Intrinsic function which returns the processor time stamp.
-** (the number of clock cycles since the last reset)
-*/
-unsigned __int64 __rdts(void);
-
-#pragma intrinsic(__rdtsc)
-
-/* Intrinsic versions of "interlocked" functions */
-long _InterlockedAnd(long volatile * Value, long Mask);
-unsigned char _interlockedbittestandreset(long volatile * a, long b);
-unsigned char _interlockedbittestandset(long volatile * a, long b);
-long _InterlockedCompareExchange(long volatile * Destination, long Exchange,
-                                 long Comperand);
-long _InterlockedDecrement(long volatile * lpAddend);
-long _InterlockedIncrement(long volatile * lpAddend);
-long _InterlockedOr(long volatile * Value, long Mask);
-void *_InterlockedCompareExchangePointer(void * volatile * Destination,
-					 void * Exchange, void * Comperand);
-
-#pragma intrinsic(_InterlockedAnd)
-#pragma intrinsic(_interlockedbittestandreset)
-#pragma intrinsic(_interlockedbittestandset)
-#pragma intrinsic(_InterlockedCompareExchange)
-#pragma intrinsic(_InterlockedDecrement)
-#pragma intrinsic(_InterlockedIncrement)
-#pragma intrinsic(_InterlockedOr)
-#pragma intrinsic(_InterlockedCompareExchangePointer)
-
-/* Pause intrinsic */
-void _mm_pause(void);
-
-#pragma intrinsic(_mm_pause)
 
 /**********************************************************************
  * Free-running cycle counters.
@@ -101,43 +66,43 @@ ci_inline void ci_frc64(ci_uint64* pval)
   ci_inline int  ci_atomic_read(const ci_atomic_t* v) { return v->n; }
 
   ci_inline void ci_atomic_inc(ci_atomic_t* v)
-  { _InterlockedIncrement(&v->n); }
+  { InterlockedIncrement(&v->n); }
 
   ci_inline void ci_atomic_dec(ci_atomic_t* v)
-  { _InterlockedDecrement(&v->n); }
+  { InterlockedDecrement(&v->n); }
 
   ci_inline int ci_atomic_inc_and_test(ci_atomic_t* v)
-  { return _InterlockedIncrement(&v->n) == 0; }
+  { return InterlockedIncrement(&v->n) == 0; }
 
   ci_inline int ci_atomic_dec_and_test(ci_atomic_t* v)
-  { return _InterlockedDecrement(&v->n) == 0; }
+  { return InterlockedDecrement(&v->n) == 0; }
 
   ci_inline void ci_atomic_and(ci_atomic_t* v, int i)
-  { _InterlockedAnd(&v->n, i); }
+  { InterlockedAnd(&v->n, i); }
 
   ci_inline void ci_atomic_or(ci_atomic_t* v, int i)
-  { _InterlockedOr(&v->n, i); }
+  { InterlockedOr(&v->n, i); }
 
   ci_inline int ci_atomic_xchg (ci_atomic_t *v, int i)
-  { return _InterlockedExchange(&(v->n), i); }
+  { return InterlockedExchange(&(v->n), i); }
 
   ci_inline void ci_atomic_add(ci_atomic_t* v, int i)
-  { _InterlockedAdd(&v->n, i); }
+  { InterlockedAdd(&v->n, i); }
 
   ci_inline void ci_atomic32_and(volatile ci_uint32* p, ci_uint32 mask)
-  { _InterlockedAnd((volatile LONG*)p, mask); }
+  { InterlockedAnd((volatile LONG*)p, mask); }
 
   ci_inline void ci_atomic32_or(volatile ci_uint32* p, ci_uint32 mask)
-  { _InterlockedOr((volatile LONG*)p, mask); }
+  { InterlockedOr((volatile LONG*)p, mask); }
 
   ci_inline void ci_atomic32_add(volatile ci_uint32* p, ci_uint32 mask)
-  { _InterlockedAdd((volatile LONG*)p, mask); }
+  { InterlockedAdd((volatile LONG*)p, mask); }
 
   ci_inline void ci_atomic32_inc(volatile ci_uint32* p)
-  { _InterlockedIncrement((volatile LONG*) p); }
+  { InterlockedIncrement((volatile LONG*) p); }
 
   ci_inline int ci_atomic32_dec_and_test(volatile ci_uint32* p)
-  { return _InterlockedDecrement((volatile LONG*) p) == 0; }
+  { return InterlockedDecrement((volatile LONG*) p) == 0; }
 
 
 /**********************************************************************

@@ -92,7 +92,11 @@ struct tlv_partition_header {
   uint32_t tag;
   uint32_t length;
   uint16_t type_id;
-  uint16_t reserved;
+/* 0 indicates the default segment (always located at offset 0), while other values
+ * are for RFID-selectable presets that should immediately follow the default segment.
+ * The default segment may also have preset > 0, which means that it is a preset
+ * selected through an RFID command and copied by FW to the location at offset 0. */
+  uint16_t preset;
   uint32_t generation;
   uint32_t total_length;
 };
@@ -269,6 +273,8 @@ struct tlv_pcie_config {
   uint16_t pf_aper;                             /**< BIU aperture for PF BAR2 */
   uint16_t vf_aper;                             /**< BIU aperture for VF BAR0 */
   uint16_t int_aper;                            /**< BIU aperture for PF BAR4 and VF BAR2 */  
+#define TLV_MAX_PF_DEFAULT (-1)                 /* Use FW default for largest PF RID  */
+#define TLV_APER_DEFAULT (0xFFFF)               /* Use FW default for a given aperture */
 };
 
 /* Per-PF configuration. Note that not all these fields are necessarily useful
@@ -317,13 +323,17 @@ struct tlv_tmp_gubbins {
   int8_t with_rmon;             /* 0 -> off, 1 -> on, -1 -> leave alone */
   /* Consumed by clocks_hunt.c */
   int8_t clk_mode;             /* 0 -> off, 1 -> on, -1 -> leave alone */
-  /* Consumed by sram.c */
+  /* No longer used, superseded by TLV_TAG_DESCRIPTOR_CACHE_CONFIG. */
   int8_t rx_dc_size;           /* -1 -> leave alone */
   int8_t tx_dc_size;
   int16_t num_q_allocs;
 };
 
-/* Global port configuration */
+/* Global port configuration
+ *
+ * This is now deprecated in favour of a platform-provided default
+ * and dynamic config override via tlv_global_port_options.
+ */
 #define TLV_TAG_GLOBAL_PORT_CONFIG      (0x000a0000)
 
 struct tlv_global_port_config {
@@ -359,6 +369,10 @@ struct tlv_firmware_options {
  */
 #define TLV_FIRMWARE_VARIANT_FULL_FEATURED   MC_CMD_FW_FULL_FEATURED
 #define TLV_FIRMWARE_VARIANT_LOW_LATENCY     MC_CMD_FW_LOW_LATENCY
+#define TLV_FIRMWARE_VARIANT_PACKED_STREAM   MC_CMD_FW_PACKED_STREAM
+#define TLV_FIRMWARE_VARIANT_HIGH_TX_RATE    MC_CMD_FW_HIGH_TX_RATE
+#define TLV_FIRMWARE_VARIANT_PACKED_STREAM_HASH_MODE_1 \
+                                             MC_CMD_FW_PACKED_STREAM_HASH_MODE_1
 };
 
 /* Voltage settings
@@ -394,6 +408,19 @@ struct tlv_clock_config {
   uint16_t clk_sys;        /* MHz */
   uint16_t clk_dpcpu;      /* MHz */
   uint16_t clk_icore;      /* MHz */
+  uint16_t clk_pcs;        /* MHz */
+};
+
+#define TLV_TAG_CLOCK_CONFIG_MEDFORD      (0x00100000)
+
+struct tlv_clock_config_medford {
+  uint32_t tag;
+  uint32_t length;
+  uint16_t clk_sys;        /* MHz */
+  uint16_t clk_mc;         /* MHz */
+  uint16_t clk_rmon;       /* MHz */
+  uint16_t clk_vswitch;    /* MHz */
+  uint16_t clk_dpcpu;      /* MHz */
   uint16_t clk_pcs;        /* MHz */
 };
 
@@ -444,6 +471,222 @@ struct tlv_pcie_config_r2 {
   uint16_t int_aper;                            /**< BIU aperture for PF BAR4 and VF BAR2 */  
 };
 
+/* Dynamic port mode.
+ *
+ * Allows selecting alternate port configuration for platforms that support it
+ * (e.g. 1x40G vs 2x10G on Milano, 1x40G vs 4x10G on Medford). This affects the
+ * number of externally visible ports (and, hence, PF to port mapping), so must
+ * be done at boot time.
+ *
+ * This tag supercedes tlv_global_port_config.
+ */
+
+#define TLV_TAG_GLOBAL_PORT_MODE         (0x10110000)
+
+struct tlv_global_port_mode {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t port_mode;
+#define TLV_PORT_MODE_DEFAULT           (0xffffffff) /* Default for given platform */
+#define TLV_PORT_MODE_10G                        (0) /* 10G, single SFP/10G-KR */
+#define TLV_PORT_MODE_40G                        (1) /* 40G, single QSFP/40G-KR */
+#define TLV_PORT_MODE_10G_10G                    (2) /* 2x10G, dual SFP/10G-KR or single QSFP */
+#define TLV_PORT_MODE_40G_40G                    (3) /* 40G + 40G, dual QSFP/40G-KR (Greenport, Medford) */
+#define TLV_PORT_MODE_10G_10G_10G_10G            (4) /* 2x10G + 2x10G, quad SFP/10G-KR or dual QSFP (Greenport, Medford) */
+#define TLV_PORT_MODE_10G_10G_10G_10G_Q          (5) /* 4x10G, single QSFP, cage 0 (Medford) */
+#define TLV_PORT_MODE_40G_10G_10G                (6) /* 1x40G + 2x10G, dual QSFP (Greenport, Medford) */
+#define TLV_PORT_MODE_10G_10G_40G                (7) /* 2x10G + 1x40G, dual QSFP (Greenport, Medford) */
+#define TLV_PORT_MODE_10G_10G_10G_10G_Q2         (8) /* 4x10G, single QSFP, cage 1 (Medford) */
+#define TLV_PORT_MODE_MAX TLV_PORT_MODE_10G_10G_10G_10G_Q2
+};
+
+/* Type of the v-switch created implicitly by the firmware */
+
+#define TLV_TAG_VSWITCH_TYPE(port)       (0x10120000 + (port))
+
+struct tlv_vswitch_type {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t vswitch_type;
+#define TLV_VSWITCH_TYPE_DEFAULT        (0xffffffff) /* Firmware default; equivalent to no TLV present for a given port */
+#define TLV_VSWITCH_TYPE_NONE                    (0)
+#define TLV_VSWITCH_TYPE_VLAN                    (1)
+#define TLV_VSWITCH_TYPE_VEB                     (2)
+#define TLV_VSWITCH_TYPE_VEPA                    (3)
+#define TLV_VSWITCH_TYPE_MUX                     (4)
+#define TLV_VSWITCH_TYPE_TEST                    (5)
+};
+
+/* A VLAN tag for the v-port created implicitly by the firmware */
+
+#define TLV_TAG_VPORT_VLAN_TAG(pf)               (0x10130000 + (pf))
+
+struct tlv_vport_vlan_tag {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t vlan_tag;
+#define TLV_VPORT_NO_VLAN_TAG                    (0xFFFFFFFF) /* Default in the absence of TLV for a given PF */
+};
+
+/* Offset to be applied to the 0v9 setting, wherever it came from */
+
+#define TLV_TAG_ATB_0V9_OFFSET           (0x10140000)
+
+struct tlv_0v9_atb_offset {
+  uint32_t tag;
+  uint32_t length;
+  int16_t  offset_millivolts;
+  uint16_t reserved;
+};
+
+/* A privilege mask given on reset to all non-admin PCIe functions (that is other than first-PF-per-port).
+ * The meaning of particular bits is defined in mcdi_ef10.yml under MC_CMD_PRIVILEGE_MASK, see also bug 44583.
+ * TLV_TAG_PRIVILEGE_MASK_ADD specifies bits that should be added (ORed) to firmware default while
+ * TLV_TAG_PRIVILEGE_MASK_REM specifies bits that should be removed (ANDed) from firmware default:
+ * Initial_privilege_mask = (firmware_default_mask | privilege_mask_add) & ~privilege_mask_rem */
+
+#define TLV_TAG_PRIVILEGE_MASK          (0x10150000) /* legacy symbol - do not use */
+
+struct tlv_privilege_mask {                          /* legacy structure - do not use */
+  uint32_t tag;
+  uint32_t length;
+  uint32_t privilege_mask;
+};
+
+#define TLV_TAG_PRIVILEGE_MASK_ADD      (0x10150000)
+
+struct tlv_privilege_mask_add {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t privilege_mask_add;
+};
+
+#define TLV_TAG_PRIVILEGE_MASK_REM      (0x10160000)
+
+struct tlv_privilege_mask_rem {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t privilege_mask_rem;
+};
+
+/* Additional privileges given to all PFs.
+ * This tag takes precedence over TLV_TAG_PRIVILEGE_MASK_REM. */
+
+#define TLV_TAG_PRIVILEGE_MASK_ADD_ALL_PFS         (0x10190000)
+
+struct tlv_privilege_mask_add_all_pfs {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t privilege_mask_add;
+};
+
+/* Additional privileges given to a selected PF.
+ * This tag takes precedence over TLV_TAG_PRIVILEGE_MASK_REM. */
+
+#define TLV_TAG_PRIVILEGE_MASK_ADD_SINGLE_PF(pf)   (0x101A0000 + (pf))
+
+struct tlv_privilege_mask_add_single_pf {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t privilege_mask_add;
+};
+
+/* Turning on/off the PFIOV mode.
+ * This tag only takes effect if TLV_TAG_VSWITCH_TYPE is missing or set to DEFAULT. */
+
+#define TLV_TAG_PFIOV(port)             (0x10170000 + (port))
+
+struct tlv_pfiov {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t pfiov;
+#define TLV_PFIOV_OFF                    (0) /* Default */
+#define TLV_PFIOV_ON                     (1)
+};
+
+/* Multicast filter chaining mode selection.
+ *
+ * When enabled, multicast packets are delivered to all recipients of all
+ * matching multicast filters, with the exception that IP multicast filters
+ * will steal traffic from MAC multicast filters on a per-function basis.
+ * (New behaviour.)
+ *
+ * When disabled, multicast packets will always be delivered only to the
+ * recipients of the highest priority matching multicast filter.
+ * (Legacy behaviour.)
+ *
+ * The DEFAULT mode (which is the same as the tag not being present at all)
+ * is equivalent to ENABLED in production builds, and DISABLED in eftest
+ * builds.
+ *
+ * This option is intended to provide run-time control over this feature
+ * while it is being stabilised and may be withdrawn at some point in the
+ * future; the new behaviour is intended to become the standard behaviour.
+ */
+
+#define TLV_TAG_MCAST_FILTER_CHAINING   (0x10180000)
+
+struct tlv_mcast_filter_chaining {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t mode;
+#define TLV_MCAST_FILTER_CHAINING_DEFAULT  (0xffffffff)
+#define TLV_MCAST_FILTER_CHAINING_DISABLED (0)
+#define TLV_MCAST_FILTER_CHAINING_ENABLED  (1)
+};
+
+/* Descriptor cache config.
+ *
+ * Sets the sizes of the TX and RX descriptor caches as a power of 2. It also
+ * sets the total number of VIs. When the number of VIs is reduced VIs are taken
+ * away from the highest numbered port first, so a vi_count of 1024 means 1024
+ * VIs on the first port and 0 on the second (on a Torino).
+ */
+
+#define TLV_TAG_DESCRIPTOR_CACHE_CONFIG    (0x101d0000)
+
+struct tlv_descriptor_cache_config {
+  uint32_t tag;
+  uint32_t length;
+  uint8_t rx_desc_cache_size;
+  uint8_t tx_desc_cache_size;
+  uint16_t vi_count;
+};
+#define TLV_DESC_CACHE_DEFAULT (0xff)
+#define TLV_VI_COUNT_DEFAULT   (0xffff)
+
+/* Pacer rate limit per PF */
+#define TLV_TAG_RATE_LIMIT(pf)    (0x101b0000 + (pf))
+
+struct tlv_rate_limit {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t rate_mbps; 
+};
+
+/* OCSD Enable/Disable
+ *
+ * This setting allows OCSD to be disabled. This is a requirement for HP
+ * servers to support PCI passthrough for virtualization.
+ *
+ * The DEFAULT mode (which is the same as the tag not being present) is
+ * equivalent to ENABLED.
+ *
+ * This option is not used by the MCFW, and is entirely handled by the various
+ * drivers that support OCSD, by reading the setting before they attempt
+ * to enable OCSD.
+ *
+ * bit0: OCSD Disabled/Enabled
+ */
+
+#define TLV_TAG_OCSD (0x101C0000)
+
+struct tlv_ocsd {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t mode;
+#define TLV_OCSD_DISABLED 0
+#define TLV_OCSD_ENABLED 1 /* Default */
+};
 
 #endif /* CI_MGMT_TLV_LAYOUT_H */
-

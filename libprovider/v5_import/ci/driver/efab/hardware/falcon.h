@@ -58,6 +58,8 @@
 
 #ifndef EFHW_IS_LITTLE_ENDIAN
 
+/* older gcc lacks #pragma message, don't error out */
+#pragma GCC diagnostic warning "-Wunknown-pragmas"
 #pragma message "Not defining Falcon event macros; they need lots of cpu_to_le64s()"
 
 #else

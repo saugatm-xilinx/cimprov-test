@@ -195,6 +195,27 @@ size_t tlv_block_length_used(tlv_cursor_t *cursor)
   return (size_t)((uint8_t *)cursor->end + 4 - (uint8_t *)cursor->block);
 }
 
+uint32_t *tlv_last_segment_end(tlv_cursor_t *cursor)
+{
+  tlv_cursor_t segment_cursor;
+  uint32_t *last_segment_end = cursor->block;
+  uint32_t *segment_start = cursor->block;
+
+  /* Go through each segment and check that it has an end tag. If there is no
+   * end tag then the previous segment was the last valid one, so return the
+   * pointer to its end tag. */
+  while(1){
+    if (tlv_init_cursor(&segment_cursor, segment_start, cursor->limit) != TLV_OK)
+      break;
+    if (tlv_require_end(&segment_cursor) != TLV_OK)
+      break;
+    last_segment_end = segment_cursor.end;
+    segment_start = segment_cursor.end + 1;
+  }
+
+  return last_segment_end;
+}
+
 static uint32_t *tlv_write(tlv_cursor_t *cursor, uint32_t tag,
                            const uint8_t *data, size_t len)
 {
@@ -222,31 +243,20 @@ int tlv_append(tlv_cursor_t *cursor, uint32_t tag,
 {
   int rc;
 
-  rc = tlv_require_end(cursor);
-  if (rc != 0)
+  /* Set the cursor to the current end tag and insert the data there, shifting
+     up the end tag and any segments after it. */
+  rc = tlv_find(cursor, TLV_TAG_END);
+  if (rc != TLV_OK)
     return rc;
 
-  /* cursor->end should point to the current end tag at the end of the used
-   * portion of the block.  We need space to write a new tag, new length,
-   * the padded data, and a new TLV_TAG_END.
-   */
-  if (cursor->limit < (cursor->end + 1 + 1 + ((len + 3) / 4) + 1))
-    return TLV_NO_SPACE;
-
-  cursor->current = cursor->end;
-
-  cursor->end = tlv_write(cursor, tag, data, len);
-
-  /* Write new end tag */
-  cursor->end[0] = host_to_le32(TLV_TAG_END);
-
-  return TLV_OK;
+  return tlv_insert(cursor, tag, data, len);
 }
 
 int tlv_insert(tlv_cursor_t *cursor, uint32_t tag,
                const uint8_t *data, size_t len)
 {
   unsigned int delta;
+  uint32_t *last_segment_end;
   int rc;
 
   rc = tlv_validate_state(cursor);
@@ -262,13 +272,15 @@ int tlv_insert(tlv_cursor_t *cursor, uint32_t tag,
   if (rc != 0)
     return rc;
 
+  last_segment_end = tlv_last_segment_end(cursor);
+
   /* Range check */
-  if ((cursor->end + 1 + delta) > cursor->limit)
+  if ((last_segment_end + 1 + delta) > cursor->limit)
     return TLV_NO_SPACE;
 
   /* Shuffle things up, leaving new space at cursor->current */
   memmove(cursor->current + delta, cursor->current,
-          (cursor->end + 1 - cursor->current) * sizeof(uint32_t));
+          (last_segment_end + 1 - cursor->current) * sizeof(uint32_t));
 
   /* Adjust end pointer */
   cursor->end += delta;
@@ -297,6 +309,7 @@ int write_tlv_item(tlv_cursor_t *cursor, void *item_with_hdr)
 int tlv_delete(tlv_cursor_t *cursor)
 {
   unsigned int delta;
+  uint32_t *last_segment_end;
   int rc;
 
   rc = tlv_validate_state(cursor);
@@ -312,12 +325,14 @@ int tlv_delete(tlv_cursor_t *cursor)
   if (rc != 0)
     return rc;
 
+  last_segment_end = tlv_last_segment_end(cursor);
+
   /* Shuffle things down, destroying the item at cursor->current */
   memmove(cursor->current, cursor->current + delta,
-          (cursor->end + 1 - cursor->current) * sizeof(uint32_t));
+          (last_segment_end + 1 - cursor->current) * sizeof(uint32_t));
 
   /* Reset the new space at the end */
-  memset(cursor->end + 1 - delta, 0xff, delta * sizeof(uint32_t));
+  memset(last_segment_end + 1 - delta, 0xff, delta * sizeof(uint32_t));
 
   /* Adjust end pointer */
   cursor->end -= delta;
@@ -329,6 +344,7 @@ int tlv_modify(tlv_cursor_t *cursor, const uint8_t *data, size_t len)
 {
   unsigned int old_n_words, new_n_words, delta;
   uint32_t tag;
+  uint32_t *last_segment_end;
   uint32_t *position;
   int rc;
 
@@ -348,18 +364,20 @@ int tlv_modify(tlv_cursor_t *cursor, const uint8_t *data, size_t len)
   if (rc != 0)
     return rc;
 
+  last_segment_end = tlv_last_segment_end(cursor);
+
   if (new_n_words > old_n_words) {
     /* Need more space */
     delta = new_n_words - old_n_words;
     position = cursor->current + old_n_words;
 
     /* Range check */
-    if ((cursor->end + 1 + delta) > cursor->limit)
+    if ((last_segment_end + 1 + delta) > cursor->limit)
       return TLV_NO_SPACE;
 
     /* Shuffle things up, making new space at cursor->current + old_n_words */
     memmove(position + delta, position,
-            (cursor->end + 1 - position) * sizeof(uint32_t));
+            (last_segment_end + 1 - position) * sizeof(uint32_t));
 
     /* Adjust end pointer */
     cursor->end += delta;
@@ -371,10 +389,10 @@ int tlv_modify(tlv_cursor_t *cursor, const uint8_t *data, size_t len)
 
     /* Shuffle things down, removing words at cursor->current + new_n_words */
     memmove(position, position + delta,
-            (cursor->end + 1 - position) * sizeof(uint32_t));
+            (last_segment_end + 1 - position) * sizeof(uint32_t));
 
     /* Reset the new space at the end */
-    memset(cursor->end + 1 - delta, 0xff, delta * sizeof(uint32_t));
+    memset(last_segment_end + 1 - delta, 0xff, delta * sizeof(uint32_t));
 
     /* Adjust end pointer */
     cursor->end -= delta;

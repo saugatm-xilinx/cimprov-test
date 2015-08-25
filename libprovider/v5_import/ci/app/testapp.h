@@ -45,8 +45,8 @@ typedef struct ci_cfg_desc_s {
 /* 'standard' options                      defaults:       */
 extern int         ci_cfg_quiet;		/* 0               */
 extern int         ci_cfg_verbose;	/* 0               */
-extern int         ci_cfg_iter;		/* 1               */
-extern int	   ci_cfg_port;		/* 0               */
+extern unsigned    ci_cfg_iter;		  /* 1               */
+extern int         ci_cfg_port;		  /* 0               */
 extern unsigned    ci_cfg_protocol;	/* 6 (IPPROTO_TCP) */
 extern const char *ci_cfg_nic_name;     /* "0" */
 extern int         ci_cfg_nic_index;    /* 0 */

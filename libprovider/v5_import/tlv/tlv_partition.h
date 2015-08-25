@@ -54,6 +54,8 @@ extern int tlv_update_or_append_to_partition(
 
 extern int tlv_increment_partition_generation(nvram_partition_t *partition);
 
+extern int tlv_zero_partition_preset(nvram_partition_t *partition);
+
 /* Initialize a buffer with an empty dynamic config. */
 int tlv_init_dynamic_config_buf(char* buf, unsigned buf_size);
 

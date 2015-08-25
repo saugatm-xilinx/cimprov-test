@@ -1,2 +1,3 @@
-All includes in this folder were taken from 9c8e835a5b19 revision of
-v5-incoming repository.
+All includes in this folder except libutils were taken from 1e1627214647 revision of
+v5-incoming repository. libutils was taken from
+sfutils/build/linux/host/include/libutils (sfutils revision 659eedd3fd3d).

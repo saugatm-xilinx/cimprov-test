@@ -40,8 +40,8 @@
 #ifndef CI_BUILD_ASSERT
 #define __CI_BUILD_ASSERT_NAME(_x) __CI_BUILD_ASSERT_ILOATHECPP(_x)
 #define __CI_BUILD_ASSERT_ILOATHECPP(_x)  __CI_BUILD_ASSERT__ ##_x
-#define CI_BUILD_ASSERT(e)\
- typedef char  __CI_BUILD_ASSERT_NAME(__LINE__)[(e)?1:-1]
+#define CI_BUILD_ASSERT(e) \
+  { typedef char  __CI_BUILD_ASSERT_NAME(__LINE__)[(e)?1:-1] CI_UNUSED; }
 #endif
 
 

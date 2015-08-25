@@ -14,22 +14,7 @@
 #ifndef __CI_COMPAT_MSVC_X86_64_H__
 #define __CI_COMPAT_MSVC_X86_64_H__
 
-/*! /fixme
-   the following declarations are temporary
-   when we move to visual studio 2005 we should be able to include <intrin.h>
-*/
-
-long _InterlockedAdd(long volatile *, long);
-void _WriteBarrier();
-void _ReadBarrier();
-void _ReadWriteBarrier();
-
-/* Experimentation shows that with the current (as of Feb. 2006) compiler and
- * settings these are compiler barriers, but do _not_ generate barrier 
- * instructions. */
-#pragma intrinsic(_WriteBarrier)
-#pragma intrinsic(_ReadBarrier)
-#pragma intrinsic(_ReadWriteBarrier)
+#include <intrin.h>
 
 /*! 
    Barriers to enforce ordering with respect to:
@@ -47,7 +32,7 @@ ci_inline void ci_x86_mb(void)
    * According to MSDN it is also a compiler barrier. (The value of the 
    * addend has no significance, but the x86 version uses 10h and 
    * symmetry is nice...) */
-  _InterlockedAdd(&foo, 0x10);
+  InterlockedAdd(&foo, 0x10);
 }
 
 

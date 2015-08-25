@@ -18,14 +18,6 @@
 extern "C" {
 #endif
 
-/* Intrinsic versions of "interlocked" functions */
-long _InterlockedDecrement(long volatile * lpAddend);
-long _InterlockedIncrement(long volatile * lpAddend);
-long _InterlockedExchange(long volatile * lpAddend, int i);
-
-#pragma intrinsic(_InterlockedDecrement)
-#pragma intrinsic(_InterlockedIncrement)
-#pragma intrinsic(_InterlockedExchange)
 
 /**********************************************************************
  * Free-running cycle counters.

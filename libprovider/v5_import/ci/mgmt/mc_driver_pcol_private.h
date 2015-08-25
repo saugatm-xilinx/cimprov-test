@@ -26,6 +26,9 @@
  * API
  */
 #define MC_CMD_I2C_OP 0xe
+#undef MC_CMD_0xe_PRIVILEGE_CTG
+
+#define MC_CMD_0xe_PRIVILEGE_CTG SRIOV_CTG_ADMIN
 
 /* MC_CMD_I2C_OP_IN msgrequest */
 #define    MC_CMD_I2C_OP_IN_LENMIN 8
@@ -47,6 +50,12 @@
 #define          MC_CMD_I2C_READ_REGS_ADDR16 0x6
 /* enum: Write one or more registers */
 #define          MC_CMD_I2C_WRITE_REGS_ADDR16 0x7
+/* enum: Raw read from an I2C slave */
+#define          MC_CMD_I2C_RAW_READ 0x8
+/* enum: Raw write to an I2C slave */
+#define          MC_CMD_I2C_RAW_WRITE 0x9
+/* enum: Raw write/read to an I2C slave */
+#define          MC_CMD_I2C_RAW_TRANSACTION 0xa
 /* operation-specific arguments */
 #define       MC_CMD_I2C_OP_IN_ARGS_OFST 4
 #define       MC_CMD_I2C_OP_IN_ARGS_LEN 4
@@ -91,11 +100,56 @@
 #define    MC_CMD_I2C_GET_BUS_IN_LEN 0
 
 /* MC_CMD_I2C_PROBE_BUS_IN msgrequest */
-#define    MC_CMD_I2C_PROBE_BUS_IN_LEN 8
+#define    MC_CMD_I2C_PROBE_BUS_IN_LEN 12
 /* Operation code */
 #define       MC_CMD_I2C_PROBE_BUS_IN_OP_OFST 0
 /* Start address. Probing will proceed to MIN(ADDR + 31, 127) */
 #define       MC_CMD_I2C_PROBE_BUS_IN_ADDR_OFST 4
+/* The number of I2C addresses to probe, starting with ADDR. */
+#define       MC_CMD_I2C_PROBE_BUS_IN_NUM_ADDRS_OFST 8
+
+/* MC_CMD_I2C_RAW_READ_IN msgrequest */
+#define    MC_CMD_I2C_RAW_READ_IN_LEN 12
+/* Operation code */
+#define       MC_CMD_I2C_RAW_READ_IN_OP_OFST 0
+/* I2C Bus address */
+#define       MC_CMD_I2C_RAW_READ_IN_ADDR_OFST 4
+/* Number of bytes to read */
+#define       MC_CMD_I2C_RAW_READ_IN_NUM_OFST 8
+
+/* MC_CMD_I2C_RAW_WRITE_IN msgrequest */
+#define    MC_CMD_I2C_RAW_WRITE_IN_LENMIN 13
+#define    MC_CMD_I2C_RAW_WRITE_IN_LENMAX 252
+#define    MC_CMD_I2C_RAW_WRITE_IN_LEN(num) (12+1*(num))
+/* Operation code */
+#define       MC_CMD_I2C_RAW_WRITE_IN_OP_OFST 0
+/* I2C Bus address */
+#define       MC_CMD_I2C_RAW_WRITE_IN_ADDR_OFST 4
+/* Number of bytes to write */
+#define       MC_CMD_I2C_RAW_WRITE_IN_NUM_OFST 8
+/* Bytes to write */
+#define       MC_CMD_I2C_RAW_WRITE_IN_DATA_OFST 12
+#define       MC_CMD_I2C_RAW_WRITE_IN_DATA_LEN 1
+#define       MC_CMD_I2C_RAW_WRITE_IN_DATA_MINNUM 1
+#define       MC_CMD_I2C_RAW_WRITE_IN_DATA_MAXNUM 240
+
+/* MC_CMD_I2C_RAW_TRANSACTION_IN msgrequest */
+#define    MC_CMD_I2C_RAW_TRANSACTION_IN_LENMIN 17
+#define    MC_CMD_I2C_RAW_TRANSACTION_IN_LENMAX 252
+#define    MC_CMD_I2C_RAW_TRANSACTION_IN_LEN(num) (16+1*(num))
+/* Operation code */
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_OP_OFST 0
+/* I2C Bus address */
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_ADDR_OFST 4
+/* Number of bytes to write */
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_NUM_WRITE_BYTES_OFST 8
+/* Number of bytes to read */
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_NUM_READ_BYTES_OFST 12
+/* Bytes to write */
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_DATA_OFST 16
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_DATA_LEN 1
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_DATA_MINNUM 1
+#define       MC_CMD_I2C_RAW_TRANSACTION_IN_DATA_MAXNUM 236
 
 /* MC_CMD_I2C_OP_OUT msgresponse */
 #define    MC_CMD_I2C_OP_OUT_LENMIN 0
@@ -133,12 +187,38 @@
 /* bitmap of addresses in the specified ranged that got a response */
 #define       MC_CMD_I2C_PROBE_BUS_OUT_DEVICES_OFST 0
 
+/* MC_CMD_I2C_RAW_READ_OUT msgresponse */
+#define    MC_CMD_I2C_RAW_READ_OUT_LENMIN 1
+#define    MC_CMD_I2C_RAW_READ_OUT_LENMAX 252
+#define    MC_CMD_I2C_RAW_READ_OUT_LEN(num) (0+1*(num))
+/* returned data */
+#define       MC_CMD_I2C_RAW_READ_OUT_DATA_OFST 0
+#define       MC_CMD_I2C_RAW_READ_OUT_DATA_LEN 1
+#define       MC_CMD_I2C_RAW_READ_OUT_DATA_MINNUM 1
+#define       MC_CMD_I2C_RAW_READ_OUT_DATA_MAXNUM 252
+
+/* MC_CMD_I2C_RAW_WRITE_OUT msgresponse */
+#define    MC_CMD_I2C_RAW_WRITE_OUT_LEN 0
+
+/* MC_CMD_I2C_RAW_TRANSACTION_OUT msgresponse */
+#define    MC_CMD_I2C_RAW_TRANSACTION_OUT_LENMIN 1
+#define    MC_CMD_I2C_RAW_TRANSACTION_OUT_LENMAX 252
+#define    MC_CMD_I2C_RAW_TRANSACTION_OUT_LEN(num) (0+1*(num))
+/* returned data */
+#define       MC_CMD_I2C_RAW_TRANSACTION_OUT_DATA_OFST 0
+#define       MC_CMD_I2C_RAW_TRANSACTION_OUT_DATA_LEN 1
+#define       MC_CMD_I2C_RAW_TRANSACTION_OUT_DATA_MINNUM 1
+#define       MC_CMD_I2C_RAW_TRANSACTION_OUT_DATA_MAXNUM 252
+
 
 /***********************************/
 /* MC_CMD_DBI_READ
  * Read DBI register(s); deprecated; see see MC_CMD_DBI_READX
  */
 #define MC_CMD_DBI_READ 0x13
+#undef MC_CMD_0x13_PRIVILEGE_CTG
+
+#define MC_CMD_0x13_PRIVILEGE_CTG SRIOV_CTG_ADMIN
 
 /* MC_CMD_DBI_READ_IN msgrequest */
 #define    MC_CMD_DBI_READ_IN_LENMIN 4
@@ -164,6 +244,9 @@
  * Trigger an NC-SI event (and possibly an AEN in response)
  */
 #define MC_CMD_NCSI_PROD 0x1d
+#undef MC_CMD_0x1d_PRIVILEGE_CTG
+
+#define MC_CMD_0x1d_PRIVILEGE_CTG SRIOV_CTG_ADMIN
 
 /* MC_CMD_NCSI_PROD_IN msgrequest */
 #define    MC_CMD_NCSI_PROD_IN_LEN 4
@@ -197,6 +280,9 @@
  * Reserved for development.
  */
 #define MC_CMD_DEVEL 0x1e
+#undef MC_CMD_0x1e_PRIVILEGE_CTG
+
+#define MC_CMD_0x1e_PRIVILEGE_CTG SRIOV_CTG_GENERAL
 
 /* MC_CMD_DEVEL_IN msgrequest */
 #define    MC_CMD_DEVEL_IN_LEN 16
@@ -413,6 +499,43 @@
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_RXDPCPU  0x1f
 /* enum: PCIE error monitoring operations */
 #define          MC_CMD_EFTEST_OP_IN_EFTEST_PCIE_MONITOR  0x20
+/* enum: UART testing */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_UART  0x21
+/* enum: SMC tests */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_SMC  0x22
+/* enum: Port mode operations */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_PORT_MODE  0x23
+/* enum: SPI DMA tests */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_SPI_DMA  0x24
+/* enum: Tests for new MIPS instructions */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_MIPS_INSNS  0x25
+/* enum: Test support for the EF100 switch */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_EF100_SWITCH  0x26
+/* enum: Support for setting up and testing the SFFF */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_SFFF  0x27
+/* enum: Tests for the OTP storage */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_OTP_NVRAM  0x28
+/* enum: Tests for medford XIP support */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_XIP  0x29
+/* enum: Support for setting up VI allocation */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_VI_ALLOC  0x2a
+/* enum: Tests for Medford CCOM registers */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_CCOM  0x2b
+/* enum: Test support for EVB framework */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_EVB  0x2c
+/* enum: Control the network egress port interface flow. */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_EF100_NET_EPI_FLOW_CTL  0x2d
+/* enum: Directed test for bug41963 */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_BUG41963  0x2e
+/* enum: Control the medford traffic generator */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_HWPKTGEN  0x2f
+/* enum: Tests for MC JTAG interface */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_JTAG  0x30
+/* enum: Support for setting up and testing the pacer */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_PACER  0x31
+/* enum: Stop the DPCPU polling thread. A reboot will be needed to restart it
+ */
+#define          MC_CMD_EFTEST_OP_IN_EFTEST_STOP_DPCPU_THREAD  0x32
 /* the operation requested (interpretation is test-specific) */
 #define       MC_CMD_EFTEST_OP_IN_EFTEST_OP_OFST 1
 #define       MC_CMD_EFTEST_OP_IN_EFTEST_OP_LEN 1
@@ -581,7 +704,12 @@
 #define          MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_COMMAND_OP_LOOP_SUBOP_END  0x1
 #define        MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_MERGE_BLK_LBN 0
 #define        MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_MERGE_BLK_WIDTH 2
-#define          MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_COMMAND_MERGE_BLK_RX   0x0 /* enum */
+/* enum: Huntington only */
+#define          MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_COMMAND_MERGE_BLK_RX   0x0
+/* enum: Medford only */
+#define          MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_COMMAND_MERGE_BLK_RX0  0x0
+/* enum: Medford only */
+#define          MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_COMMAND_MERGE_BLK_RX1  0x3
 #define          MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_COMMAND_MERGE_BLK_TX0  0x1 /* enum */
 #define          MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_COMMAND_MERGE_BLK_TX1  0x2 /* enum */
 #define        MC_CMD_EVENT_TEST_CUT_THRU_MERGE_PARAMS_RUN_IN_MERGE_CONFIG_EN_LBN 2
@@ -724,6 +852,29 @@
 /* test run result (0 if ok, non-zero in case of failure) */
 #define       MC_CMD_INTR_TEST_STRESS_TABLE_POLL_OUT_RESULT_OFST 0
 
+/* MC_CMD_EFTEST_SAMPLE_IN msgrequest */
+#define    MC_CMD_EFTEST_SAMPLE_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_SAMPLE_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SAMPLE_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_SAMPLE_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SAMPLE_IN_EFTEST_OP_LEN 1
+/* enum: Setup. */
+#define          MC_CMD_EFTEST_SAMPLE_IN_SAMPLE_SETUP  0x0
+/* enum: Work. */
+#define          MC_CMD_EFTEST_SAMPLE_IN_SAMPLE_WORK  0x1
+/* enum: Poll. */
+#define          MC_CMD_EFTEST_SAMPLE_IN_SAMPLE_POLL  0x2
+/* enum: Setup. */
+#define          MC_CMD_EFTEST_SAMPLE_IN_SAMPLE_PAUSE  0x3
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SAMPLE_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SAMPLE_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_SAMPLE_OUT msgresponse */
+#define    MC_CMD_EFTEST_SAMPLE_OUT_LEN 0
+
 /* MC_CMD_EFTEST_SAMPLE_SETUP_IN msgrequest */
 #define    MC_CMD_EFTEST_SAMPLE_SETUP_IN_LENMIN 8
 #define    MC_CMD_EFTEST_SAMPLE_SETUP_IN_LENMAX 252
@@ -813,7 +964,7 @@
 /* opaque value to return */
 #define       MC_CMD_EFTEST_SAMPLE_PAUSE_IN_OPAQUE_OFST 8
 
-/* MC_CMD_EFTEST_SAMPLE_PAUSE_OUT msgrequest */
+/* MC_CMD_EFTEST_SAMPLE_PAUSE_OUT msgresponse */
 #define    MC_CMD_EFTEST_SAMPLE_PAUSE_OUT_LEN 4
 /* opaque value passed in */
 #define       MC_CMD_EFTEST_SAMPLE_PAUSE_OUT_OPAQUE_OFST 0
@@ -908,7 +1059,7 @@
 #define       MC_CMD_RX_STALL_STOP_OUT_DISABLE_COUNT_OFST 4
 
 /* MC_CMD_PM_IN msgrequest */
-#define    MC_CMD_PM_IN_LEN 32
+#define    MC_CMD_PM_IN_LEN 40
 /* identifies the test */
 #define       MC_CMD_PM_IN_EFTEST_ID_OFST 0
 #define       MC_CMD_PM_IN_EFTEST_ID_LEN 1
@@ -940,6 +1091,8 @@
 #define          MC_CMD_PM_IN_READ_STATE2  0xb
 /* enum: Reset the PM, in particular the arbiter counters */
 #define          MC_CMD_PM_IN_RESET  0xc
+/* enum: Configure cut-thru mode */
+#define          MC_CMD_PM_IN_CUT_THRU  0xd
 /* align the arguments to 32 bits */
 #define       MC_CMD_PM_IN_EFTEST_OP_RSVD_OFST 2
 #define       MC_CMD_PM_IN_EFTEST_OP_RSVD_LEN 2
@@ -975,6 +1128,10 @@
 #define       MC_CMD_PM_IN_EPI_PRIORITY_OFST 24
 /* Enable IPI backpressure */
 #define       MC_CMD_PM_IN_BACKPRESSURE_ENABLE_OFST 28
+/* Enable cut-thru */
+#define       MC_CMD_PM_IN_CUT_THRU_ENABLE_OFST 32
+/* Force cut-thru */
+#define       MC_CMD_PM_IN_CUT_THRU_OVERRIDE_OFST 36
 
 /* MC_CMD_PM_OUT msgresponse */
 #define    MC_CMD_PM_OUT_LEN 456
@@ -1120,6 +1277,7 @@
 #define          MC_CMD_PDMA_TEST_IN_RECEIVEINIT  0x7 /* enum */
 #define          MC_CMD_PDMA_TEST_IN_RECEIVEEXEC  0x8 /* enum */
 #define          MC_CMD_PDMA_TEST_IN_TXDRAIN  0x9 /* enum */
+#define          MC_CMD_PDMA_TEST_IN_INTERLEAVE  0xa /* enum */
 /* align the next field to 32 bits */
 #define       MC_CMD_PDMA_TEST_IN_PAD_OFST 2
 #define       MC_CMD_PDMA_TEST_IN_PAD_LEN 2
@@ -1208,8 +1366,18 @@
 #define          MC_CMD_FILTER_ALLOC_IN_PORT1  0x1
 /* enum: NCSI */
 #define          MC_CMD_FILTER_ALLOC_IN_NCSI  0x2
-/* enum: RXDP */
+/* enum: RXDP (for the calling function) */
 #define          MC_CMD_FILTER_ALLOC_IN_RXDP  0x3
+/* enum: LAN2 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_PORT2  0x4
+/* enum: LAN3 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_PORT3  0x5
+/* enum: MCTP (Medford only, reserved, purpose TBD) */
+#define          MC_CMD_FILTER_ALLOC_IN_MCTP  0x6
+/* enum: RXDP0 */
+#define          MC_CMD_FILTER_ALLOC_IN_RXDP0  0x7
+/* enum: RXDP1 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_RXDP1  0x8
 /* The requested rule id (for OP==ALLOC_ID) */
 #define       MC_CMD_FILTER_ALLOC_IN_RULE_ID_OFST 8
 /* The filter type (for OP==ALLOC || OP==ALLOC_ID) */
@@ -1247,24 +1415,58 @@
 #define       MC_CMD_FILTER_ALLOC_IN_ECHO_MACADDR_LEN 6
 #define       MC_CMD_FILTER_ALLOC_IN_ECHO_SRC_OFST 26
 #define       MC_CMD_FILTER_ALLOC_IN_ECHO_SRC_LEN 1
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX0       0x0 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX1       0x1 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX2       0x2 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX3       0x3 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX0_MC    0x4 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX1_MC    0x5 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX2_MC    0x6 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX3_MC    0x7 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX0       0x8 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX1       0x9 /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX2       0xa /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX3       0xb /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC_VTBL0  0xe /* enum */
-#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC_VTBL1  0xf /* enum */
+/* enum: RX0 */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX0       0x0
+/* enum: RX1 */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX1       0x1
+/* enum: RX2 */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX2       0x2
+/* enum: RX3 */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX3       0x3
+/* enum: RX0_MC (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX0_MC    0x4
+/* enum: RX1_MC (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX1_MC    0x5
+/* enum: RX2_MC (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX2_MC    0x6
+/* enum: RX3_MC (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_RX3_MC    0x7
+/* enum: TX0 */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX0       0x8
+/* enum: TX1 */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX1       0x9
+/* enum: TX2 (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX2       0xa
+/* enum: TX3 (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX3       0xb
+/* enum: MC_VTBL0 (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC_VTBL0  0xe
+/* enum: MC_VTBL1 (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC_VTBL1  0xf
 /* enum: Leave the value as received */
 #define          MC_CMD_FILTER_ALLOC_IN_SRC_SRC       0x10
-/* enum: Translate 0/1/2/3 to 4/5/6/7 */
+/* enum: Translate 0/1/2/3 to 4/5/6/7 (Huntington) / 28/29/30/31 (Medford) */
 #define          MC_CMD_FILTER_ALLOC_IN_SRC_FWD       0x11
+/* enum: TX0_ALT0 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX0_ALT0  0x15
+/* enum: TX0_ALT1 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX0_ALT1  0x16
+/* enum: TX0_ALT2 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX0_ALT2  0x17
+/* enum: TX1_ALT0 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX1_ALT0  0x19
+/* enum: TX1_ALT1 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX1_ALT1  0x1a
+/* enum: TX1_ALT2 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_TX1_ALT2  0x1b
+/* enum: MC (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC  0x1c
+/* enum: MC_ALT0 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC_ALT0  0x1d
+/* enum: MC_ALT1 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC_ALT1  0x1e
+/* enum: MC_ALT2 (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_SRC_MC_ALT2  0x1f
 /* alignment */
 #define       MC_CMD_FILTER_ALLOC_IN_ECHO_MACADDR_RSVD_OFST 27
 #define       MC_CMD_FILTER_ALLOC_IN_ECHO_MACADDR_RSVD_LEN 1
@@ -1326,24 +1528,39 @@
 #define       MC_CMD_FILTER_ALLOC_IN_EXP_FLTR_RSVD_OFST 86
 #define       MC_CMD_FILTER_ALLOC_IN_EXP_FLTR_RSVD_LEN 2
 #define       MC_CMD_FILTER_ALLOC_IN_EXP_FLAGS_OFST 88
-/* enum: flag if destination mac matches */
-#define          MC_CMD_FILTER_ALLOC_IN_FLAG_DST_MACADDR_MATCH  0x1
-/* enum: flag if source mac matches */
-#define          MC_CMD_FILTER_ALLOC_IN_FLAG_SRC_MACADDR_MATCH  0x2
-/* enum: flag if only expected filter bits are set */
-#define          MC_CMD_FILTER_ALLOC_IN_FLAG_FLTR_MATCH_EXACT  0x4
-/* enum: flag if all expected filter bits are set */
-#define          MC_CMD_FILTER_ALLOC_IN_FLAG_FLTR_MATCH_ALL  0x8
-/* enum: drop if destination mac doesn't match */
-#define          MC_CMD_FILTER_ALLOC_IN_DROP_DST_MACADDR_MATCH  0x10
-/* enum: drop if source mac doesn't match */
-#define          MC_CMD_FILTER_ALLOC_IN_DROP_SRC_MACADDR_MATCH  0x20
-/* enum: drop unless only expected filter bits are set */
-#define          MC_CMD_FILTER_ALLOC_IN_DROP_FLTR_MATCH_EXACT  0x40
-/* enum: drop unless all expected filter bits are set */
-#define          MC_CMD_FILTER_ALLOC_IN_DROP_FLTR_MATCH_ALL  0x80
-/* enum: include filter info */
-#define          MC_CMD_FILTER_ALLOC_IN_INCLUDE_FLTR  0x100
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_DST_MACADDR_MATCH_LBN 0
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_DST_MACADDR_MATCH_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_SRC_MACADDR_MATCH_LBN 1
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_SRC_MACADDR_MATCH_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_FLTR_MATCH_EXACT_LBN 2
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_FLTR_MATCH_EXACT_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_FLTR_MATCH_ALL_LBN 3
+#define        MC_CMD_FILTER_ALLOC_IN_FLAG_FLTR_MATCH_ALL_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_DST_MACADDR_MATCH_LBN 4
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_DST_MACADDR_MATCH_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_SRC_MACADDR_MATCH_LBN 5
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_SRC_MACADDR_MATCH_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_FLTR_MATCH_EXACT_LBN 6
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_FLTR_MATCH_EXACT_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_FLTR_MATCH_ALL_LBN 7
+#define        MC_CMD_FILTER_ALLOC_IN_DROP_FLTR_MATCH_ALL_WIDTH 1
+#define        MC_CMD_FILTER_ALLOC_IN_CNTXT_LBN 8
+#define        MC_CMD_FILTER_ALLOC_IN_CNTXT_WIDTH 4
+#define          MC_CMD_FILTER_ALLOC_IN_ZERO  0x0 /* enum */
+/* enum: Filter bits from the MAC filters (Huntington only). */
+#define          MC_CMD_FILTER_ALLOC_IN_FLTR  0x1
+#define          MC_CMD_FILTER_ALLOC_IN_FINFO_SRC_DST  0x2 /* enum */
+/* enum: (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_FINFO_WRD1   0x3
+/* enum: (Medford only) */
+#define          MC_CMD_FILTER_ALLOC_IN_FINFO_WRD2   0x4
+#define          MC_CMD_FILTER_ALLOC_IN_FINFO_WRD3   0x5 /* enum */
+/* enum: (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_TS_LO   0x6
+/* enum: (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_TS_MD   0x7
+/* enum: (Huntington only) */
+#define          MC_CMD_FILTER_ALLOC_IN_TS_HI   0x8
 
 /* MC_CMD_FILTER_ALLOC_OUT msgresponse */
 #define    MC_CMD_FILTER_ALLOC_OUT_LEN 4
@@ -1830,6 +2047,8 @@
 #define          MC_CMD_PD_TEST_IN_LUE_FORCED_DEPTH  0x7 /* enum */
 #define          MC_CMD_PD_TEST_IN_SPAM_EXC_REQ_OFF  0x8 /* enum */
 #define          MC_CMD_PD_TEST_IN_SPAM_EXC_REQ_ON   0x9 /* enum */
+#define          MC_CMD_PD_TEST_IN_ENGINE_LOOPBACK_HACK_ON  0xa /* enum */
+#define          MC_CMD_PD_TEST_IN_ENGINE_LOOPBACK_HACK_OFF   0xb /* enum */
 /* align the arguments to 32 bits */
 #define       MC_CMD_PD_TEST_IN_EFTEST_OP_RSVD_OFST 2
 #define       MC_CMD_PD_TEST_IN_EFTEST_OP_RSVD_LEN 2
@@ -1847,55 +2066,21 @@
 #define       MC_CMD_PD_TEST_IN_LUE_AF_FIFO_THRESHOLD_OFST 24
 
 /* MC_CMD_PORT_SETTINGS_IN msgrequest */
-#define    MC_CMD_PORT_SETTINGS_IN_LEN 9
+#define    MC_CMD_PORT_SETTINGS_IN_LEN 8
 /* identifies the test */
 #define       MC_CMD_PORT_SETTINGS_IN_EFTEST_ID_OFST 0
 #define       MC_CMD_PORT_SETTINGS_IN_EFTEST_ID_LEN 1
 /* the operation requested */
 #define       MC_CMD_PORT_SETTINGS_IN_EFTEST_OP_OFST 1
 #define       MC_CMD_PORT_SETTINGS_IN_EFTEST_OP_LEN 1
-/* enum: Apply the supplied settings */
+/* enum: Deprecated */
 #define          MC_CMD_PORT_SETTINGS_IN_APPLY  0x0
-#define       MC_CMD_PORT_SETTINGS_IN_LOOPBACK_MODE_OFST 2
-#define       MC_CMD_PORT_SETTINGS_IN_LOOPBACK_MODE_LEN 1
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_NONE  0x0 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_DATA  0x1 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_GMAC  0x2 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XGMII  0x3 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XGXS  0x4 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XAUI  0x5 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_GMII  0x6 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_SGMII  0x7 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XGBR  0x8 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XFI  0x9 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XAUI_FAR  0xa /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_GMII_FAR  0xb /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_SGMII_FAR  0xc /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XFI_FAR  0xd /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_GPHY  0xe /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_PHYXS  0xf /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_PCS  0x10 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_PMAPMD  0x11 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XPORT  0x12 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XGMII_WS  0x13 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XAUI_WS  0x14 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XAUI_WS_FAR  0x15 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XAUI_WS_NEAR  0x16 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_GMII_WS  0x17 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XFI_WS  0x18 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_XFI_WS_FAR  0x19 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_LOOPBACK_PHYXS_WS  0x1a /* enum */
-#define       MC_CMD_PORT_SETTINGS_IN_SPEED_SELECT_OFST 3
-#define       MC_CMD_PORT_SETTINGS_IN_SPEED_SELECT_LEN 1
-#define          MC_CMD_PORT_SETTINGS_IN_SPEED_100M  0x0 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_SPEED_1G    0x1 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_SPEED_10G   0x2 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_SPEED_40G   0x3 /* enum */
-/* 16-bit numeric value specifying the MTU for this port. */
-#define       MC_CMD_PORT_SETTINGS_IN_MTU_OFST 4
-#define       MC_CMD_PORT_SETTINGS_IN_MTU_LEN 2
-#define       MC_CMD_PORT_SETTINGS_IN_MISC_OFST 6
-#define       MC_CMD_PORT_SETTINGS_IN_MISC_LEN 1
+/* enum: Apply misc MAC/PCS settings */
+#define          MC_CMD_PORT_SETTINGS_IN_APPLY_MISC  0x1
+/* align the arguments to 32 bits */
+#define       MC_CMD_PORT_SETTINGS_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_PORT_SETTINGS_IN_EFTEST_OP_RSVD_LEN 2
+#define       MC_CMD_PORT_SETTINGS_IN_FLAGS_OFST 4
 #define        MC_CMD_PORT_SETTINGS_IN_CRC_APPEND_LBN 0
 #define        MC_CMD_PORT_SETTINGS_IN_CRC_APPEND_WIDTH 1
 #define        MC_CMD_PORT_SETTINGS_IN_CRC_FORWARD_LBN 1
@@ -1904,26 +2089,29 @@
 #define        MC_CMD_PORT_SETTINGS_IN_PCSCLK_333_WIDTH 1
 #define        MC_CMD_PORT_SETTINGS_IN_PCSCLK_625_LBN 3
 #define        MC_CMD_PORT_SETTINGS_IN_PCSCLK_625_WIDTH 1
-#define        MC_CMD_PORT_SETTINGS_IN_CT_STFWD_LBN 4
-#define        MC_CMD_PORT_SETTINGS_IN_CT_STFWD_WIDTH 1
-#define        MC_CMD_PORT_SETTINGS_IN_CT_FORCE_LBN 5
-#define        MC_CMD_PORT_SETTINGS_IN_CT_FORCE_WIDTH 1
-#define        MC_CMD_PORT_SETTINGS_IN_SPARE6_LBN 6
-#define        MC_CMD_PORT_SETTINGS_IN_SPARE6_WIDTH 1
-#define        MC_CMD_PORT_SETTINGS_IN_SPARE7_LBN 7
-#define        MC_CMD_PORT_SETTINGS_IN_SPARE7_WIDTH 1
-#define       MC_CMD_PORT_SETTINGS_IN_MACSEC_MODE_OFST 7
-#define       MC_CMD_PORT_SETTINGS_IN_MACSEC_MODE_LEN 1
-#define          MC_CMD_PORT_SETTINGS_IN_BYPASS_EXT  0x0 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_BYPASS_TXI  0x1 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_BYPASS_RXI  0x2 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_BYPASS_INT  0x3 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_BYPASS_ENC  0x4 /* enum */
-#define       MC_CMD_PORT_SETTINGS_IN_FC_MODE_OFST 8
-#define       MC_CMD_PORT_SETTINGS_IN_FC_MODE_LEN 1
-#define          MC_CMD_PORT_SETTINGS_IN_FC_NONE  0x0 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_FC_LEGACY  0x1 /* enum */
-#define          MC_CMD_PORT_SETTINGS_IN_FC_QBB  0x2 /* enum */
+#define        MC_CMD_PORT_SETTINGS_IN_PCSCLK_714_LBN 4
+#define        MC_CMD_PORT_SETTINGS_IN_PCSCLK_714_WIDTH 1
+
+/* MC_CMD_PORT_LINK_CONTROL_IN msgrequest */
+#define    MC_CMD_PORT_LINK_CONTROL_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_PORT_LINK_CONTROL_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_PORT_LINK_CONTROL_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_PORT_LINK_CONTROL_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_PORT_LINK_CONTROL_IN_EFTEST_OP_LEN 1
+/* enum: MAC/PCS link control */
+#define          MC_CMD_PORT_LINK_CONTROL_IN_LINK_CONTROL  0x2
+/* align the arguments to 32 bits */
+#define       MC_CMD_PORT_LINK_CONTROL_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_PORT_LINK_CONTROL_IN_EFTEST_OP_RSVD_LEN 2
+/* Link mode */
+#define       MC_CMD_PORT_LINK_CONTROL_IN_MODE_OFST 4
+#define          MC_CMD_PORT_LINK_CONTROL_IN_LINK_UP  0x0 /* enum */
+#define          MC_CMD_PORT_LINK_CONTROL_IN_LINK_DOWN_LOWPOWER  0x1 /* enum */
+#define          MC_CMD_PORT_LINK_CONTROL_IN_LINK_DOWN_LOS  0x2 /* enum */
+#define          MC_CMD_PORT_LINK_CONTROL_IN_LINK_DOWN_LOCAL_FAULT  0x3 /* enum */
+#define          MC_CMD_PORT_LINK_CONTROL_IN_LINK_DOWN_REMOTE_FAULT  0x4 /* enum */
 
 /* MC_CMD_LED_SETTINGS_IN msgrequest */
 #define    MC_CMD_LED_SETTINGS_IN_LEN 8
@@ -2012,7 +2200,7 @@
 #define          MC_CMD_EFTEST_OBFF_TEST_GET_STATE_OUT_ENABLE_WAKE  0x3
 
 /* MC_CMD_CLOCK_RATIO_IN msgrequest */
-#define    MC_CMD_CLOCK_RATIO_IN_LEN 2
+#define    MC_CMD_CLOCK_RATIO_IN_LEN 8
 /* identifies the test */
 #define       MC_CMD_CLOCK_RATIO_IN_EFTEST_ID_OFST 0
 #define       MC_CMD_CLOCK_RATIO_IN_EFTEST_ID_LEN 1
@@ -2021,6 +2209,41 @@
 #define       MC_CMD_CLOCK_RATIO_IN_EFTEST_OP_LEN 1
 /* enum: Get current clock ratio */
 #define          MC_CMD_CLOCK_RATIO_IN_GET_RATIO  0x0
+/* enum: Get current clock ratio */
+#define          MC_CMD_CLOCK_RATIO_IN_SET_RATIO  0x1
+/* enum: Set Rhodium G0 clock (Medford Rhodium only) */
+#define          MC_CMD_CLOCK_RATIO_IN_SET_RHODIUM_G0  0x2
+/* enum: Set Protium G0 clock (Medford Protium only) */
+#define          MC_CMD_CLOCK_RATIO_IN_SET_PROTIUM_G0  0x3
+/* align the arguments to 32 bits */
+#define       MC_CMD_CLOCK_RATIO_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_CLOCK_RATIO_IN_EFTEST_OP_RSVD_LEN 2
+/* Clock ratio */
+#define       MC_CMD_CLOCK_RATIO_IN_RATIO_OFST 4
+#define       MC_CMD_CLOCK_RATIO_IN_RATIO_LEN 2
+/* Rhodium/Protium G0 clock in Hz */
+#define       MC_CMD_CLOCK_RATIO_IN_G0_HZ_OFST 4
+
+/* MC_CMD_CLOCK_RATIO_EXT_IN msgrequest */
+#define    MC_CMD_CLOCK_RATIO_EXT_IN_LEN 12
+/* identifies the test */
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_EFTEST_OP_LEN 1
+/*            Enum values, see field(s): */
+/*               MC_CMD_CLOCK_RATIO_IN/EFTEST_OP */
+/* align the arguments to 32 bits */
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_EFTEST_OP_RSVD_LEN 2
+/* Clock ratio */
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_RATIO_OFST 4
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_RATIO_LEN 2
+/* Rhodium/Protium G0 clock in Hz */
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_G0_HZ_OFST 4
+/* Divider between G0 and Fast Clock (Protium only) */
+#define       MC_CMD_CLOCK_RATIO_EXT_IN_CAKE_MODE_OFST 8
 
 /* MC_CMD_CLOCK_RATIO_OUT msgrequest */
 #define    MC_CMD_CLOCK_RATIO_OUT_LEN 2
@@ -2146,7 +2369,7 @@
 #define       MC_CMD_PIOTEST_MSG_OUT_TEST_RESULTS_MAXNUM 63
 
 /* MC_CMD_CSR_ACCESS_START_IN msgrequest */
-#define    MC_CMD_CSR_ACCESS_START_IN_LEN 24
+#define    MC_CMD_CSR_ACCESS_START_IN_LEN 28
 /* identifies the test */
 #define       MC_CMD_CSR_ACCESS_START_IN_EFTEST_ID_OFST 0
 #define       MC_CMD_CSR_ACCESS_START_IN_EFTEST_ID_LEN 1
@@ -2156,6 +2379,7 @@
 #define          MC_CMD_CSR_ACCESS_START_IN_START_READ  0x1 /* enum */
 #define          MC_CMD_CSR_ACCESS_START_IN_START_WRITE  0x2 /* enum */
 #define          MC_CMD_CSR_ACCESS_START_IN_START_WRITE_READ  0x3 /* enum */
+#define          MC_CMD_CSR_ACCESS_START_IN_START_WRITE_SAFE  0x4 /* enum */
 /* Align next field to 32bits */
 #define       MC_CMD_CSR_ACCESS_START_IN_PAD_OFST 2
 #define       MC_CMD_CSR_ACCESS_START_IN_PAD_LEN 2
@@ -2172,6 +2396,8 @@
 #define       MC_CMD_CSR_ACCESS_START_IN_DATA_OFST 16
 /* Register address. */
 #define       MC_CMD_CSR_ACCESS_START_IN_ADDRESS_OFST 20
+/* Address increment */
+#define       MC_CMD_CSR_ACCESS_START_IN_STEP_OFST 24
 
 /* MC_CMD_CSR_ACCESS_STOP_IN msgrequest */
 #define    MC_CMD_CSR_ACCESS_STOP_IN_LEN 2
@@ -2184,7 +2410,7 @@
 #define          MC_CMD_CSR_ACCESS_STOP_IN_STOP_RETURN_RESULT  0x0 /* enum */
 
 /* MC_CMD_CSR_ACCESS_STOP_OUT msgresponse */
-#define    MC_CMD_CSR_ACCESS_STOP_OUT_LEN 24
+#define    MC_CMD_CSR_ACCESS_STOP_OUT_LEN 28
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_STATUS_OFST 0
 #define          MC_CMD_CSR_ACCESS_STOP_OUT_STATUS_BUSY  0x8000000 /* enum */
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_READ_COUNT_OFST 4
@@ -2192,6 +2418,7 @@
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_READ_VAL_2_OFST 12
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_READ_VAL_3_OFST 16
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_READ_VAL_4_OFST 20
+#define       MC_CMD_CSR_ACCESS_STOP_OUT_ADDRESS_OFST 24
 
 /* MC_CMD_MC_DOORBELL_STRESS_IN msgrequest */
 #define    MC_CMD_MC_DOORBELL_STRESS_IN_LEN 2
@@ -2292,8 +2519,26 @@
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_PE_REQ_MAX_RX  0xe /* enum */
 /* 1 - TX, 0 - RX */
 #define       MC_CMD_EFTEST_PE_INSTALL_IN_TX_OFST 4
-/* dmaq (absolute) */
-#define       MC_CMD_EFTEST_PE_INSTALL_IN_DMAQ_OFST 8
+/* TX when TX_SRC is HOST and RX when RX_DST in HOST: absolute dmaq; TX when
+ * TX_SRC is SFFF: sfff_destination_id (relative to TXDP specified by
+ * TXDP0/TXDP1); RX when RX_DST is P0 or P1: sfff_destination_id (relative to
+ * TXDP specified by P0/P1)
+ */
+#define       MC_CMD_EFTEST_PE_INSTALL_IN_DMAQ_OR_SFFF_DEST_ID_OFST 8
+#define       MC_CMD_EFTEST_PE_INSTALL_IN_DMAQ_OR_SFFF_DEST_ID_LEN 2
+#define       MC_CMD_EFTEST_PE_INSTALL_IN_TX_SRC_OR_RX_DST_OFST 10
+#define       MC_CMD_EFTEST_PE_INSTALL_IN_TX_SRC_OR_RX_DST_LEN 2
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_TX_SRC_HOST  0x0 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_TX_SRC_SFFF_TXDP0  0x1 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_TX_SRC_SFFF_TXDP1  0x2 /* enum */
+#define        MC_CMD_EFTEST_PE_INSTALL_IN_DUMMY2_LBN 0
+#define        MC_CMD_EFTEST_PE_INSTALL_IN_DUMMY2_WIDTH 16
+/* enum: Backward compatability with older snapper; don't use. */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_RX_DST_BACKWARD_COMPATIBILTY  0x0
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_RX_DST_HOST  0x8 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_RX_DST_MC  0x4 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_RX_DST_P0  0x2 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_RX_DST_P1  0x1 /* enum */
 /* Instruction count */
 #define       MC_CMD_EFTEST_PE_INSTALL_IN_INSTR_COUNT_OFST 12
 /* Instructions */
@@ -2316,6 +2561,9 @@
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_ALGN_MODE_L3       0x1 /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_ALGN_MODE_L4       0x2 /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_ALGN_MODE_PLD      0x3 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_ALGN_MODE_INNER_L3   0x4 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_ALGN_MODE_INNER_L4   0x5 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_ALGN_MODE_INNER_PLD  0x6 /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_ALGN_MODE_DEFAULT  0x0 /* enum */
 #define        MC_CMD_EFTEST_PE_INSTALL_IN_OP_LBN 4
 #define        MC_CMD_EFTEST_PE_INSTALL_IN_OP_WIDTH 4
@@ -2324,6 +2572,7 @@
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_OP_LD1_IGN      0x2 /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_OP_ST1_ACC      0x3 /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_OP_ST1_IMM      0x4 /* enum */
+#define          MC_CMD_EFTEST_PE_INSTALL_IN_OP_PE_CSUM_IMM  0x6 /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_OP_LD2_ACC      0x9 /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_OP_LD2_IGN      0xa /* enum */
 #define          MC_CMD_EFTEST_PE_INSTALL_IN_OP_ST2_ACC      0xb /* enum */
@@ -2539,8 +2788,838 @@
 /* The index of the new stats block to associate with the port. */
 #define       MC_CMD_EFTEST_RMON_SET_SCRATCH_IN_RMON_INDEX_OFST 8
 
+/* MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_RX_UP_CONV_STATS  0x1 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_PORT_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_PORT_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_UP_CONV_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_RX_IPI_STATS  0x2 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_VFIFO_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_VFIFO_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_IPI_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_IPI_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_RX_CLASS_STATS  0x3 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_RX_SUPER_CLASS_STATS  0x4 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_SUPER_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_SUPER_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_RX_CLASS_DROPS_STATS  0x5 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_CLASS_DROPS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_RX_SUPER_CLASS_DROPS_STATS  0x6 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_SUPER_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_SUPER_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_SUPER_CLASS_DROPS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_RX_ERRORS_STATS  0x7 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_QID_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_QID_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_ERRORS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_RX_OVERFLOW_STATS  0x8 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_RX_OVERFLOW_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_TX_CLASS_STATS  0x9 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_TX_CLASS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_TX_CLASS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_TX_SUPER_CLASS_STATS  0xa /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_SUPER_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_SUPER_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_TX_SUPER_CLASS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_TX_NOWHERE_STATS  0xb /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_TX_NOWHERE_QBB_STATS  0xc /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_PRIORITY_LBN 0
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_PRIORITY_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_TX_NOWHERE_QBB_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_TX_ERRORS_STATS  0xd /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_QID_LBN 0
+#define        MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_QID_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_TX_ERRORS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_TX_OVERFLOW_STATS  0xe /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_CLASS_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_TX_OVERFLOW_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_LEN 16
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_RX_ADD_QID_TO_CLASS  0xf /* enum */
+/* class */
+#define       MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_CLASS_OFST 4
+/* qid */
+#define       MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_QID_OFST 8
+/* flags */
+#define       MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_FLAGS_OFST 12
+#define        MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_SUPER_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_SUPER_CLASS_WIDTH 4
+#define        MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_PE_DELTA_LBN 4
+#define        MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_PE_DELTA_WIDTH 4
+#define        MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_MTU_LBN 8
+#define        MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_IN_MTU_WIDTH 14
+
+/* MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_RX_ADD_QID_TO_CLASS_OUT_LEN 0
+
+/* MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_LEN 16
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_TX_ADD_QID_TO_CLASS  0x10 /* enum */
+/* class */
+#define       MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_CLASS_OFST 4
+/* qid */
+#define       MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_QID_OFST 8
+/* flags */
+#define       MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_FLAGS_OFST 12
+#define        MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_SUPER_CLASS_LBN 0
+#define        MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_SUPER_CLASS_WIDTH 4
+#define        MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_PE_DELTA_LBN 4
+#define        MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_PE_DELTA_WIDTH 4
+#define        MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_MTU_LBN 8
+#define        MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_IN_MTU_WIDTH 14
+
+/* MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_TX_ADD_QID_TO_CLASS_OUT_LEN 0
+
+/* MC_CMD_EFTEST_RMON_ALLOC_CLASS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_ALLOC_CLASS_IN_LEN 2
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_ALLOC_CLASS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_ALLOC_CLASS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_ALLOC_CLASS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_ALLOC_CLASS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_ALLOC_CLASS_IN_ALLOC_CLASS  0x11 /* enum */
+
+/* MC_CMD_EFTEST_RMON_ALLOC_CLASS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_ALLOC_CLASS_OUT_LEN 4
+/* class */
+#define       MC_CMD_EFTEST_RMON_ALLOC_CLASS_OUT_CLASS_OFST 0
+
+/* MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_IN_LEN 2
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_IN_ALLOC_SUPER_CLASS  0x12 /* enum */
+
+/* MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_OUT_LEN 4
+/* super_class */
+#define       MC_CMD_EFTEST_RMON_ALLOC_SUPER_CLASS_OUT_SUPER_CLASS_OFST 0
+
+/* MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN_DEALLOC_CLASS  0x13 /* enum */
+/* class */
+#define       MC_CMD_EFTEST_RMON_DEALLOC_CLASS_IN_CLASS_OFST 4
+
+/* MC_CMD_EFTEST_RMON_DEALLOC_CLASS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_DEALLOC_CLASS_OUT_LEN 0
+
+/* MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN_DEALLOC_SUPER_CLASS  0x14 /* enum */
+/* super_class */
+#define       MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_IN_SUPER_CLASS_OFST 4
+
+/* MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_DEALLOC_SUPER_CLASS_OUT_LEN 0
+
+/* MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN_COLLECT_CLASS_STATS  0x15 /* enum */
+/* The port id associated with the vport/pport at which to collect class stats
+ */
+#define       MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_IN_PORT_ID_OFST 4
+
+/* MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_OUT_LEN 4
+/* class */
+#define       MC_CMD_EFTEST_RMON_COLLECT_CLASS_STATS_OUT_CLASS_OFST 0
+
+/* MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN_COLLECT_SUPER_CLASS_STATS  0x16 /* enum */
+/* The port id associated with the vport/pport at which to collect class stats
+ */
+#define       MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_IN_PORT_ID_OFST 4
+
+/* MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_OUT_LEN 4
+/* super_class */
+#define       MC_CMD_EFTEST_RMON_COLLECT_SUPER_CLASS_STATS_OUT_SUPER_CLASS_OFST 0
+
+/* MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_MC_INGRESS_STATS  0x17 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_PORT_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_PORT_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_MC_EGRESS0_STATS  0x18 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS0_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_MC_EGRESS1_STATS  0x19 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS1_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_MC_EGRESS2_STATS  0x1a /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS2_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_MC_EGRESS3_STATS  0x1b /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS3_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_MC_EGRESS_RX0_STATS  0x1c /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX0_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_MC_EGRESS_RX1_STATS  0x1d /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_RX1_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_MC_EGRESS_NCSI_STATS  0x1e /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_NCSI_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_MC_INGRESS_BUCKETS_STATS  0x1f /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_INGRESS_BUCKETS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_MC_EGRESS_BUCKETS_STATS  0x20 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_BUCKETS_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_MC_EGRESS_VLAN_STATS  0x21 /* enum */
+/* flags */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_UNUSED_LBN 0
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_UNUSED_WIDTH 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_RST_LBN 16
+#define        MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_IN_RST_WIDTH 1
+
+/* MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT_LENMIN 4
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT_LEN(num) (0+4*(num))
+/* Array of stats */
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT_BUFFER_OFST 0
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT_BUFFER_LEN 4
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT_BUFFER_MINNUM 1
+#define       MC_CMD_EFTEST_RMON_MC_EGRESS_VLAN_STATS_OUT_BUFFER_MAXNUM 63
+
+/* MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN_END_COLLECT_CLASS_STATS  0x22 /* enum */
+/* The port id associated with the vport/pport at which to stop collecting
+ * class stats
+ */
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_IN_PORT_ID_OFST 4
+
+/* MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_END_COLLECT_CLASS_STATS_OUT_LEN 0
+
+/* MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN msgrequest */
+#define    MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN_END_COLLECT_SUPER_CLASS_STATS  0x23 /* enum */
+/* The port id associated with the vport/pport at which to stop collecting
+ * class stats
+ */
+#define       MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_IN_PORT_ID_OFST 4
+
+/* MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_OUT msgresponse */
+#define    MC_CMD_EFTEST_RMON_END_COLLECT_SUPER_CLASS_STATS_OUT_LEN 0
+
 /* MC_CMD_EFTEST_TXDPCPU_IN msgrequest */
-#define    MC_CMD_EFTEST_TXDPCPU_IN_LEN 8
+#define    MC_CMD_EFTEST_TXDPCPU_IN_LEN 2
 /* identifies the test */
 #define       MC_CMD_EFTEST_TXDPCPU_IN_EFTEST_ID_OFST 0
 #define       MC_CMD_EFTEST_TXDPCPU_IN_EFTEST_ID_LEN 1
@@ -2548,8 +3627,92 @@
 #define       MC_CMD_EFTEST_TXDPCPU_IN_EFTEST_OP_OFST 1
 #define       MC_CMD_EFTEST_TXDPCPU_IN_EFTEST_OP_LEN 1
 #define          MC_CMD_EFTEST_TXDPCPU_IN_SET_MIN_FILL  0x0 /* enum */
+#define          MC_CMD_EFTEST_TXDPCPU_IN_SET_TS_MODE  0x1 /* enum */
+#define          MC_CMD_EFTEST_TXDPCPU_IN_EVENT_GEN  0x2 /* enum */
+
+/* MC_CMD_EFTEST_TXDPCPU_OUT msgresponse */
+#define    MC_CMD_EFTEST_TXDPCPU_OUT_LEN 0
+
+/* MC_CMD_EFTEST_TXDPCPU_SET_MIN_FILL_IN msgrequest */
+#define    MC_CMD_EFTEST_TXDPCPU_SET_MIN_FILL_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_TXDPCPU_SET_MIN_FILL_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_TXDPCPU_SET_MIN_FILL_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_TXDPCPU_SET_MIN_FILL_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_TXDPCPU_SET_MIN_FILL_IN_EFTEST_OP_LEN 1
 /* The min_fill value to use, or 0 to use the default. */
-#define       MC_CMD_EFTEST_TXDPCPU_IN_MIN_FILL_OFST 4
+#define       MC_CMD_EFTEST_TXDPCPU_SET_MIN_FILL_IN_MIN_FILL_OFST 4
+
+/* MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN msgrequest */
+#define    MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_LEN 12
+/* identifies the test */
+#define       MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_EFTEST_OP_LEN 1
+/* The TXQ on which to set timestamp mode */
+#define       MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_TARGET_TXQ_OFST 4
+/* The timestamp mode to select */
+#define       MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_TS_MODE_OFST 8
+#define          MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_TS_MODE_DEFAULT  0x0 /* enum */
+#define          MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_TS_MODE_TXDP  0x1 /* enum */
+#define          MC_CMD_EFTEST_TXDPCPU_SET_TS_MODE_IN_TS_MODE_MAC  0x2 /* enum */
+
+/* MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN msgrequest */
+#define    MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_LEN 36
+/* identifies the test */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_EFTEST_OP_LEN 1
+/* Various flags */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_FLAG_GET_LBN 0
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_FLAG_GET_WIDTH 1
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_FLAG_SET_LBN 1
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_FLAG_SET_WIDTH 1
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_FLAG_FIXUP_LBN 2
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_FLAG_FIXUP_WIDTH 1
+/* The TXDP to query/modify */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_TXDP_OFST 8
+/* The EVQ to receive events */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_TARGET_EVQ_OFST 12
+/* The low 32 bits of the event */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_EVENT_LO_OFST 16
+/* The high 32 bits of the event */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_EVENT_HI_OFST 20
+/* The number of events to send per batch, 0 to disable */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_BATCH_SIZE_OFST 24
+/* The time between batches */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_BATCH_PERIOD_OFST 28
+/* Increment in ESF_DZ_TX_DESCR_INDX between events. */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_IN_DESCR_INDX_INCR_OFST 32
+
+/* MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT msgresponse */
+#define    MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_LEN 28
+/* Indicates which flags are supported. */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_SUPPORTED_FLAGS_OFST 0
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_SUPPORTED_FLAG_GET_LBN 0
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_SUPPORTED_FLAG_GET_WIDTH 1
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_SUPPORTED_FLAG_SET_LBN 1
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_SUPPORTED_FLAG_SET_WIDTH 1
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_SUPPORTED_FLAG_FIXUP_LBN 2
+#define        MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_SUPPORTED_FLAG_FIXUP_WIDTH 1
+/* The EVQ to receive events, -1 to disable */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_TARGET_EVQ_OFST 4
+/* The low 32 bits of the event */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_EVENT_LO_OFST 8
+/* The high 32 bits of the event */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_EVENT_HI_OFST 12
+/* The number of events to send per batch */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_BATCH_SIZE_OFST 16
+/* The time between batches */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_BATCH_PERIOD_OFST 20
+/* Increment in ESF_DZ_TX_DESCR_INDX between events. */
+#define       MC_CMD_EFTEST_TXDPCPU_EVENT_GEN_OUT_DESCR_INDX_INCR_OFST 24
 
 /* MC_CMD_EFTEST_ECC_TEST_IN msgrequest */
 #define    MC_CMD_EFTEST_ECC_TEST_IN_LEN 16
@@ -2675,6 +3838,8 @@
 #define        MC_CMD_EFTEST_DUT_FEATURES_OUT_40G_SUPPORTED_WIDTH 1
 #define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PCIE_MONITOR_PRESENT_LBN 20
 #define        MC_CMD_EFTEST_DUT_FEATURES_OUT_PCIE_MONITOR_PRESENT_WIDTH 1
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_TX_STRIPING_LBN 21
+#define        MC_CMD_EFTEST_DUT_FEATURES_OUT_TX_STRIPING_WIDTH 1
 /* First word of flags. */
 #define       MC_CMD_EFTEST_DUT_FEATURES_OUT_FLAGS1_OFST 0
 
@@ -2697,7 +3862,7 @@
 #define       MC_CMD_EFTEST_PCIE_MONITOR_IN_EFTEST_OP_RSVD_LEN 2
 
 /* MC_CMD_EFTEST_PCIE_MONITOR_OUT msgresponse */
-#define    MC_CMD_EFTEST_PCIE_MONITOR_OUT_LEN 232
+#define    MC_CMD_EFTEST_PCIE_MONITOR_OUT_LEN 328
 /* Number of LTSSM transitions that have occurred */
 #define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LTSSM_TRANSITIONS_OFST 0
 /* Number of PHY link up/down transitions that have occurred */
@@ -2705,15 +3870,1451 @@
 /* Error counts for each PCIE lane */
 #define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LANE_ERRORS_OFST 8
 #define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LANE_ERRORS_LEN 4
-#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LANE_ERRORS_NUM 8
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_LANE_ERRORS_NUM 32
 /* Error counts for each bit in the AER uncorrectable error status register */
-#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_UNCORRECTABLE_ERRORS_OFST 40
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_UNCORRECTABLE_ERRORS_OFST 136
 #define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_UNCORRECTABLE_ERRORS_LEN 4
 #define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_UNCORRECTABLE_ERRORS_NUM 32
 /* Error counts for each bit in the AER correctable error status register */
-#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_CORRECTABLE_ERRORS_OFST 168
+#define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_CORRECTABLE_ERRORS_OFST 264
 #define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_CORRECTABLE_ERRORS_LEN 4
 #define       MC_CMD_EFTEST_PCIE_MONITOR_OUT_AER_CORRECTABLE_ERRORS_NUM 16
+
+/* MC_CMD_EFTEST_UART_IN msgrequest */
+#define    MC_CMD_EFTEST_UART_IN_LEN 2
+/* identifies the test */
+#define       MC_CMD_EFTEST_UART_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_UART_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_EFTEST_UART_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_UART_IN_EFTEST_OP_LEN 1
+/* enum: loopback test on uart0 */
+#define          MC_CMD_EFTEST_UART_IN_UART0_LOOPBACK  0x0
+/* enum: loopback test on uart1 */
+#define          MC_CMD_EFTEST_UART_IN_UART1_LOOPBACK  0x1
+
+/* MC_CMD_EFTEST_SMC_STRESS_START_IN msgrequest */
+#define    MC_CMD_EFTEST_SMC_STRESS_START_IN_LEN 16
+/* identifies the test */
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_SMC_STRESS_START_IN_STRESS_START  0x0 /* enum */
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_EFTEST_OP_RSVD_LEN 2
+/* Owner id (VI relative number) */
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_OWNER_ID_OFST 4
+/* number of iterations to run */
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_ITERATIONS_OFST 8
+/* number of iteration to reschedule after */
+#define       MC_CMD_EFTEST_SMC_STRESS_START_IN_SCHEDULE_PERIOD_OFST 12
+
+/* MC_CMD_EFTEST_SMC_STRESS_START_OUT msgresponse */
+#define    MC_CMD_EFTEST_SMC_STRESS_START_OUT_LEN 4
+#define       MC_CMD_EFTEST_SMC_STRESS_START_OUT_THREAD_OFST 0
+
+/* MC_CMD_EFTEST_SMC_STRESS_POLL_IN msgrequest */
+#define    MC_CMD_EFTEST_SMC_STRESS_POLL_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_SMC_STRESS_POLL_IN_STRESS_POLL  0x1 /* enum */
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_IN_EFTEST_OP_RSVD_LEN 2
+/* pointer to thread structure to poll */
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_IN_THREAD_OFST 4
+
+/* MC_CMD_EFTEST_SMC_STRESS_POLL_OUT msgresponse */
+#define    MC_CMD_EFTEST_SMC_STRESS_POLL_OUT_LEN 4
+#define       MC_CMD_EFTEST_SMC_STRESS_POLL_OUT_RESULT_OFST 0
+
+/* MC_CMD_EFTEST_PORT_MODE_INFO_IN msgrequest */
+#define    MC_CMD_EFTEST_PORT_MODE_INFO_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_PORT_MODE_INFO_IN_GET  0x0 /* enum */
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_IN_EFTEST_OP_RSVD_LEN 2
+/* Port mode */
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_IN_MODE_OFST 4
+
+/* MC_CMD_EFTEST_PORT_MODE_INFO_OUT msgresponse */
+#define    MC_CMD_EFTEST_PORT_MODE_INFO_OUT_LENMIN 20
+#define    MC_CMD_EFTEST_PORT_MODE_INFO_OUT_LENMAX 244
+#define    MC_CMD_EFTEST_PORT_MODE_INFO_OUT_LEN(num) (4+16*(num))
+/* Number of ports */
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_OUT_PORT_COUNT_OFST 0
+/* Port info, layed out as PORT_CONFIG_ENTRY */
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_OUT_PORT_ENTRIES_OFST 4
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_OUT_PORT_ENTRIES_LEN 16
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_OUT_PORT_ENTRIES_MINNUM 1
+#define       MC_CMD_EFTEST_PORT_MODE_INFO_OUT_PORT_ENTRIES_MAXNUM 15
+
+/* MC_CMD_EFTEST_PORT_MODE_GET_IN msgrequest */
+#define    MC_CMD_EFTEST_PORT_MODE_GET_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_PORT_MODE_GET_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_PORT_MODE_GET_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_PORT_MODE_GET_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_PORT_MODE_GET_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_PORT_MODE_GET_IN_GET  0x1 /* enum */
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_PORT_MODE_GET_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_PORT_MODE_GET_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_PORT_MODE_GET_OUT msgresponse */
+#define    MC_CMD_EFTEST_PORT_MODE_GET_OUT_LEN 4
+/* Current mode */
+#define       MC_CMD_EFTEST_PORT_MODE_GET_OUT_MODE_OFST 0
+
+/* MC_CMD_EFTEST_PORT_MODE_SET_IN msgrequest */
+#define    MC_CMD_EFTEST_PORT_MODE_SET_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_PORT_MODE_SET_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_PORT_MODE_SET_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_PORT_MODE_SET_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_PORT_MODE_SET_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_PORT_MODE_SET_IN_SET  0x2 /* enum */
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_PORT_MODE_SET_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_PORT_MODE_SET_IN_EFTEST_OP_RSVD_LEN 2
+/* Port mode */
+#define       MC_CMD_EFTEST_PORT_MODE_SET_IN_MODE_OFST 4
+
+/* MC_CMD_EFTEST_SPI_DMA_IN msgrequest */
+#define    MC_CMD_EFTEST_SPI_DMA_IN_LEN 16
+/* identifies the test */
+#define       MC_CMD_EFTEST_SPI_DMA_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SPI_DMA_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SPI_DMA_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SPI_DMA_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_SPI_DMA_IN_DMA_SIMPLE  0x0 /* enum */
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SPI_DMA_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SPI_DMA_IN_EFTEST_OP_RSVD_LEN 2
+/* Flash address to DMA from (ignored for SIMPLE) */
+#define       MC_CMD_EFTEST_SPI_DMA_IN_FLASH_ADDR_OFST 4
+/* IMEM address to DMA to (ignored for SIMPLE) */
+#define       MC_CMD_EFTEST_SPI_DMA_IN_IMEM_ADDR_OFST 8
+/* transfer length (ignored for SIMPLE) */
+#define       MC_CMD_EFTEST_SPI_DMA_IN_LEN_OFST 12
+
+/* MC_CMD_EFTEST_SPI_DMA_OUT msgresponse */
+#define    MC_CMD_EFTEST_SPI_DMA_OUT_LEN 4
+#define       MC_CMD_EFTEST_SPI_DMA_OUT_RESULT_OFST 0
+
+/* MC_CMD_EFTEST_MIPS_INSNS_IN msgrequest */
+#define    MC_CMD_EFTEST_MIPS_INSNS_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_MIPS_INSNS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_MIPS_INSNS_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_MIPS_INSNS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_MIPS_INSNS_IN_EFTEST_OP_LEN 1
+/* enum: test the MUL instruction */
+#define          MC_CMD_EFTEST_MIPS_INSNS_IN_INSN_MUL  0x0
+/* enum: test CLO and CLZ */
+#define          MC_CMD_EFTEST_MIPS_INSNS_IN_INSN_CLO_CLZ  0x1
+/* enum: test EXT and INS */
+#define          MC_CMD_EFTEST_MIPS_INSNS_IN_INSN_EXT_INS  0x2
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_MIPS_INSNS_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_MIPS_INSNS_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_MIPS_INSNS_OUT msgresponse */
+#define    MC_CMD_EFTEST_MIPS_INSNS_OUT_LEN 4
+#define       MC_CMD_EFTEST_MIPS_INSNS_OUT_RESULT_OFST 0
+
+/* MC_CMD_EFTEST_EF100_SWITCH_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_IN_EFTEST_OP_LEN 1
+/* enum: Check buffer state after a test */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_BUFFER_CHECK  0x0
+/* enum: Set a TXQ's target VFIFOs */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_SET_TX_MAP  0x1
+/* enum: Find needed vFIFO */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_VFIFO_FIND  0x2
+/* enum: Initialise and start a VFIFO */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_VFIFO_SETUP  0x3
+/* enum: Tear down a VFIFO */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_VFIFO_TEARDOWN  0x4
+/* enum: Repeatedly set up and tear down a VFIFO */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_VFIFO_AGITATE  0x5
+/* enum: Enable and disable inputs to the eng_epi arbiters */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_ENG_EPI_VFIFO_ENABLE  0x6
+/* enum: Start or stop the thread which toggles the inputs to the eng_epi
+ * arbiters
+ */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_ENG_EPI_VFIFO_TOGGLE  0x7
+/* enum: Ask the NIC which VFIFOs are reserved for testing purposes. */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_GET_RESERVED_VFIFOS  0x8
+/* enum: Turn VFIFO egress on/off. */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_VFIFO_EGRESS  0x9
+/* enum: Find all VFIFOs attached to a given (ipi, epi) pair. */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_VFIFO_FIND_ALL  0xa
+/* enum: Retrieve parameters for a single VFIFO */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_VFIFO_QUERY  0xb
+/* enum: Enable/disable cut-through mode */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_SET_CUT_THROUGH  0xc
+/* enum: Adjust switch configuration for testing purposes */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_SET_TEST_MODE  0xd
+/* enum: Start or stop the thread which reads the ENG_EPI and NET_EPI VFIFO
+ * XON/XOFF registers.
+ */
+#define          MC_CMD_EFTEST_EF100_SWITCH_IN_EPI_VFIFO_XONXOFF_READ_AGITATOR  0xe
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_EFTEST_OP_LEN 1
+/* enum: Check buffer state after a test */
+#define          MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_BUFFER_CHECK  0x0
+/* enum: Set a TXQ's target VFIFOs */
+#define          MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_SET_TX_MAP  0x0
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_EFTEST_OP_RSVD_LEN 2
+/* Queue ID */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_TXQID_OFST 4
+/* Queue ID */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_NET_VF_OFST 8
+/* Queue ID */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_HOST_VF_OFST 12
+/* Port number */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TX_MAP_IN_PORT_NUM_OFST 16
+
+/* MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_LEN 24
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_EFTEST_OP_RSVD_LEN 2
+/* Source */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_SRC_OFST 4
+/* enum: Network */
+#define          MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_NET  0x1
+/* enum: Engine */
+#define          MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_ENG  0x2
+/* Interface number */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_IPI_NUM_OFST 8
+/* Destination */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_DST_OFST 12
+/* enum: Network */
+/*               MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_NET  0x1 */
+/* enum: Engine */
+/*               MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_ENG  0x2 */
+/* Interface number */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_EPI_NUM_OFST 16
+/* Associated qbb priority */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_IN_QBB_PRIORITY_OFST 20
+
+/* MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_OUT msgresponse */
+#define    MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_OUT_LEN 8
+/* VFIFO number */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_OUT_VFIFO_OFST 0
+/* Common pool number use by this VFIFO */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_OUT_CP_OFST 4
+
+/* MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_LEN 48
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EFTEST_OP_RSVD_LEN 2
+/* VFIFO number */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_VFIFO_OFST 4
+/* 1 = net_ipi, 2 = eng_ipi */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_IPI_SIDE_OFST 8
+/* 0 to 3 */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_IPI_NUM_OFST 12
+/* 1 = net_ipi, 2 = eng_ipi */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EPI_SIDE_OFST 16
+/* 0 to 3 */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_EPI_NUM_OFST 20
+/* Common pool to allocate buffers from */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_CP_OFST 24
+/* Cut-through threshold */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_CT_THRESH_OFST 28
+/* 0 = store & forward, 1 = cut through */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_TX_MODE_OFST 32
+/* eng_epi arbiter weight */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_FRR_WEIGHT_OFST 36
+/* Pause priority (for net EPI) */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_PRI_OFST 40
+/* enum: Don't point the upconverter at this VFIFO; for testing purposes */
+#define          MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_NONE  0x8
+/* Number of iterations to execute (VFIFO_AGITATE only) */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_SETUP_IN_ITERATIONS_OFST 44
+
+/* MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_LEN 24
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_EFTEST_OP_RSVD_LEN 2
+/* ENG_EPI port (0 or 1; corresponds to RXDP instance) */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_EPI_OFST 4
+/* Which inputs to enable */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_ENABLE_OFST 8
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_ENABLE_LEN 8
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_ENABLE_LO_OFST 8
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_ENABLE_HI_OFST 12
+/* Which inputs to disable */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_DISABLE_OFST 16
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_DISABLE_LEN 8
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_DISABLE_LO_OFST 16
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_ENABLE_IN_DISABLE_HI_OFST 20
+
+/* MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_LEN 32
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_EFTEST_OP_RSVD_LEN 2
+/* Start or stop the MC thread. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_OP_OFST 4
+/* enum: Start MC thread */
+#define          MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_OP_START  0x0
+/* enum: Stop MC thread */
+#define          MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_OP_STOP  0x1
+/* ENG_EPI port (0 or 1 - corresponds to RXDP instance, 2 for both RXDPs) */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_EPI_OFST 8
+/* VFIFO(s) to toggle. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_VFIFOS_OFST 12
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_VFIFOS_LEN 8
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_VFIFOS_LO_OFST 12
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_VFIFOS_HI_OFST 16
+/* How long to keep VFIFO(s) enabled, microseconds. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_ON_PERIOD_OFST 20
+/* How long to keep VFIFO(s) diabled, microseconds. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_OFF_PERIOD_OFST 24
+/* Port number, or -1 for all ports on this RXDP */
+#define       MC_CMD_EFTEST_EF100_SWITCH_ENG_EPI_VFIFO_TOGGLE_IN_PORT_OFST 28
+
+/* MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT msgresponse */
+#define    MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_LEN 80
+/* The first ENG_EPI (0-63) VFIFO that snapper can use, or 64 if none are
+ * reserved.
+ */
+#define       MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_ENG_VFIFO_BASE_OFST 0
+/* The first NET_EPI (64-127) VFIFO that snapper can use, or 128 if none are
+ * reserved.
+ */
+#define       MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_NET_VFIFO_BASE_OFST 4
+/* Value of EMCR_MEMORY_MODULE_COMMON_POOL_RAM_SELECT register */
+#define       MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_RAM_SELECT_OFST 8
+/* Value of EMCR_SWITCH_FC_CP_KIND register */
+#define       MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_CP_KIND_OFST 12
+/* Array to store the number of buffers assigned to each of common pools. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_NUM_BUFS_PER_POOL_OFST 16
+#define       MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_NUM_BUFS_PER_POOL_LEN 4
+#define       MC_CMD_EFTEST_EF100_SWITCH_GET_RESERVED_VFIFOS_OUT_NUM_BUFS_PER_POOL_NUM 16
+
+/* MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_LEN 12
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_EFTEST_OP_RSVD_LEN 2
+/* VFIFO id */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_VID_OFST 4
+/* Egress turned ON/OFF */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_EGRESS_IN_ON_OFST 8
+
+/* MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_EFTEST_OP_RSVD_LEN 2
+/* Source */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_SRC_OFST 4
+/* enum: Network */
+#define          MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_NET  0x1
+/* enum: Engine */
+#define          MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_ENG  0x2
+/* Interface number */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_IPI_NUM_OFST 8
+/* Destination */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_DST_OFST 12
+/* enum: Network */
+/*               MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_NET  0x1 */
+/* enum: Engine */
+/*               MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_ENG  0x2 */
+/* Interface number */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_IN_EPI_NUM_OFST 16
+
+/* MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT msgresponse */
+#define    MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT_LEN 264
+/* VFIFO number or -1 */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT_VFIFO_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT_VFIFO_LEN 4
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT_VFIFO_NUM 33
+/* VFIFO priority or -1 */
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT_PRIO_OFST 132
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT_PRIO_LEN 4
+#define       MC_CMD_EFTEST_EF100_SWITCH_VFIFO_FIND_ALL_OUT_PRIO_NUM 33
+
+/* MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_EFTEST_OP_RSVD_LEN 2
+/* For each VFIFO, 1 to enable cut-through mode or 0 to disable */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_ENABLE_OFST 4
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_CUT_THROUGH_IN_ENABLE_LEN 16
+
+/* MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_EFTEST_OP_RSVD_LEN 2
+/* Which test-specific configuration to select. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_TEST_MODE_OFST 4
+/* enum: Use production configuration (no test-specific adjustments) */
+#define          MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_PRODUCTION  0x0
+/* enum: Assign most net-egr buffers to the loopback path */
+#define          MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_LOOPBACK  0x1
+/* enum: Test Qbb with a broken transmitter that ignores XOFFs */
+#define          MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_QBB_BROKEN  0x2
+/* enum: Test Qbb with preemptive discard enabled */
+#define          MC_CMD_EFTEST_EF100_SWITCH_SET_TEST_MODE_IN_QBB_DISCARD  0x3
+
+/* MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT msgresponse */
+#define    MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_LEN 4
+#define       MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_RESULT_OFST 0
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_MULTI_BUFFS_ON_IDLE_VF     0x1 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_BUFF_ON_DISABLED_VF        0x2 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_NO_BUFF_ON_ENABLED_VF      0x4 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_CP_EXCESS_BUFFS            0x8 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_CP_MISSING_BUFFS           0x10 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_SW_EXCESS_BUFFS            0x20 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_SW_MISSING_BUFFS           0x40 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_FA_URGENCY_ERROR           0x80 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_VF_WORD_CNTR_NONZERO       0x100 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_VF_PKT_CNTR_NONZERO        0x200 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_VF_PKT_START_CNTR_NONZERO  0x400 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_VF_ADV_WORD_CNTR_NONZERO   0x800 /* enum */
+#define          MC_CMD_EFTEST_EF100_BUFFER_CHECK_OUT_PF_WORD_CNTR_NONZERO       0x1000 /* enum */
+
+/* MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_LEN 12
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_EFTEST_OP_RSVD_LEN 2
+/* Start or stop the MC thread. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_OP_OFST 4
+/* enum: Start MC thread */
+#define          MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_OP_START  0x0
+/* enum: Stop MC thread */
+#define          MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_OP_STOP  0x1
+/* Delay between read iterations, microseconds. */
+#define       MC_CMD_EFTEST_EF100_SWITCH_EPI_VFIFO_XONXOFF_READ_AGITATOR_IN_DELAY_OFST 8
+
+/* MC_CMD_EFTEST_SFFF_IN msgrequest */
+#define    MC_CMD_EFTEST_SFFF_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_SFFF_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SFFF_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SFFF_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SFFF_IN_EFTEST_OP_LEN 1
+/* enum: Allocate buffers for use by SFFF */
+#define          MC_CMD_EFTEST_SFFF_IN_ALLOC_BUFS  0x0
+/* enum: Free buffers allocated for use by SFFF */
+#define          MC_CMD_EFTEST_SFFF_IN_FREE_BUFS  0x1
+/* enum: Allocate a SFFF destination entry */
+#define          MC_CMD_EFTEST_SFFF_IN_ALLOC_DEST  0x2
+/* enum: Allocate a SFFF destination entry */
+#define          MC_CMD_EFTEST_SFFF_IN_FREE_DEST  0x3
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SFFF_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SFFF_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_SFFF_OUT msgresponse */
+#define    MC_CMD_EFTEST_SFFF_OUT_LEN 0
+
+/* MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN msgrequest */
+#define    MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_LEN 12
+/* Identifies the test */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_EFTEST_OP_LEN 1
+/* Padding to align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_EFTEST_OP_RSVD_LEN 2
+/* Target TXDP, 0 or 1 */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_TXDP_OFST 4
+/* The number of buffers to allocate */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_BUFS_IN_COUNT_OFST 8
+
+/* MC_CMD_EFTEST_SFFF_ALLOC_BUFS_OUT msgresponse */
+#define    MC_CMD_EFTEST_SFFF_ALLOC_BUFS_OUT_LEN 0
+
+/* MC_CMD_EFTEST_SFFF_FREE_BUFS_IN msgrequest */
+#define    MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_LEN 12
+/* Identifies the test */
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_EFTEST_OP_LEN 1
+/* Padding to align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_EFTEST_OP_RSVD_LEN 2
+/* Target TXDP, 0 or 1 */
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_TXDP_OFST 4
+/* The number of buffers to free */
+#define       MC_CMD_EFTEST_SFFF_FREE_BUFS_IN_COUNT_OFST 8
+
+/* MC_CMD_EFTEST_SFFF_FREE_BUFS_OUT msgresponse */
+#define    MC_CMD_EFTEST_SFFF_FREE_BUFS_OUT_LEN 0
+
+/* MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN msgrequest */
+#define    MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_LEN 20
+/* Identifies the test */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_EFTEST_OP_LEN 1
+/* Padding to align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_EFTEST_OP_RSVD_LEN 2
+/* Target TXDP, 0 or 1. */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_TXDP_OFST 4
+/* The target port number. */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_PORT_NUM_OFST 8
+/* Various flags fields */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_FLAGS_OFST 12
+#define        MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_SEND_TO_MAC_LBN 0
+#define        MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_SEND_TO_MAC_WIDTH 1
+#define        MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_SEND_TO_RX_LBN 1
+#define        MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_SEND_TO_RX_WIDTH 1
+/* The port ID associated with the v-adaptor which should contain this SFFF
+ * destination.
+ */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_IN_PORT_ID_OFST 16
+
+/* MC_CMD_EFTEST_SFFF_ALLOC_DEST_OUT msgresponse */
+#define    MC_CMD_EFTEST_SFFF_ALLOC_DEST_OUT_LEN 4
+/* Identifies the SFFF destination number. This is used in the RX_QUEUE field
+ * in RX filters with RX_DEST set to RX_DEST_TX0 or RX_DEST_TX1. It is also
+ * used in the FREE_DEST operation.
+ */
+#define       MC_CMD_EFTEST_SFFF_ALLOC_DEST_OUT_DEST_ID_OFST 0
+
+/* MC_CMD_EFTEST_SFFF_FREE_DEST_IN msgrequest */
+#define    MC_CMD_EFTEST_SFFF_FREE_DEST_IN_LEN 12
+/* Identifies the test */
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_EFTEST_OP_LEN 1
+/* Padding to align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_EFTEST_OP_RSVD_LEN 2
+/* Target TXDP, 0 or 1. */
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_TXDP_OFST 4
+/* The SFFF destination number returned by the ALLOC_DEST operation. */
+#define       MC_CMD_EFTEST_SFFF_FREE_DEST_IN_DEST_ID_OFST 8
+
+/* MC_CMD_EFTEST_SFFF_FREE_DEST_OUT msgresponse */
+#define    MC_CMD_EFTEST_SFFF_FREE_DEST_OUT_LEN 0
+
+/* MC_CMD_EFTEST_OTP_NVRAM_IN msgrequest */
+#define    MC_CMD_EFTEST_OTP_NVRAM_IN_LENMIN 12
+#define    MC_CMD_EFTEST_OTP_NVRAM_IN_LENMAX 252
+#define    MC_CMD_EFTEST_OTP_NVRAM_IN_LEN(num) (12+4*(num))
+/* identifies the test */
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_EFTEST_OP_LEN 1
+/* enum: Read data as bytes from specified BIT address */
+#define          MC_CMD_EFTEST_OTP_NVRAM_IN_READ_BYTES  0x0
+/* enum: Write data provided, starting at BIT address specified */
+#define          MC_CMD_EFTEST_OTP_NVRAM_IN_WRITE_BITS  0x1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_EFTEST_OP_RSVD_LEN 2
+/* Bit address of operation */
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_ADDR_OFST 4
+/* number of bytes to read or write */
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_COUNT_OFST 8
+/* data to write (for WRITE_BITS) */
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_DATA_OFST 12
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_DATA_LEN 4
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_DATA_MINNUM 0
+#define       MC_CMD_EFTEST_OTP_NVRAM_IN_DATA_MAXNUM 60
+
+/* MC_CMD_EFTEST_OTP_NVRAM_OUT msgresponse */
+#define    MC_CMD_EFTEST_OTP_NVRAM_OUT_LENMIN 0
+#define    MC_CMD_EFTEST_OTP_NVRAM_OUT_LENMAX 252
+#define    MC_CMD_EFTEST_OTP_NVRAM_OUT_LEN(num) (0+4*(num))
+/* data read (for READ_BYTES) */
+#define       MC_CMD_EFTEST_OTP_NVRAM_OUT_DATA_OFST 0
+#define       MC_CMD_EFTEST_OTP_NVRAM_OUT_DATA_LEN 4
+#define       MC_CMD_EFTEST_OTP_NVRAM_OUT_DATA_MINNUM 0
+#define       MC_CMD_EFTEST_OTP_NVRAM_OUT_DATA_MAXNUM 63
+
+/* MC_CMD_EFTEST_XIP_IN msgrequest */
+#define    MC_CMD_EFTEST_XIP_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_XIP_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_XIP_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_XIP_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_XIP_IN_EFTEST_OP_LEN 1
+/* enum: Check we can run a small fragment of XIP code */
+#define          MC_CMD_EFTEST_XIP_IN_XIP_TRIVIAL  0x0
+/* enum: Check handling of jumps at the end of blocks */
+#define          MC_CMD_EFTEST_XIP_IN_XIP_END_BLOCK_JUMP  0x1
+/* enum: Check that running a small piece of code with correct CMAC and auth on
+ * works
+ */
+#define          MC_CMD_EFTEST_XIP_IN_XIP_TRIVIAL_AUTHGOOD  0x2
+/* enum: Check that running a small piece of code with incorrect CMAC and auth
+ * on fails as expected
+ */
+#define          MC_CMD_EFTEST_XIP_IN_XIP_TRIVIAL_AUTHBAD  0x3
+/* enum: Test CMAC calculation in DMA mode */
+#define          MC_CMD_EFTEST_XIP_IN_DMA_CMAC_TEST  0x4
+/* enum: Test CMAC calculation in FW mode */
+#define          MC_CMD_EFTEST_XIP_IN_FW_CMAC_TEST  0x5
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_XIP_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_XIP_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_XIP_DMA_CMAC_IN msgrequest */
+#define    MC_CMD_EFTEST_XIP_DMA_CMAC_IN_LEN 12
+/* identifies the test */
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_EFTEST_OP_RSVD_LEN 2
+/* Key length to use */
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_KEYLEN_OFST 4
+/* size of data to CMAC */
+#define       MC_CMD_EFTEST_XIP_DMA_CMAC_IN_BLOCKSIZE_OFST 8
+
+/* MC_CMD_EFTEST_XIP_OUT msgresponse */
+#define    MC_CMD_EFTEST_XIP_OUT_LEN 0
+
+/* MC_CMD_EFTEST_VI_ALLOC_IN msgrequest */
+#define    MC_CMD_EFTEST_VI_ALLOC_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_VI_ALLOC_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_VI_ALLOC_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_VI_ALLOC_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_VI_ALLOC_IN_EFTEST_OP_LEN 1
+/* enum: Configure VI allocation */
+#define          MC_CMD_EFTEST_VI_ALLOC_IN_VI_ALLOC_CONFIGURE  0x0
+/* enum: Restore VI allocation */
+#define          MC_CMD_EFTEST_VI_ALLOC_IN_VI_ALLOC_RESTORE  0x1
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_VI_ALLOC_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_VI_ALLOC_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN msgrequest */
+#define    MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_EFTEST_OP_LEN 1
+/* enum: Configure VI allocation */
+#define          MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_VI_ALLOC_CONFIGURE  0x0
+/* enum: Restore VI allocation */
+#define          MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_VI_ALLOC_RESTORE  0x1
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_EFTEST_OP_RSVD_LEN 2
+/* The port number to modify. */
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_PORT_NUM_OFST 4
+/* The new base VI number for the port. */
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_VI_BASE_OFST 8
+/* The number of VIs associated with the port. */
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_VI_COUNT_OFST 12
+/* The shift applied to VI indexes. */
+#define       MC_CMD_EFTEST_VI_ALLOC_CONFIGURE_IN_VI_SHIFT_OFST 16
+
+/* MC_CMD_EFTEST_VI_ALLOC_RESTORE_IN msgrequest */
+#define    MC_CMD_EFTEST_VI_ALLOC_RESTORE_IN_LEN 8
+/* The port number to restore. Set to 0xffffffff for all ports. */
+#define       MC_CMD_EFTEST_VI_ALLOC_RESTORE_IN_PORT_NUM_OFST 4
+
+/* MC_CMD_EFTEST_VI_ALLOC_OUT msgresponse */
+#define    MC_CMD_EFTEST_VI_ALLOC_OUT_LEN 0
+
+/* MC_CMD_EFTEST_CCOM_IN msgrequest */
+#define    MC_CMD_EFTEST_CCOM_IN_LEN 2
+/* identifies the test */
+#define       MC_CMD_EFTEST_CCOM_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_CCOM_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_CCOM_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_CCOM_IN_EFTEST_OP_LEN 1
+/* enum: Walking ones test across all CCOM outputs */
+#define          MC_CMD_EFTEST_CCOM_IN_CCOM_MANUAL  0x0
+
+/* MC_CMD_EFTEST_CCOM_OUT msgresponse */
+#define    MC_CMD_EFTEST_CCOM_OUT_LEN 0
+
+/* MC_CMD_EFTEST_EVB msgrequest */
+#define    MC_CMD_EFTEST_EVB_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_EVB_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EVB_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EVB_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EVB_EFTEST_OP_LEN 1
+/* enum: Attempt to destroy everything downstream of an evb port, then unassign
+ * it
+ */
+#define          MC_CMD_EFTEST_EVB_EVB_PORT_RESET  0x0
+/* enum: As per EVB_PORT_RESET, but each free/unassign is performed as the
+ * owner of the object in question
+ */
+#define          MC_CMD_EFTEST_EVB_EVB_PORT_RESET_AS_OWNER  0x1
+/* enum: Create the default vSwitch on a pport */
+#define          MC_CMD_EFTEST_EVB_EVB_PORT_CREATE_DEFAULT_VSWITCH  0x2
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_EVB_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EVB_EFTEST_OP_RSVD_LEN 2
+/* The port ID associated to be reset */
+#define       MC_CMD_EFTEST_EVB_PORT_ID_OFST 4
+
+/* MC_CMD_EFTEST_EVB_OUT msgresponse */
+#define    MC_CMD_EFTEST_EVB_OUT_LEN 0
+
+/* MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN msgrequest */
+#define    MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_EFTEST_OP_LEN 1
+/* enum: Enable all VFIFOs on network egress port interface. */
+#define          MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_XON  0x0
+/* enum: Disable all VFIFOs on network egress port interface. */
+#define          MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_XOFF  0x1
+/* enum: Return all VFIFOs on network egress port interface to normal
+ * operation.
+ */
+#define          MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_NORMAL  0x2
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_EFTEST_OP_RSVD_LEN 2
+/* The external port number of network egress port interface to modify. */
+#define       MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_IN_PORT_NUM_OFST 4
+
+/* MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_OUT msgresponse */
+#define    MC_CMD_EFTEST_EF100_NET_EPI_FLOW_CTL_OUT_LEN 0
+
+/* MC_CMD_EFTEST_BUG41963_IN msgrequest */
+#define    MC_CMD_EFTEST_BUG41963_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_BUG41963_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_BUG41963_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_BUG41963_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_BUG41963_IN_EFTEST_OP_LEN 1
+/* enum: Run the directed test */
+#define          MC_CMD_EFTEST_BUG41963_IN_OP_RUN  0x0
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_BUG41963_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_BUG41963_IN_EFTEST_OP_RSVD_LEN 2
+/* Flags to control which operations to perform */
+#define       MC_CMD_EFTEST_BUG41963_IN_FLAGS_OFST 4
+#define        MC_CMD_EFTEST_BUG41963_IN_IRQ_SCREAM_LBN 0
+#define        MC_CMD_EFTEST_BUG41963_IN_IRQ_SCREAM_WIDTH 1
+#define        MC_CMD_EFTEST_BUG41963_IN_IRQ_DISABLE_LBN 1
+#define        MC_CMD_EFTEST_BUG41963_IN_IRQ_DISABLE_WIDTH 1
+#define        MC_CMD_EFTEST_BUG41963_IN_WDOG_DISABLE_LBN 2
+#define        MC_CMD_EFTEST_BUG41963_IN_WDOG_DISABLE_WIDTH 1
+#define        MC_CMD_EFTEST_BUG41963_IN_LOG_C0_EPC_LBN 3
+#define        MC_CMD_EFTEST_BUG41963_IN_LOG_C0_EPC_WIDTH 1
+#define        MC_CMD_EFTEST_BUG41963_IN_SPIN_MODE_LBN 8
+#define        MC_CMD_EFTEST_BUG41963_IN_SPIN_MODE_WIDTH 8
+
+/* MC_CMD_EFTEST_BUG41963_OUT msgresponse */
+#define    MC_CMD_EFTEST_BUG41963_OUT_LEN 0
+
+/* MC_CMD_EFTEST_HWPKTGEN_INIT_IN msgrequest */
+#define    MC_CMD_EFTEST_HWPKTGEN_INIT_IN_LEN 12
+/* identifies the test */
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_HWPKTGEN_INIT_IN_INIT  0x0 /* enum */
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_EFTEST_OP_RSVD_LEN 2
+/* Generator instance to use */
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_ID_OFST 4
+/* Number of bytes to clear the control vectors for */
+#define       MC_CMD_EFTEST_HWPKTGEN_INIT_IN_DATA_SIZE_OFST 8
+
+/* MC_CMD_EFTEST_HWPKTGEN_INIT_OUT msgresponse */
+#define    MC_CMD_EFTEST_HWPKTGEN_INIT_OUT_LEN 0
+
+/* MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN msgrequest */
+#define    MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_CREATE_PACKET  0x1 /* enum */
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_EFTEST_OP_RSVD_LEN 2
+/* Generator instance to use */
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_ID_OFST 4
+/* Byte offset of start of packet. Must be multiple of 16/32 for 10G/40G. */
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_OFFSET_OFST 8
+/* Length of packet in bytes */
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_LENGTH_OFST 12
+/* Error flags for packet */
+#define       MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_IN_ERRORS_OFST 16
+
+/* MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_OUT msgresponse */
+#define    MC_CMD_EFTEST_HWPKTGEN_CREATE_PACKET_OUT_LEN 0
+
+/* MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN msgrequest */
+#define    MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_LEN 144
+/* identifies the test */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_EDIT_PACKET  0x2 /* enum */
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_EFTEST_OP_RSVD_LEN 2
+/* Generator instance to use */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_ID_OFST 4
+/* Byte offset of start of edit. Must be multiple of 4 */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_OFFSET_OFST 8
+/* Length of edit in bytes (max 128). Must be a multiple of 4 */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_LENGTH_OFST 12
+/* New packet data */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_DATA_OFST 16
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_IN_DATA_LEN 128
+
+/* MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_OUT msgresponse */
+#define    MC_CMD_EFTEST_HWPKTGEN_EDIT_PACKET_OUT_LEN 0
+
+/* MC_CMD_EFTEST_HWPKTGEN_START_IN msgrequest */
+#define    MC_CMD_EFTEST_HWPKTGEN_START_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_HWPKTGEN_START_IN_START  0x3 /* enum */
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_EFTEST_OP_RSVD_LEN 2
+/* Generator instance to use */
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_ID_OFST 4
+/* Number of bytes of data to include in loop. Must be multiple of 16/32 for
+ * 10G/40G.
+ */
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_DATA_SIZE_OFST 8
+/* Number of times to loop. */
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_FRAME_COUNT_OFST 12
+/* Data injection rate (0=1x, 1=1/2x, 2=1/4x switch clock) */
+#define       MC_CMD_EFTEST_HWPKTGEN_START_IN_SAMPLING_RATE_OFST 16
+
+/* MC_CMD_EFTEST_HWPKTGEN_START_OUT msgresponse */
+#define    MC_CMD_EFTEST_HWPKTGEN_START_OUT_LEN 0
+
+/* MC_CMD_EFTEST_HWPKTGEN_POLL_IN msgrequest */
+#define    MC_CMD_EFTEST_HWPKTGEN_POLL_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_HWPKTGEN_POLL_IN_POLL  0x4 /* enum */
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_IN_EFTEST_OP_RSVD_LEN 2
+/* Generator instance to use */
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_IN_ID_OFST 4
+
+/* MC_CMD_EFTEST_HWPKTGEN_POLL_OUT msgresponse */
+#define    MC_CMD_EFTEST_HWPKTGEN_POLL_OUT_LEN 4
+/* Number of times left to loop */
+#define       MC_CMD_EFTEST_HWPKTGEN_POLL_OUT_REMAINING_COUNT_OFST 0
+
+/* MC_CMD_EFTEST_HWPKTGEN_STOP_IN msgrequest */
+#define    MC_CMD_EFTEST_HWPKTGEN_STOP_IN_LEN 8
+/* identifies the test */
+#define       MC_CMD_EFTEST_HWPKTGEN_STOP_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_HWPKTGEN_STOP_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_HWPKTGEN_STOP_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_HWPKTGEN_STOP_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_HWPKTGEN_STOP_IN_STOP  0x5 /* enum */
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_HWPKTGEN_STOP_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_HWPKTGEN_STOP_IN_EFTEST_OP_RSVD_LEN 2
+/* Generator instance to use */
+#define       MC_CMD_EFTEST_HWPKTGEN_STOP_IN_ID_OFST 4
+
+/* MC_CMD_EFTEST_HWPKTGEN_STOP_OUT msgresponse */
+#define    MC_CMD_EFTEST_HWPKTGEN_STOP_OUT_LEN 0
+
+/* MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN msgrequest */
+#define    MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_EDIT_CONTROL  0x6 /* enum */
+/* align the arguments to 32 bits. */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_EFTEST_OP_RSVD_LEN 2
+/* Generator instance to use */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_ID_OFST 4
+/* First control word offset */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_OFFSET_OFST 8
+/* Number of words to edit */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_LENGTH_OFST 12
+/* Word value to set */
+#define       MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_IN_VALUE_OFST 16
+
+/* MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_OUT msgresponse */
+#define    MC_CMD_EFTEST_HWPKTGEN_EDIT_CONTROL_OUT_LEN 0
+
+/* MC_CMD_EFTEST_JTAG_MBIST_IN msgrequest */
+#define    MC_CMD_EFTEST_JTAG_MBIST_IN_LEN 2
+/* identifies the test */
+#define       MC_CMD_EFTEST_JTAG_MBIST_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_JTAG_MBIST_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_JTAG_MBIST_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_JTAG_MBIST_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_JTAG_MBIST_IN_MBIST  0x0 /* enum */
+
+/* MC_CMD_EFTEST_JTAG_MBIST_OUT msgresponse */
+#define    MC_CMD_EFTEST_JTAG_MBIST_OUT_LEN 4
+/* Test result (0 = success) */
+#define       MC_CMD_EFTEST_JTAG_MBIST_OUT_RESULT_OFST 0
+
+/* MC_CMD_EFTEST_JTAG_TAP_IN msgrequest */
+#define    MC_CMD_EFTEST_JTAG_TAP_IN_LEN 2
+/* identifies the test */
+#define       MC_CMD_EFTEST_JTAG_TAP_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_JTAG_TAP_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_JTAG_TAP_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_JTAG_TAP_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_EFTEST_JTAG_TAP_IN_TAP  0x1 /* enum */
+
+/* MC_CMD_EFTEST_JTAG_TAP_OUT msgresponse */
+#define    MC_CMD_EFTEST_JTAG_TAP_OUT_LEN 8
+/* Test result (0 = success) */
+#define       MC_CMD_EFTEST_JTAG_TAP_OUT_RESULT_OFST 0
+/* Instruction tapped out */
+#define       MC_CMD_EFTEST_JTAG_TAP_OUT_VALUE_OFST 4
+
+/* MC_CMD_EFTEST_PACER_IN msgrequest */
+#define    MC_CMD_EFTEST_PACER_IN_LEN 4
+/* identifies the test */
+#define       MC_CMD_EFTEST_PACER_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_PACER_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_PACER_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_PACER_IN_EFTEST_OP_LEN 1
+/* enum: Set and/or get the pacer parameters */
+#define          MC_CMD_EFTEST_PACER_IN_ADJUST_PARAMS  0x0
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_PACER_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_PACER_IN_EFTEST_OP_RSVD_LEN 2
+
+/* MC_CMD_EFTEST_PACER_OUT msgresponse */
+#define    MC_CMD_EFTEST_PACER_OUT_LEN 0
+
+/* MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN msgrequest */
+#define    MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_LEN 24
+/* identifies the test */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_EFTEST_ID_LEN 1
+/* Test-specific operation */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_EFTEST_OP_LEN 1
+/* align the arguments to 32 bits */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_EFTEST_OP_RSVD_OFST 2
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_EFTEST_OP_RSVD_LEN 2
+/* The TXDP number of the pacer to adjust */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_TXDP_NUM_OFST 4
+/* Flags to control which operations to perform. */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_FLAGS_OFST 8
+#define        MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_FLAG_SET_ALERT_MASK_DELAY_LBN 0
+#define        MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_FLAG_SET_ALERT_MASK_DELAY_WIDTH 1
+#define        MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_FLAG_SET_ALERT_MASK_THRESHOLD_LBN 1
+#define        MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_FLAG_SET_ALERT_MASK_THRESHOLD_WIDTH 1
+#define        MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_FLAG_SET_SNOOPER_THRESHOLD_LBN 2
+#define        MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_FLAG_SET_SNOOPER_THRESHOLD_WIDTH 1
+/* The new mask delay value to use. See SF-112428-TC for details. */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_ALERT_MASK_DELAY_OFST 12
+/* The new mask threshold value to use. See SF-112428-TC for details. */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_ALERT_MASK_THRESHOLD_OFST 16
+/* The new snoop threshold value to use. See SF-112428-TC for details. */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_IN_SNOOPER_THRESHOLD_OFST 20
+
+/* MC_CMD_EFTEST_PACER_ADJUST_PARAMS_OUT msgresponse */
+#define    MC_CMD_EFTEST_PACER_ADJUST_PARAMS_OUT_LEN 24
+/* The old mask delay value in use. See SF-112428-TC for details. */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_OUT_ALERT_MASK_DELAY_OFST 12
+/* The old mask threshold value in use. See SF-112428-TC for details. */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_OUT_ALERT_MASK_THRESHOLD_OFST 16
+/* The old snoop threshold value in use. See SF-112428-TC for details. */
+#define       MC_CMD_EFTEST_PACER_ADJUST_PARAMS_OUT_SNOOPER_THRESHOLD_OFST 20
+
+
+/***********************************/
+/* MC_CMD_ROMBIST
+ * Multiplexed MCDI call for ROM BIST operations (only valid in boot ROM)
+ */
+#define MC_CMD_ROMBIST 0x10e
+#undef MC_CMD_0x10e_PRIVILEGE_CTG
+
+#define MC_CMD_0x10e_PRIVILEGE_CTG SRIOV_CTG_ADMIN
+
+/* MC_CMD_ROMBIST_IN msgrequest */
+#define    MC_CMD_ROMBIST_IN_LENMIN 4
+#define    MC_CMD_ROMBIST_IN_LENMAX 252
+#define    MC_CMD_ROMBIST_IN_LEN(num) (4+4*(num))
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_IN_ROMBIST_OP_OFST 0
+/* enum: Setup logging */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_LOG_SETUP  0x0
+/* enum: Read BIST log */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_LOG_READ  0x1
+/* enum: Setup DUT clocks */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_SET_CLOCKS  0x2
+/* enum: Tune KR equalization settings for external loopback */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_SET_KR_EQ  0x3
+/* enum: Tune PCIe equalization settings for external loopback */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_SET_PCIE_EQ  0x4
+/* enum: Run parametrized BIST test */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_RUN  0x5
+/* enum: Run canned BIST Test */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_RUN_BIST  0x6
+/* enum: Run burn-in test */
+#define          MC_CMD_ROMBIST_IN_ROMBIST_RUN_BURNIN  0x7
+/* arguments specific to the operation */
+#define       MC_CMD_ROMBIST_IN_ROMBIST_ARGS_OFST 4
+#define       MC_CMD_ROMBIST_IN_ROMBIST_ARGS_LEN 4
+#define       MC_CMD_ROMBIST_IN_ROMBIST_ARGS_MINNUM 0
+#define       MC_CMD_ROMBIST_IN_ROMBIST_ARGS_MAXNUM 62
+
+/* MC_CMD_ROMBIST_OUT msgresponse */
+#define    MC_CMD_ROMBIST_OUT_LEN 0
+
+/* MC_CMD_ROMBIST_LOG_SETUP_IN msgrequest: Setup logging */
+#define    MC_CMD_ROMBIST_LOG_SETUP_IN_LEN 12
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_LOG_SETUP_IN_ROMBIST_OP_OFST 0
+#define       MC_CMD_ROMBIST_LOG_SETUP_IN_FLAGS_OFST 4
+#define        MC_CMD_ROMBIST_LOG_SETUP_IN_DMEM_LBN 0
+#define        MC_CMD_ROMBIST_LOG_SETUP_IN_DMEM_WIDTH 1
+#define        MC_CMD_ROMBIST_LOG_SETUP_IN_UART_LBN 1
+#define        MC_CMD_ROMBIST_LOG_SETUP_IN_UART_WIDTH 1
+#define        MC_CMD_ROMBIST_LOG_SETUP_IN_CLEAR_LBN 2
+#define        MC_CMD_ROMBIST_LOG_SETUP_IN_CLEAR_WIDTH 1
+/* Log level */
+#define       MC_CMD_ROMBIST_LOG_SETUP_IN_LEVEL_OFST 8
+#define          MC_CMD_ROMBIST_LOG_SETUP_IN_LOG_ERR  0x0 /* enum */
+#define          MC_CMD_ROMBIST_LOG_SETUP_IN_LOG_WARN  0x1 /* enum */
+#define          MC_CMD_ROMBIST_LOG_SETUP_IN_LOG_INFO  0x2 /* enum */
+#define          MC_CMD_ROMBIST_LOG_SETUP_IN_LOG_DBG  0x3 /* enum */
+
+/* MC_CMD_ROMBIST_LOG_SETUP_OUT msgresponse */
+#define    MC_CMD_ROMBIST_LOG_SETUP_OUT_LEN 0
+
+/* MC_CMD_ROMBIST_LOG_READ_IN msgrequest: Read BIST log */
+#define    MC_CMD_ROMBIST_LOG_READ_IN_LEN 8
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_LOG_READ_IN_ROMBIST_OP_OFST 0
+/* Offset to start reading from */
+#define       MC_CMD_ROMBIST_LOG_READ_IN_OFFSET_OFST 4
+
+/* MC_CMD_ROMBIST_LOG_READ_OUT msgresponse */
+#define    MC_CMD_ROMBIST_LOG_READ_OUT_LENMIN 0
+#define    MC_CMD_ROMBIST_LOG_READ_OUT_LENMAX 252
+#define    MC_CMD_ROMBIST_LOG_READ_OUT_LEN(num) (0+4*(num))
+/* Log data (zero length, if no more data left) */
+#define       MC_CMD_ROMBIST_LOG_READ_OUT_DATA_OFST 0
+#define       MC_CMD_ROMBIST_LOG_READ_OUT_DATA_LEN 4
+#define       MC_CMD_ROMBIST_LOG_READ_OUT_DATA_MINNUM 0
+#define       MC_CMD_ROMBIST_LOG_READ_OUT_DATA_MAXNUM 63
+
+/* MC_CMD_ROMBIST_SET_CLOCKS_IN msgrequest: Set DUT clocks (similar to
+ * MC_CMD_SET_CLOCKS but takes selector values, such that non-standard clocks,
+ * like XTAL or TCKREFIN can be selected)
+ */
+#define    MC_CMD_ROMBIST_SET_CLOCKS_IN_LEN 24
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_SET_CLOCKS_IN_ROMBIST_OP_OFST 0
+/* Requested MC clock selector */
+#define       MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLK_SEL_OFST 4
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_333  0x0 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_384  0x1 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_454  0x2 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_526  0x3 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_555  0x4 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_XTAL  0x5 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_TEST  0x6 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_MC_CLOCK_SEL_DONT_CHANGE  0xff /* enum */
+/* Requested SYS clock selector */
+#define       MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLK_SEL_OFST 8
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_454  0x0 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_500  0x1 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_526  0x2 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_555  0x3 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_588  0x4 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_625  0x5 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_666  0x6 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_714  0x7 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_740  0x8 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_769  0x9 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_800  0xa /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_833  0xb /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_869  0xc /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_333  0xd /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_384  0xe /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_416  0xf /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_TEST  0x10 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_CKREF  0x11 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_XTAL  0x12 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_SYS_CLOCK_SEL_DONT_CHANGE  0xff /* enum */
+/* Requested RMON clock selector */
+#define       MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLK_SEL_OFST 12
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_454  0x0 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_500  0x1 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_526  0x2 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_555  0x3 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_588  0x4 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_625  0x5 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_666  0x6 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_714  0x7 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_740  0x8 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_769  0x9 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_800  0xa /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_833  0xb /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_869  0xc /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_333  0xd /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_384  0xe /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_416  0xf /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_TEST  0x10 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_CKREF  0x11 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_XTAL  0x12 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_RMON_CLOCK_SEL_DONT_CHANGE  0xff /* enum */
+/* Requested vswitch clock selector */
+#define       MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLK_SEL_OFST 16
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_454  0x0 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_500  0x1 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_526  0x2 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_555  0x3 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_588  0x4 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_625  0x5 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_666  0x6 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_714  0x7 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_740  0x8 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_769  0x9 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_800  0xa /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_833  0xb /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_869  0xc /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_333  0xd /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_384  0xe /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_416  0xf /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_TEST  0x10 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_CKREF  0x11 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_XTAL  0x12 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_VSW_CLOCK_SEL_DONT_CHANGE  0xff /* enum */
+/* Requested DPCPU clock selector */
+#define       MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLK_SEL_OFST 20
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1666  0x0 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1538  0x1 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1428  0x2 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1333  0x3 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1250  0x4 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1176  0x5 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1111  0x6 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1052  0x7 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_1000  0x8 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_952  0x9 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_909  0xa /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_869  0xb /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_833  0xc /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_800  0xd /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_769  0xe /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_740  0xf /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_714  0x10 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_666  0x11 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_625  0x12 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_333  0x13 /* enum */
+#define          MC_CMD_ROMBIST_SET_CLOCKS_IN_DPCPU_CLOCK_SEL_DONT_CHANGE  0xff /* enum */
+
+/* MC_CMD_ROMBIST_SET_CLOCKS_OUT msgresponse */
+#define    MC_CMD_ROMBIST_SET_CLOCKS_OUT_LEN 0
+
+/* MC_CMD_ROMBIST_SET_KR_EQ_IN msgrequest: Tune KR Serdes lane equalization
+ * parameters
+ */
+#define    MC_CMD_ROMBIST_SET_KR_EQ_IN_LEN 20
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_SET_KR_EQ_IN_ROMBIST_OP_OFST 0
+/* Serdes bitmask */
+#define       MC_CMD_ROMBIST_SET_KR_EQ_IN_SERDES_OFST 4
+/* Lane bitmask */
+#define       MC_CMD_ROMBIST_SET_KR_EQ_IN_LANES_OFST 8
+/* Requested EQ parameter */
+#define       MC_CMD_ROMBIST_SET_KR_EQ_IN_EQ_OFST 12
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_VGA  0x0 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_CTLE_EQC  0x1 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_CTLE_EQRES  0x2 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_DFE1  0x3 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_DFE2  0x4 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_DFE3  0x5 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_DFE4  0x6 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_DFE5  0x7 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_DLEV  0x8 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_MARGIN  0x9 /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_ADV  0xa /* enum */
+#define          MC_CMD_ROMBIST_SET_KR_EQ_IN_KR_EQ_DLY  0xb /* enum */
+/* Requested EQ parameter value */
+#define       MC_CMD_ROMBIST_SET_KR_EQ_IN_VALUE_OFST 16
+
+/* MC_CMD_ROMBIST_SET_KR_EQ_OUT msgresponse */
+#define    MC_CMD_ROMBIST_SET_KR_EQ_OUT_LEN 0
+
+/* MC_CMD_ROMBIST_SET_PCIE_EQ_IN msgrequest: Tune PCIE Serdes lane equalization
+ * parameters
+ */
+#define    MC_CMD_ROMBIST_SET_PCIE_EQ_IN_LEN 16
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_SET_PCIE_EQ_IN_ROMBIST_OP_OFST 0
+/* Lane bitmask */
+#define       MC_CMD_ROMBIST_SET_PCIE_EQ_IN_LANES_OFST 4
+/* Requested EQ parameter */
+#define       MC_CMD_ROMBIST_SET_PCIE_EQ_IN_EQ_OFST 8
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_CTLE_EQC  0x0 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_CTLE_EQRES  0x1 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_DFE_EN  0x2 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_DFE_MAN  0x3 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_DFE1  0x4 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_DFE2  0x5 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_DFE3  0x6 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_DLEV  0x7 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_SHP  0x8 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_EMP  0x9 /* enum */
+#define          MC_CMD_ROMBIST_SET_PCIE_EQ_IN_PCIE_EQ_AMP  0xa /* enum */
+/* Requested EQ parameter value */
+#define       MC_CMD_ROMBIST_SET_PCIE_EQ_IN_VALUE_OFST 12
+
+/* MC_CMD_ROMBIST_SET_PCIE_EQ_OUT msgresponse */
+#define    MC_CMD_ROMBIST_SET_PCIE_EQ_OUT_LEN 0
+
+/* MC_CMD_ROMBIST_RUN_IN msgrequest: Run parametrized ROM BIST test */
+#define    MC_CMD_ROMBIST_RUN_IN_LEN 44
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_RUN_IN_ROMBIST_OP_OFST 0
+/* Test components to run (in parallel) */
+#define       MC_CMD_ROMBIST_RUN_IN_FLAGS_OFST 4
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_DP_TO_RX_LBN 0
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_DP_TO_RX_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_DP_TO_NP_LBN 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_DP_TO_NP_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_PCIE_TLP_LBN 2
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_PCIE_TLP_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_PCIE_SD_BIST_LBN 3
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_PCIE_SD_BIST_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_KR_SD_BIST_LBN 4
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_KR_SD_BIST_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_NCSI_LBN 5
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_NCSI_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_MEMTEST_LBN 6
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_MEMTEST_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_SPI_LBN 7
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_SPI_WIDTH 1
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_BURNIN_LBN 8
+#define        MC_CMD_ROMBIST_RUN_IN_RUN_BURNIN_WIDTH 1
+/* Port speed for each of the network ports (for datapath test) */
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_SPEED_OFST 8
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_SPEED_LEN 1
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_SPEED_NUM 4
+/* enum: Do not use port */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_SPEED_NONE  0x0
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_SPEED_1G  0x1 /* enum */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_SPEED_10G  0x2 /* enum */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_SPEED_40G  0x3 /* enum */
+/* KR Serdes instance for each of the network ports (for datapath test) */
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_SERDES_OFST 12
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_SERDES_LEN 1
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_SERDES_NUM 4
+/* KR Serdes lane bitmask for each of the network ports (for datapath test) */
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_LANES_OFST 16
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_LANES_LEN 1
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_LANES_NUM 4
+/* Loopback point for each of the network ports (for datapath test) */
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_LOOPBACK_OFST 20
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_LOOPBACK_LEN 1
+#define       MC_CMD_ROMBIST_RUN_IN_PORT_LOOPBACK_NUM 4
+/* enum: Datapath at the Up/Down converter */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_LB_DATA  0x0
+/* enum: MAC at S/X/C/GMII interface */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_LB_XGMII  0x1
+/* enum: Post-PCS at PMA interface */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_LB_PMA  0x2
+/* enum: Serdes at serializer output */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_LB_SD_FAR  0x3
+/* enum: Off-chip */
+#define          MC_CMD_ROMBIST_RUN_IN_PORT_LB_EXT  0x4
+/* PCIe speed for TLP loopback test and Serdes internal BIST */
+#define       MC_CMD_ROMBIST_RUN_IN_PCIE_SPEED_OFST 24
+#define          MC_CMD_ROMBIST_RUN_IN_PCIE_SPEED_GEN1  0x1 /* enum */
+#define          MC_CMD_ROMBIST_RUN_IN_PCIE_SPEED_GEN2  0x2 /* enum */
+#define          MC_CMD_ROMBIST_RUN_IN_PCIE_SPEED_GEN3  0x3 /* enum */
+/* PCIe loopback point for TLP loopback test or Serdes internal BIST If both
+ * are run in parallel, TLP loopback is forced to PIPE and Serdes internal BIST
+ * is set from this field (serial or external)
+ */
+#define       MC_CMD_ROMBIST_RUN_IN_PCIE_LOOPBACK_OFST 28
+/* enum: PCIe core at PIPE iterface */
+#define          MC_CMD_ROMBIST_RUN_IN_PCIE_LB_PIPE  0x0
+/* enum: PCIe serdes at serializer output */
+#define          MC_CMD_ROMBIST_RUN_IN_PCIE_LB_NES  0x1
+/* enum: Off-chip */
+#define          MC_CMD_ROMBIST_RUN_IN_PCIE_LB_EXT  0x2
+/* NCSI loopback point for NCSI loopback test */
+#define       MC_CMD_ROMBIST_RUN_IN_NCSI_LOOPBACK_OFST 32
+/* enum: Internal */
+#define          MC_CMD_ROMBIST_RUN_IN_NCSI_LB_INT  0x0
+/* enum: Off-chip */
+#define          MC_CMD_ROMBIST_RUN_IN_NCSI_LB_EXT  0x1
+/* Packet count for datapath test */
+#define       MC_CMD_ROMBIST_RUN_IN_PACKET_COUNT_OFST 36
+/* Packet count for datapath test (-1 = mixed) */
+#define       MC_CMD_ROMBIST_RUN_IN_PACKET_SIZE_OFST 40
+
+/* MC_CMD_ROMBIST_RUN_OUT msgresponse */
+#define    MC_CMD_ROMBIST_RUN_OUT_LEN 0
+
+/* MC_CMD_ROMBIST_RUN_BIST_IN msgrequest: Run canned ROM BIST test */
+#define    MC_CMD_ROMBIST_RUN_BIST_IN_LEN 4
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_RUN_BIST_IN_ROMBIST_OP_OFST 0
+
+/* MC_CMD_ROMBIST_RUN_BIST_OUT msgresponse */
+#define    MC_CMD_ROMBIST_RUN_BIST_OUT_LEN 0
+
+/* MC_CMD_ROMBIST_RUN_BURNIN_IN msgrequest: Run canned ROM burn-in test */
+#define    MC_CMD_ROMBIST_RUN_BURNIN_IN_LEN 4
+/* identifies the BIST operation */
+#define       MC_CMD_ROMBIST_RUN_BURNIN_IN_ROMBIST_OP_OFST 0
+
+/* MC_CMD_ROMBIST_RUN_BURNIN_OUT msgresponse */
+#define    MC_CMD_ROMBIST_RUN_BURNIN_OUT_LEN 0
 
 #endif /* _SIENA_MC_DRIVER_PCOL_PRIVATE_H */
 /*! \cidoxg_end */

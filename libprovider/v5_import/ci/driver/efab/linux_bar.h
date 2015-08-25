@@ -8,7 +8,7 @@
 ** </L5_PRIVATE>
 *//*
 \**************************************************************************/
-  
+
 /*! \cidoxg_include_ci_driver_efab */
 
 # ifndef __LINUX_BAR_H__
@@ -47,6 +47,9 @@
 /* The index of the 32bit expansion BAR as an offset from 64bit BARS (!!) */
 #define CI_BAR_EXP_ROM 6
 
+/* Generic PCI configuration register stuff */
+#define CI_PCI_CFG_SPC_N_BASES 6
+
 /* Maximum offset accessible via indirected IOPort */
 #define IOPORT_MAX_OFFSET (8*2*CI_PAGE_SIZE)
 
@@ -61,19 +64,29 @@ enum efx_bar_map_flags {
 };
 
 /*
- * Exported API 
- * 
+ * Nic specific table of funcs and associated bars using data supplied by
+ * harware header file.
+ */
+struct efx_bar_info
+{
+  int nbars;
+  const char*const*const bar_names;
+};
+
+/*
+ * Exported API
+ *
  * Note: This API makes use of libpci (which must be linked into executables
  * using it) and mmap of /dev/mem (which means must be executed with root
  * privileges).
- * 
+ *
  * To build requires pci/pci.h - to ensure that this and libpci are available
  * the appropriate pciutils-devel-***** package must be installed.
  *
  * &struct efx_bar_map is informational - it stores information about
  * a mapping to be used by efx_dev_unmap().
  */
-struct efx_bar_map 
+struct efx_bar_map
 {
   char *dev_name;
   int nic_i, func, bar; /* Must be assigned before call to efx_bar_map() */
@@ -115,6 +128,13 @@ extern int /*+rc*/ efx_bar_errno(int err, int sys_errno);
  */
 extern int efx_bar_validate_offset(struct efx_bar_map *bar, int offset);
 
+/*
+ * Check whether a given vendor/device IDs may belong to SF NIC
+ */
+extern int efx_check_is_our_device(unsigned int vendor_id,
+                                   unsigned int device_id);
+
+
 /**********************************************************************
 ****************** NEW API ********************************************
 **********************************************************************/
@@ -125,6 +145,14 @@ struct efx_bar_device {
   int pci_vendor_id, pci_device_id, pci_revision;
   int nic_index;
 };
+
+/*
+ * Describe device's bars
+ */
+extern int /*+rc*/ efx_get_bar_info(const struct efx_bar_device *device,
+                                    const struct efx_bar_info **distinct_funcs_out,
+                                    int *n_distinct_funcs_out);
+
 
 /*
  * Return information about the given nic, specified as index.  Returns

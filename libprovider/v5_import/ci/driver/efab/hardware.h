@@ -208,6 +208,8 @@
 #define EFHW_BUFFER_OFF			FALCON_BUFFER_4K_OFF
 
 #ifdef __powerpc__
+/* older gcc lacks #pragma message, don't error out */
+#pragma GCC diagnostic warning "-Wunknown-pragmas"
 #pragma message "page size is unknown at compile time; EFHW_NIC_PAGE_{SIZE,MASK} not defined"
 #else
 #if PAGE_SIZE <= EFHW_MAX_PAGE_SIZE

@@ -136,7 +136,7 @@ typedef ci_uint64 ci_fixed_descriptor_t;
 /* WIN32 DDK seems to think its funny to -DNDEBUG when doing a checked
 ** build.  We disagree.
 */
-#if defined(DBG) && (DBG == 1) && defined(NDEBUG)
+#if defined(DBG) && DBG && defined(NDEBUG)
 # undef NDEBUG
 #endif
 
@@ -161,6 +161,7 @@ typedef ci_uint64 ci_fixed_descriptor_t;
 #define CI_HIDDEN
 
 #define CI_PRINTF_LIKE(a,b)
+#define CI_UNUSED
 
 typedef unsigned short sa_family_t;
 

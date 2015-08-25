@@ -21,13 +21,27 @@
 
 #ifdef _WIN32
 #include <ci/compat.h>
-typedef ci_uint64 uint64_t;
-typedef ci_uint32 uint32_t;
-typedef ci_int32  int32_t;
-typedef ci_uint16 uint16_t;
-typedef ci_uint8  uint8_t;
-typedef ci_int16  int16_t;
-typedef ci_int8   int8_t;
+#ifndef uint64_t
+#define uint64_t ci_uint64
+#endif
+#ifndef uint32_t
+#define uint32_t ci_uint32
+#endif
+#ifndef uint16_t
+#define uint16_t ci_uint16
+#endif
+#ifndef uint8_t
+#define uint8_t ci_uint8
+#endif
+#ifndef int32_t
+#define int32_t ci_int32
+#endif
+#ifndef int16_t
+#define int16_t ci_int16
+#endif
+#ifndef int8_t
+#define int8_t ci_int8
+#endif
 #else
 #include <stdint.h>
 #endif
@@ -66,6 +80,11 @@ extern void tlv_init_block(uint32_t *block);
  * end tag.
  */
 extern size_t tlv_block_length_used(tlv_cursor_t *cursor);
+
+/**
+ * Return a pointer to the end tag of the last valid segment in the partition.
+ */
+extern uint32_t *tlv_last_segment_end(tlv_cursor_t *cursor);
 
 /**
  * Return the tag ID of the item at the cursor.

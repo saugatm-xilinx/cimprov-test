@@ -158,7 +158,7 @@ int tlv_validate_partition(nvram_partition_t *partition)
   host_to_le32_inplace(&header.tag, 1);
   host_to_le32_inplace(&header.length, 1);
   host_to_le16_inplace(&header.type_id, 1);
-  host_to_le16_inplace(&header.reserved, 1);
+  host_to_le16_inplace(&header.preset, 1);
   host_to_le32_inplace(&header.generation, 1);
   host_to_le32_inplace(&header.total_length, 1);
 
@@ -284,16 +284,13 @@ int tlv_append_to_partition(nvram_partition_t *partition, uint32_t tag,
 {
   int rc;
   tlv_cursor_t *cursor = &partition->tlv_cursor;
+  uint32_t *last_segment_end = tlv_last_segment_end(cursor);
 
-  rc = tlv_require_end(cursor);
-  if (rc)
-    return rc;
-
-  /* cursor->end should point to the current end tag at the end of the used
-   * portion of the block.  We need space to write a new tag, new length,
+  /* last_segment_end should point to the current end tag at the end of the last
+   * segment in the partition. We need space to write a new tag, new length,
    * and the padded data.
    */
-  if (cursor->limit < (cursor->end + 1 + 1 + ((len + 3) / 4) + 1))
+  if (cursor->limit < (last_segment_end + 1 + 1 + ((len + 3) / 4) + 1))
     return TLV_NO_SPACE;
 
   /* Insert the new tag before the end of the partition. */
@@ -351,6 +348,24 @@ int tlv_increment_partition_generation(nvram_partition_t *partition)
   return rc;
 }
 
+int tlv_zero_partition_preset(nvram_partition_t *partition)
+{
+  int rc;
+  tlv_cursor_t *cursor = &partition->tlv_cursor;
+  struct tlv_partition_header  *header;
+
+  if ((rc = tlv_validate_partition(partition)))
+    return rc;
+
+  header = (struct tlv_partition_header*)cursor->block;
+  header->preset = 0;
+
+  rc = tlv_update_partition_len_and_cks(cursor);
+  assert(rc == TLV_OK);
+
+  return rc;
+}
+
 int tlv_init_dynamic_config_buf(char* _buf, unsigned buf_size)
 {
   uint32_t *buf = (uint32_t*)_buf;
@@ -374,14 +389,14 @@ int tlv_init_dynamic_config_buf(char* _buf, unsigned buf_size)
   header.tag = host_to_le32(TLV_TAG_PARTITION_HEADER);
   header.length = host_to_le32(sizeof(header) - 8);
   header.type_id = host_to_le16(NVRAM_PARTITION_TYPE_DYNAMIC_CONFIG);
-  header.reserved = 0;
+  header.preset = 0;
   header.generation = host_to_le32(1);
   header.total_length = 0;  /* This will be fixed below. */
   write_tlv_item(&cursor, &header);
 
   trailer.tag = host_to_le32(TLV_TAG_PARTITION_TRAILER);
   trailer.length = host_to_le32(sizeof(trailer) - 8);
-  trailer.generation = host_to_le32(header.generation);
+  trailer.generation = header.generation;
   trailer.checksum = 0;  /* This will be fixed below. */
   write_tlv_item(&cursor, &trailer);
 
