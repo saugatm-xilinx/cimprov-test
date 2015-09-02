@@ -1033,8 +1033,7 @@ processXmlRequest(CURL *curl, xmlDocPtr doc, const char *method_name,
     if (xmlParseCimResponse(curl_data, curl_data_len, response) < 0)
     {
         ERROR_MSG("Failed to parse CIM response");
-        if (curl_data != NULL)
-            printf("%s\n", curl_data);
+        printf("%s\n", curl_data);
         return -1;
     }
 

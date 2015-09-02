@@ -134,36 +134,6 @@ WMIONLY([[
     [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("Tag")] string Tag;
 ]])
-
-    uint32 getSFUDevices([OUT] string Devices);
-
-    uint32 NVExists([IN] string Device,
-                    [IN] uint32 Type,
-                    [IN] uint32 Subtype,
-                    [IN] boolean TryOtherDevs,
-                    [OUT] boolean Exists,
-                    [OUT] String CorrectDevice);
-
-    uint32 NVOpen([IN] string Device,
-                  [IN] uint32 Type,
-                  [IN] uint32 Subtype,
-                  [OUT] uint32 NVContext);
-
-    uint32 NVClose([IN] uint32 NVContext);
-
-    uint32 NVPartSize([IN] uint32 NVContext,
-                      [OUT] uint64 PartSize);
-
-    uint32 NVRead([IN] uint32 NVContext,
-                  [IN] uint64 Length,
-                  [IN] sint64 Offset,
-                  [OUT] string Data);
-
-    uint32 NVReadAll([IN] uint32 NVContext,
-                     [OUT] string Data);
-
-    uint32 NVWriteAll([IN] uint32 NVContext,
-                      [IN] string Data);
 };
 
 INSTANCE

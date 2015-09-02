@@ -62,60 +62,6 @@ public:
         const Property<boolean>& PoweredOn,
         Property<uint32>& return_value);
 
-    Invoke_Method_Status getSFUDevices(
-        const SF_NICCard* self,
-        Property<String>& Devices,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status NVExists(
-        const SF_NICCard* self,
-        const Property<String>& Device,
-        const Property<uint32>& Type,
-        const Property<uint32>& Subtype,
-        const Property<boolean>& TryOtherDevs,
-        Property<boolean>& Exists,
-        Property<String>& CorrectDevice,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status NVOpen(
-        const SF_NICCard* self,
-        const Property<String>& Device,
-        const Property<uint32>& Type,
-        const Property<uint32>& Subtype,
-        Property<uint32>& NVContext,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status NVClose(
-        const SF_NICCard* self,
-        const Property<uint32>& NVContext,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status NVPartSize(
-        const SF_NICCard* self,
-        const Property<uint32>& NVContext,
-        Property<uint64>& PartSize,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status NVRead(
-        const SF_NICCard* self,
-        const Property<uint32>& NVContext,
-        const Property<uint64>& Length,
-        const Property<sint64>& Offset,
-        Property<String>& Data,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status NVReadAll(
-        const SF_NICCard* self,
-        const Property<uint32>& NVContext,
-        Property<String>& Data,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status NVWriteAll(
-        const SF_NICCard* self,
-        const Property<uint32>& NVContext,
-        const Property<String>& Data,
-        Property<uint32>& return_value);
-
     /*@END@*/
 };
 
