@@ -286,5 +286,59 @@ extern int associators(CURL *curl, const char *namespace,
                        const char *result_class,
                        int an, response_descr *response);
 
+/**
+ * Call intrinsic or extrinsic CIM method and check response
+ *
+ * @param rc_   Return value to be set on failure
+ * @param f_    Method call
+ * @param rsp_  Response to be filled
+ * @param msg_  Error message format string
+ * @param ...   Error message parameters
+ */
+#define CHECK_RESPONSE(rc_, f_, rsp_, msg_...) \
+    do {                                                                \
+        int ret_ = (f_);                                                \
+                                                                        \
+        if (ret_ < 0 || rsp_.error_returned)                            \
+        {                                                               \
+            ERROR_MSG(msg_);                                            \
+            if (ret_ >= 0)                                              \
+                ERROR_MSG("CIM ERROR: code='%s', description='%s'",     \
+                          (char *)rsp_.err_code,                        \
+                          (char *)rsp_.err_descr);                      \
+            rc_ = -1;                                                   \
+        }                                                               \
+    } while (0)
+
+/**
+ * Call extrinsic CIM method and check response and return code
+ *
+ * @param rc_   Return value to be set on failure
+ * @param f_    Method call
+ * @param rsp_  Response to be filled
+ * @param msg_  Error message format string
+ * @param ...   Error message parameters
+ */
+#define CHECK_RESPONSE_EXT(rc_, f_, rsp_, msg_...) \
+    do {                                                                \
+        int ret_ = (f_);                                                \
+                                                                        \
+        if (ret_ < 0 || rsp_.error_returned ||                          \
+            strcmp(rsp_.returned_value, "0") != 0)                      \
+        {                                                               \
+            if (ret_ >= 0)                                              \
+            {                                                           \
+                if (rsp_.error_returned)                                \
+                    ERROR_MSG("CIM ERROR: code='%s', description='%s'", \
+                              (char *)rsp_.err_code,                    \
+                              (char *)rsp_.err_descr);                  \
+                else                                                    \
+                    ERROR_MSG("Extrinsic method returned '%s'",         \
+                              rsp_.returned_value);                     \
+            }                                                           \
+            ERROR_MSG(msg_);                                            \
+            rc_ = -1;                                                   \
+        }                                                               \
+    } while (0)
 
 #endif // SFUPDATE_CIM_CIM_CLIENT_H
