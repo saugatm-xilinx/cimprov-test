@@ -21,20 +21,23 @@
 
 #include <stdint.h>
 
+extern "C" {
 #include "efx_ioctl.h"
+#include "sfu_device.h"
+#include "nv.h"
 #include "ci/mgmt/mc_flash_layout.h"
 #include "efx_regs_mcdi.h"
 #include "ci/tools/byteorder.h"
 #include "ci/tools/bitfield.h"
 #include "image.h"
-#include "sf_siocefx_common.h"
-#include "sf_siocefx_nvram.h"
 
-extern "C" {
 #include "tlv_partition.h"
 #include "tlv_layout.h"
 #include "endian_base.h"
 }
+
+#include "sf_siocefx_common.h"
+#include "sf_siocefx_nvram.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,6 +122,23 @@ extern "C" {
 #define HTTP_PROTO "http://"
 #define HTTPS_PROTO "https://"
 
+// Defines for sfu_device array string representation
+#define NETIF_NAME_PREF   "netif_name:"
+#define MAC_ADDR_PREF     "mac_addr:"
+#define SERIAL_NUM_PREF   "serial_number:"
+#define PCI_DEVID_PREF    "pci_device_id:"
+#define PCI_SUBSYSID_PREF "pci_subsystem_id:"
+#define PCI_ADDR_PREF     "pci_addr:"
+#define PORT_INDEX_PREF   "port_index:"
+#define PHY_TYPE_PREF     "phy_type:"
+#define MASTER_PORT_PREF  "master_port:"
+#define PORTS_COUNT_PREF  "ports_count:"
+// Next sfu_device record
+#define NEXT_PREF         "NEXT"
+
+// Maximum number of stored nv_context pointers
+#define MAX_NV_CTX_ID 1000
+
 extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
 }
@@ -136,6 +156,49 @@ namespace solarflare
     using cimple::Mutex;
     using cimple::Auto_Mutex;
     using cimple::Time;
+
+    ///
+    /// Structure for storing nv_context pointers
+    ///
+    typedef class NVContextDescr {
+    public:
+        struct nv_context   *ctx;
+        unsigned int         id;
+
+        // This is required to use cimple::Array
+        bool operator== (const NVContextDescr &rhs)
+        {
+            return (ctx == rhs.ctx &&
+                    id == rhs.id);
+        }
+    } NVContextDescr;
+
+    Array<NVContextDescr> NVCtxArr;
+
+    // Get index of element in NVCtxArray having
+    // a given id.
+    //
+    // @param ctx_id      Id to be found
+    //
+    // @return index in NVCtxArr on success,
+    //         -1 on failure
+    static int
+    findNVCtxById(unsigned int ctx_id)
+    {
+        unsigned int i; 
+
+        for (i = 0; i < NVCtxArr.size(); i++)
+        {
+            if (NVCtxArr[i].id == ctx_id)
+                return i;
+        }
+
+        PROVIDER_LOG_ERR("%s(): failed to find NV context id %d",
+                         __FUNCTION__, ctx_id);
+        return -1;
+    }
+
+    static Mutex NVCtxArrLock(false);
 
     ///
     /// Temporary file description
@@ -3199,17 +3262,50 @@ cleanup:
         VMwareKernelPackage kernelPackage;
         VMwareManagementPackage mgmtPackage;
 
+        bool sfu_dev_initialized;
+
         VMwareSystem()
         {
+            setenv(CIMPLEHOME_ENVVAR, "/tmp/", 1);
+
             curl_global_init(CURL_GLOBAL_ALL);
             onAlert.setFillPortAlertsInfo(vmwareFillPortAlertsInfo);
+
+            if (sfu_device_init() < 0)
+            {
+                PROVIDER_LOG_ERR("%s(): sfu_device_init() failed",
+                                 __FUNCTION__);
+                sfu_dev_initialized = false;
+            }
+            else
+                sfu_dev_initialized = true;
+
+            if (nv_init() < 0)
+            {
+                PROVIDER_LOG_ERR("%s(): nv_init() failed",
+                                  __FUNCTION__);
+                sfu_dev_initialized = false;
+            }
         };
 
         ~VMwareSystem()
         {
+            unsigned int i;
+
             curl_global_cleanup();
+
+            for (i = 0; i < NVCtxArr.size(); i++)
+            {
+                nv_close(NVCtxArr[i].ctx);
+                NVCtxArr[i].ctx = NULL;
+            }
+            NVCtxArr.clear();
         };
 
+        int findSFUDevice(const String &dev_name,
+                          struct sfu_device **devs,
+                          struct sfu_device **dev,
+                          int *devs_count);
     protected:
         void setupNICs()
         {
@@ -3245,6 +3341,26 @@ cleanup:
         virtual int tmpFileBase64Append(const String &fileName,
                                         const String &base64Str);
         virtual int removeTmpFile(String fileName);
+
+        virtual String getSFUDevices();
+
+        virtual bool NVExists(const String &dev_name,
+                              unsigned int type, unsigned int subtype,
+                              bool try_other_devs,
+                              String &correct_dev);
+        virtual int NVOpen(const String &dev_name,
+                           unsigned int type, unsigned int subtype);
+        virtual int NVClose(unsigned int nv_ctx);
+        virtual size_t NVPartSize(unsigned int nv_ctx);
+
+        virtual int NVRead(unsigned int nv_ctx,
+                           uint64 length,
+                           sint64 offset,
+                           String &data);
+        virtual int NVReadAll(unsigned int nv_ctx,
+                              String &data);
+        virtual int NVWriteAll(unsigned int nv_ctx,
+                               const String &data);
     };
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -3485,6 +3601,359 @@ cleanup:
                 tmpFilesArr.remove(i);
                 i--;
             }
+
+        return 0;
+    }
+
+    String VMwareSystem::getSFUDevices()
+    {
+        sfu_device   *devs;
+        int           devs_count;
+        unsigned int  i;
+        unsigned int  j;
+
+        size_t        enc_size;
+        char         *encoded;
+
+        Buffer buf;
+        String result;
+
+        if (!sfu_dev_initialized)
+        {
+            PROVIDER_LOG_ERR("%s(): sfu_device_init() was not called",
+                             __FUNCTION__);
+            return String("");
+        }
+
+        devs_count = sfu_device_enum(&devs);
+        if (devs_count < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): sfu_device_enum() failed",
+                             __FUNCTION__);
+            return String("");
+        }
+
+        buf.format("%d\n", devs_count);
+        for (i = 0; i < devs_count; i++)
+        {
+            buf.format("%s%s\n", NETIF_NAME_PREF, devs[i].netif_name);
+            buf.format("%s%s\n", MAC_ADDR_PREF, devs[i].mac_addr);
+            buf.format("%s%s\n", SERIAL_NUM_PREF,
+                       devs[i].serial_number);
+            buf.format("%s%u\n",
+                       PCI_DEVID_PREF,
+                       (unsigned int)devs[i].pci_device_id);
+            buf.format("%s%u\n",
+                       PCI_SUBSYSID_PREF,
+                       (unsigned int)devs[i].pci_subsystem_id);
+            buf.format("%s%s\n",
+                       PCI_ADDR_PREF,
+                       devs[i].pci_addr);
+            buf.format("%s%u\n", PORT_INDEX_PREF, devs[i].port_index);
+            buf.format("%s%d\n", PHY_TYPE_PREF, devs[i].phy_type);
+            for (j = 0; j < devs_count; j++)
+                if (&(devs[j]) == devs[i].master_port)
+                    break;
+            buf.format("%s%u\n", MASTER_PORT_PREF, j);
+            buf.format("%s\n", NEXT_PREF);
+        }
+
+        enc_size = base64_enc_size(strlen(buf.data()));
+        encoded = new char[enc_size];
+        base64_encode(encoded, buf.data(), strlen(buf.data()));
+
+        result = String(encoded);
+        delete[] encoded;
+        free(devs);
+
+        return result; 
+    }
+
+    int VMwareSystem::findSFUDevice(const String &dev_name,
+                                    struct sfu_device **devs,
+                                    struct sfu_device **dev,
+                                    int *devs_count)
+    {
+        unsigned int i;
+
+        if (!sfu_dev_initialized)
+        {
+            PROVIDER_LOG_ERR("%s(): sfu_device_init() was not called",
+                             __FUNCTION__);
+            return -1;
+        }
+
+        *devs_count = sfu_device_enum(devs);
+        if (*devs_count < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): sfu_device_enum() failed",
+                             __FUNCTION__);
+            return -1;
+        }
+
+        for (i = 0; i < *devs_count; i++)
+        {
+            if (strcmp((*devs)[i].netif_name, dev_name.c_str()) == 0)
+            {
+                *dev = &((*devs)[i]);
+                break;
+            }
+        }
+
+        if (*dev == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to find device '%s'",
+                             __FUNCTION__, dev_name.c_str());
+            free(*devs);
+            return -1;
+        }
+
+        return 0;
+    }
+
+    bool VMwareSystem::NVExists(const String &dev_name,
+                                unsigned int type,
+                                unsigned int subtype,
+                                bool try_other_devs,
+                                String &correct_dev)
+    {
+        struct sfu_device         *devs;
+        struct sfu_device         *dev = NULL;
+        const struct sfu_device   *dev2 = NULL;
+
+        int           devs_count;
+        bool          exists = false;
+        unsigned int  i;
+
+        if (findSFUDevice(dev_name, &devs, &dev,
+                          &devs_count) < 0)
+            return -1;
+
+        exists = nv_exists(dev, static_cast<enum nv_part_type>(type),
+                           subtype, (try_other_devs ? &dev2 : NULL));
+        if (try_other_devs && exists && dev2 != NULL)
+            correct_dev = String(dev2->netif_name);
+        free(devs);
+ 
+        return exists;
+    }
+
+    int VMwareSystem::NVOpen(const String &dev_name,
+                             unsigned int type,
+                             unsigned int subtype)
+    {
+        Auto_Mutex    guard(NVCtxArrLock); 
+
+        nv_context   *ctx = NULL;
+
+        sfu_device   *devs;
+        sfu_device   *dev = NULL;
+        int           devs_count;
+
+        unsigned int  i;
+        int           new_id;
+
+        NVContextDescr ctx_descr;
+
+        for (new_id = 0; new_id < MAX_NV_CTX_ID; new_id++)
+        {
+            for (i = 0; i < NVCtxArr.size(); i++)
+            {
+                if (NVCtxArr[i].id == new_id)
+                    break;
+            }
+            if (i == NVCtxArr.size())
+                break;
+        }
+        if (new_id == MAX_NV_CTX_ID)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to find free context id",
+                             __FUNCTION__);
+            return -1;
+        }
+
+        if (findSFUDevice(dev_name, &devs, &dev,
+                          &devs_count) < 0)
+            return -1;
+
+        ctx = nv_open(dev, static_cast<enum nv_part_type>(type), subtype);
+        if (ctx == NULL)
+        {
+            PROVIDER_LOG_ERR("nv_open() failed, errno %d('%s')",
+                             errno, strerror(errno));
+            free(devs);
+            return -1;
+        }
+        free(devs);
+
+        ctx_descr.ctx = ctx;
+        ctx_descr.id = new_id;
+
+        NVCtxArr.append(ctx_descr);
+
+        return new_id;
+    }
+
+    int VMwareSystem::NVClose(unsigned int nv_ctx)
+    {
+        Auto_Mutex    guard(NVCtxArrLock); 
+
+        int i;
+
+        i = findNVCtxById(nv_ctx);
+
+        if (i < 0)
+            return -1;
+        else
+        {
+            nv_close(NVCtxArr[i].ctx);
+            NVCtxArr.remove(i);
+        }
+
+        return 0;
+    }
+
+    size_t VMwareSystem::NVPartSize(unsigned int nv_ctx)
+    {
+        Auto_Mutex    guard(NVCtxArrLock); 
+
+        int i;
+
+        i = findNVCtxById(nv_ctx);
+
+        if (i >= 0)
+            return nv_part_size(NVCtxArr[i].ctx);
+
+        return 0;
+    }
+
+    static int
+    performNVRead(bool read_all,
+                  unsigned int nv_ctx,
+                  uint64 length,
+                  sint64 offset,
+                  String &data)
+    {
+        int       i;
+        ssize_t   was_read;
+        char     *buf;
+        size_t    enc_size;
+        char     *encoded_buf;
+        size_t    part_size;
+
+        i = findNVCtxById(nv_ctx);
+        if (i < 0)
+            return -1;
+
+        PROVIDER_LOG_ERR("Read %u (off %u)",
+                         (unsigned)length,
+                         (unsigned)offset);
+        if (read_all)
+        {
+            part_size = nv_part_size(NVCtxArr[i].ctx);
+            buf = new char[part_size];
+        }
+        else
+            buf = new char[length];
+
+        PROVIDER_LOG_ERR("Pre-read");
+        if (read_all)
+        {
+            was_read = nv_read_all(NVCtxArr[i].ctx, buf);
+            if (was_read < 0)
+            {
+                PROVIDER_LOG_ERR("nv_read_all() failed, errno %d('%s')",
+                                 errno, strerror(errno));
+                delete[] buf;
+                return -1;
+            }
+            else
+                was_read = part_size;
+        }
+        else
+        {
+            was_read = nv_read(NVCtxArr[i].ctx, buf,
+                               static_cast<size_t>(length),
+                               static_cast<off_t>(offset));
+            if (was_read < 0)
+            {
+                PROVIDER_LOG_ERR("nv_read() failed, errno %d('%s')",
+                                 errno, strerror(errno));
+                delete[] buf;
+                return -1;
+            }
+        }
+        PROVIDER_LOG_ERR("Postread, was_read=%u", (unsigned)was_read);
+
+        enc_size = base64_enc_size(was_read);
+        encoded_buf = new char[enc_size];
+        base64_encode(encoded_buf, buf, was_read);
+
+        data = String(encoded_buf);
+        delete[] encoded_buf;
+        delete[] buf;
+
+        return 0;
+    }
+
+    int VMwareSystem::NVRead(unsigned int nv_ctx,
+                             uint64 length,
+                             sint64 offset,
+                             String &data)
+    {
+        Auto_Mutex    guard(NVCtxArrLock); 
+
+        return performNVRead(false, nv_ctx, length, offset,
+                             data);
+    }
+
+    int VMwareSystem::NVReadAll(unsigned int nv_ctx,
+                                String &data)
+    {
+        Auto_Mutex    guard(NVCtxArrLock); 
+
+        return performNVRead(true, nv_ctx, 0, 0, data);
+    }
+
+    int VMwareSystem::NVWriteAll(unsigned int nv_ctx,
+                                 const String &data)
+    {
+        Auto_Mutex    guard(NVCtxArrLock); 
+    
+        int       i;
+        char     *buf;
+        ssize_t   dec_size;
+        int       rc;
+
+        i = findNVCtxById(nv_ctx);
+        if (i < 0)
+            return -1;
+
+        dec_size = base64_dec_size(data.c_str());
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "buffer size", __FUNCTION__);
+            return -1;
+        }
+
+        buf = new char[dec_size];
+        if (base64_decode(buf, data.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to decode hash",
+                             __FUNCTION__);
+            delete[] buf;
+            return -1;
+        }
+
+        rc = nv_write_all(NVCtxArr[i].ctx, buf, dec_size, NULL);
+        if (rc < 0)
+        {
+            PROVIDER_LOG_ERR("nv_write_all() failed, errno %d('%s')",
+                             errno, strerror(errno));
+            delete[] buf;
+            return -1;
+        }
 
         return 0;
     }

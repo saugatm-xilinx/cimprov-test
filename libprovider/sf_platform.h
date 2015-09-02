@@ -33,6 +33,7 @@ namespace solarflare
     using cimple::String;
     using cimple::Datetime;
     using cimple::uint64;
+    using cimple::sint64;
     using cimple::Mutex;
     using cimple::Array;
 
@@ -823,6 +824,109 @@ namespace solarflare
         }
 
         virtual int removeTmpFile(String fileName)
+        {
+            return -1;
+        }
+
+        // Get string representation of array of sfu_devices
+        // structures returned by sfu_devide_enum()
+        //
+        // @return String representation of array encoded in Base64
+        //         on success, empty string on failure
+        virtual String getSFUDevices()
+        {
+            return String(""); 
+        }
+
+        // Call nv_exists().
+        //
+        // @param dev_name             Device name
+        // @param type                  Partition type
+        // @param subtype               Partition subtype
+        // @param try_other_devs        Try other ports if on current
+        //                              device partition cannot be accessed
+        // @param correct_dev     [out] If try_other_devs is TRUE, here
+        //                              name of device to be accessed will
+        //                              be stored
+        //
+        // @return true if NV partition exists, false otherwise
+        virtual bool NVExists(const String &dev_name,
+                              unsigned int type, unsigned int subtype,
+                              bool try_other_devs,
+                              String &correct_dev)
+        {
+            return false;
+        }
+
+        // Call nv_open().
+        //
+        // @param dev_name      Device name
+        // @param type          Partition type
+        // @param subtype       Partition subtype
+        //
+        // @return NV context id (>= 0) on success, -1 on failure
+        virtual int NVOpen(const String &dev_name,
+                           unsigned int type, unsigned int subtype)
+        {
+            return -1;
+        }
+
+        // Call nv_close().
+        //
+        // @param nv_ctx        NV context id
+        //
+        // @return 0 on success, -1 on failure
+        virtual int NVClose(unsigned int nv_ctx)
+        {
+            return -1;
+        }
+
+        // Return NV partition size
+        //
+        // @param nv_ctx        NV context id
+        //
+        // @return 0 on success, -1 on failure
+        virtual size_t NVPartSize(unsigned int nv_ctx)
+        {
+            return 0;
+        }
+
+        // Read data from NV partition
+        //
+        // @param nv_ctx        NV context id
+        // @param lenth         Number of bytes to be read
+        // @param offset        Starting offset
+        // @param data    [out] Read data
+        //
+        // @return 0 on success, -1 on failure
+        virtual int NVRead(unsigned int nv_ctx,
+                           uint64 length,
+                           sint64 offset,
+                           String &data)
+        {
+            return -1;
+        }
+
+        // Read all the data from NV partition
+        //
+        // @param nv_ctx        NV context id
+        // @param data    [out] Read data
+        //
+        // @return 0 on success, -1 on failure
+        virtual int NVReadAll(unsigned int nv_ctx,
+                              String &data)
+        {
+            return -1;
+        }
+
+        // Write data to NV partition
+        //
+        // @param nv_ctx        NV context id
+        // @param data          Data to be written
+        //
+        // @return 0 on success, -1 on failure
+        virtual int NVWriteAll(unsigned int nv_ctx,
+                               const String &data)
         {
             return -1;
         }
