@@ -55,7 +55,7 @@ Enum_Instances_Status SF_NVAPI_Provider::enum_instances(
     SF_NVAPI *inst = SF_NVAPI::create();
     
     if (inst == NULL)
-        return ENUM_INSTANCES_FAILDED;
+        return ENUM_INSTANCES_FAILED;
 
     inst->ElementName.set("NVAPI");
     inst->Description.set("Remote access to NV API");
