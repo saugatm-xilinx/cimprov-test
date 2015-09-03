@@ -128,12 +128,10 @@ WMIONLY([[
 ]])
 };
 
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
 INSTANCE
-class SF_NICCard : SF_Card {
-WMIONLY([[
-    [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
-    [Read,Key : DisableOverride,Override("Tag")] string Tag;
-]])
+class SF_NVAPI : CIM_ManagedElement {
+    [Override("ElementName"), Key] string ElementName;
 
     uint32 getSFUDevices([OUT] string Devices);
 
@@ -164,6 +162,15 @@ WMIONLY([[
 
     uint32 NVWriteAll([IN] uint32 NVContext,
                       [IN] string Data);
+};
+]], [[]])
+
+INSTANCE
+class SF_NICCard : SF_Card {
+WMIONLY([[
+    [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
+    [Read,Key : DisableOverride,Override("Tag")] string Tag;
+]])
 };
 
 INSTANCE

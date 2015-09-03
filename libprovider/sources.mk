@@ -41,6 +41,7 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_LANEndpoint_Provider.cpp \
 	SF_LogEntry_Provider.cpp \
 	SF_LogManagesRecord_Provider.cpp \
+	SF_NVAPI_Provider.cpp \
 	SF_NICCard_Provider.cpp \
 	SF_NICSAPImplementation_Provider.cpp \
 	SF_OwningJobElement_Provider.cpp \
