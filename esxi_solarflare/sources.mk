@@ -38,6 +38,7 @@ esxi_archive_SOURCES = esxi_bootstrap.sh \
 					   oem/solarflare-pkg.sh \
 					   oem/solarflare-prep.sh \
 					   oem/solarflare-vib-depends.xml \
+					   oem/solarflare-vib-provides.xml \
 					   oem/solarflare.defs \
 					   oem/solarflare.deps \
 					   oem/solarflare.inc \

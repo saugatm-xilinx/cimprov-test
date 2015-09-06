@@ -20,7 +20,7 @@ DESC_URLS := oem/descriptor-urls.xml
 DESC_DEPENDS := oem/solarflare-vib-depends.xml
 DESC_CONFLICTS :=
 DESC_REPLACES :=
-DESC_PROVIDES :=
+DESC_PROVIDES := oem/solarflare-vib-provides.xml
 
 DESC_MAINT := 1
 DESC_LIVE_INSTALL_ALLOWED := true
