@@ -1,0 +1,7 @@
+ <provide name="cim.DMTF.DSP1002" version="2.0.0" />
+ <provide name="cim.DMTF.DSP1010" version="2.0.0" />
+ <provide name="cim.DMTF.DSP1011" version="1.0.2" />
+ <provide name="cim.DMTF.DSP1014" version="1.0.1" />
+ <provide name="cim.DMTF.DSP1023" version="1.0.1" />
+ <provide name="cim.DMTF.DSP1025" version="1.0.0" />
+ <provide name="cim.DMTF.DSP1035" version="1.0.2" />
