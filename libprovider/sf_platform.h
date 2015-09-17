@@ -697,7 +697,7 @@ namespace solarflare
         {
             if (!initialized)
             {
-                Logger::eventLog.log("startup");
+                Logger::getEventLog().log("startup");
                 initialized = true;
                 setupPackages();
                 setupNICs();

@@ -70,7 +70,7 @@ Modify_Instance_Status SF_ProviderLog_Provider::modify_instance(
 void SF_ProviderLog_Provider::ChangeState::handler(solarflare::SystemElement&,
                                                    unsigned idx)
 {
-    solarflare::Logger *log = solarflare::Logger::knownLogs[idx];
+    solarflare::Logger *log = solarflare::Logger::getKnownLogs()[idx];
 
     switch (reqState)
     {
@@ -145,7 +145,7 @@ Invoke_Method_Status SF_ProviderLog_Provider::RequestStateChange(
 void SF_ProviderLog_Provider::LogClearer::handler(solarflare::SystemElement&,
                                                   unsigned idx)
 {
-    solarflare::Logger::knownLogs[idx]->clear();
+    solarflare::Logger::getKnownLogs()[idx]->clear();
 }
 
 

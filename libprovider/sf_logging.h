@@ -191,29 +191,29 @@ namespace solarflare
         unsigned currentSize() const;
 
         /// Logger instance for errors
-        static Logger errorLog;
+        static Logger &getErrorLog();
 
         /// Logger instance for system events
-        static Logger eventLog;
+        static Logger &getEventLog();
 
         /// Logger instance for debug messages
-        static Logger debugLog;
+        static Logger &getDebugLog();
 
         /// List of all known loggers
-        static Logger *const knownLogs[];
+        static Logger *const getKnownLogs();
     };
 } // namespace
 
 #define PROVIDER_LOG_ERR(_fmt, _args...) \
-    solarflare::Logger::errorLog.format(__FILE_REL__, __LINE__, \
-                                        _fmt, ##_args)
+    solarflare::Logger::getErrorLog().format(__FILE_REL__, __LINE__, \
+                                             _fmt, ##_args)
 
 #define PROVIDER_LOG_EVT(_fmt, _args...) \
-    solarflare::Logger::eventLog.format(__FILE_REL__, __LINE__, \
-                                        _fmt, ##_args)
+    solarflare::Logger::getEventLog().format(__FILE_REL__, __LINE__, \
+                                             _fmt, ##_args)
 
 #define PROVIDER_LOG_DBG(_fmt, _args...) \
-    solarflare::Logger::debugLog.format(__FILE_REL__, __LINE__, \
-                                        _fmt, ##_args)
+    solarflare::Logger::getDebugLog().format(__FILE_REL__, __LINE__, \
+                                             _fmt, ##_args)
 
 #endif   // SOLARFLARE_SF_CORE_H

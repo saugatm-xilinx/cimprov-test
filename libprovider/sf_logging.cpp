@@ -96,16 +96,38 @@ namespace solarflare
         return le;
     }
 
-    
-    Logger Logger::errorLog(LogError, 128, "Error log");
-    Logger Logger::eventLog(LogInfo, 128, "Event log");
-    // This log is disabled by default
-    Logger Logger::debugLog(LogDebug, 1024, "Debugging log", false);
+    Logger &Logger::getErrorLog()
+    {
+        static Logger errorLog(LogError, 128, "Error log");
 
-    Logger *const Logger::knownLogs[] = {
-        &Logger::errorLog,
-        &Logger::eventLog,
-        &Logger::debugLog,
-        NULL
-    };
+        return errorLog;
+    }
+
+    Logger &Logger::getEventLog()
+    {
+        static Logger eventLog(LogInfo, 128, "Event log");
+
+        return eventLog;
+    }
+ 
+    // This log is disabled by default
+    Logger &Logger::getDebugLog()
+    {
+        static Logger debugLog(LogDebug, 1024,
+                               "Debugging log", false);
+
+        return debugLog;
+    }
+ 
+    Logger *const Logger::getKnownLogs()
+    {
+        static Logger *const knownLogs[] = {
+            &Logger::getErrorLog(),
+            &Logger::getEventLog(),
+            &Logger::getDebugLog(),
+            NULL
+        };
+
+        return knownLogs;
+    }
 }

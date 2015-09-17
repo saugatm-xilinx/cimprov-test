@@ -121,28 +121,28 @@ namespace solarflare
     unsigned LogEntryHelper::nObjects(const SystemElement&) const
     {
         unsigned n = 0;
-        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
-            n += Logger::knownLogs[i]->currentSize();
+        for (unsigned i = 0; Logger::getKnownLogs()[i] != NULL; i++)
+            n += Logger::getKnownLogs()[i]->currentSize();
         return n;
     }
 
     const Logger *LogEntryHelper::logger(unsigned& idx) const
     {
         unsigned sz = 0;
-        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+        for (unsigned i = 0; Logger::getKnownLogs()[i] != NULL; i++)
         {
-            sz += Logger::knownLogs[i]->currentSize();
+            sz += Logger::getKnownLogs()[i]->currentSize();
             if (idx < sz)
-                return Logger::knownLogs[i];
+                return Logger::getKnownLogs()[i];
         }
         return NULL;
     }
 
     unsigned LogEntryHelper::indexToLogIndex(unsigned idx)
     {
-        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+        for (unsigned i = 0; Logger::getKnownLogs()[i] != NULL; i++)
         {
-            unsigned sz = Logger::knownLogs[i]->currentSize();
+            unsigned sz = Logger::getKnownLogs()[i]->currentSize();
             if (idx < sz)
                 return i;
             idx -= sz;
@@ -158,8 +158,9 @@ namespace solarflare
         if (logId == unsigned(-1))
             return unsigned(-1);
 
-        for (unsigned i = 0; i < logId && Logger::knownLogs[i] != NULL; i++)
-            sz += Logger::knownLogs[i]->currentSize();
+        for (unsigned i = 0;
+             i < logId && Logger::getKnownLogs()[i] != NULL; i++)
+            sz += Logger::getKnownLogs()[i]->currentSize();
 
         if (idx < sz)
             return unsigned(-1);
@@ -247,7 +248,7 @@ namespace solarflare
     unsigned ProviderLogHelper::nObjects(const SystemElement&) const
     {
         unsigned n = 0;
-        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+        for (unsigned i = 0; Logger::getKnownLogs()[i] != NULL; i++)
             n++;
         return n;
     }
@@ -256,14 +257,16 @@ namespace solarflare
     {
         SF_ProviderLog *newLog = SF_ProviderLog::create(true);
         
-        newLog->InstanceID.set(CIMHelper::instanceID(Logger::knownLogs[idx]->description()));
+        newLog->InstanceID.set(
+              CIMHelper::instanceID(
+                    Logger::getKnownLogs()[idx]->description()));
         return newLog;
     }
 
     Instance *ProviderLogHelper::instance(const SystemElement& sys, unsigned idx) const
     {
         SF_ProviderLog *newLog = static_cast<SF_ProviderLog *>(reference(sys, idx));
-        const Logger *log = Logger::knownLogs[idx];
+        const Logger *log = Logger::getKnownLogs()[idx];
 
         newLog->Name.set(log->description());
 #if CIM_SCHEMA_VERSION_MINOR > 0
@@ -307,13 +310,15 @@ namespace solarflare
         if (logObj->InstanceID.null)
             return false;
         
-        return CIMHelper::instanceID(Logger::knownLogs[idx]->description()) == logObj->InstanceID.value;
+        return CIMHelper::instanceID(
+                  Logger::getKnownLogs()[idx]->description()) ==
+                                                  logObj->InstanceID.value;
     }
 
     unsigned ProviderLogCapabilitiesHelper::nObjects(const SystemElement&) const
     {
         unsigned n = 0;
-        for (unsigned i = 0; Logger::knownLogs[i] != NULL; i++)
+        for (unsigned i = 0; Logger::getKnownLogs()[i] != NULL; i++)
             n++;
         return n;
     }
@@ -321,7 +326,9 @@ namespace solarflare
     Instance *ProviderLogCapabilitiesHelper::reference(const SystemElement&, unsigned idx) const
     {
         SF_ProviderLogCapabilities *newRlc = SF_ProviderLogCapabilities::create(true);
-        newRlc->InstanceID.set(CIMHelper::instanceID(Logger::knownLogs[idx]->description()));
+        newRlc->InstanceID.set(
+              CIMHelper::instanceID(
+                    Logger::getKnownLogs()[idx]->description()));
         newRlc->InstanceID.value.append(" Capabilities");
 
         return newRlc;
@@ -330,7 +337,7 @@ namespace solarflare
     Instance *ProviderLogCapabilitiesHelper::instance(const SystemElement& sys, unsigned idx) const
     {
         SF_ProviderLogCapabilities *newRlc = static_cast<SF_ProviderLogCapabilities *>(reference(sys, idx));
-        const Logger *log = Logger::knownLogs[idx];
+        const Logger *log = Logger::getKnownLogs()[idx];
 
         newRlc->Description.set(log->description());
         newRlc->ElementName.set(log->description());

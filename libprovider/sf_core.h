@@ -51,7 +51,7 @@ namespace solarflare
                                              line(lineNo),
                                              msg("")
         {
-            solarflare::Logger::errorLog.format(
+            solarflare::Logger::getErrorLog().format(
                                       fileName.c_str(), lineNo,
                                       "ProviderException was thrown");
         }
@@ -62,7 +62,7 @@ namespace solarflare
                                     file(fileName), line(lineNo),
                                     msg(message)
         {
-            solarflare::Logger::errorLog.format(
+            solarflare::Logger::getErrorLog().format(
                                       fileName.c_str(), lineNo,
                                       "ProviderException was thrown: %s",
                                       message.c_str());

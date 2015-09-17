@@ -118,7 +118,12 @@ CIMPLE_NAMESPACE_BEGIN
 // location where CIMPLE stores and retrieves information. This is set
 // from a definitiion in config.h but may be overridded by setters
 // in cimple_config.
-static String cimple_home_envvar = CIMPLEHOME_ENVVAR ;
+static String &static_cimple_home_envvar()
+{
+    static String cimple_home_envvar = CIMPLEHOME_ENVVAR ;
+
+    return cimple_home_envvar;
+}
 
 // FUTURE static String cimple_home_dir = String::EMPTY;
 
@@ -603,7 +608,7 @@ static void _initialize(const char* name)
     // Defined originally in options as define and 
     // as String in this file.
    
-    const char* home = getenv(cimple_home_envvar.c_str());
+    const char* home = getenv(static_cimple_home_envvar().c_str());
 
     static bool no_cimple_home_logged = false;
     static bool no_home_logged = false;
@@ -613,7 +618,7 @@ static void _initialize(const char* name)
     {
         if (!no_cimple_home_logged)
             LOG_ERR(("No CIMPLE_HOME env var defined. Looking for %s",
-                     cimple_home_envvar.c_str()));
+                     static_cimple_home_envvar().c_str()));
         no_cimple_home_logged = true;
         home = getenv("HOME");
         if (!home)
@@ -629,7 +634,7 @@ static void _initialize(const char* name)
     else
         no_cimple_home_logged = false;
     LOG_DIAG(("CIMPLE home %s from env var %s",
-        home,cimple_home_envvar.c_str()));
+        home,static_cimple_home_envvar().c_str()));
 
     // Read parameters from .<name>rc configuration file.
     char          conf_path[1024];
@@ -1082,13 +1087,13 @@ bool get_log_enable_state()
 CIMPLE_CIMPLE_LINKAGE
 int set_cimple_home_envvar(const char* env_var)
 {
-    cimple_home_envvar = env_var;
+    static_cimple_home_envvar() = env_var;
     return 0;
 }
 
 const char* get_cimple_home_envvar()
 {
-    return cimple_home_envvar.c_str();
+    return static_cimple_home_envvar().c_str();
 }
 
 CIMPLE_CIMPLE_LINKAGE
