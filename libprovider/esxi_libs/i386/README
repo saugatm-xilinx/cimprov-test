@@ -1,7 +1,8 @@
-libsfupdate.a and libutils.a were built from 9c8e835a5b19
-revision of v5-incoming repository on VMWare Workbench 2.1 with the
+libsfupdate.a and libutils.a were built from 659eedd3fd3d
+revision of v5-incoming repository on 32bit CentOS host with the
 following command:
-make -C build/gnu/ -j3 CC='gcc -fPIC' TARGET_CC="'gcc -fPIC'" SFUPDATE_NO_DEFAULT_IMAGES=1 SFUPDATE_NO_NETIF_FLAGS=1
+make PLATFORM=linux SFUPDATE_NO_DEFAULT_IMAGES=1 SFUPDATE_NO_NETIF_FLAGS=1
+and adding -fPIC to CFLAGS in platform/linux/config.mk
 
 libcurl.a was built from sources of 7.29.0 version of libcurl.
 libssl.a and libcrypto.a are built from openssl-1.0.1e
