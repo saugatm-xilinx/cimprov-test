@@ -200,7 +200,7 @@ namespace solarflare
         static Logger &getDebugLog();
 
         /// List of all known loggers
-        static Logger *const getKnownLogs();
+        static Logger *const *getKnownLogs();
     };
 } // namespace
 

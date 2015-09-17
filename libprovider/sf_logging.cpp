@@ -119,7 +119,7 @@ namespace solarflare
         return debugLog;
     }
  
-    Logger *const Logger::getKnownLogs()
+    Logger *const *Logger::getKnownLogs()
     {
         static Logger *const knownLogs[] = {
             &Logger::getErrorLog(),
