@@ -1,4 +1,9 @@
-SF_SoftwareIdentity
+SF_DriverSoftwareIdentity
+SF_ToolSoftwareIdentity
+SF_LibrarySoftwareIdentity
+SF_PackageSoftwareIdentity
+SF_FirmwareSoftwareIdentity
+SF_DiagnosticSoftwareIdentity
 SF_ConcreteJob
 SF_InstalledSoftwareIdentity
 SF_DiagElementSoftwareIdentity

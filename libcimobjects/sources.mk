@@ -21,12 +21,13 @@ libcimobjects_EXTRA_MOF += SF_Card SF_ConnectorOnPackage SF_OrderedComponent
 libcimobjects_EXTRA_MOF += SF_DeviceSAPImplementation SF_Realizes
 libcimobjects_EXTRA_MOF += SF_UseOfLog SF_RecordLogCapabilities SF_RecordLog
 libcimobjects_EXTRA_MOF += SF_ElementSoftwareIdentity SF_Container
+libcimobjects_EXTRA_MOF += SF_SoftwareIdentity
 
 ifeq ($(CIM_SERVER),pegasus)
 libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem IBMSD_Chassis PG_ComputerSystem PG_RegisteredProfile
 endif
 ifeq ($(CIM_SERVER),esxi)
-libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem OMC_Chassis
+libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem OMC_Chassis VMware_KernelModuleService
 endif
 ifeq ($(CIM_SERVER),wmi)
 libcimobjects_EXTRA_MOF += Win32_ComputerSystem Win32_SystemEnclosure

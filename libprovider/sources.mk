@@ -56,7 +56,12 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_ServiceAffectsController_Provider.cpp \
 	SF_ServiceAffectsSystem_Provider.cpp \
 	SF_ServiceAffectsSoftware_Provider.cpp \
-	SF_SoftwareIdentity_Provider.cpp \
+	SF_DriverSoftwareIdentity_Provider.cpp \
+	SF_ToolSoftwareIdentity_Provider.cpp \
+	SF_LibrarySoftwareIdentity_Provider.cpp \
+	SF_PackageSoftwareIdentity_Provider.cpp \
+	SF_FirmwareSoftwareIdentity_Provider.cpp \
+	SF_DiagnosticSoftwareIdentity_Provider.cpp \
 	SF_SoftwareInstallationServiceCapabilities_Provider.cpp \
 	SF_SoftwareInstallationService_Provider.cpp \
 	SF_SystemDevice_Provider.cpp \

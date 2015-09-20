@@ -31,6 +31,30 @@ class SF_SoftwareIdentity : CIM_SoftwareIdentity {
 };
 
 INSTANCE
+class SF_DriverSoftwareIdentity : SF_SoftwareIdentity {
+};
+
+INSTANCE
+class SF_ToolSoftwareIdentity : SF_SoftwareIdentity {
+};
+
+INSTANCE
+class SF_LibrarySoftwareIdentity : SF_SoftwareIdentity {
+};
+
+INSTANCE
+class SF_PackageSoftwareIdentity : SF_SoftwareIdentity {
+};
+
+INSTANCE
+class SF_FirmwareSoftwareIdentity : SF_SoftwareIdentity {
+};
+
+INSTANCE
+class SF_DiagnosticSoftwareIdentity : SF_SoftwareIdentity {
+};
+
+INSTANCE
 class SF_ConcreteJob : CIM_ConcreteJob {
 };
 ]])
@@ -660,6 +684,16 @@ class PG_RegisteredProfile : CIM_RegisteredProfile
 m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
 IMP_SECTION([[
 INSTANCE
+class VMware_KernelModuleService : CIM_Service {
+    uint8 LoadModule([IN] string ModuleName);
+    uint8 EnableModule([IN] string ModuleName);
+    uint8 DisableModule([IN] string ModuleName);
+    uint8 GetModuleLoadParameter([IN] string ModuleName,
+                                 [OUT] string LoadParameter);
+    uint8 SetModuleLoadParameter([IN] string ModuleName,
+                                 [IN] string LoadParameter);
+};
+
 class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
 {
       [Override("Caption")]

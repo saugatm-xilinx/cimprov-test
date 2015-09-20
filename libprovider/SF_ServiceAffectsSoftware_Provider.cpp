@@ -12,7 +12,6 @@
 #include "SF_ServiceAffectsSoftware_Provider.h"
 #include "SF_SoftwareInstallationService_Provider.h"
 #include "SF_ComputerSystem_Provider.h"
-#include "SF_SoftwareIdentity_Provider.h"
 #include "SF_PortController_Provider.h"
 #include "SF_NICCard_Provider.h"
 #include "SF_DiagnosticTest_Provider.h"

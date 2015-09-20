@@ -10,6 +10,12 @@
 
 #include "sf_provider.h"
 #include "SF_SoftwareIdentity.h"
+#include "SF_DriverSoftwareIdentity.h"
+#include "SF_ToolSoftwareIdentity.h"
+#include "SF_LibrarySoftwareIdentity.h"
+#include "SF_PackageSoftwareIdentity.h"
+#include "SF_FirmwareSoftwareIdentity.h"
+#include "SF_DiagnosticSoftwareIdentity.h"
 #include "SF_SoftwareInstallationService.h"
 #include "SF_SoftwareInstallationServiceCapabilities.h"
 #include "SF_BundleComponent.h"
@@ -37,6 +43,12 @@ namespace solarflare
     using cimple::is_a;
     using cimple::CIM_SoftwareIdentity;
     using cimple::SF_SoftwareIdentity;
+    using cimple::SF_DriverSoftwareIdentity;
+    using cimple::SF_ToolSoftwareIdentity;
+    using cimple::SF_LibrarySoftwareIdentity;
+    using cimple::SF_PackageSoftwareIdentity;
+    using cimple::SF_FirmwareSoftwareIdentity;
+    using cimple::SF_DiagnosticSoftwareIdentity;
     using cimple::SF_SoftwareInstallationService;
     using cimple::SF_SoftwareInstallationServiceCapabilities;
     using cimple::CIM_OperatingSystem;
@@ -176,6 +188,37 @@ namespace solarflare
         virtual Instance *instance(const SystemElement& se, unsigned idx) const;
     };
 
+    // Check whether a given SWElement can be represented by a given
+    // SF_SoftwareIdentity subclass.
+    //
+    // @param sw    SWElement instance
+    // @param cls   CIM Metaclass reference
+    //
+    // @return true if CIM class corresponding to cls can be used to
+    // represent sw, false otherwise
+    static bool SWElementMetaClassMatch(const SWElement& sw,
+                                        const Meta_Class& cls)
+    {
+        SWElement::SWClass    swClass;
+
+        swClass = sw.classify();
+        if (&cls == &SF_SoftwareIdentity::static_meta_class ||
+            (&cls == &SF_DriverSoftwareIdentity::static_meta_class &&
+             swClass == SWElement::SWDriver) ||
+            (&cls == &SF_ToolSoftwareIdentity::static_meta_class &&
+             swClass == SWElement::SWTool) ||
+            (&cls == &SF_LibrarySoftwareIdentity::static_meta_class &&
+             swClass == SWElement::SWLibrary) ||
+            (&cls == &SF_PackageSoftwareIdentity::static_meta_class &&
+             swClass == SWElement::SWPackage) ||
+            (&cls == &SF_FirmwareSoftwareIdentity::static_meta_class &&
+             swClass == SWElement::SWFirmware) ||
+            (&cls == &SF_DiagnosticSoftwareIdentity::static_meta_class &&
+             swClass == SWElement::SWDiagnostics))
+            return true;
+
+        return false;
+    }
 
     const CIMHelper* SWElement::cimDispatch(const Meta_Class& cls) const
     {
@@ -183,7 +226,7 @@ namespace solarflare
         static const SWConformsToProfileHelper conformToProfile;
         static const InstalledSoftwareIdentityHelper installedSoftware;
 
-        if (&cls == &SF_SoftwareIdentity::static_meta_class)
+        if (SWElementMetaClassMatch(*this, cls))
             return &softwareIdentity;
         if (&cls == &SF_InstalledSoftwareIdentity::static_meta_class)
             return &installedSoftware;
@@ -248,7 +291,46 @@ namespace solarflare
     Instance *
     SoftwareIdentityHelper::reference(const solarflare::SystemElement& se, unsigned) const
     {
-        SF_SoftwareIdentity *identity = SF_SoftwareIdentity::create(true);
+        CIM_SoftwareIdentity *identity = NULL;
+        SWElement::SWClass    swClass;
+
+        const SWElement& sw = static_cast<const SWElement&>(se);
+
+        swClass = sw.classify();
+
+        switch (swClass)
+        {
+            case SWElement::SWDriver:
+                identity = cast<CIM_SoftwareIdentity *>(
+                              SF_DriverSoftwareIdentity::create(true));
+                break;
+
+            case SWElement::SWTool:
+                identity = cast<CIM_SoftwareIdentity *>(
+                              SF_ToolSoftwareIdentity::create(true));
+                break;
+
+            case SWElement::SWLibrary:
+                identity = cast<CIM_SoftwareIdentity *>(
+                              SF_LibrarySoftwareIdentity::create(true));
+                break;
+
+            case SWElement::SWPackage:
+                identity = cast<CIM_SoftwareIdentity *>(
+                              SF_PackageSoftwareIdentity::create(true));
+                break;
+
+            case SWElement::SWFirmware:
+                identity = cast<CIM_SoftwareIdentity *>(
+                              SF_FirmwareSoftwareIdentity::create(true));
+                break;
+
+            case SWElement::SWDiagnostics:
+                identity = cast<CIM_SoftwareIdentity *>(
+                              SF_DiagnosticSoftwareIdentity::create(true));
+                break;
+        }
+
         identity->InstanceID.set(instanceID(se.name()));
         return identity;
     }
@@ -297,7 +379,7 @@ namespace solarflare
     {
         const SWElement& sw = static_cast<const SWElement&>(se);
         
-        SF_SoftwareIdentity *identity = static_cast<SF_SoftwareIdentity *>(reference(sw, idx));
+        SF_SoftwareIdentity *identity = cast<SF_SoftwareIdentity *>(reference(sw, idx));
 
         VersionInfo swVer = sw.version();
         
@@ -369,7 +451,8 @@ namespace solarflare
         static const BundleComponentHelper bundleComponent;
         static const SoftwareServiceAffectsElementHelper serviceAffectsSoftware;
 
-        if (&cls == &SF_SoftwareIdentity::static_meta_class)
+        if (SWElementMetaClassMatch(*(static_cast<const SWElement *>(this)),
+                                    cls))
             return &hostSoftwareIdentity;
         else if (&cls == &SF_BundleComponent::static_meta_class)
             return &bundleComponent;
@@ -502,7 +585,9 @@ namespace solarflare
     Instance *
     HostSoftwareIdentityHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        SF_SoftwareIdentity *id = static_cast<SF_SoftwareIdentity *>(SoftwareIdentityHelper::instance(se, idx));
+        SF_SoftwareIdentity *id =
+                cast<SF_SoftwareIdentity *>(
+                            SoftwareIdentityHelper::instance(se, idx));
         addTargetOS(id);
         return id;
     }
@@ -559,7 +644,8 @@ namespace solarflare
         static const InstallationJobHelper bundleInstallationJob;
         static const InstallableConformsToProfileHelper conformToProfile;
 
-        if (&cls == &SF_SoftwareIdentity::static_meta_class)
+        if (SWElementMetaClassMatch(*(static_cast<const SWElement *>(this)),
+                                    cls))
             return &bundleSoftwareIdentity;
         if (&cls == &SF_ServiceAffectsSoftware::static_meta_class)
             return &serviceAffectsSoftware;
@@ -568,8 +654,8 @@ namespace solarflare
             return &bundleInstallationJob;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conformToProfile;
-        else
-            return SWElement::cimDispatch(cls);
+
+        return SWElement::cimDispatch(cls);
     }
 
     const CIMHelper* ManagementPackage::cimDispatch(const Meta_Class& cls) const
@@ -623,7 +709,9 @@ namespace solarflare
     Instance *
     BundleSoftwareIdentityHelper::instance(const SystemElement& se, unsigned idx) const
     {
-        SF_SoftwareIdentity *id = static_cast<SF_SoftwareIdentity *>(HostSoftwareIdentityHelper::instance(se, idx));
+        SF_SoftwareIdentity *id =
+          cast<SF_SoftwareIdentity *>(
+              HostSoftwareIdentityHelper::instance(se, idx));
         addPackageType(id, static_cast<const Package&>(se).type());
         return id;
     }
@@ -646,8 +734,8 @@ namespace solarflare
             return &serviceAffectsSoftware;
         if (&cls == &SF_ElementConformsToProfile::static_meta_class)
             return &conformToProfile;
-        else
-            return SWElement::cimDispatch(cls);
+
+        return SWElement::cimDispatch(cls);
     }
 
     const CIMHelper* Library::cimDispatch(const Meta_Class& cls) const
