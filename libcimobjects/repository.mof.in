@@ -32,6 +32,11 @@ class SF_SoftwareIdentity : CIM_SoftwareIdentity {
 
 INSTANCE
 class SF_DriverSoftwareIdentity : SF_SoftwareIdentity {
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
+    uint32 GetDriverLoadParameters([OUT] string LoadParameters);
+
+    uint32 SetDriverLoadParameters([IN] string LoadParameters);
+]], [[]])
 };
 
 INSTANCE

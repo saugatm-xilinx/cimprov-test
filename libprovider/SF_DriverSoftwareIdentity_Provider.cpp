@@ -17,6 +17,13 @@ CIMPLE_NAMESPACE_BEGIN
 using solarflare::System;
 using solarflare::SWElement;
 
+enum ReturnValue 
+{
+    OK = 0,
+    Error = 2,
+    InvalidParameter = 5,
+};
+
 SF_DriverSoftwareIdentity_Provider::SF_DriverSoftwareIdentity_Provider()
 {
 }
@@ -69,6 +76,46 @@ Modify_Instance_Status SF_DriverSoftwareIdentity_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+#ifdef TARGET_CIM_SERVER_esxi
+Invoke_Method_Status SF_DriverSoftwareIdentity_Provider::GetDriverLoadParameters(
+    const SF_DriverSoftwareIdentity* self,
+    Property<String>& LoadParameters,
+    Property<uint32>& return_value)
+{
+    String loadParams;
+
+    if (solarflare::System::target.getDriverLoadParameters(loadParams) < 0)
+        return_value.set(Error);
+    else
+    {
+        LoadParameters.set(loadParams);
+        return_value.set(OK);
+    }
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_DriverSoftwareIdentity_Provider::SetDriverLoadParameters(
+    const SF_DriverSoftwareIdentity* self,
+    const Property<String>& LoadParameters,
+    Property<uint32>& return_value)
+{
+    String loadParams;
+
+    if (LoadParameters.null)
+        loadParams = "";
+    else
+        loadParams = LoadParameters.value;
+
+    if (solarflare::System::target.setDriverLoadParameters(
+                                                    loadParams) < 0)
+        return_value.set(Error);
+    else
+        return_value.set(OK);
+
+    return INVOKE_METHOD_OK;
+}
+#endif
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

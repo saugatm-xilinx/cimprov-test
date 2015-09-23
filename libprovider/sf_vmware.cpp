@@ -18,6 +18,7 @@
 #include <cimple.h>
 #include "CIM_EthernetPort.h"
 #include "CIM_SoftwareIdentity.h"
+#include "VMware_KernelModuleService.h"
 
 #include <stdint.h>
 
@@ -150,6 +151,9 @@ namespace solarflare
     using cimple::Instance;
     using cimple::CIM_EthernetPort;
     using cimple::CIM_SoftwareIdentity;
+    using cimple::VMware_KernelModuleService;
+    using cimple::VMware_KernelModuleService_GetModuleLoadParameter_method;
+    using cimple::VMware_KernelModuleService_SetModuleLoadParameter_method;
     using cimple::Ref;
     using cimple::Array;
     using cimple::cast;
@@ -463,7 +467,7 @@ fail:
     ///
     /// @return Reference to CIM_EthernetPort value
     ///
-    Ref<CIM_EthernetPort> getCIMEthPort(const char *dev_name)
+    static Ref<CIM_EthernetPort> getCIMEthPort(const char *dev_name)
     {
         Ref<CIM_EthernetPort> cimModel = CIM_EthernetPort::create();
         Ref<Instance>         cimInstance;
@@ -3361,6 +3365,9 @@ cleanup:
                               String &data);
         virtual int NVWriteAll(unsigned int nv_ctx,
                                const String &data);
+
+        virtual int getDriverLoadParameters(String &loadParams);
+        virtual int setDriverLoadParameters(const String &loadParams);
     };
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -3956,6 +3963,112 @@ cleanup:
         }
 
         return 0;
+    }
+
+    static Ref<VMware_KernelModuleService> getKernelModuleService()
+    {
+        Ref<VMware_KernelModuleService>
+                    cimModel = VMware_KernelModuleService::create();
+
+        Ref<Instance>                   cimInstance;
+        Ref<VMware_KernelModuleService> km_svc;
+
+        cimple::Instance_Enumerator ie;
+
+        km_svc.reset(cast<VMware_KernelModuleService *>(NULL));
+
+        if (cimple::cimom::enum_instances(CIMHelper::baseNS,
+                                          cimModel.ptr(), ie) != 0)
+        {
+            PROVIDER_LOG_ERR("Failed to enumerate "
+                             "VMware_KernelModuleService");
+            return km_svc;
+        }
+
+        cimInstance = ie();
+        if (!cimInstance)
+        {
+            PROVIDER_LOG_ERR("Failed to get instance "
+                             "of VMware_KernelModuleService");
+            return km_svc;
+        }
+
+        km_svc.reset(cast<VMware_KernelModuleService *>(cimInstance.ptr()));
+
+        return km_svc;
+    }
+
+    int VMwareSystem::getDriverLoadParameters(String &loadParams)
+    {
+        Ref<VMware_KernelModuleService> km_svc = getKernelModuleService();
+
+        // cimple::Ref does not compile with methods
+        VMware_KernelModuleService_GetModuleLoadParameter_method *
+            method = NULL;
+
+        if (!km_svc)
+            return -1;
+        
+        method = VMware_KernelModuleService_GetModuleLoadParameter_method::create();
+        if (!method)
+            return -1;
+
+        method->ModuleName.set("sfc");
+        if (cimple::cimom::invoke_method(CIMHelper::baseNS,
+                                         km_svc.ptr(), method) != 0)
+        {
+            PROVIDER_LOG_ERR("Failed to invoke "
+                             "GetModuleLoadParameter() method");
+            VMware_KernelModuleService_GetModuleLoadParameter_method::destroy(method);
+            return -1;
+        }
+        else if (method->return_value.value != 0)
+        {
+            PROVIDER_LOG_ERR("GetModuleLoadParameter() method returned %u",
+                             (unsigned int)method->return_value.value);
+            VMware_KernelModuleService_GetModuleLoadParameter_method::destroy(method);
+            return -1;
+        }
+
+        loadParams = method->LoadParameter.value;
+
+        VMware_KernelModuleService_GetModuleLoadParameter_method::destroy(method);
+    }
+
+    int VMwareSystem::setDriverLoadParameters(const String &loadParams)
+    {
+        Ref<VMware_KernelModuleService> km_svc = getKernelModuleService();
+
+        // cimple::Ref does not compile with methods
+        VMware_KernelModuleService_SetModuleLoadParameter_method *
+            method = NULL;
+
+        if (!km_svc)
+            return -1;
+        
+        method = VMware_KernelModuleService_SetModuleLoadParameter_method::create();
+        if (!method)
+            return -1;
+
+        method->ModuleName.set("sfc");
+        method->LoadParameter.set(loadParams);
+        if (cimple::cimom::invoke_method(CIMHelper::baseNS,
+                                         km_svc.ptr(), method) != 0)
+        {
+            PROVIDER_LOG_ERR("Failed to invoke "
+                             "SetModuleLoadParameter() method");
+            VMware_KernelModuleService_SetModuleLoadParameter_method::destroy(method);
+            return -1;
+        }
+        else if (method->return_value.value != 0)
+        {
+            PROVIDER_LOG_ERR("SetModuleLoadParameter() method returned %u",
+                             (unsigned int)method->return_value.value);
+            VMware_KernelModuleService_SetModuleLoadParameter_method::destroy(method);
+            return -1;
+        }
+
+        VMware_KernelModuleService_SetModuleLoadParameter_method::destroy(method);
     }
 
     VMwareSystem VMwareSystem::target;

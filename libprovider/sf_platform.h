@@ -930,6 +930,16 @@ namespace solarflare
         {
             return -1;
         }
+       
+        virtual int getDriverLoadParameters(String &loadParams)
+        {
+            return -1;
+        }
+
+        virtual int setDriverLoadParameters(const String &loadParams)
+        {
+            return -1;
+        }
     };
 
 } // namespace

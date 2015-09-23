@@ -49,6 +49,17 @@ public:
         const SF_DriverSoftwareIdentity* model,
         const SF_DriverSoftwareIdentity* instance);
 
+#ifdef TARGET_CIM_SERVER_esxi
+    Invoke_Method_Status GetDriverLoadParameters(
+        const SF_DriverSoftwareIdentity* self,
+        Property<String>& LoadParameters,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status SetDriverLoadParameters(
+        const SF_DriverSoftwareIdentity* self,
+        const Property<String>& LoadParameters,
+        Property<uint32>& return_value);
+#endif
     /*@END@*/
 };
 
