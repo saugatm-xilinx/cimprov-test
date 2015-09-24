@@ -3975,8 +3975,6 @@ cleanup:
 
         cimple::Instance_Enumerator ie;
 
-        km_svc.reset(cast<VMware_KernelModuleService *>(NULL));
-
         if (cimple::cimom::enum_instances(CIMHelper::baseNS,
                                           cimModel.ptr(), ie) != 0)
         {
@@ -4033,6 +4031,8 @@ cleanup:
         loadParams = method->LoadParameter.value;
 
         VMware_KernelModuleService_GetModuleLoadParameter_method::destroy(method);
+
+        return 0;
     }
 
     int VMwareSystem::setDriverLoadParameters(const String &loadParams)
@@ -4042,6 +4042,8 @@ cleanup:
         // cimple::Ref does not compile with methods
         VMware_KernelModuleService_SetModuleLoadParameter_method *
             method = NULL;
+
+        String setParams;
 
         if (!km_svc)
             return -1;
@@ -4069,6 +4071,21 @@ cleanup:
         }
 
         VMware_KernelModuleService_SetModuleLoadParameter_method::destroy(method);
+
+        // This check is performed because SetModuleLoadParameter()
+        // may fail to return error when driver parameters were not
+        // set actually.
+        if (getDriverLoadParameters(setParams) < 0)
+            PROVIDER_LOG_ERR("Failed to check whether driver load "
+                             "parameters were set correctly");
+        else if (setParams != loadParams)
+        {
+            PROVIDER_LOG_ERR("Driver parameters are '%s' instead of '%s'",
+                             setParams.c_str(), loadParams.c_str());
+            return -1;
+        }
+
+        return 0;
     }
 
     VMwareSystem VMwareSystem::target;
