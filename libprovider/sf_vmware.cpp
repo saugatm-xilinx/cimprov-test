@@ -4043,8 +4043,6 @@ cleanup:
         VMware_KernelModuleService_SetModuleLoadParameter_method *
             method = NULL;
 
-        String setParams;
-
         if (!km_svc)
             return -1;
         
@@ -4071,19 +4069,6 @@ cleanup:
         }
 
         VMware_KernelModuleService_SetModuleLoadParameter_method::destroy(method);
-
-        // This check is performed because SetModuleLoadParameter()
-        // may fail to return error when driver parameters were not
-        // set actually.
-        if (getDriverLoadParameters(setParams) < 0)
-            PROVIDER_LOG_ERR("Failed to check whether driver load "
-                             "parameters were set correctly");
-        else if (setParams != loadParams)
-        {
-            PROVIDER_LOG_ERR("Driver parameters are '%s' instead of '%s'",
-                             setParams.c_str(), loadParams.c_str());
-            return -1;
-        }
 
         return 0;
     }
