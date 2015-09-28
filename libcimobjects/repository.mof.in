@@ -14,6 +14,7 @@ m4_define([[ASSOCIATION_NWMI]], [[ [Association] ]])m4_dnl
 m4_define([[INDICATION_NWMI]], [[ [Indication] ]])m4_dnl
 ]])m4_dnl
 m4_define([[WMIONLY]], [[m4_ifelse(TARGET_CIM_SERVER, [[wmi]], [[$1]])]])m4_dnl
+m4_define([[ESXIONLY]], [[m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[$1]])]])m4_dnl
 m4_ifdef([[IMPNS]], [[m4_define([[ROOT_OR_IMPNS]])]])m4_dnl
 m4_ifdef([[ROOTNS]], [[m4_define([[ROOT_OR_IMPNS]])]])m4_dnl
 m4_ifdef([[IMPNS]], [[m4_define([[INTEROP_OR_IMPNS]])]])m4_dnl
@@ -199,6 +200,12 @@ class SF_NICCard : SF_Card {
 WMIONLY([[
     [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("Tag")] string Tag;
+]])
+ESXIONLY([[
+    uint32 GetVPDFields([IN] boolean StaticVPD,
+                        [OUT,ArrayType("Indexed")] string FieldNames[],
+                        [OUT,ArrayType("Indexed")] string FieldValues[],
+                        [OUT,ArrayType("Indexed")] boolean HexValues[]);
 ]])
 };
 

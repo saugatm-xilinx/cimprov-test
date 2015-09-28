@@ -361,6 +361,23 @@ namespace solarflare
 
     class Driver;
 
+    ///
+    /// VPD field description
+    ///
+    class VPDField
+    {
+    public:
+        String name;      ///< VPD field name
+        Buffer data;      ///< VPD field data
+
+        // Dummy operator to make possible using of cimple::Array
+        bool operator== (const VPDField &rhs)
+        {
+            UNUSED(rhs);
+            return false;
+        }
+    };
+
     /// @brief An abstract class for NIC elements
     /// Implementors shall subclass it for platform-specific behaviour
     class NIC : public SystemElement,
@@ -396,6 +413,19 @@ namespace solarflare
         ///          from zero.
         NIC(unsigned i) : SystemElement(nicDescription),
                           OrderedElement(i) {};
+
+        ///
+        /// Get all VPD fields
+        ///
+        /// @param staticVPD           Whether to get static or dynamic VPD
+        /// @param parsedFields  [out] Parsed VPD fields
+        ///
+        /// @return 0 on success, -1 on failure
+        virtual int getFullVPD(bool staticVPD,
+                               Array<VPDField> &parsedFields) const
+        {
+            return -1;
+        }
 
         /// @return NIC VPD
         virtual VitalProductData vitalProductData() const = 0;

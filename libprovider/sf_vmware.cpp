@@ -1061,17 +1061,14 @@ fail:
     ///
     /// Parse VPD data.
     ///
-    /// @param vpd               Buffer with VPD data
-    /// @param len               Length of VPD data
-    /// @param product_name      [out] Where to save product name
-    /// @param product_number    [out] Where to save product number
-    /// @param serial_number     [out] Where to save serial number
+    /// @param vpd                     Buffer with VPD data
+    /// @param len                     Length of VPD data
+    /// @param parsedFields      [out] Where to save parsed VPD fields
     ///
     /// @return 0 on success or error code
     ///
     static int parseVPD(uint8_t *vpd, uint32_t len,
-                        String &product_name, String &product_number,
-                        String &serial_number)
+                        Array<VPDField> &parsedFields)
     {
         int             tag_name;
         unsigned int    tag_len;
@@ -1088,6 +1085,8 @@ fail:
         uint8_t sum = 0;
         uint8_t *vpd_start = vpd;
 
+        parsedFields.clear(); 
+
         while (vpd < end)
         {
             if ((rc = getVPDTag(vpd, len, &tag_name,
@@ -1098,67 +1097,42 @@ fail:
             {
                 case VPD_TAG_ID:
                 {
-                    char *tmp_product_name = new char[tag_len + 1];
+                    VPDField field;
 
-                    memcpy(tmp_product_name, tag_start, tag_len);
-                    tmp_product_name[tag_len] = '\0';
-
-                    product_name = tmp_product_name;
-                    delete[] tmp_product_name;
+                    field.name = "IDTag";
+                    field.data.append((const char *)tag_start, tag_len);
+                    parsedFields.append(field);
 
                     break;
                 }
 
                 case VPD_TAG_R:
                 case VPD_TAG_W:
-
+                {
                     sum = 0;
                     for (vpd_field = tag_start;
                          vpd_field < tag_start + tag_len; )
                     {
+                        VPDField field;
+
                         field_name[0] = vpd_field[0];
                         field_name[1] = vpd_field[1];
                         field_name[2] = '\0';
+
+                        field.name = String(field_name);
+
                         field_len = vpd_field[2];
-                        field_value = new char[field_len + 1];
-                        memcpy(field_value, vpd_field + 3, field_len);
-                        field_value[field_len] = '\0';
 
-                        if (strcmp(field_name, "PN") == 0)
-                            product_number = field_value;
-                        else if (strcmp(field_name, "SN") == 0)
-                            serial_number = field_value;
-                        else if (strcmp(field_name, "RV") == 0 &&
-                            tag_name == VPD_TAG_R)
-                        {
-                            if (field_len < 1)
-                            {
-                                PROVIDER_LOG_ERR("Too small length %u "
-                                                 "of field %s",
-                                                 field_len,
-                                                 field_name);
-                                delete[] field_value;
-                                return -1;
-                            }
-
-                            sum = 0;
-                            for (i = 0; i < vpd_field + 3 - vpd_start; i++)
-                                sum += (vpd_start[i] & 0x000000ff);
-
-                            sum += vpd_field[3];
-
-#if 0
-                            if (sum != 0)
-                                printf("Invalid checksum!\n");
-#endif
-                        }
-
-                        delete[] field_value;
+                        field.data.append(
+                              reinterpret_cast<char *>(vpd_field + 3),
+                              field_len);
+                        parsedFields.append(field);
 
                         vpd_field += 3 + field_len;
                     }
 
                     break;
+                }
             }
 
             if (tag_name == VPD_TAG_END)
@@ -1186,18 +1160,17 @@ fail:
     ///
     /// Get VPD.
     ///
-    /// @param ifname            Interface name
-    /// @param port_number       Port number
-    /// @param product_name      Where to save product name
-    /// @param product_number    Where to save product number
-    /// @param serial_number     Where to save serial number
-    /// @param device_type       Device type (Siena, Huntington, etc)
+    /// @param ifname             Interface name
+    /// @param port_number        Port number
+    /// @param device_type        Device type (Siena, Huntington, etc)
+    /// @param staticVPD          Whether to get static or dynamic VPD
+    /// @param parsedFields [out] Parsed VPD fields
     ///
     /// @return 0 on success or error code
     ///
     static int getVPD(const char *ifname, int port_number,
-                      String &product_name, String &product_number,
-                      String &serial_number, int device_type)
+                      int device_type, bool staticVPD,
+                      Array<VPDField> &parsedFields)
     {
         int       rc;
         int       fd;
@@ -1207,8 +1180,6 @@ fail:
         int       vpd_off;
         int       vpd_len;
         uint32_t  nvram_type;
-
-        siena_mc_static_config_hdr_t partial_hdr;
 
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
@@ -1220,32 +1191,70 @@ fail:
 
         if (device_type == SFU_DEVICE_TYPE_SIENA)
         {
-            nvram_type = port_number == 0 ?
-                            MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0 :
-                                    MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT1;
-
-            if (siocEFXReadNVRAM(fd, false, (uint8_t *)&partial_hdr, 0,
-                                 sizeof(partial_hdr),
-                                 ifname, nvram_type) < 0)
+            if (staticVPD)
             {
-                PROVIDER_LOG_ERR("Failed to get header from NVRAM");
-                close(fd);
-                return -1;
-            }
+                siena_mc_static_config_hdr_t partial_hdr;
 
-            if (CI_BSWAP_LE32(partial_hdr.magic) !=
-                                        SIENA_MC_STATIC_CONFIG_MAGIC)
+                nvram_type = port_number == 0 ?
+                                MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT0 :
+                                        MC_CMD_NVRAM_TYPE_STATIC_CFG_PORT1;
+
+                if (siocEFXReadNVRAM(fd, false, (uint8_t *)&partial_hdr, 0,
+                                     sizeof(partial_hdr),
+                                     ifname, nvram_type) < 0)
+                {
+                    PROVIDER_LOG_ERR("Failed to get header from NVRAM");
+                    close(fd);
+                    return -1;
+                }
+
+                if (CI_BSWAP_LE32(partial_hdr.magic) !=
+                                            SIENA_MC_STATIC_CONFIG_MAGIC)
+                {
+                    PROVIDER_LOG_ERR(
+                                  "Unknown NVRAM header magic "
+                                  "number %ld(0x%lx)",
+                                  static_cast<long int>(partial_hdr.magic),
+                                  static_cast<long int>(partial_hdr.magic));
+                    close(fd);
+                    return -1;
+                }
+
+                vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
+                vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
+            }
+            else
             {
-                PROVIDER_LOG_ERR("Unknown NVRAM header magic "
-                                 "number %ld(0x%lx)",
-                                 static_cast<long int>(partial_hdr.magic),
-                                 static_cast<long int>(partial_hdr.magic));
-                close(fd);
-                return -1;
-            }
+                siena_mc_dynamic_config_hdr_t partial_hdr;
 
-            vpd_off = CI_BSWAP_LE32(partial_hdr.static_vpd_offset);
-            vpd_len = CI_BSWAP_LE32(partial_hdr.static_vpd_length);
+                nvram_type = port_number == 0 ?
+                                MC_CMD_NVRAM_TYPE_DYNAMIC_CFG_PORT0 :
+                                        MC_CMD_NVRAM_TYPE_DYNAMIC_CFG_PORT1;
+
+                if (siocEFXReadNVRAM(fd, false, (uint8_t *)&partial_hdr, 0,
+                                     sizeof(partial_hdr),
+                                     ifname, nvram_type) < 0)
+                {
+                    PROVIDER_LOG_ERR("Failed to get header from NVRAM");
+                    close(fd);
+                    return -1;
+                }
+
+                if (CI_BSWAP_LE32(partial_hdr.magic) !=
+                                            SIENA_MC_DYNAMIC_CONFIG_MAGIC)
+                {
+                    PROVIDER_LOG_ERR(
+                                  "Unknown NVRAM header magic "
+                                  "number %ld(0x%lx)",
+                                  static_cast<long int>(partial_hdr.magic),
+                                  static_cast<long int>(partial_hdr.magic));
+                    close(fd);
+                    return -1;
+                }
+
+                vpd_off = CI_BSWAP_LE32(partial_hdr.dynamic_vpd_offset);
+                vpd_len = CI_BSWAP_LE32(partial_hdr.dynamic_vpd_length);
+            }
 
             vpd = new uint8_t[vpd_len];
             if (siocEFXReadNVRAM(fd, false, vpd, vpd_off, vpd_len,
@@ -1263,7 +1272,10 @@ fail:
         {
             nvram_partition_t partition;
 
-            nvram_type = NVRAM_PARTITION_TYPE_STATIC_CONFIG;
+            if (staticVPD)
+                nvram_type = NVRAM_PARTITION_TYPE_STATIC_CONFIG;
+            else
+                nvram_type = NVRAM_PARTITION_TYPE_DYNAMIC_CONFIG;
 
             if (siocEFXReadNVRAMPartition(fd, false, ifname,
                                           nvram_type, nvram_data,
@@ -1286,7 +1298,9 @@ fail:
             }
 
             if ((rc = tlv_find(&partition.tlv_cursor,
-                               TLV_TAG_PF_STATIC_VPD(0))) != TLV_OK)
+                               (staticVPD ?
+                                  TLV_TAG_PF_STATIC_VPD(0) :
+                                  TLV_TAG_PF_DYNAMIC_VPD(0)))) != TLV_OK)
             {
                 PROVIDER_LOG_ERR("tlv_find() returned %d", rc);
                 close(fd);
@@ -1294,11 +1308,23 @@ fail:
                 return -1;
             }
 
-            vpd = reinterpret_cast<struct tlv_pf_static_vpd *>
-                                (partition.tlv_cursor.current)->bytes;
-            vpd_len = le32_to_host(
-                        reinterpret_cast<struct tlv_pf_static_vpd *>
-                                (partition.tlv_cursor.current)->length);
+            if (staticVPD)
+            {
+                vpd = reinterpret_cast<struct tlv_pf_static_vpd *>
+                                    (partition.tlv_cursor.current)->bytes;
+                vpd_len = le32_to_host(
+                            reinterpret_cast<struct tlv_pf_static_vpd *>
+                                    (partition.tlv_cursor.current)->length);
+            }
+            else
+            {
+                vpd = reinterpret_cast<struct tlv_pf_dynamic_vpd *>
+                                    (partition.tlv_cursor.current)->bytes;
+                vpd_len = le32_to_host(
+                            reinterpret_cast<struct tlv_pf_dynamic_vpd *>
+                                    (partition.tlv_cursor.current)->length);
+           
+            }
         }
         else
         {
@@ -1308,8 +1334,7 @@ fail:
             return -1;
         }
 
-        if ((rc = parseVPD(vpd, vpd_len, product_name,
-                           product_number, serial_number)) < 0)
+        if ((rc = parseVPD(vpd, vpd_len, parsedFields)) < 0)
         {
             PROVIDER_LOG_ERR("Failed to parse VPD");
             close(fd);
@@ -2317,6 +2342,8 @@ fail:
             }
         }
 
+        virtual int getFullVPD(bool staticVPD,
+                               Array<VPDField> &parsedFields) const;
         virtual VitalProductData vitalProductData() const;
         Connector connector() const;
 
@@ -2396,9 +2423,25 @@ fail:
         }
     };
 
-    VitalProductData VMwareNIC::vitalProductData() const 
+    int VMwareNIC::getFullVPD(bool staticVPD,
+                              Array<VPDField> &parsedFields) const
     {
         if (ports.size() <= 0)
+        {
+            PROVIDER_LOG_ERR("%s(): NIC has no ports", __FUNCTION__);
+            return -1;
+        }
+        else
+            return getVPD(ports[0].dev_name.c_str(), 0,
+                          SFU_DEVICE_TYPE(pci_device_id),
+                          staticVPD, parsedFields);
+    }
+
+    VitalProductData VMwareNIC::vitalProductData() const 
+    {
+        Array<VPDField> parsedFields;
+
+        if (getFullVPD(true, parsedFields) < 0)
             return VitalProductData("", "", "", "", "", "");
         else
         {
@@ -2406,9 +2449,17 @@ fail:
             String   pn;
             String   sn;
 
-            if (getVPD(ports[0].dev_name.c_str(), 0,
-                       p_name, pn, sn, SFU_DEVICE_TYPE(pci_device_id)) < 0)
-                return VitalProductData("", "", "", "", "", "");
+            unsigned int i;
+
+            for (i = 0; i < parsedFields.size(); i++)
+            {
+                if (strcmp(parsedFields[i].name.c_str(), "IDTag") == 0)
+                    p_name = String(parsedFields[i].data.data());
+                else if (strcmp(parsedFields[i].name.c_str(), "PN") == 0)
+                    pn = String(parsedFields[i].data.data());
+                else if (strcmp(parsedFields[i].name.c_str(), "SN") == 0)
+                    sn = String(parsedFields[i].data.data());
+            }
 
             VitalProductData vpd(sn.c_str(), "", sn.c_str(), pn.c_str(),
                                  p_name.c_str(), pn.c_str());
