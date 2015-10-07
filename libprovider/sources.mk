@@ -41,7 +41,6 @@ libprovider_SOURCES = SF_AffectedJobElement_Provider.cpp \
 	SF_LANEndpoint_Provider.cpp \
 	SF_LogEntry_Provider.cpp \
 	SF_LogManagesRecord_Provider.cpp \
-	SF_NVAPI_Provider.cpp \
 	SF_NICCard_Provider.cpp \
 	SF_NICSAPImplementation_Provider.cpp \
 	SF_OwningJobElement_Provider.cpp \
@@ -98,6 +97,10 @@ libprovider_SOURCES += sf_mcdi_sensors.cpp
 libprovider_SOURCES += sf_mtd.cpp
 libprovider_SOURCES += sf_siocefx_nvram.cpp
 libprovider_SOURCES += sf_ef10_fw_version.cpp
+endif
+
+ifeq ($(PROVIDER_PLATFORM), vmware)
+libprovider_SOURCES += SF_NVAPI_Provider.cpp
 endif
 
 ifeq ($(PROVIDER_PLATFORM),windows)
