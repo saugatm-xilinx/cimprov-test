@@ -53,7 +53,7 @@ Enum_Instances_Status SF_NVAPI_Provider::enum_instances(
     Enum_Instances_Handler<SF_NVAPI>* handler)
 {
     SF_NVAPI *inst = SF_NVAPI::create();
-    
+ 
     if (inst == NULL)
         return ENUM_INSTANCES_FAILED;
 

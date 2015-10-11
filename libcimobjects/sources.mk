@@ -37,7 +37,7 @@ ifneq ($(_DO_NOT_GENERATE),1)
 include $(libcimobjects_DIR)/classes.mk
 endif
 
-libcimobjects_GENERATED = $(libcimobjects_SOURCES) $(patsubst %.cpp,%.h,$(libcimobjects_SOURCES)) classes.mk repository.mof 
+libcimobjects_GENERATED = $(libcimobjects_SOURCES) $(patsubst %.cpp,%.h,$(libcimobjects_SOURCES)) classes.mk repository.mof classes
 
 $(eval $(call component,libcimobjects,STATIC_LIBRARIES))
 
@@ -68,6 +68,9 @@ $(libcimobjects_DIR)/interop.mof : $(libcimobjects_DIR)/repository.mof.in
 
 $(libcimobjects_DIR)/root.mof : $(libcimobjects_DIR)/repository.mof.in
 	$(MOF_PREPROCESS) -DROOTNS=1 $< >$@
+
+$(libcimobjects_DIR)/classes : $(libcimobjects_DIR)/classes.in
+	$(MOF_PREPROCESS) $< >$@
 
 ifeq ($(CIM_INTERFACE),wmi)
 PATCH_SCHEMA_FOR_WMI = | $(SED) 's/\[\([^]]*\)Association,[[:space:]]*/\[\1/; s/\[\([^]]*\)Abstract,[[:space:]]*/\[\1/'
