@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "log.h"
+#include "cim_log.h"
 
 /** Where to store data received from CURL */
 char *curl_data = NULL;

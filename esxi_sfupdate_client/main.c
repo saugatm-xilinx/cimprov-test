@@ -25,7 +25,7 @@
 #include "fw_images.h"
 
 #include "cim_client.h"
-#include "log.h"
+#include "cim_log.h"
 
 #include "curl_aux.h"
 

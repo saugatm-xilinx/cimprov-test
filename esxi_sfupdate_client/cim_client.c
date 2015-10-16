@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "log.h"
+#include "cim_log.h"
 #include "cim_client.h"
 
 #include <string.h>

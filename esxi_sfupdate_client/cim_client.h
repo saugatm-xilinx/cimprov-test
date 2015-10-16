@@ -1,7 +1,7 @@
 #ifndef SFUPDATE_CIM_CIM_CLIENT_H
 #define SFUPDATE_CIM_CIM_CLIENT_H 1
 
-#include "log.h"
+#include "cim_log.h"
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>

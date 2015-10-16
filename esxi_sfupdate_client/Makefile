@@ -66,7 +66,7 @@ DISTFILES = main.c vsnprintf_fix.c curl_aux.c curl_aux.h \
 	    		cim_client.c cim_client.h Makefile README \
 	    		esxi_sfupdate_client.spec \
 			fw_images.h include_fw_imgs.sh sf_base64.h \
-			log.h libs libs_includes
+			cim_log.h libs libs_includes
 
 .PHONY : clean
 clean:
