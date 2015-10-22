@@ -239,6 +239,13 @@ class SF_EthernetPort : CIM_EthernetPort {
     [read,Key,Override("DeviceID")] string DeviceID;
     [Key,Read,Override("SystemCreationClassName")] string SystemCreationClassName;
     [Key,Read,Override("SystemName")] string SystemName;
+
+ESXIONLY([[
+    uint32 GetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],
+                             [OUT,ArrayType("Indexed")] uint32 ParamValues[]);
+    uint32 SetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],
+                             [IN,ArrayType("Indexed")] uint32 ParamValues[]);
+]])
 };
 
 INSTANCE

@@ -205,6 +205,7 @@ Invoke_Method_Status SF_NICCard_Provider::GetVPDFields(
 
     return INVOKE_METHOD_OK;
 }
+
 #endif
 
 /*@END@*/

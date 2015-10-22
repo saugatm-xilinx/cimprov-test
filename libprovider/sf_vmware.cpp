@@ -1892,6 +1892,11 @@ fail:
 
         virtual void initialize() {};
 
+        virtual int getIntrModeration(const Array_String &paramNames,
+                                      Array_uint32 &paramValues) const;
+        virtual int setIntrModeration(const Array_String &paramNames,
+                                      const Array_uint32 &paramValues);
+
         // Dummy operator to make possible using of cimple::Array
         bool operator== (const VMwarePort &rhs)
         {
@@ -2074,6 +2079,120 @@ fail:
             return MACAddress(a0, a1, a2, a3, a4, a5);
 #undef MAC_STR_SIZE
         }
+    }
+
+    int VMwarePort::getIntrModeration(const Array_String &paramNames,
+                                      Array_uint32 &paramValues) const
+    {
+        struct ethtool_coalesce cmd;
+
+        unsigned int i;
+
+#define GCOALESCE_IF(x_) \
+    if (strcasecmp(paramNames[i].c_str(), \
+                   #x_) == 0)             \
+        paramValues.append(cmd.x_)
+
+        memset(&cmd, 0, sizeof(cmd));
+        cmd.cmd = ETHTOOL_GCOALESCE;
+        if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
+                             ETHTOOL_GCOALESCE, &cmd) < 0)
+            return -1;
+
+        for (i = 0; i < paramNames.size(); i++)
+        {
+            GCOALESCE_IF(rx_coalesce_usecs);
+            else GCOALESCE_IF(rx_max_coalesced_frames);
+            else GCOALESCE_IF(rx_coalesce_usecs_irq);
+            else GCOALESCE_IF(rx_max_coalesced_frames_irq);
+            else GCOALESCE_IF(tx_coalesce_usecs);
+            else GCOALESCE_IF(tx_max_coalesced_frames);
+            else GCOALESCE_IF(tx_coalesce_usecs_irq);
+            else GCOALESCE_IF(tx_max_coalesced_frames_irq);
+            else GCOALESCE_IF(stats_block_coalesce_usecs);
+            else GCOALESCE_IF(use_adaptive_rx_coalesce);
+            else GCOALESCE_IF(use_adaptive_tx_coalesce);
+            else GCOALESCE_IF(pkt_rate_low);
+            else GCOALESCE_IF(rx_coalesce_usecs_low);
+            else GCOALESCE_IF(rx_max_coalesced_frames_low);
+            else GCOALESCE_IF(tx_coalesce_usecs_low);
+            else GCOALESCE_IF(tx_max_coalesced_frames_low);
+            else GCOALESCE_IF(pkt_rate_high);
+            else GCOALESCE_IF(rx_coalesce_usecs_high);
+            else GCOALESCE_IF(rx_max_coalesced_frames_high);
+            else GCOALESCE_IF(tx_coalesce_usecs_high);
+            else GCOALESCE_IF(tx_max_coalesced_frames_high);
+            else GCOALESCE_IF(rate_sample_interval);
+            else
+            {
+                PROVIDER_LOG_ERR("%s(): unknown interrupt moderation "
+                                 "parameter %s", __FUNCTION__,
+                                 paramNames[i].c_str());
+                paramValues.clear();
+                return -1;
+            }
+        }
+    
+        return 0;
+    }
+
+    int VMwarePort::setIntrModeration(const Array_String &paramNames,
+                                      const Array_uint32 &paramValues)
+    {
+        struct ethtool_coalesce cmd;
+
+        unsigned int i;
+
+#define SCOALESCE_IF(x_) \
+    if (strcasecmp(paramNames[i].c_str(), \
+                   #x_) == 0)             \
+        cmd.x_ = paramValues[i]
+
+        memset(&cmd, 0, sizeof(cmd));
+        cmd.cmd = ETHTOOL_GCOALESCE;
+        if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
+                             ETHTOOL_GCOALESCE, &cmd) < 0)
+            return -1;
+
+        for (i = 0; i < paramNames.size(); i++)
+        {
+            SCOALESCE_IF(rx_coalesce_usecs);
+            else SCOALESCE_IF(rx_max_coalesced_frames);
+            else SCOALESCE_IF(rx_coalesce_usecs_irq);
+            else SCOALESCE_IF(rx_max_coalesced_frames_irq);
+            else SCOALESCE_IF(tx_coalesce_usecs);
+            else SCOALESCE_IF(tx_max_coalesced_frames);
+            else SCOALESCE_IF(tx_coalesce_usecs_irq);
+            else SCOALESCE_IF(tx_max_coalesced_frames_irq);
+            else SCOALESCE_IF(stats_block_coalesce_usecs);
+            else SCOALESCE_IF(use_adaptive_rx_coalesce);
+            else SCOALESCE_IF(use_adaptive_tx_coalesce);
+            else SCOALESCE_IF(pkt_rate_low);
+            else SCOALESCE_IF(rx_coalesce_usecs_low);
+            else SCOALESCE_IF(rx_max_coalesced_frames_low);
+            else SCOALESCE_IF(tx_coalesce_usecs_low);
+            else SCOALESCE_IF(tx_max_coalesced_frames_low);
+            else SCOALESCE_IF(pkt_rate_high);
+            else SCOALESCE_IF(rx_coalesce_usecs_high);
+            else SCOALESCE_IF(rx_max_coalesced_frames_high);
+            else SCOALESCE_IF(tx_coalesce_usecs_high);
+            else SCOALESCE_IF(tx_max_coalesced_frames_high);
+            else SCOALESCE_IF(rate_sample_interval);
+            else
+            {
+                PROVIDER_LOG_ERR("%s(): unknown interrupt moderation "
+                                 "parameter %s", __FUNCTION__,
+                                 paramNames[i].c_str());
+                return -1;
+            }
+        }
+
+        cmd.cmd = ETHTOOL_SCOALESCE;
+        if (vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
+                             ETHTOOL_SCOALESCE, &cmd) < 0)
+            return -1;
+
+        return 0;
     }
 
     class VMwareInterface : public Interface {

@@ -16,6 +16,13 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+enum ReturnValue 
+{
+    OK = 0,
+    Error = 2,
+    InvalidParameter = 5,
+};
+
 SF_EthernetPort_Provider::SF_EthernetPort_Provider()
 {
 }
@@ -249,6 +256,97 @@ Invoke_Method_Status SF_EthernetPort_Provider::RestoreProperties(
 {
     return INVOKE_METHOD_UNSUPPORTED;
 }
+
+#ifdef TARGET_CIM_SERVER_esxi
+using solarflare::Port;
+using solarflare::Interface;
+
+class IntrModerationProc : public solarflare::ActionForAll
+{
+    bool ok;
+    bool set;
+    Array_String paramNames;
+    Array_uint32 paramValues;
+
+protected:
+    virtual void handler(solarflare::SystemElement& se, unsigned);
+public:
+    IntrModerationProc(const Instance *inst, bool doSet,
+                       const Array_String &names,
+                       const Array_uint32 &values) :
+      solarflare::ActionForAll(inst), ok(false), set(doSet),
+      paramNames(names), paramValues(values) {};
+
+    bool isOK() { return ok; }
+    Array_String &getParamNames() { return paramNames; }
+    Array_uint32 &getParamValues() { return paramValues; }
+};
+
+void IntrModerationProc::handler(solarflare::SystemElement& se, unsigned)
+{
+    int rc;
+
+    Port *port = static_cast<Interface&>(se).port();
+
+    if (ok)
+    {
+        PROVIDER_LOG_ERR("%s(): trying to configure interrupt "
+                         "moderation for more than one port at once",
+                         __FUNCTION__);
+        return;
+    }
+
+    if (set)
+        rc = port->setIntrModeration(paramNames, paramValues);
+    else
+        rc = port->getIntrModeration(paramNames, paramValues);
+
+    if (rc >= 0)
+        ok = true;
+}
+
+Invoke_Method_Status SF_EthernetPort_Provider::GetIntrModeration(
+    const SF_EthernetPort* self,
+    const Property<Array_String>& ParamNames,
+    Property<Array_uint32>& ParamValues,
+    Property<uint32>& return_value)
+{
+    IntrModerationProc proc(cast<Instance *>(self), false,
+                            ParamNames.value,
+                            ParamValues.value);
+
+    proc.forInterface();
+    if (proc.isOK())
+    {
+        ParamValues.set(proc.getParamValues());
+        return_value.set(OK);
+    }
+    else
+        return_value.set(Error);
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_EthernetPort_Provider::SetIntrModeration(
+    const SF_EthernetPort* self,
+    const Property<Array_String>& ParamNames,
+    const Property<Array_uint32>& ParamValues,
+    Property<uint32>& return_value)
+{
+    IntrModerationProc proc(cast<Instance *>(self), true,
+                            ParamNames.value,
+                            ParamValues.value);
+
+    proc.forInterface();
+    if (proc.isOK())
+        return_value.set(OK);
+    else
+        return_value.set(Error);
+
+    return INVOKE_METHOD_OK;
+}
+
+#endif
 
 /*@END@*/
 

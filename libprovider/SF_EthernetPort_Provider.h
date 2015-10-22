@@ -115,6 +115,19 @@ public:
         const SF_EthernetPort* self,
         Property<uint32>& return_value);
 
+#ifdef TARGET_CIM_SERVER_esxi
+    Invoke_Method_Status GetIntrModeration(
+        const SF_EthernetPort* self,
+        const Property<Array_String>& ParamNames,
+        Property<Array_uint32>& ParamValues,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status SetIntrModeration(
+        const SF_EthernetPort* self,
+        const Property<Array_String>& ParamNames,
+        const Property<Array_uint32>& ParamValues,
+        Property<uint32>& return_value);
+#endif
     /*@END@*/
 };
 

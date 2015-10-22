@@ -32,11 +32,13 @@ namespace solarflare
     using cimple::Buffer;
     using cimple::String;
     using cimple::Datetime;
+    using cimple::uint32;
     using cimple::uint64;
     using cimple::sint64;
     using cimple::Mutex;
     using cimple::Array;
-
+    using cimple::Array_String;
+    using cimple::Array_uint32;
 
     class NIC;
 
@@ -234,6 +236,32 @@ namespace solarflare
         virtual const String& genericName() const { return portName; }
 
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
+        ///
+        /// Get interrupt moderation parameters.
+        ///
+        /// @param paramNames           Parameter names
+        /// @param paramValues    [out] Parameter values
+        ///
+        /// @return 0 on success, -1 on failure
+        virtual int getIntrModeration(const Array_String &paramNames,
+                                      Array_uint32 &paramValues) const
+        {
+            return -1;
+        }
+
+        ///
+        /// Set interrupt moderation parameters.
+        ///
+        /// @param paramNames           Parameter names
+        /// @param paramValues          Parameter values
+        ///
+        /// @return 0 on success, -1 on failure
+        virtual int setIntrModeration(const Array_String &paramNames,
+                                      const Array_uint32 &paramValues)
+        {
+            return -1;
+        }
     };
 
             
