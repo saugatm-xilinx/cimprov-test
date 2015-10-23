@@ -4022,9 +4022,6 @@ cleanup:
         if (i < 0)
             return -1;
 
-        PROVIDER_LOG_ERR("Read %u (off %u)",
-                         (unsigned)length,
-                         (unsigned)offset);
         if (read_all)
         {
             part_size = nv_part_size(NVCtxArr[i].ctx);
@@ -4033,7 +4030,6 @@ cleanup:
         else
             buf = new char[length];
 
-        PROVIDER_LOG_ERR("Pre-read");
         if (read_all)
         {
             was_read = nv_read_all(NVCtxArr[i].ctx, buf);
@@ -4060,7 +4056,6 @@ cleanup:
                 return -1;
             }
         }
-        PROVIDER_LOG_ERR("Postread, was_read=%u", (unsigned)was_read);
 
         enc_size = base64_enc_size(was_read);
         encoded_buf = new char[enc_size];
