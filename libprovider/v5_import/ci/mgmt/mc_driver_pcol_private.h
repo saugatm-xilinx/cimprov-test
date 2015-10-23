@@ -2049,6 +2049,7 @@
 #define          MC_CMD_PD_TEST_IN_SPAM_EXC_REQ_ON   0x9 /* enum */
 #define          MC_CMD_PD_TEST_IN_ENGINE_LOOPBACK_HACK_ON  0xa /* enum */
 #define          MC_CMD_PD_TEST_IN_ENGINE_LOOPBACK_HACK_OFF   0xb /* enum */
+#define          MC_CMD_PD_TEST_IN_LUE_MEM_TEST    0xc /* enum */
 /* align the arguments to 32 bits */
 #define       MC_CMD_PD_TEST_IN_EFTEST_OP_RSVD_OFST 2
 #define       MC_CMD_PD_TEST_IN_EFTEST_OP_RSVD_LEN 2
@@ -2419,6 +2420,26 @@
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_READ_VAL_3_OFST 16
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_READ_VAL_4_OFST 20
 #define       MC_CMD_CSR_ACCESS_STOP_OUT_ADDRESS_OFST 24
+
+/* MC_CMD_CSR_ACCESS_TABLE_SCAN_IN msgrequest */
+#define    MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_LEN 20
+/* identifies the test */
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_EFTEST_ID_OFST 0
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_EFTEST_ID_LEN 1
+/* the operation requested */
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_EFTEST_OP_OFST 1
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_EFTEST_OP_LEN 1
+#define          MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_TABLE_SCAN  0x5 /* enum */
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_PAD_OFST 2
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_PAD_LEN 2
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_START_ADDRESS_OFST 4
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_STEP_OFST 8
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_COUNT_OFST 12
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_IN_MASK_OFST 16
+
+/* MC_CMD_CSR_ACCESS_TABLE_SCAN_OUT msgresponse */
+#define    MC_CMD_CSR_ACCESS_TABLE_SCAN_OUT_LEN 4
+#define       MC_CMD_CSR_ACCESS_TABLE_SCAN_OUT_RESULT_OFST 0
 
 /* MC_CMD_MC_DOORBELL_STRESS_IN msgrequest */
 #define    MC_CMD_MC_DOORBELL_STRESS_IN_LEN 2
@@ -5315,6 +5336,22 @@
 
 /* MC_CMD_ROMBIST_RUN_BURNIN_OUT msgresponse */
 #define    MC_CMD_ROMBIST_RUN_BURNIN_OUT_LEN 0
+
+/* Other enums */
+#define          NVRAM_PARTITION_TYPE_MC_USAGE_TLV         0xff00 /* enum */
+#define          NVRAM_PARTITION_TYPE_MC_USAGE_BLOCK       0xff01 /* enum */
+/* enum: TLV format configuration for trusted server adapter */
+#define          NVRAM_PARTITION_TYPE_TSA_CONFIG           0xff02
+/* enum: rules cache for trusted server adapter */
+#define          NVRAM_PARTITION_TYPE_TSA_CACHE            0xff03
+/* enum: Spare partition 6 */
+#define          NVRAM_PARTITION_TYPE_SPARE_6              0xff06
+/* enum: Spare partition 7 */
+#define          NVRAM_PARTITION_TYPE_SPARE_7              0xff07
+/* enum: Spare partition 8 */
+#define          NVRAM_PARTITION_TYPE_SPARE_8              0xff08
+/* enum: Spare partition 9 */
+#define          NVRAM_PARTITION_TYPE_SPARE_9              0xff09
 
 #endif /* _SIENA_MC_DRIVER_PCOL_PRIVATE_H */
 /*! \cidoxg_end */

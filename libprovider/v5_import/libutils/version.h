@@ -7,15 +7,15 @@
 
 #define SFU_MAJ_RELEASE_VERSION            (4)
 #define SFU_MIN_RELEASE_VERSION            (6)
-#define SFU_MAINT_RELEASE_VERSION          (6)
-#define SFU_INCREMENTING_VERSION           (1007)
-#define SFU_VERSION_STRING                 "v4.6.6.1007"
+#define SFU_MAINT_RELEASE_VERSION          (8)
+#define SFU_INCREMENTING_VERSION           (1004)
+#define SFU_VERSION_STRING                 "v4.6.8.1004"
 
 /* Don't show incrementing version (build number) by default in Windows .rc files */
-#define SFU_RC_VERSION_STRING              "v4.6.6"
+#define SFU_RC_VERSION_STRING              "v4.6.8"
 
 #define SFU_COPYRIGHT_STRING \
-  "Copyright Solarflare Communications 2006-2014, Level 5 Networks 2002-2005 "
+  "Copyright Solarflare Communications 2006-2015, Level 5 Networks 2002-2005 "
 #define SFU_COMPANY_NAME                   "Solarflare"
 #define SFU_PRODUCT_NAME                   "Solarstorm"
 

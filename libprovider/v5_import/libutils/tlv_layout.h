@@ -1,12 +1,12 @@
-/**************************************************************************\ 
-*//*! \file 
-** <L5_PRIVATE L5_SOURCE> 
+/**************************************************************************\
+*//*! \file
+** <L5_PRIVATE L5_SOURCE>
 ** \author  mjs
 **  \brief  TLV item layouts for EF10 static and dynamic config in NVRAM
 **   \date  2012/11/20
 **    \cop  (c) Solarflare Communications Inc.
-** </L5_PRIVATE> 
-*//* 
+** </L5_PRIVATE>
+*//*
 \**************************************************************************/
 
 /* These structures define the layouts for the TLV items stored in static and
@@ -177,7 +177,9 @@ struct tlv_port_mac {
 /* Static VPD.
  *
  * This is the portion of VPD which is set at manufacturing time and not
- * expected to change.  It is formatted as a standard PCI VPD block.
+ * expected to change.  It is formatted as a standard PCI VPD block. There are
+ * global and per-pf TLVs for this, the global TLV is new for Medford and is
+ * used in preference to the per-pf TLV.
  */
 
 #define TLV_TAG_PF_STATIC_VPD(pf)       (0x00030000 + (pf))
@@ -188,11 +190,21 @@ struct tlv_pf_static_vpd {
   uint8_t  bytes[];
 };
 
+#define TLV_TAG_GLOBAL_STATIC_VPD       (0x001f0000)
+
+struct tlv_global_static_vpd {
+  uint32_t tag;
+  uint32_t length;
+  uint8_t  bytes[];
+};
+
 
 /* Dynamic VPD.
  *
  * This is the portion of VPD which may be changed (e.g. by firmware updates).
- * It is formatted as a standard PCI VPD block.
+ * It is formatted as a standard PCI VPD block. There are global and per-pf TLVs
+ * for this, the global TLV is new for Medford and is used in preference to the
+ * per-pf TLV.
  */
 
 #define TLV_TAG_PF_DYNAMIC_VPD(pf)      (0x10030000 + (pf))
@@ -203,16 +215,39 @@ struct tlv_pf_dynamic_vpd {
   uint8_t  bytes[];
 };
 
+#define TLV_TAG_GLOBAL_DYNAMIC_VPD      (0x10200000)
+
+struct tlv_global_dynamic_vpd {
+  uint32_t tag;
+  uint32_t length;
+  uint8_t  bytes[];
+};
+
 
 /* "DBI" PCI config space changes.
  *
  * This is a set of edits made to the default PCI config space values before
- * the device is allowed to enumerate.
+ * the device is allowed to enumerate. There are global and per-pf TLVs for
+ * this, the global TLV is new for Medford and is used in preference to the
+ * per-pf TLV.
  */
 
 #define TLV_TAG_PF_DBI(pf)              (0x00040000 + (pf))
 
 struct tlv_pf_dbi {
+  uint32_t tag;
+  uint32_t length;
+  struct {
+    uint16_t addr;
+    uint16_t byte_enables;
+    uint32_t value;
+  } items[];
+};
+
+
+#define TLV_TAG_GLOBAL_DBI              (0x00210000)
+
+struct tlv_global_dbi {
   uint32_t tag;
   uint32_t length;
   struct {
@@ -272,7 +307,7 @@ struct tlv_pcie_config {
   int16_t max_pf_number;                        /**< Largest PF RID (lower PFs may be hidden) */
   uint16_t pf_aper;                             /**< BIU aperture for PF BAR2 */
   uint16_t vf_aper;                             /**< BIU aperture for VF BAR0 */
-  uint16_t int_aper;                            /**< BIU aperture for PF BAR4 and VF BAR2 */  
+  uint16_t int_aper;                            /**< BIU aperture for PF BAR4 and VF BAR2 */
 #define TLV_MAX_PF_DEFAULT (-1)                 /* Use FW default for largest PF RID  */
 #define TLV_APER_DEFAULT (0xFFFF)               /* Use FW default for a given aperture */
 };
@@ -288,13 +323,13 @@ struct tlv_per_pf_pcie_config {
   uint32_t tag;
   uint32_t length;
   uint8_t vfs_total;
-  uint8_t port_allocation;  
+  uint8_t port_allocation;
   uint16_t vectors_per_pf;
   uint16_t vectors_per_vf;
   uint8_t pf_bar0_aperture;
   uint8_t pf_bar2_aperture;
   uint8_t vf_bar0_aperture;
-  uint8_t vf_base;  
+  uint8_t vf_base;
   uint16_t supp_pagesz;
   uint16_t msix_vec_base;
 };
@@ -303,7 +338,8 @@ struct tlv_per_pf_pcie_config {
 /* Development ONLY. This is a single TLV tag for all the gubbins
  * that can be set through the MC command-line other than the PCIe
  * settings. This is a temporary measure. */
-#define TLV_TAG_TMP_GUBBINS (0x10090000)
+#define TLV_TAG_TMP_GUBBINS (0x10090000)        /* legacy symbol - do not use */
+#define TLV_TAG_TMP_GUBBINS_HUNT TLV_TAG_TMP_GUBBINS
 
 struct tlv_tmp_gubbins {
   uint32_t tag;
@@ -313,7 +349,7 @@ struct tlv_tmp_gubbins {
   uint64_t tx1_tags;     /* Bitmap */
   uint64_t dl_tags;      /* Bitmap */
   uint32_t flags;
-#define TLV_DPCPU_TX_STRIPE (1) /* TX striping is on */
+#define TLV_DPCPU_TX_STRIPE (1) /* No longer used, has no effect */
 #define TLV_DPCPU_BIU_TAGS  (2) /* Use BIU tag manager */
 #define TLV_DPCPU_TX0_TAGS  (4) /* tx0_tags is valid */
 #define TLV_DPCPU_TX1_TAGS  (8) /* tx1_tags is valid */
@@ -376,16 +412,16 @@ struct tlv_firmware_options {
 };
 
 /* Voltage settings
- * 
+ *
  * Intended for boards with A0 silicon where the core voltage may
- * need tweaking. Most likely set once when the pass voltage is 
+ * need tweaking. Most likely set once when the pass voltage is
  * determined. */
 
 #define TLV_TAG_0V9_SETTINGS (0x000c0000)
 
 struct tlv_0v9_settings {
   uint32_t tag;
-  uint32_t length;  
+  uint32_t length;
   uint16_t flags; /* Boards with high 0v9 settings may need active cooling */
 #define TLV_TAG_0V9_REQUIRES_FAN (1)
   uint16_t target_voltage; /* In millivolts */
@@ -394,17 +430,18 @@ struct tlv_0v9_settings {
   uint16_t warn_low;       /* In millivolts */
   uint16_t warn_high;      /* In millivolts */
   uint16_t panic_low;      /* In millivolts */
-  uint16_t panic_high;     /* In millivolts */   
+  uint16_t panic_high;     /* In millivolts */
 };
 
 
 /* Clock configuration */
 
-#define TLV_TAG_CLOCK_CONFIG            (0x000d0000)
+#define TLV_TAG_CLOCK_CONFIG       (0x000d0000) /* legacy symbol - do not use */
+#define TLV_TAG_CLOCK_CONFIG_HUNT  TLV_TAG_CLOCK_CONFIG
 
 struct tlv_clock_config {
   uint32_t tag;
-  uint32_t length;  
+  uint32_t length;
   uint16_t clk_sys;        /* MHz */
   uint16_t clk_dpcpu;      /* MHz */
   uint16_t clk_icore;      /* MHz */
@@ -443,7 +480,8 @@ struct tlv_global_mac {
   uint16_t reserved2;
 };
 
-#define TLV_TAG_ATB_0V9_TARGET           (0x000f0000)
+#define TLV_TAG_ATB_0V9_TARGET     (0x000f0000) /* legacy symbol - do not use */
+#define TLV_TAG_ATB_0V9_TARGET_HUNT     TLV_TAG_ATB_0V9_TARGET
 
 /* The target value for the 0v9 power rail measured on-chip at the
  * analogue test bus */
@@ -468,7 +506,7 @@ struct tlv_pcie_config_r2 {
   uint16_t visible_pfs;                         /**< Bitmap of visible PFs */
   uint16_t pf_aper;                             /**< BIU aperture for PF BAR2 */
   uint16_t vf_aper;                             /**< BIU aperture for VF BAR0 */
-  uint16_t int_aper;                            /**< BIU aperture for PF BAR4 and VF BAR2 */  
+  uint16_t int_aper;                            /**< BIU aperture for PF BAR4 and VF BAR2 */
 };
 
 /* Dynamic port mode.
@@ -635,33 +673,13 @@ struct tlv_mcast_filter_chaining {
 #define TLV_MCAST_FILTER_CHAINING_ENABLED  (1)
 };
 
-/* Descriptor cache config.
- *
- * Sets the sizes of the TX and RX descriptor caches as a power of 2. It also
- * sets the total number of VIs. When the number of VIs is reduced VIs are taken
- * away from the highest numbered port first, so a vi_count of 1024 means 1024
- * VIs on the first port and 0 on the second (on a Torino).
- */
-
-#define TLV_TAG_DESCRIPTOR_CACHE_CONFIG    (0x101d0000)
-
-struct tlv_descriptor_cache_config {
-  uint32_t tag;
-  uint32_t length;
-  uint8_t rx_desc_cache_size;
-  uint8_t tx_desc_cache_size;
-  uint16_t vi_count;
-};
-#define TLV_DESC_CACHE_DEFAULT (0xff)
-#define TLV_VI_COUNT_DEFAULT   (0xffff)
-
 /* Pacer rate limit per PF */
 #define TLV_TAG_RATE_LIMIT(pf)    (0x101b0000 + (pf))
 
 struct tlv_rate_limit {
   uint32_t tag;
   uint32_t length;
-  uint32_t rate_mbps; 
+  uint32_t rate_mbps;
 };
 
 /* OCSD Enable/Disable
@@ -687,6 +705,52 @@ struct tlv_ocsd {
   uint32_t mode;
 #define TLV_OCSD_DISABLED 0
 #define TLV_OCSD_ENABLED 1 /* Default */
+};
+
+/* Descriptor cache config.
+ *
+ * Sets the sizes of the TX and RX descriptor caches as a power of 2. It also
+ * sets the total number of VIs. When the number of VIs is reduced VIs are taken
+ * away from the highest numbered port first, so a vi_count of 1024 means 1024
+ * VIs on the first port and 0 on the second (on a Torino).
+ */
+
+#define TLV_TAG_DESCRIPTOR_CACHE_CONFIG    (0x101d0000)
+
+struct tlv_descriptor_cache_config {
+  uint32_t tag;
+  uint32_t length;
+  uint8_t rx_desc_cache_size;
+  uint8_t tx_desc_cache_size;
+  uint16_t vi_count;
+};
+#define TLV_DESC_CACHE_DEFAULT (0xff)
+#define TLV_VI_COUNT_DEFAULT   (0xffff)
+
+/* RX event merging config (read batching).
+ *
+ * Sets the global maximum number of events for the merging bins, and the
+ * global timeout configuration for the bins.
+ */
+
+#define TLV_TAG_RX_EVENT_MERGING_CONFIG    (0x101e0000)
+
+struct tlv_rx_event_merging_config {
+  uint32_t  tag;
+  uint32_t  length;
+  uint32_t  max_events;
+#define TLV_RX_EVENT_MERGING_CONFIG_MAX_EVENTS_MAX ((1 << 4) - 1)
+  uint32_t  timeout_ns;
+};
+#define TLV_RX_EVENT_MERGING_MAX_EVENTS_DEFAULT 7
+#define TLV_RX_EVENT_MERGING_TIMEOUT_NS_DEFAULT 8740
+
+#define TLV_TAG_PCIE_LINK_SETTINGS (0x101f0000)
+struct tlv_pcie_link_settings {
+  uint32_t tag;
+  uint32_t length;
+  uint16_t gen;   /* Target PCIe generation: 1, 2, 3 */
+  uint16_t width; /* Number of lanes */
 };
 
 #endif /* CI_MGMT_TLV_LAYOUT_H */

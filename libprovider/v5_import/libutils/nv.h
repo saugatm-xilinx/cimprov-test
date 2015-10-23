@@ -21,6 +21,7 @@ struct sfu_device;
 enum nv_part_type {
   NV_PART_MCFW,
   NV_PART_DYNAMIC_CFG,
+  NV_PART_STATIC_CFG,
   NV_PART_BOOTROM,
   NV_PART_BOOTROM_CFG,
   NV_PART_PHY,
