@@ -25,7 +25,6 @@
 #include "SF_JobProgress.h"
 #include "SF_JobError.h"
 #include "SF_JobSuccess.h"
-#include "SF_Alert.h"
 #include "SF_EthernetPort.h"
 
 #if CIM_SCHEMA_VERSION_MINOR == 0

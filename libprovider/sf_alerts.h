@@ -11,7 +11,8 @@
 #ifndef SOLARFLARE_SF_ALERTS_H
 #define SOLARFLARE_SF_ALERTS_H 1
 
-#include "SF_Alert.h"
+#include "SF_LinkStateAlert.h"
+#include "SF_SensorAlert.h"
 #include "SF_EthernetPort.h"
 #include "sf_sensors.h"
 #include "sf_provider.h"
@@ -28,7 +29,7 @@ namespace solarflare
     using cimple::Datetime;
 
     ///
-    /// Properties of SF_Alert to be filled in an alert indication.
+    /// Properties of SF_AlertIndication to be filled in an alert indication.
     ///
     class AlertProps {
     public:
@@ -306,8 +307,8 @@ namespace solarflare
         ///
         /// Create an indication object according to given properties
         /// 
-        /// @param alertProps            Values of SF_Alert properties
-        ///                              to be filled
+        /// @param alertProps            Values of SF_AlertIndication
+        ///                              properties to be filled
         ///
         /// @return Indication object pointer
         ///
@@ -465,7 +466,8 @@ namespace solarflare
         }
     };
 
-    extern CIMAlertNotify<cimple::SF_Alert> onAlert;
+    extern CIMAlertNotify<cimple::SF_LinkStateAlert> onLinkStateAlert;
+    extern CIMAlertNotify<cimple::SF_SensorAlert> onSensorAlert;
 }
 
 #endif // SOLARFLARE_SF_ALERTS_H

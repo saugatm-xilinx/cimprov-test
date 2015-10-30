@@ -302,7 +302,8 @@ namespace solarflare
     CIMJobChangeStateNotify<cimple::SF_JobSuccess> onJobSuccess(0);
 #endif
 
-    CIMAlertNotify<cimple::SF_Alert> onAlert;
+    CIMAlertNotify<cimple::SF_LinkStateAlert> onLinkStateAlert;
+    CIMAlertNotify<cimple::SF_SensorAlert> onSensorAlert;
 
     bool Action::process(SystemElement& se)
     {

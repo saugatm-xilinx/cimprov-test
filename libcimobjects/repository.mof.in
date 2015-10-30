@@ -170,7 +170,7 @@ class SF_NVAPI : CIM_ManagedElement {
                     [IN] uint32 Subtype,
                     [IN] boolean TryOtherDevs,
                     [OUT] boolean Exists,
-                    [OUT] String CorrectDevice);
+                    [OUT] string CorrectDevice);
 
     uint32 NVOpen([IN] string Device,
                   [IN] uint32 Type,
@@ -593,6 +593,22 @@ class SF_ElementSettingData : CIM_ElementSettingData {
 ]])
 
 INTEROP_SECTION([[
+
+INDICATION_NWMI
+class SF_AlertIndication : CIM_AlertIndication
+{
+};
+
+INDICATION
+class SF_LinkStateAlert : SF_AlertIndication
+{
+};
+
+INDICATION
+class SF_SensorAlert : SF_AlertIndication
+{
+};
+
 INSTANCE
 class SF_RegisteredProfile : CIM_RegisteredProfile {
 };
@@ -801,13 +817,4 @@ class SF_JobSuccess : SF_InstModification
 {
 };
 
-INDICATION_NWMI
-class SF_AlertIndication : CIM_AlertIndication
-{
-};
-
-INDICATION
-class SF_Alert : SF_AlertIndication
-{
-};
 ]])

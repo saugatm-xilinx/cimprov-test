@@ -62,6 +62,7 @@ SF_JobStarted
 SF_JobProgress
 SF_JobError
 SF_JobSuccess
-SF_Alert
+SF_LinkStateAlert
+SF_SensorAlert
 m4_ifelse(TARGET_CIM_SERVER, [[esxi]],
 [[SF_NVAPI]], [[]])

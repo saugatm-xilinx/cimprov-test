@@ -250,8 +250,10 @@ namespace solarflare
 
 
     /// Forward declaration
-    static int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                       const Port *port);
+    static int linuxFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                const Port *port);
+    static int linuxFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                             const Port *port);
 
     ///
     /// VPD access data and methods.
@@ -452,8 +454,10 @@ namespace solarflare
     class LinuxPort : public Port {
         const NIC *owner;
         Interface *boundIface;
-        friend int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                           const Port *port);
+        friend int linuxFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                    const Port *port);
+        friend int linuxFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                                 const Port *port);
     public:
         LinuxPort(const NIC *up, unsigned i) : Port(i), owner(up) {}
 
@@ -1481,7 +1485,10 @@ namespace solarflare
         LinuxManagementPackage mgmtPackage;
         LinuxSystem()
         {
-            onAlert.setFillPortAlertsInfo(linuxFillPortAlertsInfo);
+            onLinkStateAlert.setFillPortAlertsInfo(
+                                      linuxFillPortLinkStateAlertsInfo);
+            onSensorAlert.setFillPortAlertsInfo(
+                                      linuxFillPortSensorAlertsInfo);
         };
     protected:
         void setupNICs()
@@ -1771,8 +1778,8 @@ namespace solarflare
 
     public:
 
-        friend int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                           const Port *port);
+        friend int linuxFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                    const Port *port);
     };
 
     ///
@@ -1810,23 +1817,22 @@ namespace solarflare
                 close(fd);
         }
 
-        friend int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                           const Port *port);
+        friend int linuxFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                                 const Port *port);
     };
 
     ///
-    /// Fill array of alert indication descriptions.
+    /// Fill array of link state alert indication descriptions.
     ///
     /// @param info   [out] Array to be filled
     /// @param port         Reference to port class instance
     ///
     /// @return -1 on failure, 0 on success.
     ///
-    static int linuxFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                       const Port *port)
+    static int linuxFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                const Port *port)
     {
         LinuxLinkStateAlertInfo *linkStateInstInfo = NULL;
-        LinuxSensorsAlertInfo   *sensorsInstInfo = NULL;
 
         const LinuxPort *linuxPort =
                       dynamic_cast<const LinuxPort *>(port);
@@ -1834,6 +1840,25 @@ namespace solarflare
         linkStateInstInfo = new LinuxLinkStateAlertInfo();
         linkStateInstInfo->ifName = linuxPort->boundIface->ifName();
         info.append(linkStateInstInfo);
+
+        return 0;
+    }
+
+    ///
+    /// Fill array of sensor alert indication descriptions.
+    ///
+    /// @param info   [out] Array to be filled
+    /// @param port         Reference to port class instance
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
+    static int linuxFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                             const Port *port)
+    {
+        LinuxSensorsAlertInfo   *sensorsInstInfo = NULL;
+
+        const LinuxPort *linuxPort =
+                      dynamic_cast<const LinuxPort *>(port);
 
         sensorsInstInfo = new LinuxSensorsAlertInfo();
         sensorsInstInfo->ifName = linuxPort->boundIface->ifName();

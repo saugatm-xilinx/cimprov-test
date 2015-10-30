@@ -3428,8 +3428,10 @@ cleanup:
     };
 
     /// Forward declaration
-    static int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                        const Port *port);
+    static int vmwareFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                 const Port *port);
+    static int vmwareFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                              const Port *port);
 
     /// @brief stub-only System implementation
     class VMwareSystem : public System {
@@ -3443,7 +3445,10 @@ cleanup:
             setenv(CIMPLEHOME_ENVVAR, "/tmp/", 1);
 
             curl_global_init(CURL_GLOBAL_ALL);
-            onAlert.setFillPortAlertsInfo(vmwareFillPortAlertsInfo);
+            onLinkStateAlert.setFillPortAlertsInfo(
+                                vmwareFillPortLinkStateAlertsInfo);
+            onSensorAlert.setFillPortAlertsInfo(
+                                vmwareFillPortSensorAlertsInfo);
 
             if (sfu_device_init() < 0)
             {
@@ -4325,8 +4330,8 @@ cleanup:
 
     public:
 
-        friend int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                            const Port *port);
+        friend int vmwareFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                     const Port *port);
     };
 
     ///
@@ -4363,23 +4368,22 @@ cleanup:
                 close(fd);
         }
 
-        friend int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                            const Port *port);
+        friend int vmwareFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                                  const Port *port);
     };
 
     ///
-    /// Fill array of alert indication descriptions.
+    /// Fill array of link state alert indication descriptions.
     ///
     /// @param info   [out] Array to be filled
     /// @param port         Reference to port class instance
     ///
     /// @return -1 on failure, 0 on success.
     ///
-    static int vmwareFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                        const Port *port)
+    static int vmwareFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                 const Port *port)
     {
         VMwareLinkStateAlertInfo *linkStateInstInfo = NULL;
-        VMwareSensorsAlertInfo   *sensorsInstInfo = NULL;
 
         const VMwarePort *vmwarePort =
                       dynamic_cast<const VMwarePort *>(port);
@@ -4388,6 +4392,25 @@ cleanup:
         linkStateInstInfo->devFile = vmwarePort->dev_file;
         linkStateInstInfo->devName = vmwarePort->dev_name;
         info.append(linkStateInstInfo);
+
+        return 0;
+    }
+
+    ///
+    /// Fill array of sensor alert indication descriptions.
+    ///
+    /// @param info   [out] Array to be filled
+    /// @param port         Reference to port class instance
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
+    static int vmwareFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                              const Port *port)
+    {
+        VMwareSensorsAlertInfo   *sensorsInstInfo = NULL;
+
+        const VMwarePort *vmwarePort =
+                      dynamic_cast<const VMwarePort *>(port);
 
         sensorsInstInfo = new VMwareSensorsAlertInfo();
         sensorsInstInfo->devName = vmwarePort->dev_name;

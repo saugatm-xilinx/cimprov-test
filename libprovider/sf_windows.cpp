@@ -1050,16 +1050,20 @@ cleanup:
     const String WindowsDiagnostic::diagGenName = "Diagnostic";
 
     /// Forward declaration
-    static int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                         const Port *port);
+    static int windowsFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                  const Port *port);
+    static int windowsFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                               const Port *port);
 
     class WindowsPort : public Port {
         const NIC *owner;
         mutable Array<WindowsDiagnostic *> diags;
         mutable bool diagsInitialized;
         PortDescr portInfo;
-        friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                             const Port *port);
+        friend int windowsFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                      const Port *port);
+        friend int windowsFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                                   const Port *port);
     public:
 
         WindowsPort(const NIC *up, unsigned i, PortDescr &descr) :
@@ -2078,7 +2082,10 @@ cleanup:
         WindowsManagementPackage mgmtPackage;
         WindowsSystem() : driversFromScratch(true), driversLock(false)
         {
-            onAlert.setFillPortAlertsInfo(windowsFillPortAlertsInfo);
+            onLinkStateAlert.setFillPortAlertsInfo(
+                                    windowsFillPortLinkStateAlertsInfo);
+            onSensorAlert.setFillPortAlertsInfo(
+                                    windowsFillPortSensorAlertsInfo);
         };
     protected:
         void setupNICs()
@@ -2669,8 +2676,9 @@ cleanup:
     public:
         WindowsLinkStateAlertInfo() : portId(-1) {};
 
-        friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                             const Port *port);
+        friend int windowsFillPortLinkStateAlertsInfo(
+                                            Array<AlertInfo *> &info,
+                                            const Port *port);
     };
 
     typedef enum {
@@ -2902,23 +2910,22 @@ cleanup:
     public:
         WindowsSensorsAlertInfo() : portId(-1) {};
 
-        friend int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                             const Port *port);
+        friend int windowsFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                                   const Port *port);
     };
 
     ///
-    /// Fill array of alert indication descriptions.
+    /// Fill array of link state alert indication descriptions.
     ///
     /// @param info   [out] Array to be filled
     /// @param port         Reference to port class instance
     ///
     /// @return -1 on failure, 0 on success.
     ///
-    static int windowsFillPortAlertsInfo(Array<AlertInfo *> &info,
-                                         const Port *port)
+    static int windowsFillPortLinkStateAlertsInfo(Array<AlertInfo *> &info,
+                                                  const Port *port)
     {
         WindowsLinkStateAlertInfo *linkStateInstInfo = NULL;
-        WindowsSensorsAlertInfo   *sensorsInstInfo = NULL;
 
         const WindowsPort *windowsPort =
                       dynamic_cast<const WindowsPort *>(port);
@@ -2926,6 +2933,25 @@ cleanup:
         linkStateInstInfo = new WindowsLinkStateAlertInfo();
         linkStateInstInfo->portId = windowsPort->efxPortId();
         info.append(linkStateInstInfo);
+
+        return 0;
+    }
+
+    ///
+    /// Fill array of sensor alert indication descriptions.
+    ///
+    /// @param info   [out] Array to be filled
+    /// @param port         Reference to port class instance
+    ///
+    /// @return -1 on failure, 0 on success.
+    ///
+    static int windowsFillPortSensorAlertsInfo(Array<AlertInfo *> &info,
+                                               const Port *port)
+    {
+        WindowsSensorsAlertInfo   *sensorsInstInfo = NULL;
+
+        const WindowsPort *windowsPort =
+                      dynamic_cast<const WindowsPort *>(port);
 
         sensorsInstInfo = new WindowsSensorsAlertInfo();
         sensorsInstInfo->portId = windowsPort->efxPortId();
