@@ -289,6 +289,9 @@
  * have already installed filters. See the comment at
  * MC_CMD_WORKAROUND_BUG26807. */
 #define MC_CMD_ERR_FILTERS_PRESENT 0x1014
+/* The clock whose frequency you've attempted to set set
+ * doesn't exist on this NIC */
+#define MC_CMD_ERR_NO_CLOCK 0x1015
 
 #define MC_CMD_ERR_CODE_OFST 0
 
@@ -3123,6 +3126,8 @@
 #define       MC_CMD_AOE_OUT_INFO_FPGA_VERSION_OFST 12
 /* FPGA type - read from CPLD straps */
 #define       MC_CMD_AOE_OUT_INFO_FPGA_TYPE_OFST 16
+#define          MC_CMD_AOE_OUT_INFO_FPGA_TYPE_A5_C2   0x1 /* enum */
+#define          MC_CMD_AOE_OUT_INFO_FPGA_TYPE_A7_C2   0x2 /* enum */
 /* FPGA state (debug) */
 #define       MC_CMD_AOE_OUT_INFO_FPGA_STATE_OFST 20
 /* FPGA image - partition from which loaded */
@@ -6341,6 +6346,8 @@
 #define          MC_CMD_SENSOR_PHY0_VCC  0x4c
 /* enum: Voltage supplied to the QSFP #1 from their power supply: mV */
 #define          MC_CMD_SENSOR_PHY1_VCC  0x4d
+/* enum: Controller die temperature (TDIODE): degC */
+#define          MC_CMD_SENSOR_CONTROLLER_TDIODE_TEMP  0x4e
 /* MC_CMD_SENSOR_INFO_ENTRY_TYPEDEF */
 #define       MC_CMD_SENSOR_ENTRY_OFST 4
 #define       MC_CMD_SENSOR_ENTRY_LEN 8
@@ -7667,6 +7674,34 @@
 #define          LICENSED_APP_ID_NETWORK_ACCESS_CONTROL  0x80
 #define       LICENSED_APP_ID_ID_LBN 0
 #define       LICENSED_APP_ID_ID_WIDTH 32
+
+/* LICENSED_FEATURES structuredef */
+#define    LICENSED_FEATURES_LEN 8
+/* Bitmask of licensed firmware features */
+#define       LICENSED_FEATURES_MASK_OFST 0
+#define       LICENSED_FEATURES_MASK_LEN 8
+#define       LICENSED_FEATURES_MASK_LO_OFST 0
+#define       LICENSED_FEATURES_MASK_HI_OFST 4
+#define        LICENSED_FEATURES_RX_CUT_THROUGH_LBN 0
+#define        LICENSED_FEATURES_RX_CUT_THROUGH_WIDTH 1
+#define        LICENSED_FEATURES_PIO_LBN 1
+#define        LICENSED_FEATURES_PIO_WIDTH 1
+#define        LICENSED_FEATURES_EVQ_TIMER_LBN 2
+#define        LICENSED_FEATURES_EVQ_TIMER_WIDTH 1
+#define        LICENSED_FEATURES_CLOCK_LBN 3
+#define        LICENSED_FEATURES_CLOCK_WIDTH 1
+#define        LICENSED_FEATURES_RX_TIMESTAMPS_LBN 4
+#define        LICENSED_FEATURES_RX_TIMESTAMPS_WIDTH 1
+#define        LICENSED_FEATURES_TX_TIMESTAMPS_LBN 5
+#define        LICENSED_FEATURES_TX_TIMESTAMPS_WIDTH 1
+#define        LICENSED_FEATURES_RX_SNIFF_LBN 6
+#define        LICENSED_FEATURES_RX_SNIFF_WIDTH 1
+#define        LICENSED_FEATURES_TX_SNIFF_LBN 7
+#define        LICENSED_FEATURES_TX_SNIFF_WIDTH 1
+#define        LICENSED_FEATURES_PROXY_FILTER_OPS_LBN 8
+#define        LICENSED_FEATURES_PROXY_FILTER_OPS_WIDTH 1
+#define       LICENSED_FEATURES_MASK_LBN 0
+#define       LICENSED_FEATURES_MASK_WIDTH 64
 
 /* TX_TIMESTAMP_EVENT structuredef */
 #define    TX_TIMESTAMP_EVENT_LEN 6
@@ -9668,6 +9703,8 @@
 #define    MC_CMD_GET_CAPABILITIES_OUT_LEN 20
 /* First word of flags. */
 #define       MC_CMD_GET_CAPABILITIES_OUT_FLAGS1_OFST 0
+#define        MC_CMD_GET_CAPABILITIES_OUT_TX_STRIPING_LBN 4
+#define        MC_CMD_GET_CAPABILITIES_OUT_TX_STRIPING_WIDTH 1
 #define        MC_CMD_GET_CAPABILITIES_OUT_VADAPTOR_QUERY_LBN 5
 #define        MC_CMD_GET_CAPABILITIES_OUT_VADAPTOR_QUERY_WIDTH 1
 #define        MC_CMD_GET_CAPABILITIES_OUT_EVB_PORT_VLAN_RESTRICT_LBN 6
@@ -11584,32 +11621,38 @@
 #define       MC_CMD_KR_TUNE_RXEQ_GET_OUT_PARAM_MAXNUM 63
 #define        MC_CMD_KR_TUNE_RXEQ_GET_OUT_PARAM_ID_LBN 0
 #define        MC_CMD_KR_TUNE_RXEQ_GET_OUT_PARAM_ID_WIDTH 8
-/* enum: Attenuation (0-15, TBD for Medford) */
+/* enum: Attenuation (0-15, Huntington) */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_ATT  0x0
-/* enum: CTLE Boost (0-15, TBD for Medford) */
+/* enum: CTLE Boost (0-15, Huntington) */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_BOOST  0x1
-/* enum: Edge DFE Tap1 (0 - max negative, 64 - zero, 127 - max positive, TBD
- * for Medford)
+/* enum: Edge DFE Tap1 (Huntington - 0 - max negative, 64 - zero, 127 - max
+ * positive, Medford - 0-31)
  */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_EDFE_TAP1  0x2
-/* enum: Edge DFE Tap2 (0 - max negative, 32 - zero, 63 - max positive, TBD for
- * Medford)
+/* enum: Edge DFE Tap2 (Huntington - 0 - max negative, 32 - zero, 63 - max
+ * positive, Medford - 0-31)
  */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_EDFE_TAP2  0x3
-/* enum: Edge DFE Tap3 (0 - max negative, 32 - zero, 63 - max positive, TBD for
- * Medford)
+/* enum: Edge DFE Tap3 (Huntington - 0 - max negative, 32 - zero, 63 - max
+ * positive, Medford - 0-16)
  */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_EDFE_TAP3  0x4
-/* enum: Edge DFE Tap4 (0 - max negative, 32 - zero, 63 - max positive, TBD for
- * Medford)
+/* enum: Edge DFE Tap4 (Huntington - 0 - max negative, 32 - zero, 63 - max
+ * positive, Medford - 0-16)
  */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_EDFE_TAP4  0x5
-/* enum: Edge DFE Tap5 (0 - max negative, 32 - zero, 63 - max positive, TBD for
- * Medford)
+/* enum: Edge DFE Tap5 (Huntington - 0 - max negative, 32 - zero, 63 - max
+ * positive, Medford - 0-16)
  */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_EDFE_TAP5  0x6
-/* enum: Edge DFE DLEV (TBD for Medford) */
+/* enum: Edge DFE DLEV (0-128 for Medford) */
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_EDFE_DLEV  0x7
+/* enum: Variable Gain Amplifier (0-15, Medford) */
+#define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_VGA  0x8
+/* enum: CTLE EQ Capacitor (0-15, Medford) */
+#define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_CTLE_EQC  0x9
+/* enum: CTLE EQ Resistor (0-7, Medford) */
+#define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_CTLE_EQRES  0xa
 #define        MC_CMD_KR_TUNE_RXEQ_GET_OUT_PARAM_LANE_LBN 8
 #define        MC_CMD_KR_TUNE_RXEQ_GET_OUT_PARAM_LANE_WIDTH 3
 #define          MC_CMD_KR_TUNE_RXEQ_GET_OUT_LANE_0  0x0 /* enum */
@@ -11681,26 +11724,32 @@
 #define       MC_CMD_KR_TUNE_TXEQ_GET_OUT_PARAM_MAXNUM 63
 #define        MC_CMD_KR_TUNE_TXEQ_GET_OUT_PARAM_ID_LBN 0
 #define        MC_CMD_KR_TUNE_TXEQ_GET_OUT_PARAM_ID_WIDTH 8
-/* enum: TX Amplitude */
+/* enum: TX Amplitude (Huntington, Medford) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_LEV  0x0
-/* enum: De-Emphasis Tap1 Magnitude (0-7) */
+/* enum: De-Emphasis Tap1 Magnitude (0-7) (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_MODE  0x1
 /* enum: De-Emphasis Tap1 Fine */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_DTLEV  0x2
-/* enum: De-Emphasis Tap2 Magnitude (0-6) */
+/* enum: De-Emphasis Tap2 Magnitude (0-6) (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_D2  0x3
-/* enum: De-Emphasis Tap2 Fine */
+/* enum: De-Emphasis Tap2 Fine (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_D2TLEV  0x4
-/* enum: Pre-Emphasis Magnitude */
+/* enum: Pre-Emphasis Magnitude (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_E  0x5
-/* enum: Pre-Emphasis Fine */
+/* enum: Pre-Emphasis Fine (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_ETLEV  0x6
-/* enum: TX Slew Rate Coarse control */
+/* enum: TX Slew Rate Coarse control (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_PREDRV_DLY  0x7
-/* enum: TX Slew Rate Fine control */
+/* enum: TX Slew Rate Fine control (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_SR_SET  0x8
-/* enum: TX Termination Impedance control */
+/* enum: TX Termination Impedance control (Huntington) */
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_RT_SET  0x9
+/* enum: TX Amplitude Fine control (Medford) */
+#define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TX_LEV_FINE  0xa
+/* enum: Pre-shoot Tap (Medford) */
+#define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TAP_ADV  0xb
+/* enum: De-emphasis Tap (Medford) */
+#define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_TAP_DLY  0xc
 #define        MC_CMD_KR_TUNE_TXEQ_GET_OUT_PARAM_LANE_LBN 8
 #define        MC_CMD_KR_TUNE_TXEQ_GET_OUT_PARAM_LANE_WIDTH 3
 #define          MC_CMD_KR_TUNE_TXEQ_GET_OUT_LANE_0  0x0 /* enum */

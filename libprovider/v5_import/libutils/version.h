@@ -5,14 +5,14 @@
 
 /* These numbers are updated manually, each time the software is "released" */
 
-#define SFU_MAJ_RELEASE_VERSION            (4)
-#define SFU_MIN_RELEASE_VERSION            (6)
-#define SFU_MAINT_RELEASE_VERSION          (8)
-#define SFU_INCREMENTING_VERSION           (1004)
-#define SFU_VERSION_STRING                 "v4.6.8.1004"
+#define SFU_MAJ_RELEASE_VERSION            (5)
+#define SFU_MIN_RELEASE_VERSION            (0)
+#define SFU_MAINT_RELEASE_VERSION          (0)
+#define SFU_INCREMENTING_VERSION           (1000)
+#define SFU_VERSION_STRING                 "v5.0.0.1000"
 
 /* Don't show incrementing version (build number) by default in Windows .rc files */
-#define SFU_RC_VERSION_STRING              "v4.6.8"
+#define SFU_RC_VERSION_STRING              "v5.0.0"
 
 #define SFU_COPYRIGHT_STRING \
   "Copyright Solarflare Communications 2006-2015, Level 5 Networks 2002-2005 "

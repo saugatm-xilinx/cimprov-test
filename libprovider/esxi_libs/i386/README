@@ -1,6 +1,6 @@
-libsfupdate.a and libutils.a were built from fbae5d69266c
-revision of sfutils repository on 32bit CentOS host with the
-following command:
+libsfupdate.a and libutils.a were built from 4d3eeed7649e
+revision of sfutils repository (with fix to bug 58106 applied)
+on 32bit CentOS host with the following command:
 make PLATFORM=linux SFUPDATE_NO_DEFAULT_IMAGES=1 SFUPDATE_NO_NETIF_FLAGS=1
 and adding -fPIC to CFLAGS in platform/linux/config.mk
 

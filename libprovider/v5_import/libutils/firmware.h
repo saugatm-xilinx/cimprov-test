@@ -124,6 +124,7 @@ extern const struct firmware_ops gpxe_bethpage_firmware_ops;
 extern const struct firmware_ops gpxe_siena_firmware_ops;
 extern const struct firmware_ops gpxe_farmingdale_firmware_ops;
 extern const struct firmware_ops gpxe_greenport_firmware_ops;
+extern const struct firmware_ops gpxe_medford_firmware_ops;
 extern const image_header_t* gpxe_clear_firmware;
 
 /* MC firmware (Siena) */
@@ -149,6 +150,9 @@ extern const struct firmware_ops mc_shoemaker_firmware_ops;
 extern const struct firmware_ops mc_ikeya_firmware_ops;
 extern const struct firmware_ops mc_gehrels_firmware_ops;
 extern const struct firmware_ops mc_kowalski_firmware_ops;
+
+/* MC firmware (Medford) */
+extern const struct firmware_ops mc_sparta_firmware_ops;
 
 /* PHY firmware */
 extern const struct firmware_ops sfx7101b_firmware_ops;
