@@ -9,7 +9,7 @@ PREFIX[CPPFLAGS] += m4_patsubst(__esxi_archive_CPPFLAGS__, [-I], [-I$(srcdir)/])
 PREFIX[CPPFLAGS] += -DSF_IMPLEMENTATION_NS=\"$(smash_namespace)\"
 PREFIX[CPPFLAGS] += -DSF_INTEROP_NS=\"$(sfcb_interop_namespace)\"
 PREFIX[CPPFLAGS] += -DCIMPLE_CMPI_MODULE
-PREFIX[CXXFLAGS] = $(CFLAGS) __target_CXXFLAGS__
+PREFIX[CXXFLAGS] = $(CFLAGS) __target_CXXFLAGS__ -Wl,--exclude-libs,ALL
 PREFIX[LDADD] = m4_patsubst(m4_patsubst(__esxi_archive_LIBS__, [[^ ]+], [$(srcdir)/\&]), [ ], [ \\
 ])
 

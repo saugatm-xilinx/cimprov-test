@@ -4,5 +4,6 @@ on 32bit CentOS host with the following command:
 make PLATFORM=linux SFUPDATE_NO_DEFAULT_IMAGES=1 SFUPDATE_NO_NETIF_FLAGS=1
 and adding -fPIC to CFLAGS in platform/linux/config.mk
 
-libcurl.a was built from sources of 7.29.0 version of libcurl.
-libssl.a and libcrypto.a are built from openssl-1.0.1e
+libcurl.a was built from sources of 7.44.0 version of libcurl with
+bind() calls disabled.
+libssl.a and libcrypto.a are built from openssl-1.0.1p
