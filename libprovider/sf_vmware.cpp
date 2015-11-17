@@ -120,6 +120,7 @@ extern "C" {
 // Protocols to be used to obtain firmware image
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
+#define FTP_PROTO "ftp://"
 #define HTTP_PROTO "http://"
 #define HTTPS_PROTO "https://"
 
@@ -2686,7 +2687,7 @@ fail:
     }
 
     ///
-    /// Get data via TFTP or HTTP protocol.
+    /// Download file from remote location specified by URI.
     ///
     /// @param uri         Data URI
     /// @param passwd      Password (NULL if not required)
@@ -3164,6 +3165,7 @@ cleanup:
                 close(fd_aux);
         }
         else if (strcasecmp_start(fileName, TFTP_PROTO) == 0 ||
+                 strcasecmp_start(fileName, FTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, HTTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, HTTPS_PROTO) == 0)
         {
