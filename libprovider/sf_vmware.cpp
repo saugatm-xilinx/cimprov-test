@@ -121,6 +121,7 @@ extern "C" {
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
 #define FTP_PROTO "ftp://"
+#define SFTP_PROTO "sftp://"
 #define HTTP_PROTO "http://"
 #define HTTPS_PROTO "https://"
 
@@ -3166,6 +3167,7 @@ cleanup:
         }
         else if (strcasecmp_start(fileName, TFTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, FTP_PROTO) == 0 ||
+                 strcasecmp_start(fileName, SFTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, HTTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, HTTPS_PROTO) == 0)
         {
