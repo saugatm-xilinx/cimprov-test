@@ -18,4 +18,4 @@ override DIST_IS_SPECIAL = 1
 override PROVIDER_TARBALL = $(esxi_archive_TARGET)
 override target_CPPFLAGS = 
 override target_CXXFLAGS = -Wno-unused -Wno-unused-parameter
-override target_LDFLAGS = -pthread -lrt
+override target_LDFLAGS = -pthread

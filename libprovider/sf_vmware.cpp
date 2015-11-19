@@ -120,6 +120,8 @@ extern "C" {
 // Protocols to be used to obtain firmware image
 #define FILE_PROTO "file://"
 #define TFTP_PROTO "tftp://"
+#define FTP_PROTO "ftp://"
+#define SFTP_PROTO "sftp://"
 #define HTTP_PROTO "http://"
 #define HTTPS_PROTO "https://"
 
@@ -1375,7 +1377,11 @@ fail:
         { FIRMWARE_MCFW, 25, "LONGMORE.dat" },
         { FIRMWARE_MCFW, 16, "MR_MCHENRY.dat" },
         { FIRMWARE_MCFW, 17, "UNCLE_HAMISH.dat" },
+        { FIRMWARE_MCFW, 27, "SHOEMAKER.dat" },
+        { FIRMWARE_MCFW, 22, "GEHRELS.dat" },
+        { FIRMWARE_MCFW, 28, "IKEYA.dat" },
         { FIRMWARE_MCFW, 9, "ERMINTRUDE.dat" },
+        { FIRMWARE_MCFW, 26, "HERSCHEL.dat" },
         { FIRMWARE_MCFW, 7, "FLORENCE.dat" },
         { FIRMWARE_MCFW, 18, "TUTTLE.dat" },
         { FIRMWARE_MCFW, 11, "BRIAN.dat" },
@@ -2682,7 +2688,7 @@ fail:
     }
 
     ///
-    /// Get data via TFTP or HTTP protocol.
+    /// Download file from remote location specified by URI.
     ///
     /// @param uri         Data URI
     /// @param passwd      Password (NULL if not required)
@@ -3160,6 +3166,8 @@ cleanup:
                 close(fd_aux);
         }
         else if (strcasecmp_start(fileName, TFTP_PROTO) == 0 ||
+                 strcasecmp_start(fileName, FTP_PROTO) == 0 ||
+                 strcasecmp_start(fileName, SFTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, HTTP_PROTO) == 0 ||
                  strcasecmp_start(fileName, HTTPS_PROTO) == 0)
         {
