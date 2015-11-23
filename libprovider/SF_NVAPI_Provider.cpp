@@ -21,6 +21,7 @@ enum ReturnValue
     InvalidParameter = 5,
 };
 
+using namespace solarflare;
 
 SF_NVAPI_Provider::SF_NVAPI_Provider()
 {
@@ -89,8 +90,6 @@ Invoke_Method_Status SF_NVAPI_Provider::getSFUDevices(
     Property<String>& Devices,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     String devs = solarflare::System::target.getSFUDevices();
 
     if (devs.empty())
@@ -118,8 +117,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVExists(
     Property<String>& CorrectDevice,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     String  correct_dev;
     boolean try_other_devs = false;
 
@@ -165,8 +162,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVOpen(
     Property<uint32>& NVContext,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     int nv_cntx;
 
     if (Device.null || Device.value.empty() ||
@@ -203,8 +198,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVClose(
     const Property<uint32>& NVContext,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     if (NVContext.null)
     {
         PROVIDER_LOG_ERR("%s(): NV context "
@@ -228,8 +221,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVPartSize(
     Property<uint64>& PartSize,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     uint64 part_size;
 
     if (NVContext.null)
@@ -258,8 +249,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVRead(
     Property<String>& Data,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     int rc;
 
     if (NVContext.null || Length.null || Offset.null)
@@ -293,8 +282,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVReadAll(
     Property<String>& Data,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     int rc;
 
     if (NVContext.null)
@@ -326,8 +313,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
     const Property<String>& Data,
     Property<uint32>& return_value)
 {
-    using namespace solarflare;
-
     int rc;
 
     if (NVContext.null)
@@ -346,6 +331,120 @@ Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
         return_value.set(OK);
     else
         return_value.set(Error);
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_NVAPI_Provider::MCDIV1Command(
+    const SF_NVAPI* self,
+    const Property<String>& Device,
+    Property<uint32>& Command,
+    Property<uint32>& Len,
+    Property<uint32>& RC,
+    Property<String>& Payload,
+    Property<sint32>& Ioctl_rc,
+    Property<uint32>& Ioctl_errno,
+    Property<uint32>& return_value)
+{
+    int rc;
+
+    unsigned int cmd = 0;
+    unsigned int len = 0;
+    unsigned int cmd_rc = 0;
+    int ioctl_rc = 0;
+    unsigned int ioctl_errno = 0;
+
+    if (Device.null || Command.null || Len.null || Payload.null)
+    {
+        PROVIDER_LOG_ERR("%s(): some parameters "
+                         "are missed",
+                         __FUNCTION__);
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    cmd = Command.value;
+    len = Len.value;
+    if (!RC.null)
+        cmd_rc = RC.value;
+
+    rc = solarflare::System::target.MCDIV1Command(Device.value,
+                                                  cmd, len, cmd_rc,
+                                                  Payload.value,
+                                                  ioctl_rc, ioctl_errno);
+    if (rc >= 0)
+        return_value.set(OK);
+    else
+        return_value.set(Error);
+
+    Command.set(cmd);
+    Len.set(len);
+    RC.set(cmd_rc);
+    Ioctl_rc.set(ioctl_rc);
+    Ioctl_errno.set(ioctl_errno);
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_NVAPI_Provider::MCDIV2Command(
+    const SF_NVAPI* self,
+    const Property<String>& Device,
+    Property<uint32>& Command,
+    Property<uint32>& InLen,
+    Property<uint32>& OutLen,
+    Property<uint32>& Flags,
+    Property<String>& Payload,
+    Property<uint32>& Host_errno,
+    Property<sint32>& Ioctl_rc,
+    Property<uint32>& Ioctl_errno,
+    Property<uint32>& return_value)
+{
+    int rc;
+
+    unsigned int cmd = 0;
+    unsigned int inlen = 0;
+    unsigned int outlen = 0;
+    unsigned int flags = 0;
+    unsigned int host_errno = 0;
+    int ioctl_rc = 0;
+    unsigned int ioctl_errno = 0;
+
+    if (Device.null || Command.null || InLen.null || OutLen.null ||
+        Payload.null)
+    {
+        PROVIDER_LOG_ERR("%s(): some parameters "
+                         "are missed",
+                         __FUNCTION__);
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    cmd = Command.value;
+    inlen = InLen.value;
+    outlen = OutLen.value;
+    if (!Flags.null)
+        flags = Flags.value;
+    if (!Host_errno.null)
+        host_errno = Host_errno.value;
+
+    rc = solarflare::System::target.MCDIV2Command(Device.value,
+                                                  cmd, inlen, outlen,
+                                                  flags,
+                                                  Payload.value,
+                                                  host_errno,
+                                                  ioctl_rc, ioctl_errno);
+    if (rc >= 0)
+        return_value.set(OK);
+    else
+        return_value.set(Error);
+
+    Command.set(cmd);
+    InLen.set(inlen);
+    OutLen.set(outlen);
+    Flags.set(flags);
+    Host_errno.set(host_errno);
+    Ioctl_rc.set(ioctl_rc);
+    Ioctl_errno.set(ioctl_errno);
 
     return INVOKE_METHOD_OK;
 }

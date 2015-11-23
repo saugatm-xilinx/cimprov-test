@@ -192,6 +192,24 @@ class SF_NVAPI : CIM_ManagedElement {
 
     uint32 NVWriteAll([IN] uint32 NVContext,
                       [IN] string Data);
+
+    uint32 MCDIV1Command([IN] String Device,
+                         [IN, OUT] uint32 Command,
+                         [IN, OUT] uint32 Len,
+                         [IN, OUT] uint32 RC,
+                         [IN, OUT] String Payload,
+                         [OUT] sint32 Ioctl_rc,
+                         [OUT] uint32 Ioctl_errno);
+
+    uint32 MCDIV2Command([IN] String Device,
+                         [IN, OUT] uint32 Command,
+                         [IN, OUT] uint32 InLen,
+                         [IN, OUT] uint32 OutLen,
+                         [IN, OUT] uint32 Flags,
+                         [IN, OUT] String Payload,
+                         [IN, OUT] uint32 Host_errno,
+                         [OUT] sint32 Ioctl_rc,
+                         [OUT] uint32 Ioctl_errno);
 };
 ]], [[]])
 

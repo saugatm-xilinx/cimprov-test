@@ -3546,6 +3546,24 @@ cleanup:
 
         virtual int getDriverLoadParameters(String &loadParams);
         virtual int setDriverLoadParameters(const String &loadParams);
+
+        virtual int MCDIV1Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &len,
+                                  unsigned int &rc,
+                                  String &payload,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno);
+
+        virtual int MCDIV2Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &inlen,
+                                  unsigned int &outlen,
+                                  unsigned int &flags,
+                                  String &payload,
+                                  unsigned int &host_errno,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno);
     };
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -4135,6 +4153,167 @@ cleanup:
             return -1;
         }
 
+        return 0;
+    }
+
+    int VMwareSystem::MCDIV1Command(const String &dev_name,
+                                    unsigned int &cmd,
+                                    unsigned int &len,
+                                    unsigned int &rc,
+                                    String &payload,
+                                    int &ioctl_rc,
+                                    unsigned int &ioctl_errno)
+    {
+        struct efx_mcdi_request *mcdi_req;
+        struct efx_ioctl         ioc;
+
+        int      fd;
+        ssize_t  dec_size;
+        size_t   enc_size;
+        char    *encoded;
+
+        memset(&ioc, 0, sizeof(ioc));
+        strncpy(ioc.if_name, dev_name.c_str(), sizeof(ioc.if_name));
+        ioc.cmd = EFX_MCDI_REQUEST;
+
+        mcdi_req = &ioc.u.mcdi_request;
+
+        mcdi_req->cmd = cmd;
+        mcdi_req->len = len;
+        mcdi_req->rc = rc;
+
+        dec_size = base64_dec_size(payload.c_str());
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        }
+        if ((unsigned int)dec_size > sizeof(mcdi_req->payload))
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        }
+        if (base64_decode((char *)mcdi_req->payload, payload.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        
+        }
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            return -1;
+        }
+
+        ioctl_rc = ioctl(fd, SIOCEFX, &ioc);
+        ioctl_errno = errno;
+        close(fd);
+
+        cmd = mcdi_req->cmd;
+        len = mcdi_req->len;
+        rc = mcdi_req->rc;
+
+        if (rc == 0)
+        {
+            enc_size = base64_enc_size(sizeof(mcdi_req->payload));
+            encoded = new char[enc_size];
+            base64_encode(encoded, (char *)mcdi_req->payload,
+                          sizeof(mcdi_req->payload));
+            payload = String(encoded);
+            delete[] encoded;
+        }
+
+        return 0;
+    }
+
+    int VMwareSystem::MCDIV2Command(const String &dev_name,
+                                    unsigned int &cmd,
+                                    unsigned int &inlen,
+                                    unsigned int &outlen,
+                                    unsigned int &flags,
+                                    String &payload,
+                                    unsigned int &host_errno,
+                                    int &ioctl_rc,
+                                    unsigned int &ioctl_errno)
+    {
+        struct efx_mcdi_request2 *mcdi_req2 = NULL;
+        struct efx_ioctl          ioc;
+
+        int      fd = -1;
+        int      rc = 0;
+        ssize_t  dec_size;
+        size_t   enc_size;
+        char    *encoded = NULL;
+
+        dec_size = base64_dec_size(payload.c_str());
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+
+        memset(&ioc, 0, sizeof(ioc));
+        strncpy(ioc.if_name, dev_name.c_str(), sizeof(ioc.if_name));
+        ioc.cmd = EFX_MCDI_REQUEST2;
+
+        mcdi_req2 = &ioc.u.mcdi_request2;
+        mcdi_req2->cmd = cmd;
+        mcdi_req2->inlen = inlen;
+        mcdi_req2->outlen = outlen;
+        mcdi_req2->flags = flags;
+        mcdi_req2->host_errno = host_errno;
+
+        if (base64_decode((char *)mcdi_req2->payload, payload.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            rc = -1;
+            goto cleanup;
+        }
+
+        ioctl_rc = ioctl(fd, SIOCEFX, &ioc);
+        ioctl_errno = errno;
+        rc = ioctl_rc;
+
+        if (mcdi_req2->outlen <= outlen)
+        {
+            enc_size = base64_enc_size(sizeof(mcdi_req2->outlen));
+            encoded = new char[enc_size];
+            base64_encode(encoded, (char *)mcdi_req2->payload,
+                          mcdi_req2->outlen);
+            payload = String(encoded);
+        }
+
+        cmd = mcdi_req2->cmd;
+        inlen = mcdi_req2->inlen;
+        outlen = mcdi_req2->outlen;
+        flags = mcdi_req2->flags;
+        host_errno = mcdi_req2->host_errno;
+
+cleanup:
+        if (fd >= 0)
+            close(fd);
+        if (encoded != NULL)
+            delete[] encoded;
         return 0;
     }
 

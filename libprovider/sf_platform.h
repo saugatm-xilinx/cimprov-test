@@ -988,13 +988,47 @@ namespace solarflare
         {
             return -1;
         }
-       
+
+        // Get driver load parameters
+        //
+        // @param loadParams  [out] Driver load parameters string
+        //
+        // @return 0 on success, -1 on failure
         virtual int getDriverLoadParameters(String &loadParams)
         {
             return -1;
         }
 
+        // Set driver load parameters
+        //
+        // @param loadParams      Driver load parameters string
+        //
+        // @return 0 on success, -1 on failure
         virtual int setDriverLoadParameters(const String &loadParams)
+        {
+            return -1;
+        }
+
+        virtual int MCDIV1Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &len,
+                                  unsigned int &rc,
+                                  String &payload,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno)
+        {
+            return -1;
+        }
+
+        virtual int MCDIV2Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &inlen,
+                                  unsigned int &outlen,
+                                  unsigned int &flags,
+                                  String &payload,
+                                  unsigned int &host_errno,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno)
         {
             return -1;
         }
