@@ -1009,6 +1009,18 @@ namespace solarflare
             return -1;
         }
 
+        // Execute MCDI v1 command
+        //
+        // @param dev_name    [in]      Device name
+        // @param cmd         [in, out] cmd field of efx_mcdi_request
+        // @param len         [in, out] len field of efx_mcdi_request
+        // @param rc          [in, out] rc field of efx_mcdi_request
+        // @param payload     [in, out] payload field of efx_mcdi_request
+        // @param ioctl_rc    [out]     value returned by ioctl() call
+        // @param ioctl_errno [out]     errno after ioctl() call
+        //
+        // @return 0 if ioctl() was called, -1 if some error made calling
+        // ioctl() with the given parameters impossible
         virtual int MCDIV1Command(const String &dev_name,
                                   unsigned int &cmd,
                                   unsigned int &len,
@@ -1020,6 +1032,20 @@ namespace solarflare
             return -1;
         }
 
+        // Execute MCDI v2 command
+        //
+        // @param dev_name    [in]      Device name
+        // @param cmd         [in, out] cmd field of efx_mcdi_request2
+        // @param inlen       [in, out] inlen field of efx_mcdi_request2
+        // @param outlen      [in, out] outlen field of efx_mcdi_request2
+        // @param flags       [in, out] flags field of efx_mcdi_request2
+        // @param payload     [in, out] payload field of efx_mcdi_request2
+        // @param host_errno  [in, out] host_errno field of efx_mcdi_request2
+        // @param ioctl_rc    [out]     value returned by ioctl() call
+        // @param ioctl_errno [out]     errno after ioctl() call
+        //
+        // @return 0 if ioctl() was called, -1 if some error made calling
+        // ioctl() with the given parameters impossible
         virtual int MCDIV2Command(const String &dev_name,
                                   unsigned int &cmd,
                                   unsigned int &inlen,
