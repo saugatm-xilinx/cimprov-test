@@ -118,8 +118,12 @@ namespace solarflare
             memcpy(mcdi_req->payload, payload.u8,
                    mcdi_req->len);
 
-            if (ioctl(fd, SIOCEFX, iocArg) < 0)
+            if (ioctl(fd, SIOCEFX, iocArg) < 0 ||
+                mcdi_req->rc != 0)
             {
+                if (mcdi_req->rc != 0)
+                    errno = mcdi_req->rc;
+
                 PROVIDER_LOG_ERR("ioctl(SIOCEFX/EFX_MCDI_REQUEST) failed, "
                                  "errno %d ('%s')",
                                  errno, strerror(errno));
@@ -135,6 +139,70 @@ namespace solarflare
                                  "zero length");
                 return -1;
             }
+        }
+
+        return 0;
+    }
+
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+
+    /// Described in sf_siocefx_nvram.h
+    int siocEFXWriteNVRAM(int fd, bool isSock,
+                          uint8_t *data,
+                          uint32_t offset,
+                          uint32_t len,
+                          const char *ifname,
+                          uint32_t type)
+    {
+        unsigned int    end = offset + len;
+        uint8_t        *ptr = data;
+        unsigned int    write_len;
+
+        struct efx_mcdi_request *mcdi_req;
+        struct efx_ioctl         iocData;
+        struct efx_sock_ioctl    sockIocData;
+        struct ifreq             ifr;
+        void                    *iocArg = NULL;
+        uint32_t                *payload;
+
+        for ( ; offset < end; )
+        {
+            initIoctlArg(isSock, mcdi_req, iocData,
+                         sockIocData, iocArg, ifr, ifname);
+
+            write_len = min(len,
+                            sizeof(mcdi_req->payload) -
+                                MC_CMD_NVRAM_WRITE_IN_LEN(0));
+
+            mcdi_req->cmd = MC_CMD_NVRAM_WRITE;
+            mcdi_req->len = MC_CMD_NVRAM_WRITE_IN_LEN(write_len);
+
+            payload = mcdi_req->payload;
+            memset(payload, 0, sizeof(mcdi_req->payload));
+            payload[MC_CMD_NVRAM_WRITE_IN_TYPE_OFST / 4] =
+                                              host_to_le32(type);
+            payload[MC_CMD_NVRAM_WRITE_IN_OFFSET_OFST / 4] =
+                                              host_to_le32(offset);
+            payload[MC_CMD_NVRAM_WRITE_IN_LENGTH_OFST / 4] =
+                                              host_to_le32(write_len);
+            memcpy(&payload[MC_CMD_NVRAM_WRITE_IN_WRITE_BUFFER_OFST/ 4],
+                   ptr, write_len);
+
+            if (ioctl(fd, SIOCEFX, iocArg) < 0 ||
+                mcdi_req->rc != 0)
+            {
+                if (mcdi_req->rc != 0)
+                    errno = mcdi_req->rc;
+
+                PROVIDER_LOG_ERR("ioctl(SIOCEFX/EFX_MCDI_REQUEST) failed, "
+                                 "errno %d ('%s')",
+                                 errno, strerror(errno));
+                return -1;
+            }
+
+            ptr += write_len;
+            offset += write_len;
+            len -= write_len;
         }
 
         return 0;

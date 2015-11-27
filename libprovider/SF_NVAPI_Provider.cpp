@@ -449,6 +449,74 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIV2Command(
     return INVOKE_METHOD_OK;
 }
 
+Invoke_Method_Status SF_NVAPI_Provider::MCDIRead(
+    const SF_NVAPI* self,
+    const Property<String>& Device,
+    const Property<uint32>& PartitionType,
+    const Property<uint32>& Length,
+    const Property<uint32>& Offset,
+    Property<String>& Data,
+    Property<uint32>& return_value)
+{
+    int rc;
+
+    if (Device.null || PartitionType.null || Length.null || Offset.null)
+    {
+        PROVIDER_LOG_ERR("%s(): some parameters "
+                         "are missed",
+                         __FUNCTION__);
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    rc = solarflare::System::target.MCDIRead(Device.value,
+                                             PartitionType.value,
+                                             Length.value,
+                                             Offset.value,
+                                             Data.value);
+    if (rc >= 0)
+    {
+        Data.null = false;
+        return_value.set(OK);
+    }
+    else
+        return_value.set(Error);
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_NVAPI_Provider::MCDIWrite(
+    const SF_NVAPI* self,
+    const Property<String>& Device,
+    const Property<uint32>& PartitionType,
+    const Property<uint32>& Offset,
+    const Property<String>& Data,
+    Property<uint32>& return_value)
+{
+    int rc;
+
+    if (Device.null || PartitionType.null || Offset.null ||
+        Data.null)
+    {
+        PROVIDER_LOG_ERR("%s(): some parameters "
+                         "are missed",
+                         __FUNCTION__);
+        return_value.set(InvalidParameter);
+        return INVOKE_METHOD_OK;
+    }
+
+    rc = solarflare::System::target.MCDIWrite(Device.value,
+                                              PartitionType.value,
+                                              Offset.value,
+                                              Data.value);
+    if (rc >= 0)
+        return_value.set(OK);
+    else
+        return_value.set(Error);
+
+    return INVOKE_METHOD_OK;
+}
+
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

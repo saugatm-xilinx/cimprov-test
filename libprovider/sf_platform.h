@@ -989,6 +989,40 @@ namespace solarflare
             return -1;
         }
 
+        // Read data from NV partition using MCDI directly
+        //
+        // @param dev_name        Device name
+        // @param part_type       Partition type
+        // @param len             Length of data to be read
+        // @param offset          At which offset to read
+        // @param data      [out] Where to save obtained data
+        //
+        // @return 0 on success, -1 on failure
+        virtual int MCDIRead(const String &dev_name,
+                             uint32 part_type,
+                             uint32 len,
+                             uint32 offset,
+                             String &data)
+        {
+            return -1;
+        }
+
+        // Write data to NV partition using MCDI directly
+        //
+        // @param dev_name      Device name
+        // @param part_type     Partition type
+        // @param offset        At which offset to write
+        // @param data          Data to be written
+        //
+        // @return 0 on success, -1 on failure
+        virtual int MCDIWrite(const String &dev_name,
+                              uint32 part_type,
+                              uint32 offset,
+                              const String &data)
+        {
+            return -1;
+        }
+
         // Get driver load parameters
         //
         // @param loadParams  [out] Driver load parameters string

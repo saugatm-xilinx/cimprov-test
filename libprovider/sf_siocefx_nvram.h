@@ -35,6 +35,26 @@ namespace solarflare
                          uint32_t type);
 
     ///
+    /// Write NVRAM data from NIC with help of SIOCEFX private ioctl
+    ///
+    /// @param fd        File descriptor to be used for ioctl()
+    /// @param isSock    Whether file descriptor is socket or not
+    /// @param data      Data to be written
+    /// @param offset    Offset of data to be written
+    /// @param len       Length of data to be written
+    /// @param ifname    Interface name
+    /// @param type      NVRAM partition type
+    ///
+    /// @return 0 on success or error code
+    ///
+    int siocEFXWriteNVRAM(int fd, bool isSock,
+                          uint8_t *data,
+                          uint32_t offset,
+                          uint32_t len,
+                          const char *ifname,
+                          uint32_t type);
+
+    ///
     /// Get size of NVRAM partition from NIC with help of
     /// SIOCEFX private ioctl.
     ///

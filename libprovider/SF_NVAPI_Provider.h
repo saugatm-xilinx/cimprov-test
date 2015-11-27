@@ -128,6 +128,23 @@ public:
         Property<uint32>& Ioctl_errno,
         Property<uint32>& return_value);
 
+    Invoke_Method_Status MCDIRead(
+        const SF_NVAPI* self,
+        const Property<String>& Device,
+        const Property<uint32>& PartitionType,
+        const Property<uint32>& Length,
+        const Property<uint32>& Offset,
+        Property<String>& Data,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status MCDIWrite(
+        const SF_NVAPI* self,
+        const Property<String>& Device,
+        const Property<uint32>& PartitionType,
+        const Property<uint32>& Offset,
+        const Property<String>& Data,
+        Property<uint32>& return_value);
+
     /*@END@*/
 };
 

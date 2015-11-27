@@ -3564,6 +3564,17 @@ cleanup:
                                   unsigned int &host_errno,
                                   int &ioctl_rc,
                                   unsigned int &ioctl_errno);
+
+        virtual int MCDIRead(const String &dev_name,
+                             uint32 part_type,
+                             uint32 len,
+                             uint32 offset,
+                             String &data);
+
+        virtual int MCDIWrite(const String &dev_name,
+                              uint32 part_type,
+                              uint32 offset,
+                              const String &data);
     };
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -4154,6 +4165,94 @@ cleanup:
         }
 
         return 0;
+    }
+
+    int VMwareSystem::MCDIRead(const String &dev_name,
+                               uint32 part_type,
+                               uint32 len,
+                               uint32 offset,
+                               String &data)
+    {
+        int       rc = 0;
+        int       fd = -1;
+        char     *buf = NULL;
+        size_t    enc_size;
+        char     *encoded_buf = NULL;
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            rc = -1;
+            goto cleanup;
+        }
+
+        buf = new char[len];
+        rc = siocEFXReadNVRAM(fd, false, (uint8_t *)buf,
+                              offset, len, dev_name.c_str(),
+                              part_type);
+        if (rc < 0)
+            goto cleanup;
+
+        enc_size = base64_enc_size(len);
+        encoded_buf = new char[enc_size];
+        base64_encode(encoded_buf, buf, len);
+
+        data = String(encoded_buf);
+cleanup:
+        if (fd >= 0)
+            close(fd);
+        delete[] buf;
+        delete[] encoded_buf;
+        return rc;
+    }
+
+    int VMwareSystem::MCDIWrite(const String &dev_name,
+                                uint32 part_type,
+                                uint32 offset,
+                                const String &data)
+    {
+        int       rc;
+        int       fd;
+        char     *decoded = NULL;
+        ssize_t   dec_size = 0;
+
+        dec_size = base64_dec_size(data.c_str());
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        }
+
+        decoded = new char[dec_size];
+        if (base64_decode(decoded, data.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            delete[] decoded;
+            return -1;
+        }
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            delete[] decoded;
+            return -1;
+        }
+
+        rc = siocEFXWriteNVRAM(fd, false, (uint8_t *)decoded,
+                               offset, dec_size, dev_name.c_str(),
+                               part_type);
+
+        close(fd);
+        delete[] decoded;
+        return rc;
     }
 
     int VMwareSystem::MCDIV1Command(const String &dev_name,
