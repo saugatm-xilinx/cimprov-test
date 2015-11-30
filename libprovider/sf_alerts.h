@@ -314,7 +314,6 @@ namespace solarflare
         virtual CIMClass *makeIndication(const AlertProps &alertProps)
         {
             CIMClass *indication = CIMClass::create(true);
-            Instance *instance = NULL;
             String    indicationId("Solarflare:");
 
             indicationId.append(alertProps.localId);
@@ -380,8 +379,6 @@ namespace solarflare
 
             unsigned int i;
             unsigned int j;
-            uint16       alertType;
-            uint16       perceivedSeverity;
             String       description;
 
             CIMAlertNotify<CIMClass> *owner =

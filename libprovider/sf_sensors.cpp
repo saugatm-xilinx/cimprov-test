@@ -332,11 +332,12 @@ namespace solarflare
     /// Desribed in sf_sensors.h
     int sensorStrId2State(const char *strState, SensorState &state)
     {
-        unsigned int val;
+        unsigned int val = 0;
         int          rc;
 
         rc = str2Enum(sensor_states_ids, strState, val);
-        state = static_cast<SensorState>(val);
+        if (rc >= 0)
+            state = static_cast<SensorState>(val);
         return rc;
     }
 
@@ -349,11 +350,12 @@ namespace solarflare
     /// Desribed in sf_sensors.h
     int sensorStrId2Type(const char *strType, SensorType &type)
     {
-        unsigned int val;
+        unsigned int val = 0;
         int          rc;
 
         rc = str2Enum(sensor_types_ids, strType, val);
-        type = static_cast<SensorType>(val);
+        if (rc >= 0)
+            type = static_cast<SensorType>(val);
         return rc;
     }
 

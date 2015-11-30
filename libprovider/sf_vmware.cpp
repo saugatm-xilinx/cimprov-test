@@ -496,6 +496,7 @@ fail:
         return cimEthPort;
     }
 
+#if 0
     ///
     /// Debugging function checking number of free FDs.
     ///
@@ -521,6 +522,7 @@ fail:
         return i;
 #undef _MAX_FDS
     }
+#endif
 
     ///
     /// Description of Ethernet port.
@@ -1350,7 +1352,7 @@ fail:
     /// Firmware default file names table entry
     typedef struct {
         UpdatedFirmwareType type;     ///< Firmware type
-        int subtype;                  ///< Firmware subtype
+        unsigned int subtype;         ///< Firmware subtype
         const char *fName;            ///< Default file name
     } FwFileTableEntry;
 
@@ -2925,7 +2927,7 @@ curl_fail:
             goto cleanup;
         }
 
-        if (md_len != dec_size ||
+        if ((ssize_t)md_len != dec_size ||
             memcmp(md_hash, hash, md_len) != 0)
             result = false;
 
@@ -3847,7 +3849,7 @@ cleanup:
         }
 
         buf.format("%d\n", devs_count);
-        for (i = 0; i < devs_count; i++)
+        for (i = 0; i < (unsigned int)devs_count; i++)
         {
             buf.format("%s%s\n", NETIF_NAME_PREF, devs[i].netif_name);
             buf.format("%s%s\n", MAC_ADDR_PREF, devs[i].mac_addr);
@@ -3864,7 +3866,7 @@ cleanup:
                        devs[i].pci_addr);
             buf.format("%s%u\n", PORT_INDEX_PREF, devs[i].port_index);
             buf.format("%s%d\n", PHY_TYPE_PREF, devs[i].phy_type);
-            for (j = 0; j < devs_count; j++)
+            for (j = 0; j < (unsigned int)devs_count; j++)
                 if (&(devs[j]) == devs[i].master_port)
                     break;
             buf.format("%s%u\n", MASTER_PORT_PREF, j);
@@ -3904,7 +3906,7 @@ cleanup:
             return -1;
         }
 
-        for (i = 0; i < *devs_count; i++)
+        for (i = 0; i < (unsigned int)*devs_count; i++)
         {
             if (strcmp((*devs)[i].netif_name, dev_name.c_str()) == 0)
             {
@@ -3936,7 +3938,6 @@ cleanup:
 
         int           devs_count;
         bool          exists = false;
-        unsigned int  i;
 
         if (findSFUDevice(dev_name, &devs, &dev,
                           &devs_count) < 0)
@@ -3964,7 +3965,7 @@ cleanup:
         int           devs_count;
 
         unsigned int  i;
-        int           new_id;
+        unsigned int  new_id;
 
         NVContextDescr ctx_descr;
 

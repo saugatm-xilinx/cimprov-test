@@ -93,7 +93,6 @@ namespace solarflare
 
     void *Thread::doThread(void *self)
     {
-        bool status;
         char *name = (char *)self;
 
         cimple::SF_ConcreteJob *job = cimple::SF_ConcreteJob::create(true);
