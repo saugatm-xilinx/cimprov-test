@@ -32,9 +32,6 @@ extern "C" {
 #include "endian_base.h"
 }
 
-// Size of block to be read from NIC NVRAM at once
-#define CHUNK_LEN 0x80
-
 namespace solarflare 
 {
     ///
@@ -81,6 +78,8 @@ namespace solarflare
         }
     }
 
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+
     /// Described in sf_siocefx_nvram.h
     int siocEFXReadNVRAM(int fd, bool isSock,
                          uint8_t *data, unsigned int offset,
@@ -97,26 +96,22 @@ namespace solarflare
         struct efx_sock_ioctl    sockIocData;
         struct ifreq             ifr;
         void                    *iocArg = NULL;
-        payload_t                payload;
 
         for ( ; offset < end; )
         {
-            chunk = end - offset;
-            if (chunk > CHUNK_LEN)
-                chunk = CHUNK_LEN;
+            chunk = min(end - offset, sizeof(mcdi_req->payload));
 
             initIoctlArg(isSock, mcdi_req, iocData,
                          sockIocData, iocArg, ifr, ifname);
 
             mcdi_req->cmd = MC_CMD_NVRAM_READ;
-            mcdi_req->len = 12;
-            
-            memset(&payload, 0, sizeof(payload));
-            SET_PAYLOAD_DWORD(payload, 0, type);
-            SET_PAYLOAD_DWORD(payload, 1, offset);
-            SET_PAYLOAD_DWORD(payload, 2, chunk);
-            memcpy(mcdi_req->payload, payload.u8,
-                   mcdi_req->len);
+            mcdi_req->len = MC_CMD_NVRAM_READ_IN_LEN;
+            mcdi_req->payload[MC_CMD_NVRAM_READ_IN_TYPE_OFST / 4] =
+                host_to_le32(type);
+            mcdi_req->payload[MC_CMD_NVRAM_READ_IN_OFFSET_OFST / 4] =
+                host_to_le32(offset);
+            mcdi_req->payload[MC_CMD_NVRAM_READ_IN_LENGTH_OFST / 4] =
+                host_to_le32(chunk);
 
             if (ioctl(fd, SIOCEFX, iocArg) < 0 ||
                 mcdi_req->rc != 0)
@@ -143,8 +138,6 @@ namespace solarflare
 
         return 0;
     }
-
-#define min(a, b) (((a) < (b)) ? (a) : (b))
 
     /// Described in sf_siocefx_nvram.h
     int siocEFXWriteNVRAM(int fd, bool isSock,
@@ -219,18 +212,14 @@ namespace solarflare
         struct efx_sock_ioctl    sockIocData;
         struct ifreq             ifr;
         void                    *iocArg = NULL;
-        payload_t                payload;
 
         initIoctlArg(isSock, mcdi_req, iocData,
                      sockIocData, iocArg, ifr, ifname);
 
         mcdi_req->cmd = MC_CMD_NVRAM_INFO;
-        mcdi_req->len = 12;
-
-        memset(&payload, 0, sizeof(payload));
-        SET_PAYLOAD_DWORD(payload, 0, type);
-        memcpy(mcdi_req->payload, &payload,
-               sizeof(*(mcdi_req->payload)));
+        mcdi_req->len = MC_CMD_NVRAM_INFO_IN_LEN;
+        mcdi_req->payload[MC_CMD_NVRAM_INFO_IN_TYPE_OFST / 4] =
+                                                host_to_le32(type);
 
         if (ioctl(fd, SIOCEFX, iocArg) < 0)
         {
@@ -240,9 +229,8 @@ namespace solarflare
             return -1;
         }
 
-        memcpy(payload.u8, mcdi_req->payload,
-               mcdi_req->len);
-        partitionSize = PAYLOAD_DWORD(payload, 1);
+        partitionSize = le32_to_host(
+                  mcdi_req->payload[MC_CMD_NVRAM_INFO_OUT_SIZE_OFST / 4]);
         return 0;
     }
 

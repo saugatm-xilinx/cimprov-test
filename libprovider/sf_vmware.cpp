@@ -693,7 +693,7 @@ fail:
             else if (numRead == 0)
                 break;
 
-            for (bufPos = 0; bufPos < numRead; )
+            for (bufPos = 0; bufPos < (unsigned int)numRead; )
             {
                 linux_dirent *d =
                       reinterpret_cast<linux_dirent *>(buf + bufPos);
@@ -1081,11 +1081,8 @@ fail:
         uint8_t        *vpd_field;
         char            field_name[3];
         unsigned int    field_len;
-        char           *field_value;
 
-        int i = 0;
         uint8_t sum = 0;
-        uint8_t *vpd_start = vpd;
 
         parsedFields.clear(); 
 
@@ -1354,7 +1351,7 @@ fail:
     typedef struct {
         UpdatedFirmwareType type;     ///< Firmware type
         int subtype;                  ///< Firmware subtype
-        char *fName;                  ///< Default file name
+        const char *fName;            ///< Default file name
     } FwFileTableEntry;
 
     ///
@@ -1418,6 +1415,9 @@ fail:
                     return MC_CMD_NVRAM_TYPE_MC_FW;
                 else
                     return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
+
+            default:
+                return -1;
         }
         return -1;
     }
@@ -1435,7 +1435,6 @@ fail:
     static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
                             int device_type, unsigned int &subtype)
     {
-        int       rc;
         int       fd;
 
         struct efx_mcdi_request *mcdi_req;
