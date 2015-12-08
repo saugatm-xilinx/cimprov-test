@@ -908,7 +908,7 @@ call_remove_fw_image(CURL *curl, const char *namespace,
  * @param curl              CURL pointer returned by curl_easy_init()
  * @param namespace         Namespace
  * @param svc               SF_SoftwareInstallationService instance pointer
- * @param target        Target parameter (should be instance of SF_NICCard)
+ * @param target            Target parameter (should be instance of SF_NICCard)
  * @param file_name         Temporary file name where image was stored
  * @param response    [out] Parsed CIM-XML response
  *
@@ -1699,7 +1699,7 @@ update_firmware(CURL *curl, const char *namespace,
     if (url_specified && firmware_source != NULL &&
         (fw_url_no_local_access ||
          strncasecmp(firmware_source, FILE_PROTO,
-                     strlen(FILE_PROTO)) == 0) ||
+                     strlen(FILE_PROTO)) == 0) &&
          !fw_url_use_cim_transf)
         func_install = call_install_from_uri;
     else
@@ -2017,7 +2017,8 @@ findAvailableUpdate(CURL *curl, const char *namespace,
     if (firmware_source != NULL &&
         url_specified &&
         strncasecmp(firmware_source, FILE_PROTO,
-                    strlen(FILE_PROTO)) == 0)
+                    strlen(FILE_PROTO)) == 0 &&
+        !fw_url_use_cim_transf)
     {
         char *applicable = NULL;
         char *version = NULL;
