@@ -15,8 +15,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+extern "C" {
 #include "efx_ioctl.h"
+#include "endian_base.h"
 #include "ci/mgmt/mc_driver_pcol.h"
+}
+
 #include "sf_siocefx_common.h"
 
 #include <cimple/Strings.h>
@@ -214,7 +218,6 @@ namespace solarflare
 
         struct efx_mcdi_request   *mcdi_req; 
         payload_t                  payload_readings;
-        payload_t                  payload_info;
         int                        rc;
         uint16_t                  *readings;
         unsigned int               readings_len;
@@ -237,24 +240,12 @@ namespace solarflare
 
         mcdi_req->cmd = MC_CMD_READ_SENSORS;
         mcdi_req->len = MC_CMD_READ_SENSORS_EXT_IN_LEN;
-
-        memset(&payload_readings, 0, sizeof(payload_readings));
-
-        // DMA address is set to 0xff.. to get data back by MCDI instead
-        SET_PAYLOAD_DWORD(
-                payload_readings,
-                MC_CMD_READ_SENSORS_EXT_IN_DMA_ADDR_LO_OFST / 4,
-                0xffffffff);
-        SET_PAYLOAD_DWORD(
-                payload_readings,
-                MC_CMD_READ_SENSORS_EXT_IN_DMA_ADDR_HI_OFST / 4,
-                0xffffffff);
-        SET_PAYLOAD_DWORD(
-                payload_readings,
-                MC_CMD_READ_SENSORS_EXT_IN_LENGTH_OFST / 4,
-                sizeof(mcdi_req->payload));
-
-        memcpy(mcdi_req->payload, payload_readings.u8, mcdi_req->len);
+        mcdi_req->payload[MC_CMD_READ_SENSORS_EXT_IN_DMA_ADDR_LO_OFST / 4] =
+          host_to_le32(0xffffffff);
+        mcdi_req->payload[MC_CMD_READ_SENSORS_EXT_IN_DMA_ADDR_HI_OFST / 4] =
+          host_to_le32(0xffffffff);
+        mcdi_req->payload[MC_CMD_READ_SENSORS_EXT_IN_LENGTH_OFST / 4] =
+          host_to_le32(sizeof(mcdi_req->payload));
 
         if (!isSocket)
             rc = ioctl(fd, SIOCEFX, ioc);
@@ -281,12 +272,8 @@ namespace solarflare
 
             mcdi_req->cmd = MC_CMD_SENSOR_INFO;
             mcdi_req->len = MC_CMD_SENSOR_INFO_EXT_IN_LEN;
-            memset(&payload_info, 0, sizeof(payload_info));
-            SET_PAYLOAD_DWORD(
-                    payload_info,
-                    MC_CMD_SENSOR_INFO_EXT_IN_PAGE_OFST / 4,
-                    page);
-            memcpy(mcdi_req->payload, payload_info.u8, mcdi_req->len);
+            mcdi_req->payload[MC_CMD_SENSOR_INFO_EXT_IN_PAGE_OFST / 4] =
+              host_to_le32(page);
 
             if (!isSocket)
                 rc = ioctl(fd, SIOCEFX, ioc);
@@ -302,12 +289,9 @@ namespace solarflare
                 return -1;
             }
 
-            memcpy(payload_info.u8, mcdi_req->payload, mcdi_req->len);
-
-            mask = PAYLOAD_DWORD(
-                     payload_info,
-                     MC_CMD_SENSOR_INFO_EXT_OUT_MASK_OFST / 4);
-            lims = &payload_info.u16[2];
+            mask = le32_to_host(
+              mcdi_req->payload[MC_CMD_SENSOR_INFO_EXT_OUT_MASK_OFST / 4]);
+            lims = (uint16_t *)&mcdi_req->payload[1];
 
             for (i = 0; i < 31; i++)
             {

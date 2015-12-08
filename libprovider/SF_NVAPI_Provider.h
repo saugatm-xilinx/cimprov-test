@@ -104,6 +104,47 @@ public:
         const Property<String>& Data,
         Property<uint32>& return_value);
 
+    Invoke_Method_Status MCDIV1Command(
+        const SF_NVAPI* self,
+        const Property<String>& Device,
+        Property<uint32>& Command,
+        Property<uint32>& Len,
+        Property<uint32>& RC,
+        Property<String>& Payload,
+        Property<sint32>& Ioctl_rc,
+        Property<uint32>& Ioctl_errno,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status MCDIV2Command(
+        const SF_NVAPI* self,
+        const Property<String>& Device,
+        Property<uint32>& Command,
+        Property<uint32>& InLen,
+        Property<uint32>& OutLen,
+        Property<uint32>& Flags,
+        Property<String>& Payload,
+        Property<uint32>& Host_errno,
+        Property<sint32>& Ioctl_rc,
+        Property<uint32>& Ioctl_errno,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status MCDIRead(
+        const SF_NVAPI* self,
+        const Property<String>& Device,
+        const Property<uint32>& PartitionType,
+        const Property<uint32>& Length,
+        const Property<uint32>& Offset,
+        Property<String>& Data,
+        Property<uint32>& return_value);
+
+    Invoke_Method_Status MCDIWrite(
+        const SF_NVAPI* self,
+        const Property<String>& Device,
+        const Property<uint32>& PartitionType,
+        const Property<uint32>& Offset,
+        const Property<String>& Data,
+        Property<uint32>& return_value);
+
     /*@END@*/
 };
 

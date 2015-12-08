@@ -988,13 +988,107 @@ namespace solarflare
         {
             return -1;
         }
-       
+
+        // Read data from NV partition using MCDI directly
+        //
+        // @param dev_name        Device name
+        // @param part_type       Partition type
+        // @param len             Length of data to be read
+        // @param offset          At which offset to read
+        // @param data      [out] Where to save obtained data
+        //
+        // @return 0 on success, -1 on failure
+        virtual int MCDIRead(const String &dev_name,
+                             uint32 part_type,
+                             uint32 len,
+                             uint32 offset,
+                             String &data)
+        {
+            return -1;
+        }
+
+        // Write data to NV partition using MCDI directly
+        //
+        // @param dev_name      Device name
+        // @param part_type     Partition type
+        // @param offset        At which offset to write
+        // @param data          Data to be written
+        //
+        // @return 0 on success, -1 on failure
+        virtual int MCDIWrite(const String &dev_name,
+                              uint32 part_type,
+                              uint32 offset,
+                              const String &data)
+        {
+            return -1;
+        }
+
+        // Get driver load parameters
+        //
+        // @param loadParams  [out] Driver load parameters string
+        //
+        // @return 0 on success, -1 on failure
         virtual int getDriverLoadParameters(String &loadParams)
         {
             return -1;
         }
 
+        // Set driver load parameters
+        //
+        // @param loadParams      Driver load parameters string
+        //
+        // @return 0 on success, -1 on failure
         virtual int setDriverLoadParameters(const String &loadParams)
+        {
+            return -1;
+        }
+
+        // Execute MCDI v1 command
+        //
+        // @param dev_name    [in]      Device name
+        // @param cmd         [in, out] cmd field of efx_mcdi_request
+        // @param len         [in, out] len field of efx_mcdi_request
+        // @param rc          [in, out] rc field of efx_mcdi_request
+        // @param payload     [in, out] payload field of efx_mcdi_request
+        // @param ioctl_rc    [out]     value returned by ioctl() call
+        // @param ioctl_errno [out]     errno after ioctl() call
+        //
+        // @return 0 if ioctl() was called, -1 if some error made calling
+        // ioctl() with the given parameters impossible
+        virtual int MCDIV1Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &len,
+                                  unsigned int &rc,
+                                  String &payload,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno)
+        {
+            return -1;
+        }
+
+        // Execute MCDI v2 command
+        //
+        // @param dev_name    [in]      Device name
+        // @param cmd         [in, out] cmd field of efx_mcdi_request2
+        // @param inlen       [in, out] inlen field of efx_mcdi_request2
+        // @param outlen      [in, out] outlen field of efx_mcdi_request2
+        // @param flags       [in, out] flags field of efx_mcdi_request2
+        // @param payload     [in, out] payload field of efx_mcdi_request2
+        // @param host_errno  [in, out] host_errno field of efx_mcdi_request2
+        // @param ioctl_rc    [out]     value returned by ioctl() call
+        // @param ioctl_errno [out]     errno after ioctl() call
+        //
+        // @return 0 if ioctl() was called, -1 if some error made calling
+        // ioctl() with the given parameters impossible
+        virtual int MCDIV2Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &inlen,
+                                  unsigned int &outlen,
+                                  unsigned int &flags,
+                                  String &payload,
+                                  unsigned int &host_errno,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno)
         {
             return -1;
         }

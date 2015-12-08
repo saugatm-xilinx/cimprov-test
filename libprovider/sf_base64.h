@@ -75,11 +75,11 @@ namespace solarflare
     static inline void base64_encode(char *dst, const char *src,
                                      size_t src_size)
     {
-        int i;
-        int j;
-        int a;
-        int b;
-        int c;
+        unsigned int i;
+        unsigned int j;
+        unsigned int a;
+        unsigned int b;
+        unsigned int c;
 
         for (i = 0;
              i < ((src_size % 3 == 0) ?
@@ -121,7 +121,7 @@ namespace solarflare
     ///
     static inline int base64_symbol_id(char c)
     {
-        int i;
+        unsigned int i;
 
         for (i = 0; i < sizeof(base64_code_table); i++)
             if (base64_code_table[i] == c)

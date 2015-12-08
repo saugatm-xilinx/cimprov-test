@@ -496,6 +496,7 @@ fail:
         return cimEthPort;
     }
 
+#if 0
     ///
     /// Debugging function checking number of free FDs.
     ///
@@ -521,6 +522,7 @@ fail:
         return i;
 #undef _MAX_FDS
     }
+#endif
 
     ///
     /// Description of Ethernet port.
@@ -693,7 +695,7 @@ fail:
             else if (numRead == 0)
                 break;
 
-            for (bufPos = 0; bufPos < numRead; )
+            for (bufPos = 0; bufPos < (unsigned int)numRead; )
             {
                 linux_dirent *d =
                       reinterpret_cast<linux_dirent *>(buf + bufPos);
@@ -1081,11 +1083,8 @@ fail:
         uint8_t        *vpd_field;
         char            field_name[3];
         unsigned int    field_len;
-        char           *field_value;
 
-        int i = 0;
         uint8_t sum = 0;
-        uint8_t *vpd_start = vpd;
 
         parsedFields.clear(); 
 
@@ -1353,8 +1352,8 @@ fail:
     /// Firmware default file names table entry
     typedef struct {
         UpdatedFirmwareType type;     ///< Firmware type
-        int subtype;                  ///< Firmware subtype
-        char *fName;                  ///< Default file name
+        unsigned int subtype;         ///< Firmware subtype
+        const char *fName;            ///< Default file name
     } FwFileTableEntry;
 
     ///
@@ -1418,6 +1417,9 @@ fail:
                     return MC_CMD_NVRAM_TYPE_MC_FW;
                 else
                     return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
+
+            default:
+                return -1;
         }
         return -1;
     }
@@ -1435,7 +1437,6 @@ fail:
     static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
                             int device_type, unsigned int &subtype)
     {
-        int       rc;
         int       fd;
 
         struct efx_mcdi_request *mcdi_req;
@@ -2926,7 +2927,7 @@ curl_fail:
             goto cleanup;
         }
 
-        if (md_len != dec_size ||
+        if ((ssize_t)md_len != dec_size ||
             memcmp(md_hash, hash, md_len) != 0)
             result = false;
 
@@ -3551,6 +3552,35 @@ cleanup:
 
         virtual int getDriverLoadParameters(String &loadParams);
         virtual int setDriverLoadParameters(const String &loadParams);
+
+        virtual int MCDIV1Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &len,
+                                  unsigned int &rc,
+                                  String &payload,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno);
+
+        virtual int MCDIV2Command(const String &dev_name,
+                                  unsigned int &cmd,
+                                  unsigned int &inlen,
+                                  unsigned int &outlen,
+                                  unsigned int &flags,
+                                  String &payload,
+                                  unsigned int &host_errno,
+                                  int &ioctl_rc,
+                                  unsigned int &ioctl_errno);
+
+        virtual int MCDIRead(const String &dev_name,
+                             uint32 part_type,
+                             uint32 len,
+                             uint32 offset,
+                             String &data);
+
+        virtual int MCDIWrite(const String &dev_name,
+                              uint32 part_type,
+                              uint32 offset,
+                              const String &data);
     };
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -3824,7 +3854,7 @@ cleanup:
         }
 
         buf.format("%d\n", devs_count);
-        for (i = 0; i < devs_count; i++)
+        for (i = 0; i < (unsigned int)devs_count; i++)
         {
             buf.format("%s%s\n", NETIF_NAME_PREF, devs[i].netif_name);
             buf.format("%s%s\n", MAC_ADDR_PREF, devs[i].mac_addr);
@@ -3841,7 +3871,7 @@ cleanup:
                        devs[i].pci_addr);
             buf.format("%s%u\n", PORT_INDEX_PREF, devs[i].port_index);
             buf.format("%s%d\n", PHY_TYPE_PREF, devs[i].phy_type);
-            for (j = 0; j < devs_count; j++)
+            for (j = 0; j < (unsigned int)devs_count; j++)
                 if (&(devs[j]) == devs[i].master_port)
                     break;
             buf.format("%s%u\n", MASTER_PORT_PREF, j);
@@ -3881,7 +3911,7 @@ cleanup:
             return -1;
         }
 
-        for (i = 0; i < *devs_count; i++)
+        for (i = 0; i < (unsigned int)*devs_count; i++)
         {
             if (strcmp((*devs)[i].netif_name, dev_name.c_str()) == 0)
             {
@@ -3913,7 +3943,6 @@ cleanup:
 
         int           devs_count;
         bool          exists = false;
-        unsigned int  i;
 
         if (findSFUDevice(dev_name, &devs, &dev,
                           &devs_count) < 0)
@@ -3941,7 +3970,7 @@ cleanup:
         int           devs_count;
 
         unsigned int  i;
-        int           new_id;
+        unsigned int  new_id;
 
         NVContextDescr ctx_descr;
 
@@ -4140,6 +4169,255 @@ cleanup:
             return -1;
         }
 
+        return 0;
+    }
+
+    int VMwareSystem::MCDIRead(const String &dev_name,
+                               uint32 part_type,
+                               uint32 len,
+                               uint32 offset,
+                               String &data)
+    {
+        int       rc = 0;
+        int       fd = -1;
+        char     *buf = NULL;
+        size_t    enc_size;
+        char     *encoded_buf = NULL;
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            rc = -1;
+            goto cleanup;
+        }
+
+        buf = new char[len];
+        rc = siocEFXReadNVRAM(fd, false, (uint8_t *)buf,
+                              offset, len, dev_name.c_str(),
+                              part_type);
+        if (rc < 0)
+            goto cleanup;
+
+        enc_size = base64_enc_size(len);
+        encoded_buf = new char[enc_size];
+        base64_encode(encoded_buf, buf, len);
+
+        data = String(encoded_buf);
+cleanup:
+        if (fd >= 0)
+            close(fd);
+        delete[] buf;
+        delete[] encoded_buf;
+        return rc;
+    }
+
+    int VMwareSystem::MCDIWrite(const String &dev_name,
+                                uint32 part_type,
+                                uint32 offset,
+                                const String &data)
+    {
+        int       rc;
+        int       fd;
+        char     *decoded = NULL;
+        ssize_t   dec_size = 0;
+
+        dec_size = base64_dec_size(data.c_str());
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        }
+
+        decoded = new char[dec_size];
+        if (base64_decode(decoded, data.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            delete[] decoded;
+            return -1;
+        }
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            delete[] decoded;
+            return -1;
+        }
+
+        rc = siocEFXWriteNVRAM(fd, false, (uint8_t *)decoded,
+                               offset, dec_size, dev_name.c_str(),
+                               part_type);
+
+        close(fd);
+        delete[] decoded;
+        return rc;
+    }
+
+    int VMwareSystem::MCDIV1Command(const String &dev_name,
+                                    unsigned int &cmd,
+                                    unsigned int &len,
+                                    unsigned int &rc,
+                                    String &payload,
+                                    int &ioctl_rc,
+                                    unsigned int &ioctl_errno)
+    {
+        struct efx_mcdi_request *mcdi_req;
+        struct efx_ioctl         ioc;
+
+        int      fd;
+        ssize_t  dec_size;
+        size_t   enc_size;
+        char    *encoded;
+
+        memset(&ioc, 0, sizeof(ioc));
+        strncpy(ioc.if_name, dev_name.c_str(), sizeof(ioc.if_name));
+        ioc.cmd = EFX_MCDI_REQUEST;
+
+        mcdi_req = &ioc.u.mcdi_request;
+
+        mcdi_req->cmd = cmd;
+        mcdi_req->len = len;
+        mcdi_req->rc = rc;
+
+        dec_size = base64_dec_size(payload.c_str());
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        }
+        if ((unsigned int)dec_size > sizeof(mcdi_req->payload))
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        }
+        if (base64_decode((char *)mcdi_req->payload, payload.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            return -1;
+        
+        }
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            return -1;
+        }
+
+        ioctl_rc = ioctl(fd, SIOCEFX, &ioc);
+        ioctl_errno = errno;
+        close(fd);
+
+        cmd = mcdi_req->cmd;
+        len = mcdi_req->len;
+        rc = mcdi_req->rc;
+
+        if (rc == 0)
+        {
+            enc_size = base64_enc_size(sizeof(mcdi_req->payload));
+            encoded = new char[enc_size];
+            base64_encode(encoded, (char *)mcdi_req->payload,
+                          sizeof(mcdi_req->payload));
+            payload = String(encoded);
+            delete[] encoded;
+        }
+
+        return 0;
+    }
+
+    int VMwareSystem::MCDIV2Command(const String &dev_name,
+                                    unsigned int &cmd,
+                                    unsigned int &inlen,
+                                    unsigned int &outlen,
+                                    unsigned int &flags,
+                                    String &payload,
+                                    unsigned int &host_errno,
+                                    int &ioctl_rc,
+                                    unsigned int &ioctl_errno)
+    {
+        struct efx_mcdi_request2 *mcdi_req2 = NULL;
+        struct efx_ioctl          ioc;
+
+        int      fd = -1;
+        int      rc = 0;
+        ssize_t  dec_size;
+        size_t   enc_size;
+        char    *encoded = NULL;
+
+        dec_size = base64_dec_size(payload.c_str());
+        if (dec_size < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+
+        memset(&ioc, 0, sizeof(ioc));
+        strncpy(ioc.if_name, dev_name.c_str(), sizeof(ioc.if_name));
+        ioc.cmd = EFX_MCDI_REQUEST2;
+
+        mcdi_req2 = &ioc.u.mcdi_request2;
+        mcdi_req2->cmd = cmd;
+        mcdi_req2->inlen = inlen;
+        mcdi_req2->outlen = outlen;
+        mcdi_req2->flags = flags;
+        mcdi_req2->host_errno = host_errno;
+
+        if (base64_decode((char *)mcdi_req2->payload, payload.c_str()) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
+                             "payload size", __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            rc = -1;
+            goto cleanup;
+        }
+
+        ioctl_rc = ioctl(fd, SIOCEFX, &ioc);
+        ioctl_errno = errno;
+        rc = ioctl_rc;
+
+        if (mcdi_req2->outlen <= outlen)
+        {
+            enc_size = base64_enc_size(sizeof(mcdi_req2->outlen));
+            encoded = new char[enc_size];
+            base64_encode(encoded, (char *)mcdi_req2->payload,
+                          mcdi_req2->outlen);
+            payload = String(encoded);
+        }
+
+        cmd = mcdi_req2->cmd;
+        inlen = mcdi_req2->inlen;
+        outlen = mcdi_req2->outlen;
+        flags = mcdi_req2->flags;
+        host_errno = mcdi_req2->host_errno;
+
+cleanup:
+        if (fd >= 0)
+            close(fd);
+        if (encoded != NULL)
+            delete[] encoded;
         return 0;
     }
 
