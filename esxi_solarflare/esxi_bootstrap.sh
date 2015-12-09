@@ -42,7 +42,7 @@ else
     sed -i "s/DESC_VENDOR=.*/DESC_VENDOR=Solarflare/g" Makefile
     sed -i "s/DESC_VENDOR_EMAIL=.*/DESC_VENDOR_EMAIL=support@solarflare.com/g" Makefile
     sed -i "s/DESC_SUMMARY=.*/DESC_SUMMARY=Solarflare NIC CIM provider/g" Makefile
-    sed -i "s/DESC_VERSION=.*/DESC_VERSION=1.0-2.0/g" Makefile
+    sed -i "s/DESC_VERSION=.*/DESC_VERSION=1.0-3.0/g" Makefile
     sed -i "s/DESC_DESCRIPTION=.*/DESC_DESCRIPTION=Solarflare NIC CIM provider for VMware ESXi/g" Makefile
     sed -i "s/DESC_URLS=.*/DESC_URLS=oem\/descriptor-urls.xml/g" Makefile
     sed -i "s/DESC_DEPENDS=.*/DESC_DEPENDS=oem\/solarflare-vib-depends.xml/g" Makefile
@@ -51,7 +51,10 @@ else
     sed -i "s/\<CFLAGS=\"\(.*\)/CFLAGS=\"-D__USE_XOPEN2K8=1 \1/g" Makefile
     sed -i "s/\${CURRENT_DIR}\/descriptor.xml/\${CURRENT_DIR}\/oem\/descriptor.xml/g" Makefile
     sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
-    sed -i "s/BULL_VENDOR_CODE=VMW/BULL_VENDOR_CODE=Solarflare/g" Makefile
+    sed -i "s/BULL_KBURL=.*/BULL_KBURL=none/g" Makefile
+    sed -i "s/BULL_VENDOR_CODE=VMW/BULL_VENDOR_CODE=SFL/g" Makefile
+    sed -i "s/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-provider-\${PROV_NAME}/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-\${PROV_NAME}-\${DESC_VERSION}/g" Makefile
+
 
     # This fixes the bug with renaming our provider to li.so
     sed -i "s/\/\\\\.so/\/[.]so/g" Makefile
