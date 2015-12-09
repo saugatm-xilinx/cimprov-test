@@ -16,7 +16,7 @@ libcimobjects_INCLUDES = $(libcimobjects_DIR)
 libcimobjects_DEPENDS = $(CIMPLE_COMPONENT)
 
 libcimobjects_EXTRA_MOF = CIM_OperatingSystem CIM_Chassis SF_ServiceAffectsElement
-libcimobjects_EXTRA_MOF += SF_InstCreation SF_InstModification SF_AlertIndication
+libcimobjects_EXTRA_MOF += SF_InstCreation SF_InstModification SF_PortAlertIndication
 libcimobjects_EXTRA_MOF += SF_Card SF_ConnectorOnPackage SF_OrderedComponent
 libcimobjects_EXTRA_MOF += SF_DeviceSAPImplementation SF_Realizes
 libcimobjects_EXTRA_MOF += SF_UseOfLog SF_RecordLogCapabilities SF_RecordLog

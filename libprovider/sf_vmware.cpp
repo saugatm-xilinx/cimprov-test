@@ -3454,9 +3454,9 @@ cleanup:
             setenv(CIMPLEHOME_ENVVAR, "/tmp/", 1);
 
             curl_global_init(CURL_GLOBAL_ALL);
-            onLinkStateAlert.setFillPortAlertsInfo(
+            onPortLinkStateAlert.setFillPortAlertsInfo(
                                 vmwareFillPortLinkStateAlertsInfo);
-            onSensorAlert.setFillPortAlertsInfo(
+            onPortSensorAlert.setFillPortAlertsInfo(
                                 vmwareFillPortSensorAlertsInfo);
 
             if (sfu_device_init() < 0)
@@ -4604,13 +4604,12 @@ cleanup:
     ///
     class VMwareLinkStateAlertInfo : public LinkStateAlertInfo {
         String devFile;     ///< Port device file
-        String devName;     ///< Port device name
 
     protected:
 
         virtual int updateLinkState()
         {
-            curLinkState = getLinkStatus(devFile, devName);
+            curLinkState = getLinkStatus(devFile, portName);
             return 0;
         }
 
@@ -4625,7 +4624,6 @@ cleanup:
     /// generated on VMware
     ///
     class VMwareSensorsAlertInfo : public SensorsAlertInfo {
-        String devName;    ///< Port device name
         int    fd;         ///< /dev/sfc_control fd
 
     protected:
@@ -4634,7 +4632,7 @@ cleanup:
         {
             if (fd < 0)
                 return -1;
-            if (mcdiGetSensors(sensorsCur, fd, false, devName) != 0)
+            if (mcdiGetSensors(sensorsCur, fd, false, portName) != 0)
                 return -1;
             return 0;
         }
@@ -4676,7 +4674,7 @@ cleanup:
 
         linkStateInstInfo = new VMwareLinkStateAlertInfo();
         linkStateInstInfo->devFile = vmwarePort->dev_file;
-        linkStateInstInfo->devName = vmwarePort->dev_name;
+        linkStateInstInfo->portName = vmwarePort->dev_name;
         info.append(linkStateInstInfo);
 
         return 0;
@@ -4699,7 +4697,7 @@ cleanup:
                       dynamic_cast<const VMwarePort *>(port);
 
         sensorsInstInfo = new VMwareSensorsAlertInfo();
-        sensorsInstInfo->devName = vmwarePort->dev_name;
+        sensorsInstInfo->portName = vmwarePort->dev_name;
         sensorsInstInfo->portFn = vmwarePort->pciAddress().fn();
         info.append(sensorsInstInfo);
 

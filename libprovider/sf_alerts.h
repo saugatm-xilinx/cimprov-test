@@ -11,8 +11,8 @@
 #ifndef SOLARFLARE_SF_ALERTS_H
 #define SOLARFLARE_SF_ALERTS_H 1
 
-#include "SF_LinkStateAlert.h"
-#include "SF_SensorAlert.h"
+#include "SF_PortLinkStateAlert.h"
+#include "SF_PortSensorAlert.h"
 #include "SF_EthernetPort.h"
 #include "sf_sensors.h"
 #include "sf_provider.h"
@@ -45,6 +45,9 @@ namespace solarflare
         String instPath;                ///< Path to port instance to which
                                         ///  generated alert indication is
                                         ///  related
+#if TARGET_CIM_SERVER_esxi
+        String portName;                ///< Name of the port instance
+#endif
         String sysName;                 ///< Name of the scoping system of
                                         ///  AlertingManagedElement
         String sysCreationClassName;    ///< The scoping system's
@@ -84,8 +87,11 @@ namespace solarflare
         /// @return true is some alerts were detected, false otherwise
         virtual bool check(Array<AlertProps> &alerts) = 0;
 
-        String instPath;              ///< Path to instance for which
+        String instPath;              ///< Path to port instance for which
                                       ///  alerts are checked
+#if TARGET_CIM_SERVER_esxi
+        String portName;              ///< Name of the port instance
+#endif
         String sysName;               ///< System name
         String sysCreationClassName;  ///< System creation class name
 
@@ -360,6 +366,9 @@ namespace solarflare
             indication->MessageArguments.null = false;
             indication->MessageArguments.value =
                                       alertProps.messageArguments;
+#if TARGET_CIM_SERVER_esxi
+            indication->PortName.set(alertProps.portName);
+#endif
 
             return indication;
         }
@@ -463,8 +472,8 @@ namespace solarflare
         }
     };
 
-    extern CIMAlertNotify<cimple::SF_LinkStateAlert> onLinkStateAlert;
-    extern CIMAlertNotify<cimple::SF_SensorAlert> onSensorAlert;
+    extern CIMAlertNotify<cimple::SF_PortLinkStateAlert> onPortLinkStateAlert;
+    extern CIMAlertNotify<cimple::SF_PortSensorAlert> onPortSensorAlert;
 }
 
 #endif // SOLARFLARE_SF_ALERTS_H

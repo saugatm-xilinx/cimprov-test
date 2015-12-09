@@ -2082,9 +2082,9 @@ cleanup:
         WindowsManagementPackage mgmtPackage;
         WindowsSystem() : driversFromScratch(true), driversLock(false)
         {
-            onLinkStateAlert.setFillPortAlertsInfo(
+            onPortLinkStateAlert.setFillPortAlertsInfo(
                                     windowsFillPortLinkStateAlertsInfo);
-            onSensorAlert.setFillPortAlertsInfo(
+            onPortSensorAlert.setFillPortAlertsInfo(
                                     windowsFillPortSensorAlertsInfo);
         };
     protected:

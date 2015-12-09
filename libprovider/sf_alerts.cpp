@@ -48,6 +48,9 @@ namespace solarflare
             }
 
             alert.instPath = instPath;
+#if TARGET_CIM_SERVER_esxi
+            alert.portName = portName;
+#endif
             alert.sysName = sysName;
             alert.sysCreationClassName = sysCreationClassName;
 
@@ -110,6 +113,9 @@ namespace solarflare
                                  _PerceivedSeverity::enum_Major;
 
             alert.instPath = instPath;
+#if TARGET_CIM_SERVER_esxi
+            alert.portName = portName;
+#endif
             alert.sysName = sysName;
             alert.sysCreationClassName = sysCreationClassName;
 

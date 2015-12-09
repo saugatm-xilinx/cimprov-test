@@ -1485,9 +1485,9 @@ namespace solarflare
         LinuxManagementPackage mgmtPackage;
         LinuxSystem()
         {
-            onLinkStateAlert.setFillPortAlertsInfo(
+            onPortLinkStateAlert.setFillPortAlertsInfo(
                                       linuxFillPortLinkStateAlertsInfo);
-            onSensorAlert.setFillPortAlertsInfo(
+            onPortSensorAlert.setFillPortAlertsInfo(
                                       linuxFillPortSensorAlertsInfo);
         };
     protected:

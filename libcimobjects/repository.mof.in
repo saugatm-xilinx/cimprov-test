@@ -624,17 +624,20 @@ class SF_ElementSettingData : CIM_ElementSettingData {
 INTEROP_SECTION([[
 
 INDICATION_NWMI
-class SF_AlertIndication : CIM_AlertIndication
+class SF_PortAlertIndication : CIM_AlertIndication
+{
+ESXIONLY([[
+    string PortName;
+]])
+};
+
+INDICATION
+class SF_PortLinkStateAlert : SF_PortAlertIndication
 {
 };
 
 INDICATION
-class SF_LinkStateAlert : SF_AlertIndication
-{
-};
-
-INDICATION
-class SF_SensorAlert : SF_AlertIndication
+class SF_PortSensorAlert : SF_PortAlertIndication
 {
 };
 
