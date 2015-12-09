@@ -24,8 +24,8 @@
 #define CI_MAJ_RELEASE_VERSION            (4)
 #define CI_MIN_RELEASE_VERSION            (8)
 #define CI_MAINT_RELEASE_VERSION          (0)
-#define CI_INCREMENTING_VERSION           (1004)
-#define CI_VERSION_STRING                 "v4.8.0.1004"
+#define CI_INCREMENTING_VERSION           (1011)
+#define CI_VERSION_STRING                 "v4.8.0.1011"
 
 /* version number in format as needed for Windows .rc files */
 #define CI_RC_PRODUCT_VERSION             CI_MAJ_RELEASE_VERSION,CI_MIN_RELEASE_VERSION,CI_MAINT_RELEASE_VERSION,CI_INCREMENTING_VERSION

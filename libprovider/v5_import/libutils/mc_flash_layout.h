@@ -84,6 +84,14 @@ typedef struct blob_hdr_s {
 
 #define BLOB_CPU_TYPE_INVALID (31)
 
+/* The upper four bits of the CPU type field specify the compression
+ * algorithm used for this blob. */
+#define BLOB_COMPRESSION_MASK (0xf0000000)
+#define BLOB_CPU_TYPE_MASK    (0x0fffffff)
+
+#define BLOB_COMPRESSION_NONE (0x00000000) /* Stored as is */
+#define BLOB_COMPRESSION_LZ   (0x10000000) /* see lib/lzdecoder.c */
+
 
 typedef struct siena_mc_boot_hdr_s {
   uint32_t magic;                  /* = SIENA_MC_BOOT_MAGIC */
