@@ -1,0 +1,17 @@
+Libraries that we link statically to:
+
+libcrypto.a, libssl.a: “The OpenSSL toolkit is licensed under an
+Apache-style license, which basically means that you are free to get and
+use it for commercial and non-commercial purposes subject to some simple
+license conditions.”
+
+libcurl.a: “Curl and libcurl are licensed under a MIT/X derivate license”
+
+libssh2.a: http://www.libssh2.org/license.html
+
+libz.a: http://www.zlib.net/zlib_license.html
+
+All these libraries are included for curl functionality.
+
+Also we link dynamically to such system libraries as libpthread, libc, 
+libgcc_s, libm, and statically to libstdc++.a
