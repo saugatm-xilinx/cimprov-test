@@ -20,7 +20,8 @@ ESXI_EXTRA_LIBS = libsfupdate.a libcurl.a libutils.a libssh2.a libssl.a libcrypt
 esxi_archive_LIBS = $(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))
 
 esxi_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
-				                $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof
+				                $(libcimobjects_DIR)/interop.mof $(libcimobjects_DIR)/root.mof \
+						$(libcimobjects_DIR)/esxi_aux.mof
 esxi_archive_EXTRA_DISTFILES += $(esxi_archive_LIBS)
 
 esxi_archive_GENERATED = $(ESXI_PROJECT_NAME)/$(libcimobjects_DIR)/namespace.mof \

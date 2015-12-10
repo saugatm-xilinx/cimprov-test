@@ -23,6 +23,11 @@ libcimobjects_EXTRA_MOF += SF_UseOfLog SF_RecordLogCapabilities SF_RecordLog
 libcimobjects_EXTRA_MOF += SF_ElementSoftwareIdentity SF_Container
 libcimobjects_EXTRA_MOF += SF_SoftwareIdentity
 
+genclass_aux_opts = ""
+ifeq ($(CIM_SERVER),esxi)
+genclass_aux_opts = -M$(abspath $(libcimobjects_DIR)/esxi_aux.mof)
+endif
+
 ifeq ($(CIM_SERVER),pegasus)
 libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem IBMSD_Chassis PG_ComputerSystem PG_RegisteredProfile
 endif
@@ -45,7 +50,7 @@ genclass_cmd = cd $(libcimobjects_DIR); CIMPLE_MOF_PATH="$(CIM_SCHEMA_DIR)" $(ab
 
 $(libcimobjects_DIR)/.genclass : $(libcimobjects_DIR)/classes $(libcimobjects_DIR)/repository.mof \
 								 $(CIM_SCHEMA_ROOTFILE) $(genclass_TARGET)
-	$(genclass_cmd) -S -r -e -F$(abspath $<) $(libcimobjects_EXTRA_MOF)
+	$(genclass_cmd) -S -r -e -F$(abspath $<) $(libcimobjects_EXTRA_MOF) $(genclass_aux_opts)
 
 $(filter %.h,$(_libcimobjects_GENERATED)) : $(libcimobjects_DIR)/classes.mk
 

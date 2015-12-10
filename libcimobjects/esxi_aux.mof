@@ -1,0 +1,9 @@
+class VMware_KernelModuleService : CIM_Service {
+    uint8 LoadModule([IN] string ModuleName);
+    uint8 EnableModule([IN] string ModuleName);
+    uint8 DisableModule([IN] string ModuleName);
+    uint8 GetModuleLoadParameter([IN] string ModuleName,
+                                 [OUT] string LoadParameter);
+    uint8 SetModuleLoadParameter([IN] string ModuleName,
+                                 [IN] string LoadParameter);
+};
