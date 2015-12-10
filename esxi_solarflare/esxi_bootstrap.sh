@@ -42,7 +42,7 @@ else
     sed -i "s/DESC_VENDOR=.*/DESC_VENDOR=Solarflare/g" Makefile
     sed -i "s/DESC_VENDOR_EMAIL=.*/DESC_VENDOR_EMAIL=support@solarflare.com/g" Makefile
     sed -i "s/DESC_SUMMARY=.*/DESC_SUMMARY=Solarflare NIC CIM provider/g" Makefile
-    sed -i "s/DESC_VERSION=.*/DESC_VERSION=1.0-3.0/g" Makefile
+    sed -i "s/DESC_VERSION=.*/DESC_VERSION=2.0-0.0/g" Makefile
     sed -i "s/DESC_DESCRIPTION=.*/DESC_DESCRIPTION=Solarflare NIC CIM provider for VMware ESXi/g" Makefile
     sed -i "s/DESC_URLS=.*/DESC_URLS=oem\/descriptor-urls.xml/g" Makefile
     sed -i "s/DESC_DEPENDS=.*/DESC_DEPENDS=oem\/solarflare-vib-depends.xml/g" Makefile
