@@ -2933,7 +2933,7 @@ curl_fail:
 
 cleanup:
 
-        free(hash);
+        delete[] hash;
         if (f != NULL)
           fclose(f);
         return result;
