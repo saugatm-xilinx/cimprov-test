@@ -7,33 +7,3 @@ class VMware_KernelModuleService : CIM_Service {
     uint8 SetModuleLoadParameter([IN] string ModuleName,
                                  [IN] string LoadParameter);
 };
-
-class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
-{
-      [Override("Caption")]
-   string Caption;
-      [Override("CreationClassName")]
-   string CreationClassName;
-      [Override("Dedicated")]
-   uint16 Dedicated[];
-      [Override("ElementName")]
-   string ElementName;
-      [Override("EnabledDefault")]
-   uint16 EnabledDefault = 2;
-      [Override("EnabledState")]
-   uint16 EnabledState = 5;
-      [Override("Name")]
-   string Name;
-      [Override("NameFormat")]
-   string NameFormat;
-      [Override("OtherDedicatedDescriptions")]
-   string OtherDedicatedDescriptions[];
-      [Override("RequestedState")]
-   uint16 RequestedState = 12;
-      [Override("ResetCapability")]
-   uint16 ResetCapability;
-};
-
-class OMC_Chassis : CIM_Chassis
-{
-};
