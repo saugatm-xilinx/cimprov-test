@@ -16,14 +16,14 @@ PROVIDER_LIBRARY = solarflare_nic_provider
 PROVIDER_NAME = solarflare-cim-provider
 
 ##! Major version of the CIM provider
-PROVIDER_VERSION_MAJOR = 1
+PROVIDER_VERSION_MAJOR = 2
 
 ##! Minor version of the CIM provider
 PROVIDER_VERSION_MINOR = 0
 PROVIDER_VERSION = $(PROVIDER_VERSION_MAJOR).$(PROVIDER_VERSION_MINOR)
 
 ##! Revision string (#.#) of the CIM provider
-PROVIDER_REVISION = 2.0
+PROVIDER_REVISION = 0.0
 VIB_ID = Solarflare_bootbank_$(PROVIDER_NAME)_$(PROVIDER_VERSION)-$(PROVIDER_REVISION)
 
 ##! Description string of the CIM provider

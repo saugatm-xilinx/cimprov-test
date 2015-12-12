@@ -85,8 +85,8 @@ namespace solarflare
 #ifdef TARGET_CIM_SERVER_pegasus
          ibmseNS, 
 #endif
-         solarflareNS, 
          baseNS, 
+         solarflareNS, 
          NULL
         };
         static const Meta_Class * const csysMetaclasses[] = 
@@ -237,8 +237,8 @@ namespace solarflare
 #ifdef TARGET_CIM_SERVER_pegasus
          ibmseNS, 
 #endif
-         solarflareNS, 
          baseNS, 
+         solarflareNS, 
          NULL
         };
         static const Meta_Class * const chassisMetaclasses[] = 

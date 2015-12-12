@@ -153,6 +153,7 @@ extern const struct firmware_ops mc_kowalski_firmware_ops;
 
 /* MC firmware (Medford) */
 extern const struct firmware_ops mc_sparta_firmware_ops;
+extern const struct firmware_ops mc_thebes_firmware_ops;
 
 /* PHY firmware */
 extern const struct firmware_ops sfx7101b_firmware_ops;
