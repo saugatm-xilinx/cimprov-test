@@ -53,8 +53,21 @@ else
     sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
     sed -i "s/BULL_KBURL=.*/BULL_KBURL=none/g" Makefile
     sed -i "s/BULL_VENDOR_CODE=VMW/BULL_VENDOR_CODE=SFL/g" Makefile
-    sed -i "s/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-provider-\${PROV_NAME}/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-\${PROV_NAME}-\${DESC_VERSION}/g" Makefile
+    sed -i "s/PROV_VIB_BASENAME=.*$/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-\${PROV_NAME}-\${DESC_VERSION}/g" Makefile
 
+    if test $cimpdk_v1 -le 5 -a $cimpdk_v2 -le 5 ; then
+        MK_CC=`cat Makefile | grep "export\s*CC\s*="`
+        MK_CXX=`echo $MK_CC | sed "s/-gcc/-g++/"`
+        MK_CXX=`echo $MK_CXX | sed "s/CC/CXX/"`
+
+        echo "" >>Makefile
+        echo "$MK_CXX" >>Makefile
+
+        sed -i "s/DESC_LIVE_INSTALL_ALLOWED=.*$/DESC_LIVE_INSTALL_ALLOWED=false/g" Makefile
+        sed -i "s/DESC_LIVE_REMOVE_ALLOWED=.*$/DESC_LIVE_REMOVE_ALLOWED=false/g" Makefile
+        sed -i "s/DESC_STATELESS_READY=.*$/DESC_STATELESS_READY=false/g" Makefile
+        sed -i "s/DESC_CIMOM_RESTART=.*$/DESC_CIMOM_RESTART=false/g" Makefile
+    fi
 
     # This fixes the bug with renaming our provider to li.so
     sed -i "s/\/\\\\.so/\/[.]so/g" Makefile

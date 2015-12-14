@@ -12,7 +12,7 @@
    <version>__PROVIDER_VERSION__-__PROVIDER_REVISION__</version>
 
    <!-- Vendor has the same formatting restrictions as the name field -->
-   <vendor>__PROVIDER_VENDOR_SHORT__</vendor>
+   <vendor>__PROVIDER_VENDOR_VMWARE_CODE__</vendor>
 
    <!-- A one-line summary of the VIB package contents. 80 chars max. -->
    <summary>__PROVIDER_DESCRIPTION__</summary>
