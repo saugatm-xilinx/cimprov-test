@@ -73,6 +73,8 @@
 	<platforms>
 		<softwarePlatform productLineID="esx" version="5.0.*" locale="" />
 		<softwarePlatform productLineID="esx" version="5.1.*" locale="" />
+		<softwarePlatform productLineID="esx" version="5.5.*" locale="" />
+		<softwarePlatform productLineID="esx" version="6.0.*" locale="" />
 	</platforms>
 
 	<!-- The following is a list of the individual VIB packages

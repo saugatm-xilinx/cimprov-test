@@ -53,6 +53,7 @@ else
     sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
     sed -i "s/BULL_KBURL=.*/BULL_KBURL=none/g" Makefile
     sed -i "s/BULL_VENDOR_CODE=VMW/BULL_VENDOR_CODE=SLF/g" Makefile
+    sed -i "s/VIB_BULLETIN_ID=.*$/VIB_BULLETIN_ID=SLF-\${DESC_NAME}-\${DESC_VERSION}/g" Makefile
     sed -i "s/PROV_VIB_BASENAME=.*$/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-\${PROV_NAME}-\${DESC_VERSION}/g" Makefile
 
     if test $cimpdk_v1 -le 5 -a $cimpdk_v2 -le 5 ; then
