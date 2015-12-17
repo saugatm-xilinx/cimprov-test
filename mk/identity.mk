@@ -34,7 +34,7 @@ PROVIDER_VENDOR = Solarflare Communications
 
 ##! Short name of the vendor of the CIM provider
 PROVIDER_VENDOR_SHORT = Solarflare
-PROVIDER_VENDOR_VMWARE_CODE = SFL
+PROVIDER_VENDOR_VMWARE_CODE = SLF
 
 ##! Support email of the CIM provider vendor
 PROVIDER_VENDOR_EMAIL = support@solarflare.com
