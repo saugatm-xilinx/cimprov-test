@@ -526,6 +526,11 @@ namespace solarflare
         cimple::SF_ElementConformsToProfile *conformingElement(const Instance *obj) const;
     };
 
+    class ForbidUnload {
+    public:
+        ForbidUnload();
+        ~ForbidUnload();
+    };
 
 } // namespace
 

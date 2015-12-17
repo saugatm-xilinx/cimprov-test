@@ -731,6 +731,7 @@ class PG_RegisteredProfile : CIM_RegisteredProfile
 
 m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
 IMP_SECTION([[
+INSTANCE
 class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
 {
       [Override("Caption")]

@@ -582,4 +582,13 @@ namespace solarflare
         return link;
     }
 
+    ForbidUnload::ForbidUnload()
+    {
+        cimple::cimom::allow_unload(false);
+    }
+
+    ForbidUnload::~ForbidUnload()
+    {
+        cimple::cimom::allow_unload(true);
+    }
 } // namespace

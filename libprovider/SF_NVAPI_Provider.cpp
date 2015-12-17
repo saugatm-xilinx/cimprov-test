@@ -99,8 +99,7 @@ Invoke_Method_Status SF_NVAPI_Provider::getSFUDevices(
     }
     else
     {
-        Devices.null = false;
-        Devices.value = devs;
+        Devices.set(devs);
         return_value.set(OK);
     }
 
@@ -133,22 +132,18 @@ Invoke_Method_Status SF_NVAPI_Provider::NVExists(
     if (!TryOtherDevs.null)
         try_other_devs = TryOtherDevs.value;
 
-    Exists.null = false;
     if (solarflare::System::target.NVExists(Device.value,
                                             Type.value,
                                             Subtype.value,
                                             try_other_devs,
                                             correct_dev))
     {
-        Exists.value = true;
+        Exists.set(true);
         if (try_other_devs)
-        {
-            CorrectDevice.null = false;
-            CorrectDevice.value = correct_dev;
-        }
+            CorrectDevice.set(correct_dev);
     }
     else
-        Exists.value = false;
+        Exists.set(false);
 
     return_value.set(OK);
     return INVOKE_METHOD_OK;
@@ -185,8 +180,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVOpen(
     }
     else
     {
-        NVContext.null = false;
-        NVContext.value = nv_cntx;
+        NVContext.set(nv_cntx);
         return_value.set(OK);
     }
 
@@ -234,8 +228,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVPartSize(
 
     part_size = solarflare::System::target.NVPartSize(NVContext.value);
 
-    PartSize.null = false;
-    PartSize.value = part_size;
+    PartSize.set(part_size);
     return_value.set(OK);
 
     return INVOKE_METHOD_OK;
@@ -315,7 +308,9 @@ Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
 {
     int rc;
 
-    if (NVContext.null)
+    ForbidUnload forbid_unload;
+
+    if (NVContext.null || Data.null)
     {
         PROVIDER_LOG_ERR("%s(): some parameters "
                          "are missed",
@@ -346,6 +341,8 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIV1Command(
     Property<uint32>& Ioctl_errno,
     Property<uint32>& return_value)
 {
+    ForbidUnload forbid_unload;
+
     int rc;
 
     unsigned int cmd = 0;
@@ -399,6 +396,8 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIV2Command(
     Property<uint32>& Ioctl_errno,
     Property<uint32>& return_value)
 {
+    ForbidUnload forbid_unload;
+
     int rc;
 
     unsigned int cmd = 0;
@@ -493,6 +492,8 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIWrite(
     const Property<String>& Data,
     Property<uint32>& return_value)
 {
+    ForbidUnload forbid_unload;
+
     int rc;
 
     if (Device.null || PartitionType.null || Offset.null ||

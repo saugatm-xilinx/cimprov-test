@@ -755,7 +755,12 @@ namespace solarflare
         {
             if (!initialized)
             {
+#if 0
+                // It is not safe to log from ctor due
+                // to undefined order of static variables initialization
+                // in CIMPLE logging system
                 Logger::getEventLog().log("startup");
+#endif
                 initialized = true;
                 setupPackages();
                 setupNICs();

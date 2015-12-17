@@ -18,6 +18,8 @@
 
 CIMPLE_NAMESPACE_BEGIN
 
+using solarflare::ForbidUnload;
+
 SF_SoftwareInstallationService_Provider::SF_SoftwareInstallationService_Provider()
 {
 }
@@ -227,6 +229,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
 
     String base64_hash;
     bool   force = false;
+
+    ForbidUnload forbid_unload;
 
     /// CIMPLE is unable to generate enums for method parameters
     enum ReturnValue 
