@@ -167,12 +167,18 @@ Invoke_Method_Status SF_NICCard_Provider::GetVPDFields(
             FieldNames.value.append(field.name);
 
             isHex = false;
-            for (j = 0; j < field.data.size(); j++)
+            if (strcmp(field.name.c_str(), "RV") == 0 ||
+                strcmp(field.name.c_str(), "CP") == 0)
+                isHex = true;
+            else
             {
-                if (!(field.data[j] >= 32 && field.data[j] <= 126))
+                for (j = 0; j < field.data.size(); j++)
                 {
-                    isHex = true;
-                    break;
+                    if (!(field.data[j] >= 32 && field.data[j] <= 126))
+                    {
+                        isHex = true;
+                        break;
+                    }
                 }
             }
 
