@@ -70,6 +70,8 @@ else
         sed -i "s/DESC_CIMOM_RESTART=.*$/DESC_CIMOM_RESTART=false/g" Makefile
     fi
 
+    sed -i "s/^\(.*Packaging file for.*\)$/\1\n\t.\/fix_bulletin.pl \${VIB_BULLETIN_XML}/" Makefile
+
     # This fixes the bug with renaming our provider to li.so
     sed -i "s/\/\\\\.so/\/[.]so/g" Makefile
 

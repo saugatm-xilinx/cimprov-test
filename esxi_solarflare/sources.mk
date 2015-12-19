@@ -31,6 +31,7 @@ esxi_archive_GENERATED = $(ESXI_PROJECT_NAME)/$(libcimobjects_DIR)/namespace.mof
 					 	 oem/bulletin.xml
 
 esxi_archive_SOURCES = esxi_bootstrap.sh \
+		       			   fix_bulletin.pl \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
 					   $(ESXI_PROJECT_NAME)/solarflare.wsman \
 					   oem/descriptor-urls.xml	\
