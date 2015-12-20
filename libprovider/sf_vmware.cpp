@@ -4149,7 +4149,7 @@ cleanup:
         buf = new char[dec_size];
         if (base64_decode(buf, data.c_str()) < 0)
         {
-            PROVIDER_LOG_ERR("%s(): failed to decode hash",
+            PROVIDER_LOG_ERR("%s(): failed to decode data",
                              __FUNCTION__);
             delete[] buf;
             return -1;
@@ -4164,6 +4164,7 @@ cleanup:
             return -1;
         }
 
+        delete[] buf;
         return 0;
     }
 
@@ -4230,8 +4231,8 @@ cleanup:
         decoded = new char[dec_size];
         if (base64_decode(decoded, data.c_str()) < 0)
         {
-            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
-                             "payload size", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): failed to decode "
+                             "payload", __FUNCTION__);
             delete[] decoded;
             return -1;
         }
@@ -4290,14 +4291,14 @@ cleanup:
         }
         if ((unsigned int)dec_size > sizeof(mcdi_req->payload))
         {
-            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
-                             "payload size", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): payload is too big, %u bytes",
+                             __FUNCTION__, (unsigned int)dec_size);
             return -1;
         }
         if (base64_decode((char *)mcdi_req->payload, payload.c_str()) < 0)
         {
-            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
-                             "payload size", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): failed to decode "
+                             "payload", __FUNCTION__);
             return -1;
         
         }
@@ -4371,10 +4372,17 @@ cleanup:
         mcdi_req2->flags = flags;
         mcdi_req2->host_errno = host_errno;
 
+        if ((unsigned int)dec_size > sizeof(mcdi_req2->payload))
+        {
+            PROVIDER_LOG_ERR("%s(): payload is too big, %u bytes",
+                             __FUNCTION__, (unsigned int)dec_size);
+            rc = -1;
+            goto cleanup;
+        }
         if (base64_decode((char *)mcdi_req2->payload, payload.c_str()) < 0)
         {
-            PROVIDER_LOG_ERR("%s(): failed to determine decoded "
-                             "payload size", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): failed to decode "
+                             "payload", __FUNCTION__);
             rc = -1;
             goto cleanup;
         }
@@ -4413,7 +4421,7 @@ cleanup:
             close(fd);
         if (encoded != NULL)
             delete[] encoded;
-        return 0;
+        return rc;
     }
 
     static Ref<VMware_KernelModuleService> getKernelModuleService()
