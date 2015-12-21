@@ -3788,6 +3788,7 @@ cleanup:
         {
             PROVIDER_LOG_ERR("%s(): failed to close a file, "
                              "errno %d ('%s')",
+                             __FUNCTION__,
                              errno, strerror(errno));
             return -1;
         }
