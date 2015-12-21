@@ -188,7 +188,8 @@ Invoke_Method_Status SF_NICCard_Provider::GetVPDFields(
 
                 for (j = 0; j < field.data.size(); j++)
                     hexValue.format("%.2x",
-                                    static_cast<int>(field.data[j]));
+                                    (static_cast<unsigned int>
+                                            (field.data[j]) & 0xff));
 
                 HexValues.value.append(true);
                 FieldValues.value.append(String(hexValue.data()));
