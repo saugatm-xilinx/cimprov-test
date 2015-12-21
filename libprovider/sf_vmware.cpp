@@ -1030,7 +1030,7 @@ fail:
             // Get large item name
             *tag_name = vpd[0] & 0x7f; // 01111111b
             *tag_len = (vpd[1] & 0x000000ff) +
-                       ((vpd[2] & 0x000000ff) >> 8);
+                       ((vpd[2] & 0x000000ff) << 8);
             *tag_start = vpd + 3;
             if (len < *tag_len + 3)
             {
