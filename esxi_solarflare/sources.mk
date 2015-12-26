@@ -76,6 +76,10 @@ $(esxi_archive_DIR)/oem/bulletin.xml : m4.defs $(esxi_archive_DIR)/oem/bulletin.
 $(esxi_archive_DIR)/oem/solarflare.inc : m4.defs $(esxi_archive_DIR)/oem/solarflare.inc.in
 	$(M4) $^ >$@
 
+$(esxi_archive_DIR)/esxi_bootstrap.sh : m4.defs $(esxi_archive_DIR)/esxi_bootstrap.sh.in
+	$(M4) $^ >$@
+	chmod u+x $@
+
 ifneq ($(ESXI_BUILD_HOST),)
 
 ifneq ($(ESXI_GATEWAY),)
