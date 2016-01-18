@@ -1,0 +1,119 @@
+Solarflare ESX CIM Provider
+===========================
+Version: 2.0-0.0
+Date: January 2016
+
+Overview
+--------
+This is the first public release of the Solarflare CIM provider. This Provider
+serves inventory information, supports driver configuration, and allows the 
+user to perform remote (over CIM protocol) actions that are supported by the
+Solarflare Linux Utilities.
+
+Supported ESXi Versions
+-----------------------
+This provider has been certified to work with:
+  o ESXi 5.5
+  o ESXi 6.0
+ 
+Supported hardware platforms
+----------------------------
+The drivers contained in this package support the following Solarflare 
+adapters:
+
+- Solarflare Flareon [Ultra] Server Adapters:
+  - Solarflare SFN7002F Dual Port SFP+ Server Adapter
+  - Solarflare SFN7004F Quad Port SFP+ Server Adapter
+  - Solarflare SFN7122F Dual Port SFP+ Server Adapter
+  - Solarflare SFN7124F Quad Port SFP+ Server Adapter
+  - Solarflare SFN7142Q Dual Port QSFP+ Server Adapter
+  - Solarflare SFN7322F Precision Time Synchronization Server Adapter
+
+- Solarflare Onload Server Adapters:
+  - Solarflare SFN6122F Dual Port SFP+ Server Adapter
+  - Solarflare SFN6322F Precision Time Synchronization Server Adapter
+  - Solarflare SFN6832F SFP+ Mezzanine Adapter
+  - Solarflare SFN5812H/SFN5814H Mezzanine Adapter (for IBM BladeCenter)
+  
+- Solarflare AOE Adapters:
+  - Solarflare SFA6902F SFP+ AOE Adapter
+
+- Solarflare Performant Server Adapters:
+  - Solarflare SFN5151T 10GBASE-T Server Adapter
+  - Solarflare SFN5152F SFP+ Server Adapter
+  - Solarflare SFN5161T Dual Port 10GBASE-T Server Adapter
+  - Solarflare SFN5162F Dual Port SFP+ Server Adapter
+
+- The following OEM adapters are also supported, but note each OEM may recommend
+  a different driver version to match the version used for testing/qualification
+  - HP Ethernet 10Gb 570FLB Adapter
+  - HP Ethernet 10Gb 570M Adapter
+  - HP Ethernet 10Gb 572SFP+ Adapter
+  - Lenovo SFN7122F 2x10GbE SFP+ Flareon Ultra Adapter
+
+Driver version
+--------------
+The following VMware ESXi driver is required:
+VMware ESXi 5.5/6.0 driver starting from 4.7.0.1029
+
+Supported features
+------------------
+
+1. Configuration of driver load-time parameters is performed via
+   SetDriverLoadParameters()/GetDriverLoadParameters() methods of the
+   SF_SoftwareDriverIdentity object. See the Solarflare ESX driver
+   documentation for the full list of parameters.
+
+   NOTE: The driver will need to be reoloaded or the system rebooted for
+   the ESX for the parameters to take effect
+
+2. Configuration of interrupt moderation is performed via the
+   SetIntrModeration()/GetIntrModeration() methods. Interrupt moderation
+   settings do not require driver reload and are NOT preserved across reboot.
+
+3. Software update requires a CIM-aware version of sfudpate utility, ;
+   supplied with "ESX SFUtils for Linux" version 1.0.0.0 or later. This can
+   be downloaded from the Solarfare site. Supported transfer protocols
+   include:
+    * HTTP,
+    * TFTP,
+    * sFTP,
+    * CIM (requires no open ports in the firewall).
+
+   Regardless of the transport protocol, image consistency is validated on the
+   provider side using SHA-1.
+
+Example of the command line (should be executed on Linux host):
+
+./sfupdate_esxi --cim-address=http://smith:31333 --cim-user=root --cim-password=foobar --firmware-url=tftp://10.17.131.60/images/bootrom/SFC9120.dat  --write
+
+4. NIC parameters configuration. All configuration options that are supported
+   by sfboot utility are supported. This requires a special CIM-aware version
+   of the sfboot utility; supplied with "ESX SFUtils for Linux" version
+   1.0.0.0 or later. This can be downloaded from the Solarflare site.
+
+Example of the command line (should be executed on Linux host):
+
+./sfboot --cimurl=http://smith:31333 --cimuser=root --cimpassword=foobar --adapter=vmnic2 switch-mode=sriov vf-count=2
+
+5. VPD access can be obtained using the GetVPDFields() method of the
+   SF_NICCard object.
+
+
+Support
+-------
+Please contact your local Solarflare support representative or email
+<support@solarflare.com>.
+
+Changelog
+---------
+
+### v2.0-0.0 -- Feature release
+
+First release providing VMware ESXi support.
+
+
+Copyright
+---------
+Copyright 2009-2015 Solarflare Communications Inc.  All rights reserved.
+Use is subject to license terms.
