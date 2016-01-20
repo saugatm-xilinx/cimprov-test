@@ -1,10 +1,13 @@
 #!/bin/bash
 
 if test $# -gt 0 ; then
-    files=$(find "$1/bootrom" "$1/mcfw" -name "*.dat")
+    files=$(find $1 -name "*.dat")
 else
     files=
 fi
+
+echo "Including firmware images:"
+echo "$files"
 
 out=./fw_images.c
 i=0
