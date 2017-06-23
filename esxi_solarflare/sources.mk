@@ -8,6 +8,13 @@
 ## </L5_PRIVATE>
 ##
 ##########################################################################
+ifeq ($(CIM_SERVER),esxi)
+BOOTSTRAP_SRC = esxi_bootstrap.sh
+BOOTSTRAP_SRC_IN = esxi_bootstrap.sh.in
+else
+BOOTSTRAP_SRC = esxi_native_bootstrap.sh
+BOOTSTRAP_SRC_IN = esxi_native_bootstrap.sh.in
+endif
 
 esxi_archive_TARGET = esxi-solarflare.tar.gz
 esxi_archive_DIR = esxi_solarflare
@@ -30,7 +37,7 @@ esxi_archive_GENERATED = $(ESXI_PROJECT_NAME)/$(libcimobjects_DIR)/namespace.mof
 					 	 oem/descriptor.xml \
 					 	 oem/bulletin.xml
 
-esxi_archive_SOURCES = esxi_bootstrap.sh \
+esxi_archive_SOURCES = $(BOOTSTRAP_SRC) \
 		       			   fix_bulletin.pl \
 					   $(ESXI_PROJECT_NAME)/configure.ac \
 					   $(ESXI_PROJECT_NAME)/solarflare.wsman \
@@ -76,7 +83,7 @@ $(esxi_archive_DIR)/oem/bulletin.xml : m4.defs $(esxi_archive_DIR)/oem/bulletin.
 $(esxi_archive_DIR)/oem/solarflare.inc : m4.defs $(esxi_archive_DIR)/oem/solarflare.inc.in
 	$(M4) $^ >$@
 
-$(esxi_archive_DIR)/esxi_bootstrap.sh : m4.defs $(esxi_archive_DIR)/esxi_bootstrap.sh.in
+$(esxi_archive_DIR)/$(BOOTSTRAP_SRC) : m4.defs $(esxi_archive_DIR)/$(BOOTSTRAP_SRC_IN)
 	$(M4) $^ >$@
 	chmod u+x $@
 
@@ -102,7 +109,7 @@ esxi_vib_DIR = esxi_solarflare
 $(esxi_vib_TARGET) : $(esxi_archive_TARGET)
 	$(ESXI_BUILD_RCP) $< $(ESXI_COPYTO):$(notdir $<)
 	$(ESXI_BUILD_RSH) mkdir -p $(ESXI_BUILD_DIR)
-	$(ESXI_BUILD_RSH) $(ESXI_Q)'set -e; cd $(ESXI_BUILD_DIR); tar xzvf ~/$<; ./esxi_bootstrap.sh'$(ESXI_Q)
+	$(ESXI_BUILD_RSH) $(ESXI_Q)'set -e; cd $(ESXI_BUILD_DIR); tar xzvf ~/$<; ./$(BOOTSTRAP_SRC)'$(ESXI_Q)
 	$(ESXI_BUILD_RSH) $(ESXI_Q)'set -e; cd $(ESXI_BUILD_DIR)/common; make CIMDE=1 solarflare && make CIMDE=1 visor-oem'$(ESXI_Q)
 	$(ESXI_BUILD_RCP) $(ESXI_COPYTO):$(ESXI_BUILD_DIR)/$(ESXI_BUILD_VIB_PATH)/$(notdir $@) $@
 

@@ -73,6 +73,8 @@ include $(TOP)/cimple/lib/sources.mk
 include $(TOP)/cimple/tools/lib/sources.mk
 ifeq ($(CIM_SERVER),sfcb)
 include $(TOP)/mk/sfcb.mk
+else ifeq ($(CIM_SERVER),esxi_native)
+include $(TOP)/mk/esxi.mk
 else ifeq ($(CIM_SERVER),esxi)
 include $(TOP)/mk/esxi.mk
 else ifeq ($(CIM_SERVER),pegasus)
@@ -135,7 +137,7 @@ endif
 
 include $(TOP)/libprovider/sources.mk
 
-ifeq ($(CIM_SERVER),esxi)
+ifeq ($(CIM_SERVER), $(filter $(CIM_SERVER),esxi esxi_native))
 include $(TOP)/esxi_solarflare/sources.mk
 endif
 
@@ -149,7 +151,7 @@ top_LDFLAGS += -Wl,-rpath=$(PROVIDER_LIBPATH)
 .PHONY: register unregister install
 
 
-ifneq ($(CIM_SERVER),esxi)
+ifneq ($(CIM_SERVER),$(filter $(CIM_SERVER),esxi_native esxi))
 ifneq ($(SLES10_BUILD_HOST),)
 all : $(sles10_archive_TARGET)
 	$(warning This target is deprecated, consider using "make dist")
@@ -171,7 +173,7 @@ endif
 
 endif
 
-ifneq ($(CIM_SERVER),esxi)
+ifneq ($(CIM_SERVER),$(filter $(CIM_SERVER),esxi_native esxi))
 
 ##! Installs CIM provider where the CIMOM expects to find it
 install : all

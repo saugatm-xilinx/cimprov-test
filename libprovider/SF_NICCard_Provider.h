@@ -62,7 +62,7 @@ public:
         const Property<boolean>& PoweredOn,
         Property<uint32>& return_value);
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
     Invoke_Method_Status GetVPDFields(
         const SF_NICCard* self,
         const Property<boolean>& StaticVPD,

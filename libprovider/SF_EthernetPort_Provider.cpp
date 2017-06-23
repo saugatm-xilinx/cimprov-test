@@ -257,7 +257,7 @@ Invoke_Method_Status SF_EthernetPort_Provider::RestoreProperties(
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined (TARGET_CIM_SERVER_esxi_native)
 using solarflare::Port;
 using solarflare::Interface;
 

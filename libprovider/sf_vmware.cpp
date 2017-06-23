@@ -20,6 +20,9 @@
 #include "CIM_SoftwareIdentity.h"
 #include "VMware_KernelModuleService.h"
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
+#include "sf_mgmtInterface.h"
+#endif
 #include <stdint.h>
 
 extern "C" {
@@ -146,6 +149,9 @@ extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
 }
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
+    extern vmk_MgmtApiSignature mgmtSig ;
+#endif
 using namespace std;
 
 namespace solarflare 
@@ -162,6 +168,7 @@ namespace solarflare
     using cimple::Mutex;
     using cimple::Auto_Mutex;
     using cimple::Time;
+
 
     ///
     /// Structure for storing nv_context pointers
@@ -2299,6 +2306,39 @@ fail:
 
     MACAddress VMwareInterface::currentMAC() const
     {
+
+   int rc = 0;
+   vmk_uint8 flag = 80;
+#if defined(TARGET_CIM_SERVER_esxi_native)
+   vmk_uint64 myCookie = 401;  
+   macAddressType macAddressVar;
+   vmk_MgmtUserHandle mgmtHandle;
+
+        if (boundPort == NULL)
+            return MACAddress(0, 0, 0, 0, 0, 0);
+
+	for (int i=0;i<=5;i++)
+		macAddressVar.macAddress[i] = 0;
+
+   rc = vmk_MgmtUserInit(&mgmtSig, myCookie, &mgmtHandle);
+   if (rc != 0) {
+      fprintf(stderr, "Initialization failed\n");
+      goto out;
+   }
+
+   rc = vmk_MgmtUserBegin(mgmtHandle);
+
+
+   rc = vmk_MgmtUserCallbackInvoke(mgmtHandle, VMK_MGMT_NO_INSTANCE_ID,
+                               TEST_CB_TO_KERNEL,  &macAddressVar);
+out:
+        return MACAddress(macAddressVar.macAddress[0],
+                          macAddressVar.macAddress[1],
+                          macAddressVar.macAddress[2],
+                          macAddressVar.macAddress[3],
+                          macAddressVar.macAddress[4],
+                          macAddressVar.macAddress[5]);
+#else
         int fd = 0;
         struct ifreq req;
         unsigned char *mac_address;
@@ -2323,12 +2363,14 @@ fail:
         close(fd);
 
         mac_address = (unsigned char *)req.ifr_hwaddr.sa_data;
+
         return MACAddress(mac_address[0],
                           mac_address[1],
                           mac_address[2],
                           mac_address[3],
                           mac_address[4],
                           mac_address[5]);
+#endif
     }
 
     void VMwareInterface::currentMAC(const MACAddress& mac)

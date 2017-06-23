@@ -24,14 +24,14 @@ libcimobjects_EXTRA_MOF += SF_ElementSoftwareIdentity SF_Container
 libcimobjects_EXTRA_MOF += SF_SoftwareIdentity
 
 genclass_aux_opts = ""
-ifeq ($(CIM_SERVER),esxi)
+ifeq ($(CIM_SERVER),$(filter $(CIM_SERVER),esxi_native esxi))
 genclass_aux_opts = -M$(abspath $(libcimobjects_DIR)/esxi_aux.mof)
 endif
 
 ifeq ($(CIM_SERVER),pegasus)
 libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem IBMSD_Chassis PG_ComputerSystem PG_RegisteredProfile
 endif
-ifeq ($(CIM_SERVER),esxi)
+ifeq ($(CIM_SERVER),$(filter $(CIM_SERVER),esxi_native esxi))
 libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem OMC_Chassis VMware_KernelModuleService SF_NVAPI
 endif
 ifeq ($(CIM_SERVER),wmi)
@@ -61,6 +61,9 @@ libcimobjects_MOF_CPPFLAGS = -DTARGET_CIM_SERVER=$(CIM_SERVER) -DPROVIDER_LIBRAR
 
 MOF_PREPROCESS := $(M4) $(libcimobjects_MOF_CPPFLAGS) $(libcimobjects_CPPFLAGS) $(target_CPPFLAGS)
 
+ifneq ($(TOP)/libcimobjects, $(libcimobjects_DIR))
+$(shell cp $(TOP)/libcimobjects/esxi_aux.mof $(libcimobjects_DIR))
+endif
 
 $(libcimobjects_DIR)/repository.mof : $(libcimobjects_DIR)/repository.mof.in
 	$(MOF_PREPROCESS) -DINBUILD=1 -DIMPNS=1 $< >$@

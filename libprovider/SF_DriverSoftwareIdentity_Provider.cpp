@@ -76,7 +76,7 @@ Modify_Instance_Status SF_DriverSoftwareIdentity_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
 Invoke_Method_Status SF_DriverSoftwareIdentity_Provider::GetDriverLoadParameters(
     const SF_DriverSoftwareIdentity* self,
     Property<String>& LoadParameters,

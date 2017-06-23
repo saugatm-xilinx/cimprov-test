@@ -94,7 +94,7 @@ Invoke_Method_Status SF_NICCard_Provider::ConnectorPower(
     return INVOKE_METHOD_UNSUPPORTED;
 }
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
 using solarflare::VPDField;
 
 class VPDGetter : public solarflare::ActionForAll

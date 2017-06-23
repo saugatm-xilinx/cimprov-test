@@ -178,7 +178,7 @@ public:
         const CIM_Collection* Collection,
         Property<uint32>& return_value);
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
     Invoke_Method_Status GetRequiredFwImageName(
         const SF_SoftwareInstallationService* self,
         const CIM_Card* Target,

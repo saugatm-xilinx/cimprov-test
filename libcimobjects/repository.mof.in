@@ -15,6 +15,7 @@ m4_define([[INDICATION_NWMI]], [[ [Indication] ]])m4_dnl
 ]])m4_dnl
 m4_define([[WMIONLY]], [[m4_ifelse(TARGET_CIM_SERVER, [[wmi]], [[$1]])]])m4_dnl
 m4_define([[ESXIONLY]], [[m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[$1]])]])m4_dnl
+m4_define([[ESXINATIVEONLY]], [[m4_ifelse(TARGET_CIM_SERVER, [[esxi_native]], [[$1]])]])m4_dnl
 m4_ifdef([[IMPNS]], [[m4_define([[ROOT_OR_IMPNS]])]])m4_dnl
 m4_ifdef([[ROOTNS]], [[m4_define([[ROOT_OR_IMPNS]])]])m4_dnl
 m4_ifdef([[IMPNS]], [[m4_define([[INTEROP_OR_IMPNS]])]])m4_dnl
@@ -25,6 +26,84 @@ m4_define([[IMP_SECTION]], [[SECTION([[IMP]], [[$1]])]])m4_dnl
 m4_define([[ROOT_SECTION]], [[SECTION([[ROOT_OR_IMP]], [[$1]])]])m4_dnl
 m4_define([[INTEROP_SECTION]], [[SECTION([[INTEROP_OR_IMP]], [[$1]])]])m4_dnl
 m4_define([[WMIONLYKEY]], [[WMIONLY([[, Key]])]])m4_dnl
+m4_define([[DRIVERLOADFUNCTIONS]], [[
+    uint32 GetDriverLoadParameters([OUT] string LoadParameters);
+
+    uint32 SetDriverLoadParameters([IN] string LoadParameters);
+]])m4_dnl
+m4_define([[OMC_UNITARY_COMPSYS_DECL]], [[
+IMP_SECTION([[
+INSTANCE
+class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
+{
+      [Override("Caption")]
+   string Caption;
+      [Override("CreationClassName")]
+   string CreationClassName;
+      [Override("Dedicated")]
+   uint16 Dedicated[];
+      [Override("ElementName")]
+   string ElementName;
+      [Override("EnabledDefault")]
+   uint16 EnabledDefault = 2;
+      [Override("EnabledState")]
+   uint16 EnabledState = 5;
+      [Override("Name")]
+   string Name;
+      [Override("NameFormat")]
+   string NameFormat;
+      [Override("OtherDedicatedDescriptions")]
+   string OtherDedicatedDescriptions[];
+      [Override("RequestedState")]
+   uint16 RequestedState = 12;
+      [Override("ResetCapability")]
+   uint16 ResetCapability;
+};
+]])]])m4_dnl
+
+m4_define([[SF_SOFTWAREINSTALL_CLASS]], [[
+INSTANCE
+class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
+    uint32 GetRequiredFwImageName([IN] CIM_Card REF Target,
+                                  [OUT] uint32 Type,
+                                  [OUT] uint32 Subtype,
+                                  [OUT] string Name,
+                                  [OUT] string CurrentVersion);
+
+    uint32 StartFwImageSend([OUT] string FileName);
+
+    uint32 SendFwImageData([IN] string FileName,
+                           [IN] string Base64Str);
+
+    uint32 RemoveFwImage([IN] string FileName);
+
+    uint32 GetLocalFwImageVersion([IN] CIM_Card REF Target,
+                                  [IN] string FileName,
+                                  [OUT] boolean ApplicableFound,
+                                  [OUT] string Version);
+};
+]])m4_dnl
+
+m4_define([[INTRMODERATION_FUNC]], [[
+    uint32 GetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],
+                             [OUT,ArrayType("Indexed")] uint32 ParamValues[]);
+    uint32 SetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],
+                             [IN,ArrayType("Indexed")] uint32 ParamValues[]);
+]])m4_dnl
+
+m4_define([[GETVPD_FUNC]], [[
+    uint32 GetVPDFields([IN] boolean StaticVPD,
+                        [OUT,ArrayType("Indexed")] string FieldNames[],
+                        [OUT,ArrayType("Indexed")] string FieldValues[],
+                        [OUT,ArrayType("Indexed")] boolean HexValues[]);
+]])m4_dnl
+
+INSTANCE
+class OMC_Chassis : CIM_Chassis
+{
+};
+
+
 
 IMP_SECTION([[
 INSTANCE
@@ -33,11 +112,7 @@ class SF_SoftwareIdentity : CIM_SoftwareIdentity {
 
 INSTANCE
 class SF_DriverSoftwareIdentity : SF_SoftwareIdentity {
-m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
-    uint32 GetDriverLoadParameters([OUT] string LoadParameters);
-
-    uint32 SetDriverLoadParameters([IN] string LoadParameters);
-]], [[]])
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], DRIVERLOADFUNCTIONS, TARGET_CIM_SERVER, [[esxi_native]], DRIVERLOADFUNCTIONS, [[]])
 };
 
 INSTANCE
@@ -224,18 +299,80 @@ class SF_NVAPI : CIM_ManagedElement {
 };
 ]], [[]])
 
+m4_ifelse(TARGET_CIM_SERVER, [[esxi_native]], [[
+INSTANCE
+class SF_NVAPI : CIM_ManagedElement {
+    [Override("ElementName"), Key] string ElementName;
+
+    uint32 getSFUDevices([OUT] string Devices);
+
+    uint32 NVExists([IN] string Device,
+                    [IN] uint32 Type,
+                    [IN] uint32 Subtype,
+                    [IN] boolean TryOtherDevs,
+                    [OUT] boolean Exists,
+                    [OUT] string CorrectDevice);
+
+    uint32 NVOpen([IN] string Device,
+                  [IN] uint32 Type,
+                  [IN] uint32 Subtype,
+                  [OUT] uint32 NVContext);
+
+    uint32 NVClose([IN] uint32 NVContext);
+
+    uint32 NVPartSize([IN] uint32 NVContext,
+                      [OUT] uint64 PartSize);
+
+    uint32 NVRead([IN] uint32 NVContext,
+                  [IN] uint64 Length,
+                  [IN] sint64 Offset,
+                  [OUT] string Data);
+
+    uint32 NVReadAll([IN] uint32 NVContext,
+                     [OUT] string Data);
+
+    uint32 NVWriteAll([IN] uint32 NVContext,
+                      [IN] string Data);
+
+    uint32 MCDIRead([IN] string Device,
+                    [IN] uint32 PartitionType,
+                    [IN] uint32 Length,
+                    [IN] uint32 Offset,
+                    [OUT] string Data);
+
+    uint32 MCDIWrite([IN] string Device,
+                     [IN] uint32 PartitionType,
+                     [IN] uint32 Offset,
+                     [IN] string Data);
+
+    uint32 MCDIV1Command([IN] string Device,
+                         [IN, OUT] uint32 Command,
+                         [IN, OUT] uint32 Len,
+                         [IN, OUT] uint32 RC,
+                         [IN, OUT] string Payload,
+                         [OUT] sint32 Ioctl_rc,
+                         [OUT] uint32 Ioctl_errno);
+
+    uint32 MCDIV2Command([IN] string Device,
+                         [IN, OUT] uint32 Command,
+                         [IN, OUT] uint32 InLen,
+                         [IN, OUT] uint32 OutLen,
+                         [IN, OUT] uint32 Flags,
+                         [IN, OUT] string Payload,
+                         [IN, OUT] uint32 Host_errno,
+                         [OUT] sint32 Ioctl_rc,
+                         [OUT] uint32 Ioctl_errno);
+};
+]], [[]])
+
 INSTANCE
 class SF_NICCard : SF_Card {
 WMIONLY([[
     [Read,Key : DisableOverride,Override("CreationClassName")] string CreationClassName;
     [Read,Key : DisableOverride,Override("Tag")] string Tag;
 ]])
-ESXIONLY([[
-    uint32 GetVPDFields([IN] boolean StaticVPD,
-                        [OUT,ArrayType("Indexed")] string FieldNames[],
-                        [OUT,ArrayType("Indexed")] string FieldValues[],
-                        [OUT,ArrayType("Indexed")] boolean HexValues[]);
-]])
+ESXIONLY(GETVPD_FUNC)
+ESXINATIVEONLY(GETVPD_FUNC)
 };
 
 INSTANCE
@@ -269,12 +406,8 @@ class SF_EthernetPort : CIM_EthernetPort {
     [Key,Read,Override("SystemCreationClassName")] string SystemCreationClassName;
     [Key,Read,Override("SystemName")] string SystemName;
 
-ESXIONLY([[
-    uint32 GetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],
-                             [OUT,ArrayType("Indexed")] uint32 ParamValues[]);
-    uint32 SetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],
-                             [IN,ArrayType("Indexed")] uint32 ParamValues[]);
-]])
+ESXIONLY(INTRMODERATION_FUNC)
+ESXINATIVEONLY(INTRMODERATION_FUNC)
 };
 
 INSTANCE
@@ -358,28 +491,7 @@ WMIONLY([[
 ]])
 };
 
-m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
-INSTANCE
-class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
-    uint32 GetRequiredFwImageName([IN] CIM_Card REF Target,
-                                  [OUT] uint32 Type,
-                                  [OUT] uint32 Subtype,
-                                  [OUT] string Name,
-                                  [OUT] string CurrentVersion);
-
-    uint32 StartFwImageSend([OUT] string FileName);
-
-    uint32 SendFwImageData([IN] string FileName,
-                           [IN] string Base64Str);
-
-    uint32 RemoveFwImage([IN] string FileName);
-
-    uint32 GetLocalFwImageVersion([IN] CIM_Card REF Target,
-                                  [IN] string FileName,
-                                  [OUT] boolean ApplicableFound,
-                                  [OUT] string Version);
-};
-]], [[
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], SF_SOFTWAREINSTALL_CLASS, TARGET_CIM_SERVER, [[esxi_native]], SF_SOFTWAREINSTALL_CLASS, [[
 INSTANCE
 class SF_SoftwareInstallationService : CIM_SoftwareInstallationService {
 };
@@ -729,40 +841,7 @@ class PG_RegisteredProfile : CIM_RegisteredProfile
 };
 ]])]])]])
 
-m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
-IMP_SECTION([[
-INSTANCE
-class OMC_UnitaryComputerSystem : CIM_UnitaryComputerSystem
-{
-      [Override("Caption")]
-   string Caption;
-      [Override("CreationClassName")]
-   string CreationClassName;
-      [Override("Dedicated")]
-   uint16 Dedicated[];
-      [Override("ElementName")]
-   string ElementName;
-      [Override("EnabledDefault")]
-   uint16 EnabledDefault = 2;
-      [Override("EnabledState")]
-   uint16 EnabledState = 5;
-      [Override("Name")]
-   string Name;
-      [Override("NameFormat")]
-   string NameFormat;
-      [Override("OtherDedicatedDescriptions")]
-   string OtherDedicatedDescriptions[];
-      [Override("RequestedState")]
-   uint16 RequestedState = 12;
-      [Override("ResetCapability")]
-   uint16 ResetCapability;
-};
-
-INSTANCE
-class OMC_Chassis : CIM_Chassis
-{
-};
-]])]])
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], OMC_UNITARY_COMPSYS_DECL, TARGET_CIM_SERVER, [[esxi_native]], OMC_UNITARY_COMPSYS_DECL, [[]])
 
 ROOT_SECTION([[
 ASSOCIATION_NWMI

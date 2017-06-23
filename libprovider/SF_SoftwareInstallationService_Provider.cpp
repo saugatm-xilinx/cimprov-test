@@ -344,7 +344,7 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     return INVOKE_METHOD_OK;
 }
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
 Invoke_Method_Status
     SF_SoftwareInstallationService_Provider::GetRequiredFwImageName(
         const SF_SoftwareInstallationService* self,

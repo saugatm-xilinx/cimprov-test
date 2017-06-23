@@ -49,7 +49,7 @@ public:
         const SF_DriverSoftwareIdentity* model,
         const SF_DriverSoftwareIdentity* instance);
 
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
     Invoke_Method_Status GetDriverLoadParameters(
         const SF_DriverSoftwareIdentity* self,
         Property<String>& LoadParameters,
