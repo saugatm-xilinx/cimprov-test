@@ -80,7 +80,7 @@ endif
 
 override host_CPPFLAGS += -D_GNU_SOURCE -I$(TOP)
 
-ifneq ($(CIM_SERVER),esxi)
+ifneq ($(CIM_SERVER),$(filter $(CIM_SERVER),esxi_native esxi))
 override host_CXXFLAGS += -fPIC  -pthread
 override host_CXXFLAGS += -Wall -W -Wno-unused -Wnon-virtual-dtor
 override host_CXXFLAGS += -g
@@ -94,7 +94,7 @@ override host_CXXFLAGS += -fvisibility=hidden
 
 override host_CFLAGS = $(host_CXXFLAGS)
 
-ifneq ($(CIM_SERVER),esxi)
+ifneq ($(CIM_SERVER),$(filter $(CIM_SERVER),esxi_native esxi))
 override host_CPPFLAGS += -DSF_IMPLEMENTATION_NS=\"$(IMP_NAMESPACE)\"
 override host_CPPFLAGS += -DSF_INTEROP_NS=\"$(INTEROP_NAMESPACE)\"
 endif
