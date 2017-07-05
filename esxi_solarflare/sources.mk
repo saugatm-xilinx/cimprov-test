@@ -12,8 +12,10 @@ ifeq ($(CIM_SERVER),esxi)
 BOOTSTRAP_SRC = esxi_bootstrap.sh
 BOOTSTRAP_SRC_IN = esxi_bootstrap.sh.in
 else
+ifeq ($(CIM_SERVER),esxi_native)
 BOOTSTRAP_SRC = esxi_native_bootstrap.sh
 BOOTSTRAP_SRC_IN = esxi_native_bootstrap.sh.in
+endif
 endif
 
 esxi_archive_TARGET = esxi-solarflare.tar.gz
