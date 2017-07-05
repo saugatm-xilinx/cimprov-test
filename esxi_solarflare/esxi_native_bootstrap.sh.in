@@ -21,7 +21,7 @@ if test $cimpdk_v1 -le 5 -a $cimpdk_v2 -le 1 ; then
     sed -i "s/acme/$PRODUCT_NAME/g" common/visor-oemtgz.sh
 
     cd solarflare
-    set +v 
+    set +v
     source ../common/defs
     set -v
     ln -sf `i686-linux5.0-g++ -print-file-name=libstdc++.a` .
