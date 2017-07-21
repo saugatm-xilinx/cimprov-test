@@ -61,7 +61,7 @@ libcimobjects_MOF_CPPFLAGS = -DTARGET_CIM_SERVER=$(CIM_SERVER) -DPROVIDER_LIBRAR
 
 MOF_PREPROCESS := $(M4) $(libcimobjects_MOF_CPPFLAGS) $(libcimobjects_CPPFLAGS) $(target_CPPFLAGS)
 
-ifneq ($(TOP)/libcimobjects, $(libcimobjects_DIR))
+ifeq ($(wildcard $(libcimobjects_DIR)/esxi_aux.mof),)
 $(shell cp $(TOP)/libcimobjects/esxi_aux.mof $(libcimobjects_DIR))
 endif
 
