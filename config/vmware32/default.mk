@@ -10,6 +10,7 @@
 ##########################################################################
 # <example>
 override CIM_SERVER = esxi
+override IS_ESXI = 1
 override CIMPLE_PLATFORM = LINUX_IX86_GNU
 override BITNESS = 32
 override HOST_CIMPLE_PLATFORM = $(CIMPLE_PLATFORM)
