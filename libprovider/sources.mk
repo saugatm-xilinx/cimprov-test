@@ -114,6 +114,11 @@ libprovider_EXTRA_CLEAN = rm $(libprovider_DIR)/guid.h $(libprovider_DIR)/regist
 endif
 
 libprovider_DIR = libprovider
+
+ifeq ($(CIM_SERVER), esxi_native)
+libprovider_SOURCES += userMgmtSrc/sfvmk_mgmtInterface.c
+endif
+
 ifeq ($(PROVIDER_PLATFORM),windows)
 libprovider_TARGET = $(PROVIDER_LIBRARY).dll
 else
@@ -164,6 +169,10 @@ ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM), vmware))
 libprovider_INCLUDES += libprovider/esxi_includes/curl \
 			libprovider/esxi_includes/openssl \
 			libprovider/esxi_includes/
+endif
+
+ifeq ($(CIM_SERVER), esxi_native)
+libprovider_INCLUDES += libprovider/userMgmtSrc
 endif
 
 ##! Generate CIMPLE module definition 

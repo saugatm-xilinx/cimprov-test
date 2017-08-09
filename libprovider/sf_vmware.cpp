@@ -20,6 +20,9 @@
 #include "CIM_SoftwareIdentity.h"
 #include "VMware_KernelModuleService.h"
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
+#include "userMgmtSrc/sfvmk_mgmtInterface.h"
+#endif
 #include <stdint.h>
 
 extern "C" {
@@ -146,6 +149,9 @@ extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
 }
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
+extern vmk_MgmtApiSignature mgmtSig ;
+#endif
 using namespace std;
 
 namespace solarflare 
