@@ -195,10 +195,31 @@ endif
 ##! The path to the platform-specific build directory
 PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFORM_VARIANT)-$(CIM_INTERFACE)-$(CIM_SCHEMA_VERSION_MAJOR).$(CIM_SCHEMA_VERSION_MINOR)
 
+##! Adding Repo information to get management Interface file for esxi_native driver
+##! Branch argument to provided with make command in following format
+##! make CONFIG=native-vmware/default LOCATION=solarflare BRANCH=dev2 platform
+ifeq ($(CIM_SERVER),esxi_native)
+ifeq ($(BRANCH),dev2)
+USRMGMTINTF_BRANCH       = a4fc5ee1a036/native_drv
+else
+USRMGMTINTF_BRANCH       = 21bf41f8b1c0/native_drv
+endif
+USRMGMTINTF_URL          = http://source.uk.solarflarecom.com/hg/incoming/esxi_sfc/rawfile
+USRMGMT_INCLFILE         = sfvmk_mgmtInterface.h
+USRMGMT_SRCFILE          = sfvmk_mgmtInterface.c
+USERMGMT_DIR		 = libprovider/userMgmtSrc
+endif
 ##! Creates a platform-specific build directory
 platform : $(PLATFORM_BUILD)/Makefile
 
 $(PLATFORM_BUILD)/Makefile : $(TOP)/mk/platform-tpl.mk $(MAKEFILE_LIST)
+ifeq ($(CIM_SERVER),esxi_native)
+		@wget -q $(USRMGMTINTF_URL)/$(USRMGMTINTF_BRANCH)/$(USRMGMT_INCLFILE)
+		@wget -q $(USRMGMTINTF_URL)/$(USRMGMTINTF_BRANCH)/$(USRMGMT_SRCFILE)
+		@mkdir -p $(TOP)/$(USERMGMT_DIR)
+		@mv $(USRMGMT_INCLFILE) $(TOP)/$(USERMGMT_DIR)/
+		@mv $(USRMGMT_SRCFILE) $(TOP)/$(USERMGMT_DIR)/
+endif
 		mkdir -p $(PLATFORM_BUILD)
 		cd $(PLATFORM_BUILD); $(HGLISTALL) | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
 		echo "CONFIG:=$(CONFIG)" >$@

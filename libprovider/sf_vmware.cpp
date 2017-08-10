@@ -21,7 +21,7 @@
 #include "VMware_KernelModuleService.h"
 
 #if defined(TARGET_CIM_SERVER_esxi_native)
-#include "sf_mgmtInterface.h"
+#include "userMgmtSrc/sfvmk_mgmtInterface.h"
 #endif
 #include <stdint.h>
 
@@ -150,7 +150,7 @@ extern "C" {
 }
 
 #if defined(TARGET_CIM_SERVER_esxi_native)
-    extern vmk_MgmtApiSignature mgmtSig ;
+extern vmk_MgmtApiSignature mgmtSig ;
 #endif
 using namespace std;
 
