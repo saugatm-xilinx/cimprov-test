@@ -213,6 +213,7 @@ namespace solarflare
         MACAddress(unsigned a0, unsigned a1, unsigned a2,
                    unsigned a3, unsigned a4, unsigned a5);
         MACAddress();
+        MACAddress(char *);
         String string() const;
     };
 
@@ -229,6 +230,11 @@ namespace solarflare
     inline MACAddress::MACAddress()
     {
         memset(address, 0, sizeof(address));
+    }
+    inline MACAddress::MACAddress(char *addressVar)
+    {
+        if( addressVar == NULL ||  sscanf(addressVar,"%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",&address[0],&address[1],&address[2],&address[3],&address[4],&address[5]) !=6 )
+            memset(address, 0, sizeof(address));
     }
 } // namespace
 

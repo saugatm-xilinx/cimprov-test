@@ -22,6 +22,7 @@
 
 #if defined(TARGET_CIM_SERVER_esxi_native)
 #include "userMgmtSrc/sfvmk_mgmtInterface.h"
+#include "sf_nicMgmtApi.h"
 #endif
 #include <stdint.h>
 
@@ -2304,41 +2305,37 @@ fail:
         return ((VMwarePort *)boundPort)->dev_name;
     }
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
     MACAddress VMwareInterface::currentMAC() const
     {
-
-   int rc = 0;
-   vmk_uint8 flag = 80;
-#if defined(TARGET_CIM_SERVER_esxi_native)
-   vmk_uint64 myCookie = 401;  
-   macAddressType macAddressVar;
-   vmk_MgmtUserHandle mgmtHandle;
+        NicMgmtProperties prop = {0};
+        char devName[SFVMK_DEV_NAME_LEN];
 
         if (boundPort == NULL)
             return MACAddress(0, 0, 0, 0, 0, 0);
 
-	for (int i=0;i<=5;i++)
-		macAddressVar.macAddress[i] = 0;
+        NicMgmtPortName ports[SFVMK_MGMT_MAX_PORTS];
+        NicMgmtLinkMode linkModes[SFVMK_MGMT_MAX_LINK_MODES];
+        NicMgmtWakeonOption wakeOptions[SF_NICMGMT_MAX_WAKEON_TYPES];
 
-   rc = vmk_MgmtUserInit(&mgmtSig, myCookie, &mgmtHandle);
-   if (rc != 0) {
-      fprintf(stderr, "Initialization failed\n");
-      goto out;
-   }
+        prop.supportedPortsInfo.ports = ports;
+        prop.supportedPortsInfo.numFilled = SFVMK_MGMT_MAX_PORTS;
 
-   rc = vmk_MgmtUserBegin(mgmtHandle);
+        prop.advLinkModesInfo.advModes = linkModes;
+        prop.advLinkModesInfo.numFilled = SFVMK_MGMT_MAX_LINK_MODES;
 
+        prop.wakeOnOptionsInfo.option = wakeOptions;
+        prop.wakeOnOptionsInfo.numFilled = SF_NICMGMT_MAX_WAKEON_TYPES;
 
-   rc = vmk_MgmtUserCallbackInvoke(mgmtHandle, VMK_MGMT_NO_INSTANCE_ID,
-                               TEST_CB_TO_KERNEL,  &macAddressVar);
-out:
-        return MACAddress(macAddressVar.macAddress[0],
-                          macAddressVar.macAddress[1],
-                          macAddressVar.macAddress[2],
-                          macAddressVar.macAddress[3],
-                          macAddressVar.macAddress[4],
-                          macAddressVar.macAddress[5]);
+        strncpy(devName, ((VMwarePort *)boundPort)->dev_name.c_str(), sizeof(devName));
+        if (NicMgmtCall(NICMGMT_GET_PROPERTIES, devName, &prop) == VMK_OK)
+            return MACAddress(prop.macAddress);
+
+        return MACAddress(0, 0, 0, 0, 0, 0);
+     }
 #else
+    MACAddress VMwareInterface::currentMAC() const
+    {
         int fd = 0;
         struct ifreq req;
         unsigned char *mac_address;
@@ -2370,8 +2367,8 @@ out:
                           mac_address[3],
                           mac_address[4],
                           mac_address[5]);
-#endif
     }
+#endif
 
     void VMwareInterface::currentMAC(const MACAddress& mac)
     {

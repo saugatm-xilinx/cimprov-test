@@ -20,4 +20,6 @@ extern "C"{
 }
 #endif
 
+#define SF_NICMGMT_MAX_WAKEON_TYPES 16
+
 #endif /*_SF_NIC_MGMT_API_H_*/
