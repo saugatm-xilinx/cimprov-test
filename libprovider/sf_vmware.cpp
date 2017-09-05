@@ -295,6 +295,29 @@ namespace solarflare
     }
 
     ///
+    /// Copies string from souce to destination with
+    /// checking of length of destination string to be more than
+    //  source string plus one for terminating character '\0'
+    ///
+    /// @param dest    The destination string
+    /// @param src     The source string
+    /// @param destLen Length of destination string
+    ///
+    /// @return        The number of characters copied  or -1 for error
+    ///
+    static inline int strncpy_check(char *dest, const char *src, int destLen)
+    {
+        int srcLen = strlen(src);
+        if (destLen >= (srcLen + 1))
+	{
+            strncpy(dest,src,srcLen);
+            dest[srcLen] = '\0';
+            return srcLen;
+	}
+	return -1;
+    }
+
+    ///
     /// Remove quotation symbols and related escaping
     /// from the string.
     ///
@@ -1853,6 +1876,44 @@ fail:
     ///
     /// @return link status (true if it is up, false otherwise)
     ///
+#ifdef TARGET_CIM_SERVER_esxi_native
+    static bool getLinkStatus(const String &devFile,
+                              const String &devName)
+    {
+        NicMgmtProperties    prop = {0};
+        char                 deviceName[SFVMK_DEV_NAME_LEN];
+        NicMgmtPortName      ports[SFVMK_MGMT_MAX_PORTS];
+        NicMgmtLinkMode      linkModes[SFVMK_MGMT_MAX_LINK_MODES];
+        NicMgmtWakeonOption  wakeOptions[SF_NICMGMT_MAX_WAKEON_TYPES];
+
+        prop.supportedPortsInfo.ports = ports;
+        prop.supportedPortsInfo.numFilled = SFVMK_MGMT_MAX_PORTS;
+
+        prop.advLinkModesInfo.advModes = linkModes;
+        prop.advLinkModesInfo.numFilled = SFVMK_MGMT_MAX_LINK_MODES;
+
+        prop.wakeOnOptionsInfo.option = wakeOptions;
+        prop.wakeOnOptionsInfo.numFilled = SF_NICMGMT_MAX_WAKEON_TYPES;
+
+        if (strncpy_check(deviceName, devName.c_str(), SFVMK_DEV_NAME_LEN) < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): Interface name is too long", __FUNCTION__);
+            return true;
+        }
+        if ((NicMgmtCall(NICMGMT_GET_PROPERTIES, deviceName, &prop)) != VMK_OK)
+        {
+            PROVIDER_LOG_ERR("%s(): NicMgmtCall failed", __FUNCTION__);
+            return true;
+        }
+        else
+        {
+            if (strcasecmp_start(prop.linkStatus, "Up") == 0)
+                return true;
+            else
+                return false;
+        }
+    }
+#else
     static bool getLinkStatus(const String &devFile,
                               const String &devName)
     {
@@ -1865,6 +1926,7 @@ fail:
 
         return edata.data == 1 ? true : false;
     }
+#endif
 
     class VMwarePort : public Port {
         NIC *owner;
