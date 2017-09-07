@@ -118,6 +118,10 @@ extern "C" {
 #define VPD_TAG_R    0x10
 #define VPD_TAG_W    0x11
 
+// Length Definitions for VPD Info Structure
+#define VPD_KEYWORD_LEN 3
+#define VPD_FIELDNAME_LEN 6
+
 // Default version string
 #define DEFAULT_VERSION_STR ""
 
@@ -1299,6 +1303,14 @@ fail:
         return 0;
     }
 
+    /// VPD Info structure
+    typedef struct
+    {
+        uint8_t tagId;                        //< Tag Type can be of ID, Read, Write, End
+        char    keyWord[VPD_KEYWORD_LEN];     //< Tag keyword
+        char    fieldName[VPD_FIELDNAME_LEN]; //< Tag name
+    } vpdInfoData;
+
     ///
     /// Get VPD.
     ///
@@ -1310,6 +1322,47 @@ fail:
     ///
     /// @return 0 on success or error code
     ///
+#ifdef TARGET_CIM_SERVER_esxi_native
+    static int getVPD(const char *ifname, int port_number,
+                      int device_type, bool staticVPD,
+                      Array<VPDField> &parsedFields)
+    {
+         UNUSED(device_type);
+         UNUSED(staticVPD);
+
+         vpdInfoData      tagArr[] = {{ VPD_TAG_ID, "", "IDTag" },
+                                      { VPD_TAG_R, "PN", "PN" },
+                                      { VPD_TAG_R, "SN", "SN" }};
+         int              tagCount = sizeof(tagArr)/sizeof(vpdInfoData);
+         sfvmk_vpdInfo_t  vpdInfo;
+         int              i;
+
+         for (i = 0; i < tagCount; i++)
+         {
+             memset(&vpdInfo,0,sizeof(sfvmk_vpdInfo_t));
+             vpdInfo.vpdOp = SFVMK_MGMT_DEV_OPS_GET;
+             vpdInfo.vpdTag = tagArr[i].tagId;
+             if (!strlen(tagArr[i].keyWord))
+                 vpdInfo.vpdKeyword = 0;
+             else
+                 vpdInfo.vpdKeyword = ( tagArr[i].keyWord[0] | tagArr[i].keyWord[1] << 8);
+             if ((DrvMgmtCall(ifname, SFVMK_CB_VPD_REQUEST, &vpdInfo)) != VMK_OK)
+             {
+                 PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
+                 return -1;
+             }
+             else
+             {
+                 VPDField field;
+                 field.name = tagArr[i].fieldName;
+                 field.data.append((const char *)vpdInfo.vpdPayload, vpdInfo.vpdLen);
+                 parsedFields.append(field);
+             }
+         }
+
+         return 0;
+    }
+ #else
     static int getVPD(const char *ifname, int port_number,
                       int device_type, bool staticVPD,
                       Array<VPDField> &parsedFields)
@@ -1535,7 +1588,7 @@ fail:
 	    return mgmtParam.status;
 	return VMK_FAILURE;
     }
-
+#endif
     /// Firmware default file names table entry
     typedef struct {
         UpdatedFirmwareType type;     ///< Firmware type
