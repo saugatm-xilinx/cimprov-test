@@ -4764,6 +4764,7 @@ cleanup:
     }
 #endif
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     VersionInfo VMwareBootROM::version() const
     {
         VersionInfo ver;
@@ -4811,6 +4812,26 @@ cleanup:
         close(fd);
         return VersionInfo(DEFAULT_VERSION_STR);
     }
+#else
+    VersionInfo VMwareBootROM::version() const
+    {
+        sfvmk_versionInfo_t verInfo = {0};
+        const char *devName;
+
+        const VMwareNIC  *nic = reinterpret_cast<const VMwareNIC *>(owner);
+
+        if (nic == NULL || nic->ports.size() < 1)
+	    return VersionInfo(DEFAULT_VERSION_STR);
+
+        devName = nic->ports[0].dev_name.c_str();
+
+	verInfo.type = SFVMK_GET_ROM_VERSION;
+
+	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+	    return VersionInfo(verInfo.version);
+	return VersionInfo(DEFAULT_VERSION_STR);
+    }
+#endif
 
     ///
     /// Class defining link state alert indication to be
