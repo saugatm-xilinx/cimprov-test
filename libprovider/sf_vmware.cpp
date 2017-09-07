@@ -1380,6 +1380,52 @@ fail:
         return 0;
     }
 
+    ///
+    /// VMK Driver Management API Invocation.
+    ///
+    /// @param devName [in]       Pointer to interface name
+    /// @param cmdCode [in]       Command code
+    /// @param cmdParam [in/out]  Pointer to parameter structure
+    ///
+    /// @return VMK Driver Management API execution status or VMK_FAILURE
+    ///
+    int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam)
+    {
+	vmk_MgmtUserHandle mgmtHandle;
+	sfvmk_mgmtDevInfo_t mgmtParam = {0};
+	bool drv_interaction_status = true;
+
+	if (strncpy_check((char *)mgmtParam.deviceName, devName,
+						SFVMK_DEV_NAME_LEN) < 0)
+        {
+            PROVIDER_LOG_ERR("Interface name [%s] is too long", devName);
+	    return VMK_FAILURE;
+        }
+
+        if (vmk_MgmtUserInit(&driverMgmtSig, 0, &mgmtHandle))
+        {
+            PROVIDER_LOG_ERR("vmk_MgmtUserInit failed");
+	    return VMK_FAILURE;
+        }
+
+	if (vmk_MgmtUserCallbackInvoke(mgmtHandle, VMK_MGMT_NO_INSTANCE_ID,
+						cmdCode, &mgmtParam, cmdParam))
+        {
+            PROVIDER_LOG_ERR("vmk_MgmtUserCallbackInvoke failed");
+	    drv_interaction_status = false;
+        }
+
+	if (vmk_MgmtUserDestroy(mgmtHandle))
+        {
+            PROVIDER_LOG_ERR("vmk_MgmtUserDestroy failed");
+	    return VMK_FAILURE;
+        }
+
+	if (drv_interaction_status)
+	    return mgmtParam.status;
+	return VMK_FAILURE;
+    }
+
     /// Firmware default file names table entry
     typedef struct {
         UpdatedFirmwareType type;     ///< Firmware type
@@ -3378,62 +3424,17 @@ cleanup:
         virtual const Package *package() const { return owner; }
     };
 
-    VersionInfo VMwareDriver::version() const
+    ///
+    /// Retrieve driver version from system CIM provider
+    ///
+    /// @return driver version on success, DEFAULT_VERSION_STR otherwise
+    ///
+    static VersionInfo vmwareGetDriverVersion()
     {
-        struct ethtool_drvinfo   drvinfo;
-        struct ifreq             ifr;
-        int                      fd;
-        char                     device_path[PATH_MAX_LEN];
-
-        Array<String> devDirList;
-
-        unsigned int i;
-
-        if (getDirContents(DEV_PATH, devDirList) < 0)
-            return VersionInfo(DEFAULT_VERSION_STR);
-
-        for (i = 0; i < devDirList.size(); i++)
-        {
-            const char *devName = devDirList[i].c_str();
-
-            if (devName[0] == '.')
-                continue;
-            if (strlen(devName) > IFNAMSIZ)
-                continue;
-
-            if (snprintf(device_path, PATH_MAX_LEN, "%s/%s",
-                         DEV_PATH, devName) >= PATH_MAX_LEN)
-                continue;
-            fd = open(device_path, O_RDWR);
-            if (fd < 0)
-                continue;
-
-            memset(&ifr, 0, sizeof(ifr));
-            memset(&drvinfo, 0, sizeof(drvinfo));
-            drvinfo.cmd = ETHTOOL_GDRVINFO;
-            ifr.ifr_data = (char *)&drvinfo;
-            strcpy(ifr.ifr_name, devName);
-
-            if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
-            {
-                close(fd);
-
-                if (strcmp(drvinfo.driver, "sfc") == 0)
-                    return VersionInfo(drvinfo.version); 
-            }
-            else
-                close(fd);
-        }
-
-        // We failed to get it via ethtool (possible reason: no
-        // Solarflare interfaces are presented) - we try to get it
-        // from VMware root/cimv2 standard objects.
-
         Ref<CIM_SoftwareIdentity> cimModel =
                                       CIM_SoftwareIdentity::create();
         Ref<Instance>             cimInstance;
         Ref<CIM_SoftwareIdentity> cimSoftId;
-        String                    strVersion;
 
         cimple::Instance_Enumerator ie;
 
@@ -3454,10 +3455,99 @@ cleanup:
 
         if (!cimSoftId)
             return VersionInfo(DEFAULT_VERSION_STR);
-
-        return VersionInfo(cimSoftId->VersionString.value.c_str());
+        else
+            return VersionInfo(cimSoftId->VersionString.value.c_str());
     }
 
+#ifndef TARGET_CIM_SERVER_esxi_native
+    VersionInfo VMwareDriver::version() const
+    {
+        struct ethtool_drvinfo   drvinfo;
+        struct ifreq             ifr;
+        int                      fd;
+        char                     device_path[PATH_MAX_LEN];
+
+        Array<String> devDirList;
+
+        unsigned int i;
+
+	if (getDirContents(DEV_PATH, devDirList) < 0)
+	    return VersionInfo(DEFAULT_VERSION_STR);
+
+        for (i = 0; i < devDirList.size(); i++)
+        {
+            const char *devName = devDirList[i].c_str();
+
+            if (devName[0] == '.')
+                continue;
+            if (strlen(devName) > IFNAMSIZ)
+                continue;
+
+            if (snprintf(device_path, PATH_MAX_LEN, "%s/%s",
+                        DEV_PATH, devName) >= PATH_MAX_LEN)
+                continue;
+            fd = open(device_path, O_RDWR);
+            if (fd < 0)
+                continue;
+
+            memset(&ifr, 0, sizeof(ifr));
+            memset(&drvinfo, 0, sizeof(drvinfo));
+            drvinfo.cmd = ETHTOOL_GDRVINFO;
+            ifr.ifr_data = (char *)&drvinfo;
+            strcpy(ifr.ifr_name, devName);
+
+            if (ioctl(fd, SIOCETHTOOL, &ifr) == 0)
+            {
+                close(fd);
+
+                if (strcmp(drvinfo.driver, "sfc") == 0)
+                   return VersionInfo(drvinfo.version);
+            }
+            else
+	      close(fd);
+        }
+
+        // We failed to get it via ethtool (possible reason: no
+        // Solarflare interfaces are presented) - we try to get it
+        // from VMware root/cimv2 standard objects.
+
+        return vmwareGetDriverVersion();
+    }
+#else
+    VersionInfo VMwareDriver::version() const
+    {
+        Array<String> devDirList;
+	sfvmk_versionInfo_t verInfo = {0};
+        unsigned int i;
+
+	// BUG72718:We are going to change the implementation of this
+	// function by using NicMgmntApi or by bypassing it
+	if (getDirContents(DEV_PATH, devDirList) < 0)
+            return VersionInfo(DEFAULT_VERSION_STR);
+
+	verInfo.type = SFVMK_GET_DRV_VERSION;
+
+        for (i = 0; i < devDirList.size(); i++)
+        {
+            const char *devName = devDirList[i].c_str();
+
+            if (devName[0] == '.')
+                continue;
+
+	    if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+	        return VersionInfo(verInfo.version);
+	}
+
+	PROVIDER_LOG_ERR("%s(): Solarflare Network Device not found",
+			 __FUNCTION__);
+
+	// We failed to get it via Driver Management API (possible reason: no
+	// Solarflare interfaces are presented) - we try to get it
+	// from VMware root/cimv2 standard objects.
+
+        return vmwareGetDriverVersion();
+    }
+#endif
     class VMwareLibrary : public Library {
         const Package *owner;
         VersionInfo vers;
