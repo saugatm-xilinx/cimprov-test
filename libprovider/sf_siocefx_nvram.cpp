@@ -26,13 +26,17 @@
 #include "sf_utils.h"
 #include "sf_logging.h"
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+#include "sf_native_vmware.h"
+#endif
+
 extern "C" {
 #include "tlv_partition.h"
 #include "tlv_layout.h"
 #include "endian_base.h"
 }
 
-namespace solarflare 
+namespace solarflare
 {
     ///
     /// Prepare argument for private SIOCEFX ioctl() call.
@@ -80,6 +84,7 @@ namespace solarflare
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     /// Described in sf_siocefx_nvram.h
     int siocEFXReadNVRAM(int fd, bool isSock,
                          uint8_t *data, unsigned int offset,
@@ -138,6 +143,52 @@ namespace solarflare
 
         return 0;
     }
+#else
+
+    int siocEFXReadNVRAM(int fd, bool isSock,
+			 uint8_t *data,unsigned int offset,
+			 unsigned int len,
+                         const char *devName,
+                         uint32_t type)
+    {
+        unsigned int    end = offset + len;
+	unsigned int    chunk;
+        uint8_t        *ptr = data;
+	bool nv_read_status = true;
+
+	UNUSED(fd);
+	UNUSED(isSock);
+
+	sfvmk_nvramCmd_t nvram_read_req = {0};
+
+	// NVRAM type field should be selected from the
+	// fields that are declared in sfvmk_mgmtInterface.h
+	nvram_read_req.type = type;
+	nvram_read_req.op = SFVMK_NVRAM_OP_READ;
+
+        for ( ; offset < end; )
+        {
+            chunk = min(end - offset, SFVMK_NVRAM_MAX_PAYLOAD);
+	    nvram_read_req.offset = offset;
+	    nvram_read_req.size = chunk;
+
+	    if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST, &nvram_read_req) != VMK_OK)
+            {
+	        PROVIDER_LOG_ERR("%s(): NVRAM read failed", __FUNCTION__);
+		nv_read_status = false;
+		break;
+	    }
+
+            memcpy(ptr, nvram_read_req.data, chunk);
+            ptr += chunk;
+            offset += chunk;
+        }
+
+	if (nv_read_status == false)
+            return -1;
+        return 0;
+    }
+#endif
 
     /// Described in sf_siocefx_nvram.h
     int siocEFXWriteNVRAM(int fd, bool isSock,
