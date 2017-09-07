@@ -4728,6 +4728,7 @@ cleanup:
 
     System& System::target = VMwareSystem::target;
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     VersionInfo VMwareNICFirmware::version() const
     {
         struct ethtool_drvinfo edata;
@@ -4744,6 +4745,24 @@ cleanup:
 
         return VersionInfo(edata.fw_version);
     }
+#else
+    VersionInfo VMwareNICFirmware::version() const
+    {
+        sfvmk_versionInfo_t verInfo = {0};
+        const char *devName;
+
+        if ((((VMwareNIC *)owner)->ports.size() <= 0))
+	    return VersionInfo(DEFAULT_VERSION_STR);
+
+	devName = ((VMwareNIC *)owner)->ports[0].dev_name.c_str();
+
+	verInfo.type = SFVMK_GET_FW_VERSION;
+
+	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+	   return VersionInfo(verInfo.version);
+	return VersionInfo(DEFAULT_VERSION_STR);
+    }
+#endif
 
     VersionInfo VMwareBootROM::version() const
     {
