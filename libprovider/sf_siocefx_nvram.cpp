@@ -306,6 +306,7 @@ namespace solarflare
     }
 #endif
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     /// Described in sf_siocefx_nvram.h
     int siocEFXGetNVRAMPartitionSize(int fd, bool isSock,
                                      const char *ifname,
@@ -338,6 +339,31 @@ namespace solarflare
                   mcdi_req->payload[MC_CMD_NVRAM_INFO_OUT_SIZE_OFST / 4]);
         return 0;
     }
+#else
+    int siocEFXGetNVRAMPartitionSize(int fd, bool isSock,
+                                     const char *devName,
+                                     uint32_t type,
+                                     uint32_t &partitionSize)
+    {
+	UNUSED(fd);
+	UNUSED(isSock);
+
+        sfvmk_nvramCmd_t nvram_partition = {0};
+
+	// NVRAM type field should be selected from the
+	// fields that are declared in sfvmk_mgmtInterface.h
+        nvram_partition.type = type;
+        nvram_partition.op = SFVMK_NVRAM_OP_SIZE;
+
+	if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST, &nvram_partition) == VMK_OK)
+        {
+	    partitionSize = nvram_partition.size;
+            return 0;
+        }
+
+	return -1;
+    }
+#endif
 
     /// Described in sf_siocefx_nvram.h
     int siocEFXReadNVRAMPartition(int fd, bool isSock,
