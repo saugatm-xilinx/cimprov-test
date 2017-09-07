@@ -2152,6 +2152,7 @@ fail:
                          ETHTOOL_SSET, &edata);
     }
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     bool VMwarePort::autoneg() const
     {
          struct ethtool_cmd edata;
@@ -2184,7 +2185,36 @@ fail:
         vmwareEthtoolCmd(dev_file.c_str(), dev_name.c_str(),
                          ETHTOOL_SSET, &edata);
     }
-    
+#else
+    bool VMwarePort::autoneg() const
+    {
+        sfvmk_linkSpeed_t speedNeg;
+
+        speedNeg.type = SFVMK_MGMT_DEV_OPS_GET;
+
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE,
+			&speedNeg) == VMK_OK)
+	    return (speedNeg.autoNeg == VMK_TRUE);
+	return true;
+    }
+
+    void VMwarePort::autoneg(bool an)
+    {
+        sfvmk_linkSpeed_t speedNeg;
+
+        speedNeg.type = SFVMK_MGMT_DEV_OPS_GET;
+
+	if ((DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE,
+			 &speedNeg) != VMK_OK) || (speedNeg.autoNeg == an))
+	    return;
+
+	speedNeg.autoNeg = an;
+	speedNeg.type = SFVMK_MGMT_DEV_OPS_SET;
+
+	DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE, &speedNeg);
+    }
+#endif
+
     void VMwarePort::renegotiate()
     {
         struct ethtool_cmd edata;
