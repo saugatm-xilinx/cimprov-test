@@ -743,12 +743,151 @@ fail:
     }
 
     ///
+    /// Sort ports in ascending order in relation to PCI function.
+    ///
+    /// @param nics          [in] NIC descriptors list to sort
+    ///
+    static void sortNICsPorts(NICDescrs &nics)
+    {
+        int i=0, j=0;
+
+        for (i = 0; i < (int)nics.size(); i++)
+        {
+            PortDescr tmp_port;
+
+            for (j = 0; j < (int)nics[i].ports.size() - 1; j++)
+            {
+                if (nics[i].ports[j].pci_fn >
+                        nics[i].ports[j + 1].pci_fn)
+                {
+                    tmp_port.pci_fn = nics[i].ports[j].pci_fn;
+                    tmp_port.dev_file = nics[i].ports[j].dev_file;
+                    tmp_port.dev_name = nics[i].ports[j].dev_name;
+                    nics[i].ports[j].pci_fn =
+                                    nics[i].ports[j + 1].pci_fn;
+                    nics[i].ports[j].dev_file =
+                                    nics[i].ports[j + 1].dev_file;
+                    nics[i].ports[j].dev_name =
+                                    nics[i].ports[j + 1].dev_name;
+                    nics[i].ports[j + 1].pci_fn = tmp_port.pci_fn;
+                    nics[i].ports[j + 1].dev_file = tmp_port.dev_file;
+                    nics[i].ports[j + 1].dev_name = tmp_port.dev_name;
+                }
+            }
+        }
+    }
+
+#ifdef TARGET_CIM_SERVER_esxi_native
+    ///
+    /// Get Names for all  NICs on the machine.
+    ///
+    /// @param pNicNameList          [out] NICs name List
+    ///
+    /// @param portCount             [out] total port count
+    ///
+    /// @return 0 on success or -1 in case of error
+    ///
+    static int getNICNameList(NicMgmtVmnicName **pNicNameList, int &portCount)
+    {
+        if (NicMgmtCall(NICMGMT_GET_NIC_LIST, &portCount, *pNicNameList) == ENOMEM)
+        {
+            *pNicNameList = (NicMgmtVmnicName*) calloc((portCount), sizeof(NicMgmtVmnicName));
+            if (*pNicNameList == NULL)
+            {
+                PROVIDER_LOG_ERR("%s(): Memory Allocation Failed", __FUNCTION__);
+                return -1;
+            }
+	    if (NicMgmtCall(NICMGMT_GET_NIC_LIST, &portCount, *pNicNameList) != 0)
+            {
+                PROVIDER_LOG_ERR("%s(): NIC Mgmt Second Call Failed", __FUNCTION__);
+                free(*pNicNameList);
+                return -1;
+            }
+        }
+        else
+        {
+            PROVIDER_LOG_ERR("%s(): NICMgmt for Port Count Call Failed", __FUNCTION__);
+            return -1;
+        }
+        return 0;
+    }
+#endif
+
+#ifdef TARGET_CIM_SERVER_esxi_native
+    ///
     /// Get descriptions for all Solarflare NICs on the machine.
     ///
     /// @param nics          [out] Where to save NIC descriptions
     ///
     /// @return 0 on success or error code
     ///
+    static int getNICs(NICDescrs &nics)
+    {
+        int                  i=0, j=0, k=0;
+        NicMgmtVmnicName     *pNicNameList = NULL;
+        int                  portCount = 0;
+        sfvmk_mgmtCbTypes_t  cmd;
+        sfvmk_pciInfo_t      pciInfo;
+
+        if( getNICNameList(&pNicNameList, portCount) < 0)
+        {
+                PROVIDER_LOG_ERR("%s(): Getting  NIC Name List Failed", __FUNCTION__);
+                return -1;
+        }
+        for (i = 0; i < portCount; i++)
+        {
+            NICDescr  tmp_nic;
+            PortDescr tmp_port;
+            int cur_domain = 0, cur_bus = 0, cur_dev = 0, cur_fn = 0;
+
+            memset(&pciInfo, 0, sizeof(sfvmk_pciInfo_t));
+            cmd = SFVMK_CB_PCI_INFO_GET;
+            if (DrvMgmtCall(pNicNameList[i], cmd, &pciInfo) != VMK_OK)
+                continue;
+
+            if (sscanf(pciInfo.pciBDF, "%x:%x:%x.%x",
+                &cur_domain, &cur_bus, &cur_dev, &cur_fn) != 4)
+            {
+                PROVIDER_LOG_ERR("%s(): Incorrect BDF info", __FUNCTION__);
+                free(pNicNameList);
+                return -1;
+            }
+
+            for (j = 0; j < (int)nics.size(); j++)
+            {
+                if (nics[j].pci_domain > cur_domain ||
+                   (nics[j].pci_domain == cur_domain &&
+                   (nics[j].pci_bus > cur_bus ||
+                   (nics[j].pci_bus == cur_bus &&
+                   nics[j].pci_device >= cur_dev))))
+                       break;
+            }
+
+            if (j == (int)nics.size() ||
+                !(nics[j].pci_domain == cur_domain &&
+                nics[j].pci_bus == cur_bus &&
+                nics[j].pci_device == cur_dev))
+            {
+                tmp_nic.pci_domain = cur_domain;
+                tmp_nic.pci_bus = cur_bus;
+                tmp_nic.pci_device = cur_dev;
+                tmp_nic.pci_device_id = pciInfo.deviceId;
+                nics.insert(j, tmp_nic);
+            }
+
+            tmp_port.pci_fn = cur_fn;
+            tmp_port.dev_file = ""; //Set to Empty as file path not to be used in NativeDrvier.
+            tmp_port.dev_name = pNicNameList[i];
+            nics[j].ports.append(tmp_port);
+        }
+
+        free(pNicNameList);
+	sortNICsPorts(nics);
+
+        return 0;
+    }
+
+#else
     static int getNICs(NICDescrs &nics)
     {
         char                 device_path[PATH_MAX_LEN];
@@ -998,39 +1137,10 @@ fail:
             }
         }
 
-        // Sort ports in ascending order in relation to PCI function.
-
-        for (i = 0; i < (int)nics.size(); i++)
-        {
-            PortDescr tmp_port;
-
-            do {
-                k = 0;
-                for (j = 0; j < (int)nics[i].ports.size() - 1; j++)
-                {
-                    if (nics[i].ports[j].pci_fn >
-                            nics[i].ports[j + 1].pci_fn)
-                    {
-                        tmp_port.pci_fn = nics[i].ports[j].pci_fn;
-                        tmp_port.dev_file = nics[i].ports[j].dev_file;
-                        tmp_port.dev_name = nics[i].ports[j].dev_name;
-                        nics[i].ports[j].pci_fn =
-                                        nics[i].ports[j + 1].pci_fn;
-                        nics[i].ports[j].dev_file =
-                                        nics[i].ports[j + 1].dev_file;
-                        nics[i].ports[j].dev_name =
-                                        nics[i].ports[j + 1].dev_name;
-                        nics[i].ports[j + 1].pci_fn = tmp_port.pci_fn;
-                        nics[i].ports[j + 1].dev_file = tmp_port.dev_file;
-                        nics[i].ports[j + 1].dev_name = tmp_port.dev_name;
-                        k++;
-                    }
-                }
-            } while (k > 0);
-        }
-
+	sortNICsPorts(nics);
         return 0;
     }
+#endif
 
     ///
     /// Parse VPD tag.
