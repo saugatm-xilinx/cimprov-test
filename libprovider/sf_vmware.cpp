@@ -2441,6 +2441,7 @@ fail:
         return false;
     }
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     void VMwareInterface::enable(bool st)
     {
         // Implementation is blocked by SF bug 35613
@@ -2450,7 +2451,24 @@ fail:
         THROW_PROVIDER_EXCEPTION_FMT("Changing interface state "
                                      "is not implemented");
     }
+#else
+    void VMwareInterface::enable(bool st)
+    {
+	sfvmk_linkStatus_t linkStatus;
 
+	if (boundPort == NULL)
+            return;
+
+	linkStatus.type = SFVMK_MGMT_DEV_OPS_SET;
+	linkStatus.state = st;
+
+	if (DrvMgmtCall(((VMwarePort *)boundPort)->dev_name.c_str(),
+			  SFVMK_CB_LINK_STATUS_UPDATE, &linkStatus) == VMK_OK)
+	    return;
+
+	PROVIDER_LOG_ERR("%s(): Interface enable/disable failed ", __FUNCTION__);
+    }
+#endif
     uint64 VMwareInterface::mtu() const
     {
         Ref<CIM_EthernetPort> cimEthPort;
