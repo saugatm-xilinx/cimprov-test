@@ -190,6 +190,7 @@ namespace solarflare
     }
 #endif
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     /// Described in sf_siocefx_nvram.h
     int siocEFXWriteNVRAM(int fd, bool isSock,
                           uint8_t *data,
@@ -251,6 +252,59 @@ namespace solarflare
 
         return 0;
     }
+
+#else
+
+    int siocEFXWriteNVRAM(int fd, bool isSock,
+                          uint8_t *data,
+                          uint32_t offset,
+                          uint32_t len,
+                          const char *devName,
+                          uint32_t type)
+    {
+        unsigned int    end = offset + len;
+        unsigned int    write_len;
+        uint8_t         *ptr = data;
+        uint32_t        *payload;
+	bool nv_write_status = true;
+
+	UNUSED(fd);
+	UNUSED(isSock);
+
+	sfvmk_nvramCmd_t nvram_write_req = {0};
+
+	// NVRAM type field should be selected from the
+	// fields that are declared in sfvmk_mgmtInterface.h
+	nvram_write_req.type = type;
+	nvram_write_req.op = SFVMK_NVRAM_OP_WRITE;
+
+        for ( ; offset < end; )
+        {
+
+            write_len = min(len, SFVMK_NVRAM_MAX_PAYLOAD);
+
+	    nvram_write_req.offset = offset;
+	    nvram_write_req.size = write_len;
+
+	    memcpy(nvram_write_req.data, ptr, write_len);
+
+	    if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST, &nvram_write_req) != VMK_OK)
+            {
+	        PROVIDER_LOG_ERR("%s(): NVRAM write failed", __FUNCTION__);
+		nv_write_status = false;
+		break;
+	    }
+
+            ptr += write_len;
+            offset += write_len;
+            len -= write_len;
+        }
+
+	if (nv_write_status == false)
+	    return -1;
+        return 0;
+    }
+#endif
 
     /// Described in sf_siocefx_nvram.h
     int siocEFXGetNVRAMPartitionSize(int fd, bool isSock,
