@@ -2033,6 +2033,7 @@ fail:
         return getLinkStatus(dev_file, dev_name);
     }
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     Port::Speed VMwarePort::linkSpeed() const
     {
         struct ethtool_cmd edata;
@@ -2075,7 +2076,49 @@ fail:
                              ETHTOOL_SSET, &edata) < 0)
             THROW_PROVIDER_EXCEPTION;
     }
-       
+#else
+    Port::Speed VMwarePort::linkSpeed() const
+    {
+        sfvmk_linkSpeed_t linkSpeed;
+
+        linkSpeed.type = SFVMK_MGMT_DEV_OPS_GET;
+
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE, &linkSpeed) != VMK_OK)
+            return Speed(Port::SpeedUnknown);
+
+	switch (linkSpeed.speed)
+        {
+            case SFVMK_LINK_SPEED_10_MBPS: return Speed(Port::Speed10M);
+            case SFVMK_LINK_SPEED_100_MBPS: return Speed(Port::Speed100M);
+            case SFVMK_LINK_SPEED_1000_MBPS: return Speed(Port::Speed1G);
+            case SFVMK_LINK_SPEED_10000_MBPS: return Speed(Port::Speed10G);
+            case SFVMK_LINK_SPEED_40000_MBPS: return Speed(Port::Speed40G);
+            default: return Speed(Port::SpeedUnknown);
+        }
+    }
+
+    void VMwarePort::linkSpeed(Port::Speed sp)
+    {
+        sfvmk_linkSpeed_t linkSpeed;
+
+        linkSpeed.type = SFVMK_MGMT_DEV_OPS_SET;
+        linkSpeed.autoNeg = VMK_FALSE;
+
+	switch (sp)
+        {
+            case Port::Speed10M: linkSpeed.speed = SFVMK_LINK_SPEED_10_MBPS; break;
+            case Port::Speed100M: linkSpeed.speed = SFVMK_LINK_SPEED_100_MBPS; break;
+            case Port::Speed1G: linkSpeed.speed = SFVMK_LINK_SPEED_1000_MBPS; break;
+            case Port::Speed10G: linkSpeed.speed = SFVMK_LINK_SPEED_10000_MBPS; break;
+            case Port::Speed40G: linkSpeed.speed = SFVMK_LINK_SPEED_40000_MBPS; break;
+            default:
+                THROW_PROVIDER_EXCEPTION_FMT("Nonstandard speed specified");
+        }
+
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE, &linkSpeed) != VMK_OK)
+	    THROW_PROVIDER_EXCEPTION_FMT("Link Speed Configuration Failed");
+    }
+#endif
     bool VMwarePort::fullDuplex() const
     { 
         struct ethtool_cmd edata;
