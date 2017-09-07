@@ -155,7 +155,7 @@ extern "C" {
 }
 
 #if defined(TARGET_CIM_SERVER_esxi_native)
-extern vmk_MgmtApiSignature mgmtSig ;
+extern vmk_MgmtApiSignature mgmtSig;
 #endif
 using namespace std;
 
@@ -3892,6 +3892,16 @@ cleanup:
 
         bool sfu_dev_initialized;
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+        VMwareSystem()
+        {
+            setenv(CIMPLEHOME_ENVVAR, "/tmp/", 1);
+
+            curl_global_init(CURL_GLOBAL_ALL);
+            onAlert.setFillPortAlertsInfo(vmwareFillPortAlertsInfo);
+            sfu_dev_initialized = true;
+        };
+#else
         VMwareSystem()
         {
             setenv(CIMPLEHOME_ENVVAR, "/tmp/", 1);
@@ -3915,6 +3925,7 @@ cleanup:
                 sfu_dev_initialized = false;
             }
         };
+#endif
 
         ~VMwareSystem()
         {
@@ -4266,6 +4277,12 @@ cleanup:
         return 0;
     }
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+    String VMwareSystem::getSFUDevices()
+    {
+        return String("");
+    }
+#else
     String VMwareSystem::getSFUDevices()
     {
         sfu_device   *devs;
@@ -4329,7 +4346,21 @@ cleanup:
 
         return result; 
     }
+#endif
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+    int VMwareSystem::findSFUDevice(const String &dev_name,
+                                    struct sfu_device **devs,
+                                    struct sfu_device **dev,
+                                    int *devs_count)
+    {
+        UNUSED(dev_name);
+        UNUSED(devs);
+        UNUSED(dev);
+        UNUSED(devs_count);
+        return -1;
+    }
+#else
     int VMwareSystem::findSFUDevice(const String &dev_name,
                                     struct sfu_device **devs,
                                     struct sfu_device **dev,
@@ -4371,6 +4402,7 @@ cleanup:
 
         return 0;
     }
+#endif
 
     bool VMwareSystem::NVExists(const String &dev_name,
                                 unsigned int type,
