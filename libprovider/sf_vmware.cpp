@@ -3911,35 +3911,38 @@ cleanup:
 #else
     VersionInfo VMwareDriver::version() const
     {
-        Array<String> devDirList;
 	sfvmk_versionInfo_t verInfo = {0};
+	NicMgmtVmnicName *nicNameList = NULL;
         unsigned int i;
+	int portCount = 0;
 
-	// BUG72718:We are going to change the implementation of this
-	// function by using NicMgmntApi or by bypassing it
-	if (getDirContents(DEV_PATH, devDirList) < 0)
-            return VersionInfo(DEFAULT_VERSION_STR);
-
-	verInfo.type = SFVMK_GET_DRV_VERSION;
-
-        for (i = 0; i < devDirList.size(); i++)
-        {
-            const char *devName = devDirList[i].c_str();
-
-            if (devName[0] == '.')
-                continue;
-
-	    if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
-	        return VersionInfo(verInfo.version);
+	// Trying to retrieve nic list using nicMgmtApi
+	if (getNICNameList(&nicNameList, &portCount) < 0)
+	{
+	    PROVIDER_LOG_ERR("Nic Name list retrieval failed");
 	}
+	else
+	{
+	    verInfo.type = SFVMK_GET_DRV_VERSION;
 
-	PROVIDER_LOG_ERR("%s(): Solarflare Network Device not found",
-			 __FUNCTION__);
+            for (i = 0; i < portCount; i++)
+            {
+	        if (DrvMgmtCall(nicNameList[i], FVMK_CB_VERINFO_GET,
+				&verInfo) == VMK_OK)
+		{
+		    free(nicNameList);
+	            return VersionInfo(verInfo.version);
+		}
+	    }
+
+	    PROVIDER_LOG_ERR("%s(): Solarflare Network Device not found", __FUNCTION__);
+	}
 
 	// We failed to get it via Driver Management API (possible reason: no
 	// Solarflare interfaces are presented) - we try to get it
 	// from VMware root/cimv2 standard objects.
 
+	free(nicNameList);
         return vmwareGetDriverVersion();
     }
 #endif
