@@ -2468,6 +2468,7 @@ fail:
         }
     }
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     int VMwarePort::getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const
     {
@@ -2488,7 +2489,7 @@ fail:
 
         for (i = 0; i < paramNames.size(); i++)
         {
-            GCOALESCE_IF(rx_coalesce_usecs);
+	    GCOALESCE_IF(rx_coalesce_usecs);
             else GCOALESCE_IF(rx_max_coalesced_frames);
             else GCOALESCE_IF(rx_coalesce_usecs_irq);
             else GCOALESCE_IF(rx_max_coalesced_frames_irq);
@@ -2543,7 +2544,7 @@ fail:
 
         for (i = 0; i < paramNames.size(); i++)
         {
-            SCOALESCE_IF(rx_coalesce_usecs);
+	    SCOALESCE_IF(rx_coalesce_usecs);
             else SCOALESCE_IF(rx_max_coalesced_frames);
             else SCOALESCE_IF(rx_coalesce_usecs_irq);
             else SCOALESCE_IF(rx_max_coalesced_frames_irq);
@@ -2581,7 +2582,119 @@ fail:
 
         return 0;
     }
+#else
 
+    int VMwarePort::getIntrModeration(const Array_String &paramNames,
+                                      Array_uint32 &paramValues) const
+    {
+	sfvmk_intrCoalsParam_t intCoalsParam;
+        unsigned int i;
+
+	intCoalsParam.type = SFVMK_MGMT_DEV_OPS_GET;
+
+#define GCOALESCE_IF(x_) \
+    if (strcasecmp(paramNames[i].c_str(), \
+                   #x_) == 0)             \
+        paramValues.append(intCoalsParam.x_)
+
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION,
+			&intCoalsParam) != VMK_OK)
+	{
+	    PROVIDER_LOG_ERR("Interrupt Moderation parameter retrieval failed");
+            return -1;
+	}
+        for (i = 0; i < paramNames.size(); i++)
+        {
+	    GCOALESCE_IF(rxUsecs);
+            else GCOALESCE_IF(rxMaxFrames);
+            else GCOALESCE_IF(txUsecs);
+            else GCOALESCE_IF(txMaxFrames);
+            else GCOALESCE_IF(useAdaptiveRx);
+            else GCOALESCE_IF(useAdaptiveTx);
+            else GCOALESCE_IF(rateSampleInterval);
+            else GCOALESCE_IF(pktRateLowWatermark);
+            else GCOALESCE_IF(pktRateHighWatermark);
+            else GCOALESCE_IF(rxUsecsLow);
+            else GCOALESCE_IF(rxFramesLow);
+            else GCOALESCE_IF(txUsecsLow);
+            else GCOALESCE_IF(txFramesLow);
+            else GCOALESCE_IF(rxUsecsHigh);
+            else GCOALESCE_IF(rxFramesHigh);
+            else GCOALESCE_IF(txUsecsHigh);
+            else GCOALESCE_IF(txFramesHigh);
+            else
+            {
+                PROVIDER_LOG_ERR("%s(): unknown interrupt moderation "
+                                 "parameter %s", __FUNCTION__,
+                                 paramNames[i].c_str());
+		paramValues.clear();
+                return -1;
+            }
+        }
+
+        return 0;
+    }
+
+    int VMwarePort::setIntrModeration(const Array_String &paramNames,
+                                      const Array_uint32 &paramValues)
+    {
+	sfvmk_intrCoalsParam_t intCoalsParam;
+        unsigned int i;
+
+	intCoalsParam.type = SFVMK_MGMT_DEV_OPS_GET;
+
+#define SCOALESCE_IF(x_) \
+    if (strcasecmp(paramNames[i].c_str(), \
+                   #x_) == 0)             \
+        intCoalsParam.x_ = paramValues[i]
+
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION,
+			&intCoalsParam) != VMK_OK)
+	{
+	    PROVIDER_LOG_ERR("%s(): Interrupt Moderation parameter"
+			     "retrieval failed", __FUNCTION__);
+            return -1;
+	}
+
+        for (i = 0; i < paramNames.size(); i++)
+        {
+	    SCOALESCE_IF(rxUsecs);
+            else SCOALESCE_IF(rxMaxFrames);
+            else SCOALESCE_IF(txUsecs);
+            else SCOALESCE_IF(txMaxFrames);
+            else SCOALESCE_IF(useAdaptiveRx);
+            else SCOALESCE_IF(useAdaptiveTx);
+            else SCOALESCE_IF(rateSampleInterval);
+            else SCOALESCE_IF(pktRateLowWatermark);
+            else SCOALESCE_IF(pktRateHighWatermark);
+            else SCOALESCE_IF(rxUsecsLow);
+            else SCOALESCE_IF(rxFramesLow);
+            else SCOALESCE_IF(txUsecsLow);
+            else SCOALESCE_IF(txFramesLow);
+            else SCOALESCE_IF(rxUsecsHigh);
+            else SCOALESCE_IF(rxFramesHigh);
+            else SCOALESCE_IF(txUsecsHigh);
+            else SCOALESCE_IF(txFramesHigh);
+            else
+            {
+                PROVIDER_LOG_ERR("%s(): unknown interrupt moderation "
+                                 "parameter %s", __FUNCTION__,
+                                 paramNames[i].c_str());
+                return -1;
+            }
+        }
+
+	intCoalsParam.type = SFVMK_MGMT_DEV_OPS_SET;
+
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION,
+			&intCoalsParam) != VMK_OK)
+	{
+	    PROVIDER_LOG_ERR("Interrupt Coalesce parameter configuration failed");
+	    return -1;
+	}
+        return 0;
+    }
+#endif
     class VMwareInterface : public Interface {
         const NIC *owner;
         Port *boundPort;
