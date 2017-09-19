@@ -3911,7 +3911,7 @@ cleanup:
 	int portCount = 0;
 
 	// Trying to retrieve nic list using nicMgmtApi
-	if (getNICNameList(&nicNameList, &portCount) < 0)
+	if (getNICNameList(&nicNameList, portCount) < 0)
 	{
 	    PROVIDER_LOG_ERR("Nic Name list retrieval failed");
 	}
@@ -3921,7 +3921,7 @@ cleanup:
 
             for (i = 0; i < portCount; i++)
             {
-	        if (DrvMgmtCall(nicNameList[i], FVMK_CB_VERINFO_GET,
+	        if (DrvMgmtCall(nicNameList[i], SFVMK_CB_VERINFO_GET,
 				&verInfo) == VMK_OK)
 		{
 		    free(nicNameList);
