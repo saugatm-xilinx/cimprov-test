@@ -1358,6 +1358,44 @@ fail:
 
          return 0;
     }
+
+    /// See description in libprovider/sf_native_vmware.h
+    int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam)
+    {
+	vmk_MgmtUserHandle mgmtHandle;
+	sfvmk_mgmtDevInfo_t mgmtParam = {0};
+	bool drv_interaction_status = true;
+
+	if (strncpy_check((char *)mgmtParam.deviceName, devName,
+						SFVMK_DEV_NAME_LEN) < 0)
+        {
+            PROVIDER_LOG_ERR("Interface name [%s] is too long", devName);
+	    return VMK_FAILURE;
+        }
+
+        if (vmk_MgmtUserInit(&driverMgmtSig, 0, &mgmtHandle))
+        {
+            PROVIDER_LOG_ERR("vmk_MgmtUserInit failed");
+	    return VMK_FAILURE;
+        }
+
+	if (vmk_MgmtUserCallbackInvoke(mgmtHandle, VMK_MGMT_NO_INSTANCE_ID,
+						cmdCode, &mgmtParam, cmdParam))
+        {
+            PROVIDER_LOG_ERR("vmk_MgmtUserCallbackInvoke failed");
+	    drv_interaction_status = false;
+        }
+
+	if (vmk_MgmtUserDestroy(mgmtHandle))
+        {
+            PROVIDER_LOG_ERR("vmk_MgmtUserDestroy failed");
+	    return VMK_FAILURE;
+        }
+
+	if (drv_interaction_status)
+	    return mgmtParam.status;
+	return VMK_FAILURE;
+    }
  #else
     static int getVPD(const char *ifname, int port_number,
                       int device_type, bool staticVPD,
@@ -1539,51 +1577,6 @@ fail:
         return 0;
     }
 
-    ///
-    /// VMK Driver Management API Invocation.
-    ///
-    /// @param devName [in]       Pointer to interface name
-    /// @param cmdCode [in]       Command code
-    /// @param cmdParam [in/out]  Pointer to parameter structure
-    ///
-    /// @return VMK Driver Management API execution status or VMK_FAILURE
-    ///
-    int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam)
-    {
-	vmk_MgmtUserHandle mgmtHandle;
-	sfvmk_mgmtDevInfo_t mgmtParam = {0};
-	bool drv_interaction_status = true;
-
-	if (strncpy_check((char *)mgmtParam.deviceName, devName,
-						SFVMK_DEV_NAME_LEN) < 0)
-        {
-            PROVIDER_LOG_ERR("Interface name [%s] is too long", devName);
-	    return VMK_FAILURE;
-        }
-
-        if (vmk_MgmtUserInit(&driverMgmtSig, 0, &mgmtHandle))
-        {
-            PROVIDER_LOG_ERR("vmk_MgmtUserInit failed");
-	    return VMK_FAILURE;
-        }
-
-	if (vmk_MgmtUserCallbackInvoke(mgmtHandle, VMK_MGMT_NO_INSTANCE_ID,
-						cmdCode, &mgmtParam, cmdParam))
-        {
-            PROVIDER_LOG_ERR("vmk_MgmtUserCallbackInvoke failed");
-	    drv_interaction_status = false;
-        }
-
-	if (vmk_MgmtUserDestroy(mgmtHandle))
-        {
-            PROVIDER_LOG_ERR("vmk_MgmtUserDestroy failed");
-	    return VMK_FAILURE;
-        }
-
-	if (drv_interaction_status)
-	    return mgmtParam.status;
-	return VMK_FAILURE;
-    }
 #endif
     /// Firmware default file names table entry
     typedef struct {

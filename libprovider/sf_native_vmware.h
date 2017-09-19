@@ -18,7 +18,16 @@ extern vmk_MgmtApiSignature driverMgmtSig;
 
 namespace solarflare
 {
-   extern int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam);
+    ///
+    /// VMK Driver Management API Invocation.
+    ///
+    /// @param devName [in]       Pointer to interface name
+    /// @param cmdCode [in]       Command code
+    /// @param cmdParam [in/out]  Pointer to parameter structure
+    ///
+    /// @return VMK Driver Management API execution status or VMK_FAILURE
+    ///
+    extern int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam);
 }
 
 #endif // SOLARFLARE_SF_NATIVE_VMWARE_NVRAM_H
