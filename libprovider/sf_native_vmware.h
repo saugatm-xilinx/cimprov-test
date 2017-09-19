@@ -12,8 +12,13 @@
 #define SOLARFLARE_SF_NATIVE_VMWARE_H 1
 
 #include "userMgmtSrc/sfvmk_mgmtInterface.h"
+#include "sf_nicMgmtApi.h"
 
-extern vmk_MgmtApiSignature mgmtSig;
-extern int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam);
+extern vmk_MgmtApiSignature driverMgmtSig;
+
+namespace solarflare
+{
+   extern int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam);
+}
 
 #endif // SOLARFLARE_SF_NATIVE_VMWARE_NVRAM_H
