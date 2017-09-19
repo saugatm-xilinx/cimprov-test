@@ -2331,6 +2331,11 @@ fail:
 
 	return true;
     }
+
+    void VMwarePort::fullDuplex(bool fd)
+    {
+        UNUSED(fd);
+    }
 #endif
 #ifndef TARGET_CIM_SERVER_esxi_native
     bool VMwarePort::autoneg() const
