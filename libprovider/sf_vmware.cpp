@@ -22,7 +22,11 @@
 
 #if defined(TARGET_CIM_SERVER_esxi_native)
 #include "sf_native_vmware.h"
+#define VMK_DRIVER_NAME "sfvmk"
+#else
+#define VMK_DRIVER_NAME "sfc"
 #endif
+
 #include <stdint.h>
 
 extern "C" {
@@ -5086,7 +5090,7 @@ cleanup:
         if (!method)
             return -1;
 
-        method->ModuleName.set("sfc");
+        method->ModuleName.set(VMK_DRIVER_NAME);
         if (cimple::cimom::invoke_method(CIMHelper::baseNS,
                                          km_svc.ptr(), method) != 0)
         {
@@ -5125,7 +5129,7 @@ cleanup:
         if (!method)
             return -1;
 
-        method->ModuleName.set("sfc");
+        method->ModuleName.set(VMK_DRIVER_NAME);
         method->LoadParameter.set(loadParams);
         if (cimple::cimom::invoke_method(CIMHelper::baseNS,
                                          km_svc.ptr(), method) != 0)
