@@ -1667,6 +1667,39 @@ fail:
     /// 
     /// @return 0 on success, -1 on error
     ///
+#ifdef TARGET_CIM_SERVER_esxi_native
+    static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
+                            int device_type, unsigned int &subtype)
+    {
+	UNUSED(device_type);
+
+	sfvmk_nvramCmd_t nvram_read_req = {0};
+
+	// NVRAM type field should be selected from the
+	// fields that are declared in sfvmk_mgmtInterface.h
+	if (type == FIRMWARE_BOOTROM)
+	    nvram_read_req.type = SFVMK_NVRAM_TYPE_BOOTROM;
+        else if (type == FIRMWARE_MCFW)
+	    nvram_read_req.type = SFVMK_NVRAM_TYPE_MC;
+        else
+        {
+	    PROVIDER_LOG_ERR("%s(): Unknown Firmware Type", __FUNCTION__);
+            return -1;
+        }
+
+        //SFVMK_NVRAM_OP_GET_VER returns both subtype and version number
+	nvram_read_req.op = SFVMK_NVRAM_OP_GET_VER;
+
+	if (DrvMgmtCall(ifName, SFVMK_CB_NVRAM_REQUEST, &nvram_read_req) != VMK_OK)
+        {
+	    PROVIDER_LOG_ERR("%s(): NVRAM read failed", __FUNCTION__);
+            return -1;
+        }
+        subtype = nvram_read_req.subtype;
+
+        return 0;
+    }
+#else
     static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
                             int device_type, unsigned int &subtype)
     {
@@ -1743,6 +1776,7 @@ fail:
         close(fd);
         return 0;
     }
+#endif
 
     ///
     /// Check firmware path, fix it if necessary and return it.
