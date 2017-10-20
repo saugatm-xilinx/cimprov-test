@@ -200,7 +200,7 @@ PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFO
 ##! make CONFIG=native-vmware/default LOCATION=solarflare BRANCH=dev2 platform
 ifeq ($(CIM_SERVER),esxi_native)
 ifeq ($(BRANCH),dev2)
-USRMGMTINTF_BRANCH       = 67476108a4cc/native_drv
+USRMGMTINTF_BRANCH       = sfvmk_dev_2/native_drv
 else
 USRMGMTINTF_BRANCH       = 21bf41f8b1c0/native_drv
 endif
