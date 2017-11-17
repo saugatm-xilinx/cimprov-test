@@ -96,7 +96,7 @@ ifeq ($(PROVIDER_PLATFORM), linux)
 libprovider_SOURCES += sf_mtd.cpp
 endif
 
-ifeq ($(PROVIDER_PLATFORM), vmware)
+ifeq ($(CIM_SERVER), esxi)
 libprovider_SOURCES += SF_NVAPI_Provider.cpp
 endif
 
