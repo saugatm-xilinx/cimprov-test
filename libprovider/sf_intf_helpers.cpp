@@ -193,7 +193,7 @@ namespace solarflare
 #endif
 #if CIM_SCHEMA_VERSION_MINOR > 0
         newPort->EnabledState.null = false;
-#if TARGET_CIM_SERVER_esxi
+#if (TARGET_CIM_SERVER_esxi || TARGET_CIM_SERVER_esxi_native)
         newPort->EnabledState.value =
           (ifStatus ? 
            SF_EthernetPort::_EnabledState::enum_Enabled :

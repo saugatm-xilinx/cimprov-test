@@ -1131,7 +1131,7 @@ namespace solarflare
         // to all the profile of ordinary software (a single one as of now)
         // + Job Control profile if it has an
         // associated thread
-#if !TARGET_CIM_SERVER_esxi
+#if (!TARGET_CIM_SERVER_esxi && !TARGET_CIM_SERVER_esxi_native)
         return SWConformsToProfileHelper::nObjects(se) + 
         (se.cimDispatch(cimple::SF_ConcreteJob::static_meta_class) != NULL);
 #else

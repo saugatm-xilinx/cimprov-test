@@ -43,7 +43,7 @@ Enum_Instances_Status SF_ReferencedProfile_Provider::enum_instances(
     const SF_ReferencedProfile* model,
     Enum_Instances_Handler<SF_ReferencedProfile>* handler)
 {
-#if !TARGET_CIM_SERVER_esxi
+#if (!TARGET_CIM_SERVER_esxi && !TARGET_CIM_SERVER_esxi_native)
     solarflare::EnumInstances<SF_ReferencedProfile>::topmost(handler);
 #endif
 

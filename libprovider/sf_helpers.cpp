@@ -24,7 +24,7 @@
 #include "Win32_ComputerSystem.h"
 #include "Win32_SystemEnclosure.h"
 #endif
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
 #include "OMC_UnitaryComputerSystem.h"
 #include "OMC_Chassis.h"
 #endif
@@ -100,7 +100,7 @@ namespace solarflare
 #ifdef TARGET_CIM_SERVER_wmi
             &cimple::Win32_ComputerSystem::static_meta_class,
 #endif
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
             &cimple::OMC_UnitaryComputerSystem::static_meta_class,
 #endif
             &CIM_ComputerSystem::static_meta_class,
@@ -249,7 +249,7 @@ namespace solarflare
 #ifdef TARGET_CIM_SERVER_wmi
             &cimple::Win32_SystemEnclosure::static_meta_class,
 #endif
-#ifdef TARGET_CIM_SERVER_esxi
+#if defined(TARGET_CIM_SERVER_esxi) || defined(TARGET_CIM_SERVER_esxi_native)
             &cimple::OMC_Chassis::static_meta_class,
 #endif
             &CIM_Chassis::static_meta_class,
@@ -542,7 +542,7 @@ namespace solarflare
         &SoftwareInventoryProfile,
         &SoftwareUpdateProfile,
         &HostLANNetworkPortProfile,
-#if !TARGET_CIM_SERVER_esxi
+#if (!TARGET_CIM_SERVER_esxi && !TARGET_CIM_SERVER_esxi_native)
         // Disabled on ESXi due to an error in CIM PAT Provides
         // Tags Validation test.
         &JobControlProfile,
