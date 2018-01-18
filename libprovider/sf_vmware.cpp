@@ -2966,6 +2966,28 @@ fail:
         virtual void initialize() {};
     };
 
+    class VMwareUEFIROM : public UEFIROM {
+        const NIC *owner;
+    public:
+        VMwareUEFIROM(const NIC *o) :
+            owner(o) {}
+        virtual const NIC *nic() const { return owner; }
+        virtual VersionInfo version() const;
+
+        virtual InstallRC syncInstall(const char *file_name,
+                                      bool force,
+                                      const char *base64_hash)
+        {
+            return vmwareInstallFirmwareType(file_name, owner,
+                                             FIRMWARE_UEFIROM,
+                                             version(),
+                                             force,
+                                             base64_hash);
+        }
+
+        virtual void initialize() {};
+    };
+
     class VMwareDiagnostic : public Diagnostic {
         const NIC *owner;
         Result testPassed;
@@ -2994,6 +3016,7 @@ fail:
     class VMwareNIC : public NIC {
         VMwareNICFirmware nicFw;
         VMwareBootROM rom;
+        VMwareUEFIROM uefirom;
         VMwareDiagnostic diag;
 
         int pci_domain;
@@ -3028,6 +3051,7 @@ fail:
         {
             nicFw.initialize();
             rom.initialize();
+            uefirom.initialize();
         }
         virtual void setupDiagnostics()
         {
@@ -3039,6 +3063,7 @@ fail:
             NIC(idx),
             nicFw(this),
             rom(this),
+            uefirom(this),
             diag(this), pci_domain(descr.pci_domain),
             pci_bus(descr.pci_bus), pci_device(descr.pci_device),
             pci_device_id(descr.pci_device_id)
@@ -3059,6 +3084,24 @@ fail:
 
         uint64 supportedMTU() const { return EFX_MAX_MTU; }
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+        virtual bool forAllFw(ElementEnumerator& en)
+        {
+            if(!en.process(nicFw))
+                return false;
+            if(!en.process(rom))
+                return false;
+            return en.process(uefirom);
+        }
+        virtual bool forAllFw(ConstElementEnumerator& en) const
+        {
+            if(!en.process(nicFw))
+                return false;
+            if(!en.process(rom))
+                return false;
+            return en.process(uefirom);
+        }
+#else
         virtual bool forAllFw(ElementEnumerator& en)
         {
             if(!en.process(nicFw))
@@ -3071,7 +3114,7 @@ fail:
                 return false;
             return en.process(rom);
         }
-
+#endif
         virtual bool forAllPorts(ElementEnumerator& en)
         {
             int i = 0;
@@ -5359,6 +5402,25 @@ cleanup:
         devName = nic->ports[0].dev_name.c_str();
 
 	verInfo.type = SFVMK_GET_ROM_VERSION;
+
+	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+	    return VersionInfo(verInfo.version);
+	return VersionInfo(DEFAULT_VERSION_STR);
+    }
+
+    VersionInfo VMwareUEFIROM::version() const
+    {
+        sfvmk_versionInfo_t verInfo = {0};
+        const char *devName;
+
+        const VMwareNIC  *nic = reinterpret_cast<const VMwareNIC *>(owner);
+
+        if (nic == NULL || nic->ports.size() < 1)
+	    return VersionInfo(DEFAULT_VERSION_STR);
+
+        devName = nic->ports[0].dev_name.c_str();
+
+	verInfo.type = SFVMK_GET_UEFI_VERSION;
 
 	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
 	    return VersionInfo(verInfo.version);
