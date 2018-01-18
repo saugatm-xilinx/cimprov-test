@@ -1603,26 +1603,36 @@ fail:
         { FIRMWARE_BOOTROM, 4, "SFC9120.dat" },
         { FIRMWARE_BOOTROM, 1, "SFC9020.dat" },
         { FIRMWARE_BOOTROM, 0, "FALCON.dat" },
+        { FIRMWARE_BOOTROM, 5, "SFC9140.dat" },
+        { FIRMWARE_BOOTROM, 6, "SFC9220.dat" },
 
         // MCFW
+        { FIRMWARE_MCFW, 11, "BRIAN.dat" },
+        { FIRMWARE_MCFW, 14, "BUXTON.dat" },
+        { FIRMWARE_MCFW, 35, "BYBLOS.dat" },
         { FIRMWARE_MCFW, 10, "DYLAN.dat" },
+        { FIRMWARE_MCFW, 9, "ERMINTRUDE.dat" },
+        { FIRMWARE_MCFW, 7, "FLORENCE.dat" },
+        { FIRMWARE_MCFW, 38, "FLORIN.dat" },
+        { FIRMWARE_MCFW, 24, "FORBES.dat" },
+        { FIRMWARE_MCFW, 22, "GEHRELS.dat" },
+        { FIRMWARE_MCFW, 26, "HERSCHEL.dat" },
+        { FIRMWARE_MCFW, 33, "ICARUS.dat" },
+        { FIRMWARE_MCFW, 28, "IKEYA.dat" },
+        { FIRMWARE_MCFW, 34, "JERICHO.dat" },
+        { FIRMWARE_MCFW, 20, "KAPTEYN.dat" },
+        { FIRMWARE_MCFW, 29, "KOWALSKI.dat" },
         { FIRMWARE_MCFW, 25, "LONGMORE.dat" },
         { FIRMWARE_MCFW, 16, "MR_MCHENRY.dat" },
-        { FIRMWARE_MCFW, 17, "UNCLE_HAMISH.dat" },
-        { FIRMWARE_MCFW, 27, "SHOEMAKER.dat" },
-        { FIRMWARE_MCFW, 22, "GEHRELS.dat" },
-        { FIRMWARE_MCFW, 28, "IKEYA.dat" },
-        { FIRMWARE_MCFW, 9, "ERMINTRUDE.dat" },
-        { FIRMWARE_MCFW, 26, "HERSCHEL.dat" },
-        { FIRMWARE_MCFW, 7, "FLORENCE.dat" },
-        { FIRMWARE_MCFW, 18, "TUTTLE.dat" },
-        { FIRMWARE_MCFW, 11, "BRIAN.dat" },
         { FIRMWARE_MCFW, 13, "MR_RUSTY.dat" },
-        { FIRMWARE_MCFW, 20, "KAPTEYN.dat" },
+        { FIRMWARE_MCFW, 37, "SHILLING.dat" },
+        { FIRMWARE_MCFW, 27, "SHOEMAKER.dat" },
+        { FIRMWARE_MCFW, 31, "SPARTA.dat" },
+        { FIRMWARE_MCFW, 32, "THEBES.dat" },
+        { FIRMWARE_MCFW, 18, "TUTTLE.dat" },
+        { FIRMWARE_MCFW, 17, "UNCLE_HAMISH.dat" },
         { FIRMWARE_MCFW, 23, "WHIPPLE.dat" },
-        { FIRMWARE_MCFW, 24, "FORBES.dat" },
         { FIRMWARE_MCFW, 8, "ZEBEDEE.dat" },
-        { FIRMWARE_MCFW, 14, "BUXTON.dat" },
 
         { FIRMWARE_UNKNOWN, 0, NULL},
     };
@@ -3680,9 +3690,14 @@ cleanup:
         int   tmp_file_used = 0;
 
         SWElement::InstallRC install_rc;
-
+        VersionInfo imgVersion;
         const char *sfupdate_image_fn = NULL;
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+        size_t fileSize = 0;
+        FILE   *fPtr =  NULL;
+        char   *pBuffer = NULL;
+#endif
         VitalProductData vpd = ((VMwareNIC *)owner)->vitalProductData();
 
 #if 0
@@ -3807,7 +3822,7 @@ cleanup:
         }
 
         if (!checkImageApplicability(sfupdate_image_fn, fwType, subType,
-                                     curVersion, NULL, force))
+                                     curVersion, &imgVersion, force))
         {
             PROVIDER_LOG_ERR("Firmware image applicability "
                              "check failed");
@@ -3816,6 +3831,62 @@ cleanup:
             return SWElement::Install_NA;
         }
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+        fPtr = fopen(sfupdate_image_fn, "r");
+        if (fPtr == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): attempt to open '%s' failed",
+                             __FUNCTION__, sfupdate_image_fn);
+            rc = -1;
+            goto cleanup;
+        }
+        fseek(fPtr, 0, SEEK_END);
+        fileSize = ftell(fPtr);
+        rewind(fPtr);
+        pBuffer = (char*) calloc(fileSize, sizeof(char));
+        if (pBuffer == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): memory allocation failed",
+                             __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+        if (fread(pBuffer, 1, fileSize, fPtr) != fileSize)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to read firmware image",
+                             __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+        sfvmk_imgUpdate_t imgUpdate;
+
+        imgUpdate.pFileBuffer = (vmk_uint64)pBuffer;
+        imgUpdate.size = fileSize;
+
+        PROVIDER_LOG_DBG("Image Update called for  fwType:%d with image version:%d.%d.%d.%d",
+                          fwType, imgVersion.major(), imgVersion.minor(),
+                          imgVersion.revision(), imgVersion.build());
+
+	if (DrvMgmtCall(((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
+                        SFVMK_CB_IMG_UPDATE, &imgUpdate) != VMK_OK)
+        {
+	    PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
+            rc = -1;
+            goto cleanup;
+        }
+
+cleanup:
+           if (pBuffer)
+               free(pBuffer);
+           if (fPtr)
+               fclose(fPtr);
+           if (tmp_file_used)
+               unlink(tmp_file);
+           if (rc < 0)
+               return SWElement::Install_Error;
+           else
+               return SWElement::Install_OK;
+#else
         PROVIDER_LOG_DBG("Run sfupdate command '%s'", cmd);
         fd = sfupdatePOpen(cmd);
         if (fd < 0)
@@ -3826,12 +3897,12 @@ cleanup:
         }
 
         sfupdateLogOutput(fd);
-
         close(fd);
+
         if (tmp_file_used)
             unlink(tmp_file);
-
         return SWElement::Install_OK;
+#endif
     }
 
     class VMwareDriver : public Driver {

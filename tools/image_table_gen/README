@@ -7,4 +7,4 @@ To use it, in its folder run make and then run
 For example,
 ./create_table.pl ~/incoming_firmware/bootrom/
 
-image.h is taken from a14b194c7d1d revision of v5-incoming repository.
+image.h is taken from e7bf8a4723c4 revision of v5-incoming repository.
