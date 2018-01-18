@@ -1645,6 +1645,26 @@ fail:
     ///
     /// @return Native firmware type
     ///
+#ifdef TARGET_CIM_SERVER_esxi_native
+    int getNativeFirmwareType(UpdatedFirmwareType fwType, int device_type)
+    {
+        switch (fwType)
+        {
+            case FIRMWARE_BOOTROM:
+                    return NVRAM_PARTITION_TYPE_EXPANSION_ROM;
+
+            case FIRMWARE_MCFW:
+                    return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
+
+            case FIRMWARE_UEFIROM:
+                    return NVRAM_PARTITION_TYPE_EXPANSION_UEFI;
+
+            default:
+                return -1;
+        }
+        return -1;
+    }
+#else
     int getNativeFirmwareType(UpdatedFirmwareType fwType, int device_type)
     {
         switch (fwType)
@@ -1666,7 +1686,7 @@ fail:
         }
         return -1;
     }
-
+#endif
     ///
     /// Get subtype of a specific type of firmware installed on NIC.
     ///
@@ -1691,6 +1711,8 @@ fail:
 	    nvram_read_req.type = SFVMK_NVRAM_TYPE_BOOTROM;
         else if (type == FIRMWARE_MCFW)
 	    nvram_read_req.type = SFVMK_NVRAM_TYPE_MC;
+        else if (type == FIRMWARE_UEFIROM)
+	    nvram_read_req.type = SFVMK_NVRAM_TYPE_UEFIROM;
         else
         {
 	    PROVIDER_LOG_ERR("%s(): Unknown Firmware Type", __FUNCTION__);
@@ -3287,6 +3309,7 @@ fail:
         return 0;
     }
 
+#ifdef TARGET_CIM_SERVER_esxi_native
     ///
     /// Get default path for a given firmware type.
     ///
@@ -3307,6 +3330,27 @@ fail:
             defPath = String("/image/");
             if (fwType == FIRMWARE_BOOTROM)
                 defPath.append("bootrom/");
+            else if (fwType == FIRMWARE_MCFW)
+                defPath.append("mcfw/");
+            else
+                defPath.append("uefirom/");
+            defPath.append(fName);
+        }
+
+        return defPath;
+    }
+#else
+    static String getDefaultFwPath(const NIC *owner,
+                                   UpdatedFirmwareType fwType,
+                                   const String &fName)
+    {
+        String          defPath;
+
+        if (!fName.empty())
+        {
+            defPath = String("/image/");
+            if (fwType == FIRMWARE_BOOTROM)
+                defPath.append("bootrom/");
             else
                 defPath.append("mcfw/");
             defPath.append(fName);
@@ -3314,6 +3358,7 @@ fail:
 
         return defPath;
     }
+#endif
 
     ///
     /// Download file from remote location specified by URI.
@@ -3618,10 +3663,19 @@ cleanup:
             return false;
         }
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+        if (!((header.ih_type == IMAGE_TYPE_BOOTROM &&
+               fwType == FIRMWARE_BOOTROM) ||
+              (header.ih_type == IMAGE_TYPE_MCFW &&
+               fwType == FIRMWARE_MCFW) ||
+              (header.ih_type == IMAGE_TYPE_UEFIROM &&
+               fwType == FIRMWARE_UEFIROM)))
+#else
         if (!((header.ih_type == IMAGE_TYPE_BOOTROM &&
                fwType == FIRMWARE_BOOTROM) ||
               (header.ih_type == IMAGE_TYPE_MCFW &&
                fwType == FIRMWARE_MCFW)))
+#endif
         {
             PROVIDER_LOG_ERR("%s(): firmware image type mismatch",
                              __FUNCTION__);
@@ -4386,6 +4440,15 @@ cleanup:
                 break;
             }
 
+#ifdef TARGET_CIM_SERVER_esxi_native
+            case FIRMWARE_UEFIROM:
+            {
+                VMwareUEFIROM uefirom(&nic);
+                version = uefirom.version();
+                break;
+            }
+#endif
+
             default:
                 PROVIDER_LOG_ERR("%s(): unknown firmware type %d",
                                  __FUNCTION__, type);
@@ -4411,6 +4474,12 @@ cleanup:
             case FIRMWARE_MCFW:
                 img_type = IMAGE_TYPE_MCFW;
                 break;
+
+#ifdef TARGET_CIM_SERVER_esxi_native
+            case FIRMWARE_UEFIROM:
+                img_type = IMAGE_TYPE_UEFIROM;
+                break;
+#endif
 
             default:
                 PROVIDER_LOG_ERR("%s(): unknown firmware type %d",

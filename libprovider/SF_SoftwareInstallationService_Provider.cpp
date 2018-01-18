@@ -387,6 +387,10 @@ Invoke_Method_Status
         fwType = FIRMWARE_BOOTROM;
     else if (strcmp(self->Name.value.c_str(), "Firmware") == 0)
         fwType = FIRMWARE_MCFW;
+#if defined(TARGET_CIM_SERVER_esxi_native)
+    else if (strcmp(self->Name.value.c_str(), "UEFIROM") == 0)
+        fwType = FIRMWARE_UEFIROM;
+#endif
     else
     {
         PROVIDER_LOG_ERR("%s(): operation is not supported for "
@@ -439,9 +443,16 @@ Invoke_Method_Status
 
     String fName = solarflare::System::target.createTmpFile();
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
+    if (self->Name.null ||
+        (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
+         strcmp(self->Name.value.c_str(), "Firmware") != 0 &&
+         strcmp(self->Name.value.c_str(), "UEFIROM") != 0))
+#else
     if (self->Name.null ||
         (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
          strcmp(self->Name.value.c_str(), "Firmware") != 0))
+#endif
     {
         PROVIDER_LOG_ERR("%s() is not supported for this "
                          "SF_SoftwareInstallationService instance",
@@ -479,9 +490,16 @@ Invoke_Method_Status
         InvalidParameter = 5,
     };
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
+    if (self->Name.null ||
+        (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
+         strcmp(self->Name.value.c_str(), "Firmware") != 0 &&
+         strcmp(self->Name.value.c_str(), "UEFIROM") != 0))
+#else
     if (self->Name.null ||
         (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
          strcmp(self->Name.value.c_str(), "Firmware") != 0))
+#endif
     {
         PROVIDER_LOG_ERR("%s() is not supported for this "
                          "SF_SoftwareInstallationService instance",
@@ -576,6 +594,10 @@ Invoke_Method_Status
         fwType = FIRMWARE_BOOTROM;
     else if (strcmp(self->Name.value.c_str(), "Firmware") == 0)
         fwType = FIRMWARE_MCFW;
+#if defined(TARGET_CIM_SERVER_esxi_native)
+    else if (strcmp(self->Name.value.c_str(), "UEFIROM") == 0)
+        fwType = FIRMWARE_UEFIROM;
+#endif
     else
     {
         PROVIDER_LOG_ERR("%s(): operation is not supported for "
