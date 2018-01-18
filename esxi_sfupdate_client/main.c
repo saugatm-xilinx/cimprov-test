@@ -99,6 +99,9 @@ static int   update_controller = 0;
 /** Whether we should update BootROM firmware or not */
 static int   update_bootrom = 0;
 
+/** Whether we should update UEFIROM firmware or not */
+static int   update_uefirom = 0;
+
 /**
  * Whether we can skip asking user for confirmation before firmware update
  * or not
@@ -129,6 +132,7 @@ static int   fw_url_use_cim_transf = 0;
 
 #define SVC_BOOTROM_NAME "BootROM"
 #define SVC_MCFW_NAME "Firmware"
+#define SVC_UEFIROM_NAME "UEFIROM"
 
 /** Command line options */
 enum {
@@ -147,6 +151,7 @@ enum {
     OPT_IF_NAME,                /**< Network interface name */
     OPT_CONTROLLER,             /**< Process controller firmware */
     OPT_BOOTROM,                /**< Process BootROM firmware */
+    OPT_UEFIROM,                /**< Process UEFIROM firmware */
     OPT_YES,                    /**< Don't ask user for confirmation when
                                      updating firmware */
     OPT_WRITE,                  /**< Perform firmware update */
@@ -181,6 +186,7 @@ parseCmdLine(int argc, const char *argv[])
     char *if_name = NULL;
     int   controller = 0;
     int   bootrom = 0;
+    int   uefirom = 0;
     int   y = 0;
     int   w = 0;
     int   url_no_local_access = 0;
@@ -235,6 +241,11 @@ parseCmdLine(int argc, const char *argv[])
         { "bootrom", '\0', POPT_ARG_NONE, NULL,
           OPT_BOOTROM,
           "Process BootROM firmware",
+          NULL },
+
+        { "uefirom", '\0', POPT_ARG_NONE, NULL,
+          OPT_UEFIROM,
+          "Process UEFIROM firmware",
           NULL },
 
         { "yes", 'y', POPT_ARG_NONE, NULL,
@@ -333,6 +344,10 @@ parseCmdLine(int argc, const char *argv[])
                 bootrom = 1;
                 break;
 
+            case OPT_UEFIROM:
+                uefirom = 1;
+                break;
+
             case OPT_YES:
                 y = 1;
                 break;
@@ -428,6 +443,7 @@ cleanup:
         interface_name = if_name;
         update_controller = controller;
         update_bootrom = bootrom;
+        update_uefirom = uefirom;
         yes = y;
         do_update = w;
         fw_url_no_local_access = url_no_local_access;
@@ -723,8 +739,10 @@ call_install_from_uri(CURL *curl, const char *namespace,
 
     if (strcmp(svc_name, SVC_BOOTROM_NAME) == 0)
         firmware_type = "BootROM";
-    else
+    else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
         firmware_type = "Controller";
+    else
+        firmware_type = "UEFIROM";
 
     printf("Updating %s firmware for ", firmware_type);
     if (target == NULL)
@@ -946,6 +964,8 @@ getFwSubdirName(const char *svc_name)
         subdir = "bootrom";
     else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
         subdir = "mcfw";
+    else if (strcmp(svc_name, SVC_UEFIROM_NAME) == 0)
+        subdir = "uefirom";
 
     return subdir;
 }
@@ -1588,7 +1608,7 @@ typedef int (*firmware_install_f)(
 
 /**
  * Get SF_SofwareInstallationService instances responsible for
- * updating BootROM and Controller firmware.
+ * updating BootROM, Controller and UEFIROM firmware.
  *
  * @param curl                     CURL pointer returned by curl_easy_init()
  * @param namespace                Provider namespace
@@ -1596,13 +1616,16 @@ typedef int (*firmware_install_f)(
  *                                 Controller firmware update
  * @param svc_bootrom_inst   [out] Service instance responsible for
  *                                 Controller firmware update
+ * @param svc_uefirom_inst   [out] Service instance responsible for
+ *                                 UEFIROM firmware update
  *
  * @return 0 on success, -1 on failure
  */
 static int
 getInstServices(CURL *curl, const char *namespace,
                 xmlCimInstance **svc_mcfw_inst,
-                xmlCimInstance **svc_bootrom_inst)
+                xmlCimInstance **svc_bootrom_inst,
+                xmlCimInstance **svc_uefirom_inst)
 {
     response_descr  svcs_rsp;
     xmlCimInstance *svc_inst = NULL;
@@ -1640,6 +1663,9 @@ getInstServices(CURL *curl, const char *namespace,
         else if (strcmp(name, SVC_BOOTROM_NAME) == 0 &&
                  svc_bootrom_inst != NULL)
             *svc_bootrom_inst = svc_inst;
+        else if (strcmp(name, SVC_UEFIROM_NAME) == 0 &&
+                 svc_uefirom_inst != NULL)
+            *svc_uefirom_inst = svc_inst;
         free(name);
     }
 
@@ -1647,6 +1673,8 @@ getInstServices(CURL *curl, const char *namespace,
         *svc_mcfw_inst = xmlCimInstanceDup(*svc_mcfw_inst);
     if (svc_bootrom_inst != NULL)
         *svc_bootrom_inst = xmlCimInstanceDup(*svc_bootrom_inst);
+    if (svc_uefirom_inst != NULL)
+        *svc_uefirom_inst = xmlCimInstanceDup(*svc_uefirom_inst);
 
     clear_response(&svcs_rsp);
     return 0;
@@ -1661,6 +1689,7 @@ getInstServices(CURL *curl, const char *namespace,
  *                          (or NULL)
  * @param controller        Whether to update controller firmware or not
  * @param bootrom           Whether to update BootROM firmware or not
+ * @param uefirom           Whether to update UEFIROM firmware or not
  * @param firmware_source   Firmware image(s) URL
  * @param url_specified     Firmware URL was specified (not local path)
  * @param force             --force option was specified
@@ -1670,7 +1699,7 @@ getInstServices(CURL *curl, const char *namespace,
 int
 update_firmware(CURL *curl, const char *namespace,
                 xmlCimInstance *nic_inst,
-                int controller, int bootrom,
+                int controller, int bootrom, int uefirom,
                 const char *firmware_source,
                 int url_specified,
                 int force)
@@ -1689,6 +1718,7 @@ update_firmware(CURL *curl, const char *namespace,
 
     xmlCimInstance *svc_mcfw_inst = NULL;
     xmlCimInstance *svc_bootrom_inst = NULL;
+    xmlCimInstance *svc_uefirom_inst = NULL;
     xmlCimInstance *log_inst = NULL;
     xmlCimInstance *rec_inst = NULL;
 
@@ -1709,11 +1739,13 @@ update_firmware(CURL *curl, const char *namespace,
 
     if ((rc = getInstServices(curl, namespace,
                               &svc_mcfw_inst,
-                              &svc_bootrom_inst)) != 0)
+                              &svc_bootrom_inst,
+                              &svc_uefirom_inst)) != 0)
         goto cleanup;
 
     if ((svc_mcfw_inst == NULL && controller) ||
-        (svc_bootrom_inst == NULL && bootrom))
+        (svc_bootrom_inst == NULL && bootrom) ||
+        (svc_uefirom_inst == NULL && uefirom))
     {
         ERROR_MSG("Failed to find appropriate "
                   "SF_SoftwareInstallationService instance");
@@ -1835,6 +1867,35 @@ update_firmware(CURL *curl, const char *namespace,
             clear_response(&call_rsp);
         }
 
+        if (uefirom)
+        {
+            CHECK_RESPONSE(
+                    rc_rsp,
+                    func_install(curl, namespace,
+                                 svc_uefirom_inst,
+                                 nic_inst, firmware_source,
+                                 url_specified,
+                                 force, NULL, &call_rsp),
+                    call_rsp,
+                    "Attempt to update "
+                    "UEFIROM firmware failed");
+            if (rc_rsp >= 0 && func_install != install_from_local_source &&
+                strcmp(call_rsp.returned_value, "0") != 0)
+            {
+                ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
+                                "trying to update UEFIROM firmware",
+                                call_rsp.returned_value);
+                rc = -1;
+                print_err_recs = 1;
+            }
+            else if (rc_rsp < 0)
+            {
+                rc = -1;
+                print_err_recs = 1;
+            }
+            clear_response(&call_rsp);
+        }
+
         if (print_err_recs && log_available)
         {
             int saved_rc = 0;
@@ -1904,6 +1965,7 @@ cleanup:
         printf("Firmware was successfully updated!\n");
     freeXmlCimInstance(svc_mcfw_inst);
     freeXmlCimInstance(svc_bootrom_inst);
+    freeXmlCimInstance(svc_uefirom_inst);
     clear_response(&call_rsp);
     clear_response(&log_rsp);
     clear_response(&rec_rsp);
@@ -2296,6 +2358,7 @@ main(int argc, const char *argv[])
     xmlCimInstance *nic_inst = NULL;
     xmlCimInstance *svc_mcfw_inst = NULL;
     xmlCimInstance *svc_bootrom_inst = NULL;
+    xmlCimInstance *svc_uefirom_inst = NULL;
 
     int controller_applicable_found = 0;
     int controller_ver_a = 0;
@@ -2309,12 +2372,19 @@ main(int argc, const char *argv[])
     int bootrom_ver_c = 0;
     int bootrom_ver_d = 0;
     char bootrom_exp_img_name[MAX_IMG_NAME_LEN];
+    int uefirom_applicable_found = 0;
+    int uefirom_ver_a = 0;
+    int uefirom_ver_b = 0;
+    int uefirom_ver_c = 0;
+    int uefirom_ver_d = 0;
+    char uefirom_exp_img_name[MAX_IMG_NAME_LEN];
     int ver_check;
 
     char nic_tag_prev[MAX_NIC_TAG_LEN] = "";
     int  have_applicable_imgs = 0;
     int  have_applicable_bootrom = 0;
     int  have_applicable_controller = 0;
+    int  have_applicable_uefirom = 0;
 
     CURL        *curl = NULL;
     CURLcode     res;
@@ -2379,10 +2449,11 @@ main(int argc, const char *argv[])
         add_port ? ":" : "",
         add_port ? (use_https ? DEF_HTTPS_PORT : DEF_HTTP_PORT) : "");
 
-    if (!update_controller && !update_bootrom)
+    if (!update_controller && !update_bootrom && !update_uefirom)
     {
         update_controller = 1;
         update_bootrom = 1;
+        update_uefirom = 1;
     }
 
     setbuf(stderr, NULL);
@@ -2402,7 +2473,8 @@ main(int argc, const char *argv[])
 
         if ((rc = getInstServices(curl, cim_namespace,
                                   &svc_mcfw_inst,
-                                  &svc_bootrom_inst)) != 0)
+                                  &svc_bootrom_inst,
+                                  &svc_uefirom_inst)) != 0)
             goto cleanup;
 
         CHECK_RESPONSE(
@@ -2555,6 +2627,18 @@ main(int argc, const char *argv[])
                                     &bootrom_ver_c,
                                     &bootrom_ver_d,
                                     bootrom_exp_img_name);
+                uefirom_exp_img_name[0] = '\0';
+                findAvailableUpdate(curl, cim_namespace,
+                                    svc_uefirom_inst,
+                                    nic_inst,
+                                    fw_url == NULL ? fw_path : fw_url,
+                                    fw_url == NULL ? 0 : 1,
+                                    &uefirom_applicable_found,
+                                    &uefirom_ver_a,
+                                    &uefirom_ver_b,
+                                    &uefirom_ver_c,
+                                    &uefirom_ver_d,
+                                    uefirom_exp_img_name);
             }
 
             snprintf(nic_tag_prev, MAX_NIC_TAG_LEN, "%s",
@@ -2666,6 +2750,42 @@ main(int argc, const char *argv[])
                         }
                     }
                 }
+                else if (strcmp(description, "NIC UEFIROM") == 0 &&
+                         update_uefirom)
+                {
+                    printf("UEFIROM version: %s\n", version);
+                    if (!(fw_url != NULL && fw_url_no_local_access))
+                    {
+                        ver_check = checkVersion(version,
+                                                 uefirom_ver_a,
+                                                 uefirom_ver_b,
+                                                 uefirom_ver_c,
+                                                 uefirom_ver_d);
+                        if (uefirom_applicable_found)
+                            printf(
+                                "    Available update: %d.%d.%d.%d%s\n",
+                                uefirom_ver_a,
+                                uefirom_ver_b,
+                                uefirom_ver_c,
+                                uefirom_ver_d,
+                                ver_check == 0 && !force_update?
+                                   " (won't be applied without --force)" :
+                                   "");
+                        else if (strlen(uefirom_exp_img_name) == 0)
+                            printf("    No update available\n");
+                        else
+                            printf("    No update available "
+                                   "(you may look for %s)\n",
+                                   uefirom_exp_img_name);
+
+                        if (uefirom_applicable_found &&
+                            (ver_check == 1 || force_update))
+                        {
+                            have_applicable_imgs = 1;
+                            have_applicable_uefirom = 1;
+                        }
+                    }
+                }
 
                 free(description);
                 free(version);
@@ -2698,23 +2818,28 @@ main(int argc, const char *argv[])
                                  have_applicable_controller);
             update_bootrom = (update_bootrom &&
                               have_applicable_bootrom);
+            update_uefirom = (update_uefirom &&
+                              have_applicable_uefirom);
         }
 
         if (!have_applicable_imgs)
             printf("\nThere is no firmware images which can be "
                    "used for update\n");
         if (do_update && have_applicable_imgs &&
-            (update_controller || update_bootrom))
+            (update_controller || update_bootrom || update_uefirom))
         {
             if (!yes)
             {
                 char yes_str[4];
                 int  i;
-
                 printf("\nDo you want to update %s firmware on %s? [yes/no]",
-                       update_controller && update_bootrom ?
-                       "Controller and BootROM" :
-                            (update_controller ? "Controller" : "BootROM"),
+                       update_controller && update_bootrom && update_uefirom?
+                       "Controller, BootROM and UEFIROM" :
+                            (update_controller && update_bootrom ? "Controller and BootROM":
+                            (update_controller && update_uefirom ? "Controller and UEFIROM":
+                            (update_uefirom && update_bootrom ? "UEFIROM and BootROM":
+                            (update_controller ? "Controller":
+                            (update_bootrom ? "BootROM" : "UEFIROM"))))),
                        interface_name == NULL ? "all NICs" : interface_name);
                 fgets(yes_str, sizeof(yes_str), stdin);
                 for (i = 0; i < sizeof(yes_str); i++)
@@ -2730,6 +2855,7 @@ main(int argc, const char *argv[])
                 update_firmware(curl, cim_namespace,
                                 interface_name == NULL ? NULL : nic_inst,
                                 update_controller, update_bootrom,
+                                update_uefirom,
                                 fw_url == NULL ? fw_path : fw_url,
                                 fw_url == NULL ? 0 : 1,
                                 force_update) < 0)
@@ -2759,6 +2885,7 @@ cleanup:
 
     freeXmlCimInstance(svc_mcfw_inst);
     freeXmlCimInstance(svc_bootrom_inst);
+    freeXmlCimInstance(svc_uefirom_inst);
 
     clear_response(&ei_ports_rsp);
     clear_response(&assoc_cntr_rsp);
