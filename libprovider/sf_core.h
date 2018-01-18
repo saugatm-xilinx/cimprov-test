@@ -554,7 +554,8 @@ namespace solarflare
     typedef enum {
         FIRMWARE_UNKNOWN = 0, ///< Unknown firmware
         FIRMWARE_BOOTROM,     ///< BootROM
-        FIRMWARE_MCFW         ///< MC firmware
+        FIRMWARE_MCFW,        ///< MC firmware
+        FIRMWARE_UEFIROM      ///< UEFI ROM
     } UpdatedFirmwareType;
 } // namespace
 

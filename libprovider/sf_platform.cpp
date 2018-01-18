@@ -133,6 +133,10 @@ namespace solarflare
     const char BootROM::romDescription[] = "NIC BootROM";
     const char BootROM::romSysname[] = "";
 
+    const String UEFIROM::uefiromName = "UEFIROM";
+    const char UEFIROM::uefiromDescription[] = "NIC UEFIROM";
+    const char UEFIROM::uefiromSysname[] = "";
+
     const char NIC::nicDescription[] = "Solarflare NIC";
     const String NIC::nicName = "Ethernet Adapter";
 

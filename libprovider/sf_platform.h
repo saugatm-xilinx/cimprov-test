@@ -387,6 +387,23 @@ namespace solarflare
     };
 
 
+    /// @brief Abstract class for UEFIROM. Implementors shall subclass it
+    /// for platform-specific behaviour
+    class UEFIROM : public Firmware {
+        // Class-wide name and description for all UEFIROM instances; to be
+        // passed into superclass.
+        static const String uefiromName;
+        static const char uefiromDescription[];
+        // fixme: same as FW
+        static const char uefiromSysname[];
+    public:
+        /// Constructor
+        UEFIROM() : Firmware(uefiromDescription, uefiromSysname) {};
+        /// @return Same class name for all instances
+        virtual const String& genericName() const { return uefiromName; }
+    };
+
+
     class Driver;
 
     ///
