@@ -17,6 +17,8 @@ const char *type2str(int type)
             return "FIRMWARE_BOOTROM";
         case IMAGE_TYPE_MCFW:
             return "FIRMWARE_MCFW";
+        case IMAGE_TYPE_UEFIROM:
+            return "FIRMWARE_UEFIROM";
         default:
             return "UNKNOWN";
     }
