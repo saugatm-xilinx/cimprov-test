@@ -19,7 +19,7 @@ PROVIDER_NAME = solarflare-cim-provider
 PROVIDER_VERSION_MAJOR = 2
 
 ##! Minor version of the CIM provider
-PROVIDER_VERSION_MINOR = 0
+PROVIDER_VERSION_MINOR = 1
 PROVIDER_VERSION = $(PROVIDER_VERSION_MAJOR).$(PROVIDER_VERSION_MINOR)
 
 ##! Revision string (#.#) of the CIM provider
