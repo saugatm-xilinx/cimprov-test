@@ -133,6 +133,7 @@ include $(TOP)/libcimobjects/sources.mk
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
 include $(TOP)/libprovider/v5_import/endianness/sources.mk
 include $(TOP)/libprovider/v5_import/tlv/sources.mk
+include $(TOP)/libprovider/v5_import/common/sources.mk
 endif
 
 include $(TOP)/libprovider/sources.mk
@@ -208,6 +209,14 @@ USRMGMTINTF_URL          = http://source.uk.solarflarecom.com/hg/incoming/esxi_s
 USRMGMT_INCLFILE         = sfvmk_mgmtInterface.h
 USRMGMT_SRCFILE          = sfvmk_mgmtInterface.c
 USERMGMT_DIR		 = libprovider/userMgmtSrc
+
+V5IMPORT_DIR             = libprovider/v5_import/common
+V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/default/src/driver/common/
+V5IMPORT_IMGFILE	 = ef10_image.c
+V5IMPORT_CRCFILE	 = efx_crc32.c
+V5IMPORT_EFXTYPESFILE	 = efx_types.h
+V5IMPORT_EF10_SIMGFILE	 = ef10_signed_image_layout.h
+
 endif
 ##! Creates a platform-specific build directory
 platform : $(PLATFORM_BUILD)/Makefile
@@ -219,6 +228,16 @@ ifeq ($(CIM_SERVER),esxi_native)
 		@mkdir -p $(TOP)/$(USERMGMT_DIR)
 		@mv $(USRMGMT_INCLFILE) $(TOP)/$(USERMGMT_DIR)/
 		@mv $(USRMGMT_SRCFILE) $(TOP)/$(USERMGMT_DIR)/
+
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_IMGFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_CRCFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EFXTYPESFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EF10_SIMGFILE)
+
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_IMGFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_CRCFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EFXTYPESFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EF10_SIMGFILE)
 endif
 		mkdir -p $(PLATFORM_BUILD)
 		cd $(PLATFORM_BUILD); $(HGLISTALL) | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p

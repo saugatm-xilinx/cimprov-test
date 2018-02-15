@@ -162,7 +162,8 @@ libprovider_INCLUDES += libprovider/v5_import libprovider/v5_import/tlv \
 		libprovider/v5_import/ci/internal libprovider/v5_import/ci/iscsi \
 		libprovider/v5_import/ci/mgmt libprovider/v5_import/ci/net \
 		libprovider/v5_import/ci/tools \
-		libprovider/v5_import/ci/tools/platform
+		libprovider/v5_import/ci/tools/platform \
+		libprovider/v5_import/common
 endif
 
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM), vmware))
@@ -195,7 +196,7 @@ $(libprovider_DIR)/module.o $(libprovider_DIR)/module.d : CPPFLAGS += -DCIMPLE_$
 
 libprovider_DEPENDS = libcimobjects
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))
-libprovider_DEPENDS += libtlv libendianness
+libprovider_DEPENDS += libtlv libendianness libcommon
 endif
 ifeq ($(PROVIDER_PLATFORM),linux)
 libprovider_DEPENDS += libpciaccess

@@ -42,6 +42,10 @@ extern "C" {
 #include "tlv_partition.h"
 #include "tlv_layout.h"
 #include "endian_base.h"
+
+#ifdef TARGET_CIM_SERVER_esxi_native
+#include "efx.h"
+#endif
 }
 
 #include "sf_siocefx_common.h"
@@ -3635,9 +3639,104 @@ cleanup:
                                         VersionInfo *imgVersion,
                                         bool force)
     {
-        image_header_t    header;
+#ifdef TARGET_CIM_SERVER_esxi_native
+        FILE                  *f;
+        VersionInfo           newVersion;
+        efx_image_header_t    *header;
+        size_t                fileSize;
+        char                  *pBuffer = NULL;
+        efx_image_info_t      imageInfo;
+        bool                  result = false;
+
+        f = fopen(filename, "r");
+        if (f == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): attempt to open '%s' failed",
+                             __FUNCTION__, filename);
+            goto cleanup;
+        }
+        if (fseek(f, 0, SEEK_END) != 0)
+        {
+            PROVIDER_LOG_ERR("%s(): Failed to reach end of file",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+        if ((fileSize = ftell(f)) == -1)
+        {
+            PROVIDER_LOG_ERR("%s(): Failed to read filesize",
+                             __FUNCTION__);
+             goto cleanup;
+        }
+        rewind(f);
+        pBuffer = (char*) calloc(fileSize, sizeof(char));
+        if (pBuffer == NULL)
+        {
+             PROVIDER_LOG_ERR("%s(): Memory allocation failed.", __FUNCTION__);
+             goto cleanup;
+        }
+        if (fread(pBuffer, 1, fileSize, f) != fileSize)
+        {
+             PROVIDER_LOG_ERR("%s(): Failed to read firmware image.", __FUNCTION__);
+             goto cleanup;
+        }
+        if ((efx_check_reflash_image(pBuffer, fileSize, &imageInfo)) != 0)
+        {
+             PROVIDER_LOG_ERR("%s(): Check Reflash Image Failed.", __FUNCTION__);
+             goto cleanup;
+        }
+        header = imageInfo.eii_headerp;
+
+        if (header->eih_magic != IMAGE_HEADER_MAGIC)
+        {
+            PROVIDER_LOG_ERR("%s(): firmware image header magic mismatch",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+        if (!((header->eih_type == IMAGE_TYPE_BOOTROM &&
+               fwType == FIRMWARE_BOOTROM) ||
+              (header->eih_type == IMAGE_TYPE_MCFW &&
+               fwType == FIRMWARE_MCFW) ||
+              (header->eih_type == IMAGE_TYPE_UEFIROM &&
+               fwType == FIRMWARE_UEFIROM)))
+        {
+            PROVIDER_LOG_ERR("%s(): firmware image type mismatch",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+        if (header->eih_subtype != subType)
+        {
+            PROVIDER_LOG_ERR("%s(): firmware image subtype mismatch",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+        newVersion = VersionInfo(header->eih_code_version_a,
+                                 header->eih_code_version_b,
+                                 header->eih_code_version_c,
+                                 header->eih_code_version_d);
+        if (imgVersion != NULL)
+            *imgVersion = newVersion;
+
+        if (!force && newVersion <= curVersion)
+        {
+            PROVIDER_LOG_ERR("%s(): firmware of the same or newer "
+                             "version is installed already",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+        result = true;
+
+cleanup:
+        if (f != NULL)
+            fclose(f);
+        if (pBuffer != NULL)
+            free(pBuffer);
+
+        return result;
+
+#else
+        image_header_t   header;
         FILE             *f;
-        VersionInfo       newVersion;
+        VersionInfo      newVersion;
 
         memset(&header, 0, sizeof(header));
 
@@ -3648,7 +3747,6 @@ cleanup:
                              __FUNCTION__, filename);
             return false;
         }
-
         if (fread(&header, 1, sizeof(header), f) != sizeof(header))
         {
             PROVIDER_LOG_ERR("%s(): failed to read firmware image "
@@ -3665,20 +3763,10 @@ cleanup:
                              __FUNCTION__);
             return false;
         }
-
-#ifdef TARGET_CIM_SERVER_esxi_native
-        if (!((header.ih_type == IMAGE_TYPE_BOOTROM &&
-               fwType == FIRMWARE_BOOTROM) ||
-              (header.ih_type == IMAGE_TYPE_MCFW &&
-               fwType == FIRMWARE_MCFW) ||
-              (header.ih_type == IMAGE_TYPE_UEFIROM &&
-               fwType == FIRMWARE_UEFIROM)))
-#else
         if (!((header.ih_type == IMAGE_TYPE_BOOTROM &&
                fwType == FIRMWARE_BOOTROM) ||
               (header.ih_type == IMAGE_TYPE_MCFW &&
                fwType == FIRMWARE_MCFW)))
-#endif
         {
             PROVIDER_LOG_ERR("%s(): firmware image type mismatch",
                              __FUNCTION__);
@@ -3708,6 +3796,7 @@ cleanup:
         }
 
         return true;
+#endif
     }
 
     ///
