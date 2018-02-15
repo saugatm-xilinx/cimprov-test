@@ -853,7 +853,7 @@ fail:
             if (DrvMgmtCall(pNicNameList[i], cmd, &pciInfo) != VMK_OK)
                 continue;
 
-            if (sscanf(pciInfo.pciBDF, "%x:%x:%x.%x",
+            if (sscanf(vmk_NameToString(&pciInfo.pciBDF), "%x:%x:%x.%x",
                 &cur_domain, &cur_bus, &cur_dev, &cur_fn) != 4)
             {
                 PROVIDER_LOG_ERR("%s(): Incorrect BDF info", __FUNCTION__);
@@ -1381,7 +1381,7 @@ fail:
 	    return VMK_FAILURE;
         }
 
-        if (vmk_MgmtUserInit(&driverMgmtSig, 0, &mgmtHandle))
+        if (vmk_MgmtUserInit(&sfvmk_mgmtSig, 0, &mgmtHandle))
         {
             PROVIDER_LOG_ERR("vmk_MgmtUserInit failed");
 	    return VMK_FAILURE;
@@ -1713,13 +1713,13 @@ fail:
 	sfvmk_nvramCmd_t nvram_read_req = {0};
 
 	// NVRAM type field should be selected from the
-	// fields that are declared in sfvmk_mgmtInterface.h
+	// fields that are declared in sfvmk_mgmt_interface.h
 	if (type == FIRMWARE_BOOTROM)
-	    nvram_read_req.type = SFVMK_NVRAM_TYPE_BOOTROM;
+	    nvram_read_req.type = SFVMK_NVRAM_BOOTROM;
         else if (type == FIRMWARE_MCFW)
-	    nvram_read_req.type = SFVMK_NVRAM_TYPE_MC;
+	    nvram_read_req.type = SFVMK_NVRAM_MC;
         else if (type == FIRMWARE_UEFIROM)
-	    nvram_read_req.type = SFVMK_NVRAM_TYPE_UEFIROM;
+	    nvram_read_req.type = SFVMK_NVRAM_UEFIROM;
         else
         {
 	    PROVIDER_LOG_ERR("%s(): Unknown Firmware Type", __FUNCTION__);
@@ -2312,7 +2312,7 @@ fail:
 
         linkSpeed.type = SFVMK_MGMT_DEV_OPS_GET;
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE, &linkSpeed) != VMK_OK)
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &linkSpeed) != VMK_OK)
             return Speed(Port::SpeedUnknown);
 
 	switch (linkSpeed.speed)
@@ -2344,7 +2344,7 @@ fail:
                 THROW_PROVIDER_EXCEPTION_FMT("Nonstandard speed specified");
         }
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE, &linkSpeed) != VMK_OK)
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &linkSpeed) != VMK_OK)
 	    THROW_PROVIDER_EXCEPTION_FMT("Link Speed Configuration Failed");
     }
 #endif
@@ -2454,7 +2454,7 @@ fail:
 
         speedNeg.type = SFVMK_MGMT_DEV_OPS_GET;
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE,
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST,
 			&speedNeg) == VMK_OK)
 	    return (speedNeg.autoNeg == VMK_TRUE);
 	return true;
@@ -2466,14 +2466,14 @@ fail:
 
         speedNeg.type = SFVMK_MGMT_DEV_OPS_GET;
 
-	if ((DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE,
+	if ((DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST,
 			 &speedNeg) != VMK_OK) || (speedNeg.autoNeg == an))
 	    return;
 
 	speedNeg.autoNeg = an;
 	speedNeg.type = SFVMK_MGMT_DEV_OPS_SET;
 
-	DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_UPDATE, &speedNeg);
+	DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &speedNeg);
     }
 #endif
 
@@ -2668,7 +2668,7 @@ fail:
                    #x_) == 0)             \
         paramValues.append(intCoalsParam.x_)
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION,
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
 			&intCoalsParam) != VMK_OK)
 	{
 	    PROVIDER_LOG_ERR("Interrupt Moderation parameter retrieval failed");
@@ -2719,7 +2719,7 @@ fail:
                    #x_) == 0)             \
         intCoalsParam.x_ = paramValues[i]
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION,
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
 			&intCoalsParam) != VMK_OK)
 	{
 	    PROVIDER_LOG_ERR("%s(): Interrupt Moderation parameter"
@@ -2757,7 +2757,7 @@ fail:
 
 	intCoalsParam.type = SFVMK_MGMT_DEV_OPS_SET;
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION,
+	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
 			&intCoalsParam) != VMK_OK)
 	{
 	    PROVIDER_LOG_ERR("Interrupt Coalesce parameter configuration failed");
@@ -2816,7 +2816,6 @@ fail:
         return false;
     }
 
-#ifndef TARGET_CIM_SERVER_esxi_native
     void VMwareInterface::enable(bool st)
     {
         // Implementation is blocked by SF bug 35613
@@ -2826,24 +2825,7 @@ fail:
         THROW_PROVIDER_EXCEPTION_FMT("Changing interface state "
                                      "is not implemented");
     }
-#else
-    void VMwareInterface::enable(bool st)
-    {
-	sfvmk_linkStatus_t linkStatus;
 
-	if (boundPort == NULL)
-            return;
-
-	linkStatus.type = SFVMK_MGMT_DEV_OPS_SET;
-	linkStatus.state = st;
-
-	if (DrvMgmtCall(((VMwarePort *)boundPort)->dev_name.c_str(),
-			  SFVMK_CB_LINK_STATUS_UPDATE, &linkStatus) == VMK_OK)
-	    return;
-
-	PROVIDER_LOG_ERR("%s(): Interface enable/disable failed ", __FUNCTION__);
-    }
-#endif
     uint64 VMwareInterface::mtu() const
     {
         Ref<CIM_EthernetPort> cimEthPort;
@@ -3245,7 +3227,6 @@ fail:
 
             VitalProductData vpd(sn.c_str(), "", sn.c_str(), pn.c_str(),
                                  p_name.c_str(), pn.c_str());
-
             return vpd;
         }
     }
@@ -4223,7 +4204,7 @@ cleanup:
 				&verInfo) == VMK_OK)
 		{
 		    free(nicNameList);
-	            return VersionInfo(verInfo.version);
+	            return VersionInfo(vmk_NameToString(&verInfo.version));
 		}
 	    }
 
@@ -5496,7 +5477,7 @@ cleanup:
 	verInfo.type = SFVMK_GET_FW_VERSION;
 
 	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
-	   return VersionInfo(verInfo.version);
+	   return VersionInfo(vmk_NameToString(&verInfo.version));
 	return VersionInfo(DEFAULT_VERSION_STR);
     }
 #endif
@@ -5565,7 +5546,7 @@ cleanup:
 	verInfo.type = SFVMK_GET_ROM_VERSION;
 
 	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
-	    return VersionInfo(verInfo.version);
+	    return VersionInfo(vmk_NameToString(&verInfo.version));
 	return VersionInfo(DEFAULT_VERSION_STR);
     }
 
@@ -5584,7 +5565,7 @@ cleanup:
 	verInfo.type = SFVMK_GET_UEFI_VERSION;
 
 	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
-	    return VersionInfo(verInfo.version);
+	    return VersionInfo(vmk_NameToString(&verInfo.version));
 	return VersionInfo(DEFAULT_VERSION_STR);
     }
 #endif

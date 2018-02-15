@@ -162,8 +162,8 @@ namespace solarflare
 	sfvmk_nvramCmd_t nvram_read_req = {0};
 
 	// NVRAM type field should be selected from the
-	// fields that are declared in sfvmk_mgmtInterface.h
-	nvram_read_req.type = type;
+	// fields that are declared in sfvmk_mgmt_interface.h
+	nvram_read_req.type = (sfvmk_nvramType_t)type;
 	nvram_read_req.op = SFVMK_NVRAM_OP_READ;
 
         for ( ; offset < end; )
@@ -274,8 +274,8 @@ namespace solarflare
 	sfvmk_nvramCmd_t nvram_write_req = {0};
 
 	// NVRAM type field should be selected from the
-	// fields that are declared in sfvmk_mgmtInterface.h
-	nvram_write_req.type = type;
+	// fields that are declared in sfvmk_mgmt_interface.h
+	nvram_write_req.type = (sfvmk_nvramType_t)type;
 	nvram_write_req.op = SFVMK_NVRAM_OP_WRITE;
 
         for ( ; offset < end; )
@@ -351,8 +351,8 @@ namespace solarflare
         sfvmk_nvramCmd_t nvram_partition = {0};
 
 	// NVRAM type field should be selected from the
-	// fields that are declared in sfvmk_mgmtInterface.h
-        nvram_partition.type = type;
+	// fields that are declared in sfvmk_mgmt_interface.h
+        nvram_partition.type = (sfvmk_nvramType_t)type;
         nvram_partition.op = SFVMK_NVRAM_OP_SIZE;
 
 	if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST, &nvram_partition) == VMK_OK)
