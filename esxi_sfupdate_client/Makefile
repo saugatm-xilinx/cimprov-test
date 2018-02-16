@@ -42,15 +42,29 @@ else
     CPP=cpp
 endif
 MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC
+TOP ?= .
+V5IMPORT_DIR             = common
+V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/default/src/driver/common/
+V5IMPORT_IMGFILE	 = ef10_image.c
+V5IMPORT_CRCFILE	 = efx_crc32.c
+V5IMPORT_EF10_SIMGFILE	 = ef10_signed_image_layout.h
 
 ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
                 $(CPP) $(MY_CPPFLAGS) 1>/dev/null 2>/dev/null; echo $$?))
     MY_CPPFLAGS:=$(MY_CPPFLAGS) -DNCURSES_CURSES_H
 endif
 
+
 sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c cim_client.c \
   			curl_aux.c $(VSNPRINTF_FIX)
-	$(CC) -g main.c fw_images.c cim_client.c curl_aux.c \
+	rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_IMGFILE)
+	rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_CRCFILE)
+	rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EF10_SIMGFILE)
+	wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_IMGFILE)
+	wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_CRCFILE)
+	wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EF10_SIMGFILE)
+
+	$(CC) -g main.c fw_images.c cim_client.c curl_aux.c common/ef10_image.c common/efx_crc32.c\
 	      -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
 	      $(XML2_CFLAGS) $(MY_LIBS) $(VSNPRINTF_FIX)
 	if test x != x$(VSNPRINTF_FIX) ; then rm $(VSNPRINTF_FIX); fi
@@ -62,8 +76,8 @@ fw_images.c :
 
 DISTDIR = esxi_sfupdate-1.0
 
-DISTFILES = main.c vsnprintf_fix.c curl_aux.c curl_aux.h \
-	    		cim_client.c cim_client.h Makefile README \
+DISTFILES = main.c vsnprintf_fix.c curl_aux.c curl_aux.h common\efx.h common\efsys.h\
+			common\efx_impl.h cim_client.c cim_client.h Makefile README \
 	    		esxi_sfupdate_client.spec \
 			fw_images.h include_fw_imgs.sh sf_base64.h \
 			cim_log.h libs libs_includes

@@ -28,6 +28,7 @@
 #include "cim_log.h"
 
 #include "curl_aux.h"
+#include "common/efx.h"
 
 extern fw_img_descr firmware_images[];
 extern unsigned int fw_images_count;
@@ -803,10 +804,8 @@ call_install_from_uri(CURL *curl, const char *namespace,
         }
     }
     printf("...\n");
-
     doc = xmlReqInstallFromURI(namespace, svc, target, url,
                                force, base64_hash);
-    
     rc = processXmlRequest(curl, doc, "InstallFromURI",
                            response);
 
@@ -1107,43 +1106,43 @@ install_from_local_source(CURL *curl, const char *namespace,
 {
 #define CHUNK_LEN 100000
 
-    int             rc = 0;
-    int             rc_rsp = 0;
-    xmlCimInstance  aux_inst;
-    xmlCimInstance *targets_list = NULL;
-    xmlCimInstance *p;
-    response_descr  nics_rsp;
-    response_descr  call_rsp;
-    char           *svc_name = NULL;
+    int                 rc = 0;
+    int                 rc_rsp = 0;
+    xmlCimInstance      aux_inst;
+    xmlCimInstance     *targets_list = NULL;
+    xmlCimInstance     *p;
+    response_descr      nics_rsp;
+    response_descr      call_rsp;
+    char               *svc_name = NULL;
 
-    int             not_full_path = 0;
-    char            full_path[MAX_PATH_LEN];
-    char            full_path_prev[MAX_PATH_LEN];
-    int             img_idx = -1;
-    int             img_idx_prev = -1;
-    char           *tmp_file_name = NULL;
-    char            url[MAX_PATH_LEN];
+    int                 not_full_path = 0;
+    char                full_path[MAX_PATH_LEN];
+    char                full_path_prev[MAX_PATH_LEN];
+    int                 img_idx = -1;
+    int                 img_idx_prev = -1;
+    char               *tmp_file_name = NULL;
+    char                url[MAX_PATH_LEN];
 
-    EVP_MD_CTX      mdctx;
-    char            md_hash[EVP_MAX_MD_SIZE];
-    int             md_len;
+    EVP_MD_CTX          mdctx;
+    char                md_hash[EVP_MAX_MD_SIZE];
+    int                 md_len;
 
-    size_t  enc_size;
-    char   *encoded = NULL;
+    size_t              enc_size;
+    char               *encoded = NULL;
 
-    char            img_chunk[CHUNK_LEN];
-    size_t          read_len;
-    size_t          was_sent;
+    char                img_chunk[CHUNK_LEN];
+    size_t              read_len;
+    size_t              was_sent;
 
-    fw_img_descr    *imgs_array = NULL;
-    unsigned int     imgs_count = 0;
+    fw_img_descr       *imgs_array = NULL;
+    unsigned int        imgs_count = 0;
 
-    int use_local_path = 0;
+    int                  use_local_path = 0;
 
-    image_header_t   update_img_header;
-    int              no_cur_ver = 0;
-    int              no_img_ver = 0;
-    char             cur_version[MAX_VER_LEN];
+    efx_image_header_t   update_img_header;
+    int                  no_cur_ver = 0;
+    int                  no_img_ver = 0;
+    char                 cur_version[MAX_VER_LEN];
 
     memset(&nics_rsp, 0, sizeof(nics_rsp));
     memset(&call_rsp, 0, sizeof(call_rsp));
@@ -1281,6 +1280,7 @@ install_from_local_source(CURL *curl, const char *namespace,
                 unsigned int   int_type;
                 unsigned int   int_subtype;
                 unsigned int   i;
+                efx_image_info_t  imageInfo;
 
                 type = get_named_value(call_rsp.out_params_list,
                                        "Type");
@@ -1300,10 +1300,15 @@ install_from_local_source(CURL *curl, const char *namespace,
 
                 for (i = 0; i < imgs_count; i++)
                 {
-                    image_header_t *header =
-                        (image_header_t*)imgs_array[i].data;
-                    if (header->ih_type == int_type &&
-                        header->ih_subtype == int_subtype)
+                    rc = efx_check_reflash_image(imgs_array[i].data, imgs_array[i].size, &imageInfo);
+                    if (rc != 0 )
+                    {
+                        ERROR_MSG_PLAIN("Error in checking firmware image");
+                        continue;
+                    }
+                    efx_image_header_t *header = imageInfo.eii_headerp;
+                    if (header->eih_type == int_type &&
+                        header->eih_subtype == int_subtype)
                         break;
                 }
 
@@ -1401,7 +1406,6 @@ install_from_local_source(CURL *curl, const char *namespace,
             was_sent = 0;
             do {
                 int ferr;
-
                 if (use_local_path)
                 {
                     read_len = fread(img_chunk, 1, CHUNK_LEN, f); 
@@ -1421,7 +1425,6 @@ install_from_local_source(CURL *curl, const char *namespace,
                     read_len = imgs_array[img_idx].size - was_sent;
                     if (read_len > CHUNK_LEN)
                         read_len = CHUNK_LEN;
-
                     memcpy(img_chunk,
                            imgs_array[img_idx].data + was_sent,
                            read_len);
@@ -1439,11 +1442,7 @@ install_from_local_source(CURL *curl, const char *namespace,
                             no_img_ver = 1;
                         }
                         else
-                        {
-                            memcpy(&update_img_header,
-                                   img_chunk, sizeof(update_img_header));
                             no_img_ver = 0;
-                        }
                     }
 
                     enc_size = base64_enc_size(read_len);
@@ -1514,15 +1513,38 @@ install_from_local_source(CURL *curl, const char *namespace,
 
         if (!(no_cur_ver || no_img_ver || force))
         {
-            /* 
+            /*
              * Skip firmware image with lower version unless
              * force is specified.
              */
+            efx_image_info_t  imageInfo;
+            if (use_local_path)
+            {
+                if (rc = getImageHeader(full_path, &update_img_header) != 0)
+                {
+                    ERROR_MSG_PLAIN("%s: Error in reading firmware image", __FUNCTION__);
+                    rc = -1;
+                    goto cleanup;
+                }
+            }
+            else
+            {
+                rc = efx_check_reflash_image(imgs_array[img_idx].data, imgs_array[img_idx].size, &imageInfo);
+                if (rc != 0)
+                {
+                    ERROR_MSG_PLAIN("Error in checking firmware image");
+                    rc = -1;
+                    goto cleanup;
+                }
+                memcpy(&update_img_header,
+                       imageInfo.eii_headerp, sizeof(update_img_header));
+            }
+
             if (!checkVersion(cur_version,
-                              update_img_header.ih_code_version_a,
-                              update_img_header.ih_code_version_b,
-                              update_img_header.ih_code_version_c,
-                              update_img_header.ih_code_version_d))
+                              update_img_header.eih_code_version_a,
+                              update_img_header.eih_code_version_b,
+                              update_img_header.eih_code_version_c,
+                              update_img_header.eih_code_version_d))
                 goto next_target;
         }
  
@@ -2008,21 +2030,20 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                     int *ver_c, int *ver_d,
                     char *req_img_name)
 {
-    response_descr  call_rsp;
-    response_descr  call_rsp_aux;
-    int             rc_rsp = 0;
-    int             rc = 0;
-
-    char            *svc_name = NULL;
-    char            *img_name = NULL;
-    const char      *subdir = NULL;
-    char            *img_type_str = NULL;
-    char            *img_subtype_str = NULL;
-    unsigned int     img_type = 0;
-    unsigned int     img_subtype = 0;
-
-    image_header_t *header = NULL;
-    int             i;
+    response_descr      call_rsp;
+    response_descr      call_rsp_aux;
+    int                 rc_rsp = 0;
+    int                 rc = 0;
+    char               *svc_name = NULL;
+    char               *img_name = NULL;
+    const char         *subdir = NULL;
+    char               *img_type_str = NULL;
+    char               *img_subtype_str = NULL;
+    unsigned int        img_type = 0;
+    unsigned int        img_subtype = 0;
+    efx_image_header_t *header = NULL;
+    int                 i;
+    efx_image_info_t    imageInfo;
 
     memset(&call_rsp, 0, sizeof(call_rsp));
     memset(&call_rsp_aux, 0, sizeof(call_rsp_aux));
@@ -2126,9 +2147,15 @@ findAvailableUpdate(CURL *curl, const char *namespace,
         {
             for (i = 0; i < fw_images_count; i++)
             {
-                header = (image_header_t*)firmware_images[i].data;
-                if (header->ih_type == img_type &&
-                    header->ih_subtype == img_subtype)
+                rc = efx_check_reflash_image(firmware_images[i].data, firmware_images[i].size, &imageInfo);
+                if (rc != 0 )
+                {
+                    ERROR_MSG("Error in checking firmware image");
+                    continue;
+                }
+                header = imageInfo.eii_headerp;
+                if (header->eih_type == img_type &&
+                    header->eih_subtype == img_subtype)
                     break;
             }
 
@@ -2137,10 +2164,10 @@ findAvailableUpdate(CURL *curl, const char *namespace,
             else
             {
                 *applicable_found = 1;
-                *ver_a = header->ih_code_version_a;
-                *ver_b = header->ih_code_version_b;
-                *ver_c = header->ih_code_version_c;
-                *ver_d = header->ih_code_version_d;
+                *ver_a = header->eih_code_version_a;
+                *ver_b = header->eih_code_version_b;
+                *ver_c = header->eih_code_version_c;
+                *ver_d = header->eih_code_version_d;
             }
         }
         else
@@ -2269,11 +2296,23 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                        curl_data, curl_data_len);
                 downloaded_fw_imgs[downloaded_count].size = curl_data_len;
 
-                header = (image_header_t*)
-                                downloaded_fw_imgs[downloaded_count].data;
+                rc = efx_check_reflash_image(
+                       downloaded_fw_imgs[downloaded_count].data,
+                       downloaded_fw_imgs[downloaded_count].size,
+                       &imageInfo);
+                if (rc != 0 )
+                {
+                    ERROR_MSG("Error in checking firmware image");
+                    *applicable_found = 0;
+                    free(downloaded_fw_imgs[downloaded_count].data);
+                    downloaded_fw_imgs[downloaded_count].size = 0;
+                    rc = -1;
+                    goto cleanup;
+                }
+                header = imageInfo.eii_headerp;
 
-                if (header->ih_type != img_type ||
-                    header->ih_subtype != img_subtype)
+                if (header->eih_type != img_type ||
+                    header->eih_subtype != img_subtype)
                 {
                     *applicable_found = 0;
                     free(downloaded_fw_imgs[downloaded_count].data);
@@ -2281,10 +2320,10 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                 }
                 else
                 {
-                    *ver_a = header->ih_code_version_a;
-                    *ver_b = header->ih_code_version_b;
-                    *ver_c = header->ih_code_version_c;
-                    *ver_d = header->ih_code_version_d;
+                    *ver_a = header->eih_code_version_a;
+                    *ver_b = header->eih_code_version_b;
+                    *ver_c = header->eih_code_version_c;
+                    *ver_d = header->eih_code_version_d;
                     *applicable_found = 1;
 
                     downloaded_count++;
@@ -2292,37 +2331,25 @@ findAvailableUpdate(CURL *curl, const char *namespace,
             }
             else
             {
-                FILE *f = fopen(full_path, "rb");
+                efx_image_header_t header_aux;
+                if (getImageHeader(full_path, &header_aux) != 0)
+                {
+                    ERROR_MSG_PLAIN("%s: Error in reading firmware image", __FUNCTION__);
+                    rc = -1;
+                    *applicable_found = 0;
+                    goto cleanup;
+                }
 
-                if (f == NULL)
+                if (header_aux.eih_type != img_type ||
+                    header_aux.eih_subtype != img_subtype)
                     *applicable_found = 0;
                 else
                 {
-                    image_header_t header_aux;
-
-                    memset(&header_aux, 0, sizeof(header_aux));
-
-                    if (fread(&header_aux, 1, sizeof(header_aux), f) !=
-                        sizeof(header_aux))
-                    {
-                        ERROR_MSG("Failed to read image header");
-                        rc = -1;
-                        fclose(f);
-                        goto cleanup;
-                    }
-                    fclose(f);
-
-                    if (header_aux.ih_type != img_type ||
-                        header_aux.ih_subtype != img_subtype)
-                        *applicable_found = 0;
-                    else
-                    {
-                        *applicable_found = 1;
-                        *ver_a = header_aux.ih_code_version_a;
-                        *ver_b = header_aux.ih_code_version_b;
-                        *ver_c = header_aux.ih_code_version_c;
-                        *ver_d = header_aux.ih_code_version_d;
-                    }
+                    *applicable_found = 1;
+                    *ver_a = header_aux.eih_code_version_a;
+                    *ver_b = header_aux.eih_code_version_b;
+                    *ver_c = header_aux.eih_code_version_c;
+                    *ver_d = header_aux.eih_code_version_d;
                 }
             }
         }
@@ -2334,6 +2361,68 @@ cleanup:
     clear_response(&call_rsp);
     free(svc_name);
     return rc;
+}
+
+
+/**
+ * Read firmware image header from file
+ *
+ * @param fileName  Image File to read
+ * @param imageHdr  Pointer to efx_image_header_t
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int getImageHeader(char *fileName, efx_image_header_t *imageHdr)
+{
+       FILE *f;
+       size_t fileSize = 0;
+       char   *pBuffer = NULL;
+       int rc = -1;
+       efx_image_info_t imageInfo;
+       f = fopen(fileName, "rb");
+       if (f == NULL)
+       {
+           ERROR_MSG("%s: File open failed", __FUNCTION__);
+           goto cleanup;
+       }
+       if (fseek(f, 0, SEEK_END) != 0)
+       {
+           ERROR_MSG("%s: Seeking file end failed", __FUNCTION__);
+           goto cleanup;
+       }
+       if ((fileSize = ftell(f)) == -1)
+       {
+           ERROR_MSG("%s: Getting file size failed", __FUNCTION__);
+           goto cleanup;
+       }
+       rewind(f);
+
+       pBuffer = (char*) calloc(fileSize, sizeof(char));
+       if (pBuffer == NULL)
+       {
+           ERROR_MSG("%s: Memory allocation failed", __FUNCTION__);
+           goto cleanup;
+       }
+       if (fread(pBuffer, 1, fileSize, f) != fileSize)
+       {
+           ERROR_MSG("%s: Failed to read firmware image", __FUNCTION__);
+           goto cleanup;
+       }
+       rc = efx_check_reflash_image(pBuffer, fileSize, &imageInfo);
+       if (rc != 0 )
+       {
+           ERROR_MSG("%s: Error in reading firmware image", __FUNCTION__);
+           goto cleanup;
+       }
+       memcpy(imageHdr, imageInfo.eii_headerp, sizeof(efx_image_header_t));
+
+       rc = 0;
+cleanup:
+   if (f != NULL)
+       fclose(f);
+   if(pBuffer != NULL)
+       free(pBuffer);
+   return rc;
 }
 
 /**
