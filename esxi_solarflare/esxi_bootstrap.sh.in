@@ -21,7 +21,7 @@ if test $cimpdk_v1 -le 5 -a $cimpdk_v2 -le 1 ; then
     sed -i "s/acme/$PRODUCT_NAME/g" common/visor-oemtgz.sh
 
     cd solarflare
-    set +v 
+    set +v
     source ../common/defs
     set -v
     ln -sf `i686-linux5.0-g++ -print-file-name=libstdc++.a` .
@@ -37,8 +37,8 @@ else
     cp $CIMPDK_SAMPLES/acme/Makefile .
 
     sed -i "s/\${PROJDIR}\/src/\${PROJDIR}\/solarflare/g" Makefile
-    sed -i "s/PROV_NAME=acme/PROV_NAME=__PROVIDER_NAME__/g" Makefile
-    sed -i "s/PROV_NAMESPACE=acme/PROV_NAMESPACE=solarflare/g" Makefile
+    sed -i "s/PROV_NAME=.*/PROV_NAME=__PROVIDER_NAME__/g" Makefile
+    sed -i "s/PROV_NAMESPACE=.*/PROV_NAMESPACE=solarflare/g" Makefile
     sed -i "s/DESC_VENDOR=.*/DESC_VENDOR=__PROVIDER_VENDOR_SHORT__/g" Makefile
     sed -i "s/DESC_VENDOR_EMAIL=.*/DESC_VENDOR_EMAIL=__PROVIDER_VENDOR_EMAIL__/g" Makefile
     sed -i "s/DESC_SUMMARY=.*/DESC_SUMMARY=__PROVIDER_DESCRIPTION__/g" Makefile
@@ -52,9 +52,17 @@ else
     sed -i "s/\${CURRENT_DIR}\/descriptor.xml/\${CURRENT_DIR}\/oem\/descriptor.xml/g" Makefile
     sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
     sed -i "s/BULL_KBURL=.*/BULL_KBURL=none/g" Makefile
-    sed -i "s/BULL_VENDOR_CODE=VMW/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
+    sed -i "s/BULL_VENDOR_CODE=.*/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
     sed -i "s/VIB_BULLETIN_ID=.*$/VIB_BULLETIN_ID=\${BULL_VENDOR_CODE}-\${DESC_NAME}-\${DESC_VERSION}/g" Makefile
     sed -i "s/PROV_VIB_BASENAME=.*$/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-\${PROV_NAME}-\${DESC_VERSION}/g" Makefile
+
+    if test $cimpdk_v1 -ge 6 -a $cimpdk_v2 -ge 5 ; then
+        sed -i "s/\${PROV_NAMESPACE}-interop.mof/interop.mof/g" Makefile
+        sed -i "s/\${PROV_NAMESPACE}.mof/namespace.mof/g" Makefile
+        sed -i "s/\${PROV_NAMESPACE}.reg/repository.reg/g" Makefile
+
+        sed -i "s/\(newname=\`echo \$\$filename.*\/\.so\/.*\)$/break ; \\\\/g" Makefile
+    fi
 
     if test $cimpdk_v1 -le 5 -a $cimpdk_v2 -le 5 ; then
         MK_CC=`cat Makefile | grep "export\s*CC\s*="`
