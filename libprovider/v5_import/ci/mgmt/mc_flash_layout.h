@@ -81,8 +81,13 @@ typedef struct blob_hdr_s {
 #define BLOB_CPU_TYPE_TXDI_VTBL1 (15)
 #define BLOB_CPU_TYPE_DUMPSPEC (32)
 #define BLOB_CPU_TYPE_MC_XIP   (33)
+#define BLOB_CPU_TYPE_FW_VARINFO (34)
 
 #define BLOB_CPU_TYPE_INVALID (31)
+
+/* Build variant for BLOB_CPU_TYPE_MC_XIP */
+#define MC_XIP_BLOB_VARIANT_NO_CMAC     0
+#define MC_XIP_BLOB_VARIANT_64BIT_CMAC  1
 
 /* The upper four bits of the CPU type field specify the compression
  * algorithm used for this blob. */
@@ -91,7 +96,6 @@ typedef struct blob_hdr_s {
 
 #define BLOB_COMPRESSION_NONE (0x00000000) /* Stored as is */
 #define BLOB_COMPRESSION_LZ   (0x10000000) /* see lib/lzdecoder.c */
-
 
 typedef struct siena_mc_boot_hdr_s {
   uint32_t magic;                  /* = SIENA_MC_BOOT_MAGIC */
@@ -103,15 +107,28 @@ typedef struct siena_mc_boot_hdr_s {
   uint16_t checksum;               /* of whole header area + firmware image */
   uint16_t firmware_version_d;
   uint8_t  mcfw_subtype;
-  uint8_t  generation;             /* Valid for medford, SBZ for earlier chips */
+  uint8_t  generation;             /* MC (Medford and later): MC partition generation when */
+                                   /* written to NVRAM. */
+                                   /* MUM & SUC images: subtype. */
+                                   /* (Otherwise set to 0) */
   uint32_t firmware_text_offset;   /* offset to firmware .text */
   uint32_t firmware_text_size;     /* length of firmware .text, in bytes */
   uint32_t firmware_data_offset;   /* offset to firmware .data */
   uint32_t firmware_data_size;     /* length of firmware .data, in bytes */
   uint8_t  spi_rate;               /* SPI rate for reading image, 0 is BootROM default */
   uint8_t  spi_phase_adj;          /* SPI SDO/SCL phase adjustment, 0 is default (no adj) */
-  uint16_t xpm_sector;             /* The sector that contains the key, or 0xffff if unsigned (medford) SBZ (earlier) */
-  uint32_t reserved_c[7];          /* (set to 0) */
+  uint16_t xpm_sector;             /* XPM (MEDFORD and later): The sector that contains */
+                                   /* the key, or 0xffff if unsigned. (Otherwise set to 0) */
+  uint8_t  mumfw_subtype;          /* MUM & SUC images: subtype. (Otherwise set to 0) */
+  uint8_t  reserved_b[3];          /* (set to 0) */
+  uint32_t security_level;         /* This number increases every time a serious security flaw */
+                                   /* is fixed. A secure NIC may not downgrade to any image */
+                                   /* with a lower security level than the current image. */
+                                   /* Note: The number in this header should only be used for */
+                                   /* determining the level of new images, not to determine */
+                                   /* the level of the current image as this header is not */
+                                   /* protected by a CMAC. */
+  uint32_t reserved_c[5];          /* (set to 0) */
 } siena_mc_boot_hdr_t;
 
 #define SIENA_MC_BOOT_HDR_PADDING \
@@ -190,6 +207,8 @@ typedef struct siena_mc_static_config_hdr_s {
   } dbi[];
 } siena_mc_static_config_hdr_t;
 
+/* This prefixes a valid XIP partition */
+#define XIP_PARTITION_MAGIC (0x51DEC0DE)
 
 /* The dynamic configuration layout has been moved to a separate header; it is
  * of interest to some user tools.
@@ -278,17 +297,24 @@ typedef struct siena_mc_combo_rom_infoblk_s {
   uint8_t mpio_priority;
   uint8_t banner_delay;
   uint8_t bootskip_delay;
+  uint8_t boot_image;
 } siena_mc_combo_rom_infoblk_t;
 
 /* gPXE configuration area.
  *
  * A bytes-sum-to-zero checksum applies across the whole area, so we need to
  * know how long it is (it's not necessarily the same length as the flash
- * partition allocated to it).
+ * partition allocated to it, and on medford there are several in the 
+ * same partition).
  */
+#define MC_LEGACY_EXPROM_CONFIG_LENGTH (0x1000) /* Applicable to SIENA and HUNT */
+#define MC_MEDFORD_EXPROM_CONFIG_LENGTH (0x800) /* Applicable to MEDFORD and later */
 
-#define SIENA_MC_EXPROM_CONFIG_LENGTH (0x1000)
-
+#if defined(SFC_ARCH_MEDFORD) || defined(SFC_ARCH_MEDFORD2)
+#define MC_EXPROM_CONFIG_LENGTH (MC_MEDFORD_EXPROM_CONFIG_LENGTH)
+#else
+#define MC_EXPROM_CONFIG_LENGTH (MC_LEGACY_EXPROM_CONFIG_LENGTH)
+#endif
 
 /* External PHY firmware MDIO boot image header.
  *
@@ -346,6 +372,31 @@ typedef struct siena_mc_callisto_hdr_s {
   uint32_t alt_boot_ptr;   /* reserved for use as MC f/w alt. boot pointer */
 } siena_mc_callisto_hdr_t;
 
+
+/* Status partition layout.
+ *
+ * Constructed by the MC and accessed by MC_CMD_NVRAM_READ.
+ * The struct is extensible in a similar way to persistent data, with the length
+ * field indicating how many of the fields are implemented by the MC.
+ */
+#define MEDFORD_MC_STATUS_MAGIC (0xEF1057A7)
+
+typedef struct medford_mc_status_hdr_s {
+  uint32_t magic;              /* = MEDFORD_MC_STATUS_MAGIC */
+  uint32_t length;             /* = sizeof(medford_mc_status_hdr_t) */
+  uint32_t last_update_err;    /* The mcdi error returned by the most recent
+                                * MC_CMD_NVRAM_UPDATE_FINISH. Set to 0 if no
+                                * update since last boot. */
+  uint32_t last_verify_result; /* The result of the most recent firmware update
+                                * verification. This will be set to
+                                * MC_CMD_NVRAM_VERIFY_RC_UNKNOWN if no verified
+                                * update has happened since the last boot. */
+  uint32_t current_security_level; /* Security level of the running firmware. */
+} medford_mc_status_hdr_t;
+
+/* The partition length must be a multiple of 512 bytes to work with the Linux
+ * mtdblock driver. */
+#define MC_STATUS_PARTN_LEN 512
 
 #endif
 

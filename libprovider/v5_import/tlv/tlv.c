@@ -59,25 +59,34 @@ void tlv_init_block(uint32_t *block)
 
 uint32_t tlv_tag(tlv_cursor_t *cursor)
 {
-  return le32_to_host(cursor->current[0]);
+  return (cursor->current? le32_to_host(cursor->current[0]): TLV_TAG_INVALID);
 }
 
 size_t tlv_length(tlv_cursor_t *cursor)
 {
-  return (cursor->current[0] == host_to_le32(TLV_TAG_END))
-           ? 0U : (size_t)le32_to_host(cursor->current[1]);
+  if (cursor->current)
+    return (cursor->current[0] == host_to_le32(TLV_TAG_END))
+            ? 0U : (size_t)le32_to_host(cursor->current[1]);
+  else
+    return 0U;
 }
 
 uint8_t *tlv_value(tlv_cursor_t *cursor)
 {
-  return (cursor->current[0] == host_to_le32(TLV_TAG_END))
-           ? NULL : (uint8_t *)&cursor->current[2];
+  if (cursor->current)
+    return (cursor->current[0] == host_to_le32(TLV_TAG_END))
+            ? NULL : (uint8_t *)&cursor->current[2];
+  else
+    return NULL;
 }
 
 uint8_t *tlv_item(tlv_cursor_t *cursor)
 {
-  return (cursor->current[0] == host_to_le32(TLV_TAG_END))
-           ? NULL : (uint8_t *)cursor->current;
+  if (cursor->current)
+    return (cursor->current[0] == host_to_le32(TLV_TAG_END))
+            ? NULL : (uint8_t *)cursor->current;
+  else
+    return NULL;
 }
 
 int tlv_validate_state(tlv_cursor_t *cursor)
@@ -474,9 +483,9 @@ void tlv_dump(tlv_cursor_t *cursor)
     return;
   }
 
-  printf("Tag 0x%08x: %zu bytes (at offset 0x%04x)\n", (unsigned int)tag,
-         length, (unsigned int)((uint8_t *)cursor->current
-                                - (uint8_t *)cursor->block));
+  printf("Tag 0x%08x: %u bytes (at offset 0x%04x)\n", (unsigned int)tag,
+         (unsigned int)length, (unsigned int)((uint8_t *)cursor->current
+                                              - (uint8_t *)cursor->block));
 
   hexdump(value, length, 4);
 }

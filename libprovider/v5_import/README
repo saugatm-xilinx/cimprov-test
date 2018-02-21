@@ -1,4 +1,4 @@
-All includes in this folder except libutils were taken from d424eb481d58 revision of
-v5-incoming repository. libutils was taken from
+All includes in this folder except libutils were taken from 0331ae558ce0
+(v4_13_0_1006) revision of v5-incoming repository. libutils was taken from
 sfutils/build/linux/host/include/libutils (sfutils revision 9149f4d0067e)
 with fixes for bug 58106 applied.
