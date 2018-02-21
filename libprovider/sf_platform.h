@@ -13,6 +13,7 @@
 
 #include <cimple/cimple.h>
 #include <cimple/Buffer.h>
+#include <cimple/Property.h>
 
 #include "sf_core.h"
 #include "sf_logging.h"
@@ -29,6 +30,7 @@
 ///
 namespace solarflare 
 {
+    using cimple::Property;
     using cimple::Buffer;
     using cimple::String;
     using cimple::Datetime;
@@ -236,6 +238,27 @@ namespace solarflare
         virtual const String& genericName() const { return portName; }
 
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
+
+        ///
+        /// Get privileges of a given physical or virtual function.
+        ///
+        /// @param pf                   Physical function number
+        /// @param vf                   Virtual function number
+        /// @param privilegeNames [out] Array of privilege names
+        /// @param privileges     [out] Array of privilege numbers in the
+        ///                             same order (each number is index of
+        ///                             corresponding bit in privilege
+        ///                             mask)
+        ///
+        /// @return 0 on success, -1 on failure
+        virtual int getPrivileges(
+                        const Property<uint32> &pf,
+                        const Property<uint32> &vf,
+                        Property<Array_String> &privilegeNames,
+                        Property<Array_uint32> &privileges) const
+        {
+            return -1;
+        }
 
         ///
         /// Get interrupt moderation parameters.
