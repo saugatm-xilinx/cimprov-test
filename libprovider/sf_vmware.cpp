@@ -1925,6 +1925,12 @@ fail:
                         Property<Array_String> &privilegeNames,
                         Property<Array_uint32> &privileges) const;
 
+        virtual int modifyPrivileges(
+                        const Property<uint32> &pf,
+                        const Property<uint32> &vf,
+                        const Property<String> &addedMask,
+                        const Property<String> &removedMask);
+
         virtual int getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const;
         virtual int setIntrModeration(const Array_String &paramNames,
@@ -2358,6 +2364,232 @@ cleanup:
             PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
                              errno, strerror(errno));
 
+        return rc;
+    }
+
+    ///
+    /// Modify privileges of a physical or virtual function.
+    ///
+    /// @param fd             File descriptor on which to call ioctl()
+    /// @param ioc            efx_ioctl structure
+    /// @param pf             Physical Function number
+    /// @param vf             Virtual Function number
+    /// @param added_privs    Which privileges to add
+    /// @param removed_privs  Which privileges to remove
+    ///
+    /// @return 0 on success, -1 on error
+    static int modifyFunctionPrivileges(int fd,
+                                        struct efx_ioctl &ioc,
+                                        uint32_t pf,
+                                        uint32_t vf,
+                                        uint32_t added_privs,
+                                        uint32_t removed_privs)
+    {
+        struct efx_mcdi_request *mcdi_req = NULL;
+
+        if (checkValueBitSize(
+                          pf,
+                          MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_PF_WIDTH) < 0)
+        {
+            PROVIDER_LOG_ERR("PF value %u is too big", pf);
+            return -1;
+        }
+
+        if (checkValueBitSize(
+                          vf,
+                          MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_VF_WIDTH) < 0)
+        {
+            PROVIDER_LOG_ERR("VF value %u is too big", pf);
+            return -1;
+        }
+
+        mcdi_req = &ioc.u.mcdi_request;
+        memset(mcdi_req, 0, sizeof(*mcdi_req));
+
+        mcdi_req->cmd = MC_CMD_PRIVILEGE_MODIFY;
+        mcdi_req->len = MC_CMD_PRIVILEGE_MODIFY_IN_LEN;
+
+        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_FN_GROUP_OFST / 4] =
+              MC_CMD_PRIVILEGE_MODIFY_IN_ONE;
+
+        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_OFST / 4] =
+            (pf << MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_PF_LBN) |
+            (vf << MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_VF_LBN);
+
+        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_ADD_MASK_OFST / 4] =
+            added_privs;
+
+        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_REMOVE_MASK_OFST / 4] =
+            removed_privs;
+
+        if (doMCDICall(fd, ioc) < 0)
+            return -1;
+
+        return 0;
+    }
+
+    ///
+    /// Convert privilege name to flag.
+    ///
+    /// @param name     Name to convert
+    ///
+    /// @return Flag value (0 if name is not known)
+    static unsigned int privilege_name2flag(const char *name)
+    {
+#define PRIVILEGE_NAME2FLAG(priv_) \
+    if (strcmp(name, #priv_) == 0) \
+        return MC_CMD_PRIVILEGE_MASK_IN_GRP_ ## priv_;
+
+        PRIVILEGE_NAME2FLAG(ADMIN);
+        PRIVILEGE_NAME2FLAG(LINK);
+        PRIVILEGE_NAME2FLAG(ONLOAD);
+        PRIVILEGE_NAME2FLAG(PTP);
+        PRIVILEGE_NAME2FLAG(INSECURE_FILTERS);
+        PRIVILEGE_NAME2FLAG(MAC_SPOOFING);
+        PRIVILEGE_NAME2FLAG(UNICAST);
+        PRIVILEGE_NAME2FLAG(MULTICAST);
+        PRIVILEGE_NAME2FLAG(BROADCAST);
+        PRIVILEGE_NAME2FLAG(ALL_MULTICAST);
+        PRIVILEGE_NAME2FLAG(PROMISCUOUS);
+        PRIVILEGE_NAME2FLAG(MAC_SPOOFING_TX);
+        PRIVILEGE_NAME2FLAG(CHANGE_MAC);
+        PRIVILEGE_NAME2FLAG(UNRESTRICTED_VLAN);
+        PRIVILEGE_NAME2FLAG(INSECURE);
+
+        PROVIDER_LOG_ERR("Unknown privilege '%s'", name);
+        return 0;
+    }
+
+    ///
+    /// Convert string representation of privileges mask to
+    /// numeric representation.
+    ///
+    /// @param str          String to convert
+    /// @param mask   [out] Where to save mask
+    ///
+    /// @note See comments for modifyPrivileges() method in
+    ///       sf_platform.h for mask format description.
+    ///
+    /// @return 0 on success, -1 on failure
+    static int privileges_str2mask(const char *str, uint32_t &mask)
+    {
+#define MAX_PRIV_LEN 512
+        unsigned int i = 0;
+        unsigned int j = 0;
+        char         priv_name[MAX_PRIV_LEN];
+        bool         is_num = false;
+        unsigned int flag = 0;
+
+        for (i = 0; ; i++)
+        {
+            if (str[i] == ':')
+            {
+                is_num = true;
+            }
+            else if (str[i] == '|' || str[i] == '\0')
+            {
+                priv_name[j] = '\0';
+                j = 0;
+
+                if (is_num)
+                {
+                    char      *endp = NULL;
+                    long int   value = 0;
+
+                    value = strtol(priv_name, &endp, 10);
+                    if (value < 0 || value > 0xffff ||
+                        *endp != '\0')
+                    {
+                        PROVIDER_LOG_ERR("Failed to convert '%s' to number",
+                                         priv_name);
+                        return -1;
+                    }
+
+                    flag = 1 << value;
+                }
+                else
+                {
+                    flag = privilege_name2flag(priv_name);
+                    if (flag == 0)
+                        return -1;
+                }
+
+                mask = mask | flag;
+                is_num = false;
+            }
+            else
+            {
+                if (j >= MAX_PRIV_LEN - 2)
+                {
+                    PROVIDER_LOG_ERR("Too long privilege name in '%s'",
+                                     str);
+                    return -1;
+                }
+                priv_name[j] = str[i];
+                j++;
+            }
+
+            if (str[i] == '\0')
+                break;
+        }
+
+        return 0;
+    }
+
+    int VMwarePort::modifyPrivileges(
+                    const Property<uint32> &pf,
+                    const Property<uint32> &vf,
+                    const Property<String> &addedMask,
+                    const Property<String> &removedMask)
+    {
+        uint32_t added_privs = 0;
+        uint32_t removed_privs = 0;
+        uint32_t pf_value = 0;
+        uint32_t vf_value = 0;
+
+        struct efx_ioctl  ioc;
+        int               fd = -1;
+        int               rc = -1;
+
+        if (pf.null)
+        {
+            PROVIDER_LOG_ERR("PhysicalFunction was not specified");
+            goto cleanup;
+        }
+
+        pf_value = pf.value;
+
+        if (vf.null)
+           vf_value = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
+        else
+           vf_value = vf.value;
+
+        if (!addedMask.null)
+        {
+            if (privileges_str2mask(addedMask.value.c_str(),
+                                    added_privs) < 0)
+                goto cleanup;
+        }
+
+        if (!removedMask.null)
+        {
+            if (privileges_str2mask(removedMask.value.c_str(),
+                                    removed_privs) < 0)
+                goto cleanup;
+        }
+
+        if (prepareMCDICall(this->dev_name.c_str(), fd, ioc) < 0)
+            goto cleanup;
+
+        if (modifyFunctionPrivileges(fd, ioc, pf_value, vf_value,
+                                     added_privs, removed_privs) < 0)
+            goto cleanup;
+
+        rc = 0;
+cleanup:
+        if (fd >= 0 && close(fd) < 0)
+            PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
+                             errno, strerror(errno));
         return rc;
     }
 
