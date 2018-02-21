@@ -3,4 +3,4 @@
 #
 # STAMPINF_DATE defaults to the current date
 # STAMPINF_VERSION is set below:
-STAMPINF_VERSION=4.8.0.1011
+STAMPINF_VERSION=4.13.0.1006

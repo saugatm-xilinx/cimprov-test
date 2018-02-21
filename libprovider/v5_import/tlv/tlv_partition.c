@@ -248,9 +248,12 @@ int tlv_update_partition_len_and_cks(tlv_cursor_t *cursor)
     return TLV_CORRUPT_BLOCK;
   }
   header->total_length = host_to_le32(new_len);
+  /* Ensure that the modified partition always has a new generation count. */
+  header->generation = host_to_le32(le32_to_host(header->generation) + 1);
 
   trailer = (struct tlv_partition_trailer*)
     ((uint8_t*)header + new_len - sizeof(*trailer) - sizeof(uint32_t));
+  trailer->generation = header->generation;
   trailer->checksum = host_to_le32(
       le32_to_host(trailer->checksum) - checksum_tlv_partition(&partition));
 

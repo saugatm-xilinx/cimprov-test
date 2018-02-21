@@ -119,7 +119,7 @@ extern const ci_cevtlog_format_cat_t _ci_cevtlog_format_cat[];
 #define FACILITY_ISCSI  3
 #endif
 
-#include "customer_event_log_msgs.h"
+// #include "customer_event_log_msgs.h"
 
 #endif
 /*! \cidoxg_end */

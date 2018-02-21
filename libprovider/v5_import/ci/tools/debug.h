@@ -45,49 +45,7 @@
 #endif
 
 
-#ifdef _PREFAST_
-
-# define _ci_check(e, f, l)                   __analysis_assume(e)
-# define _ci_assert(e, f, l)                  __analysis_assume(e)
-# define _ci_assert2(e, x, y, f, l)           __analysis_assume(e)
-# define _ci_assert_equal(x, y, f, l)         __analysis_assume((x)==(y))
-# define _ci_assert_nequal(x, y, f, l)        __analysis_assume((x)!=(y))
-# define _ci_assert_le(x, y, f, l)            __analysis_assume((x)<=(y))
-# define _ci_assert_lt(x, y, f, l)            __analysis_assume((x)< (y))
-# define _ci_assert_ge(x, y, f, l)            __analysis_assume((x)>=(y))
-# define _ci_assert_gt(x, y, f, l)            __analysis_assume((x)> (y))
-# define _ci_assert_or(x, y, f, l)            __analysis_assume((x)||(y))
-# define _ci_assert_impl(x, y, f, l)          __analysis_assume(!(x) || (y))
-# define _ci_assert_equiv(x, y, f, l)         __analysis_assume((!(x)== !(y))
-# define _ci_assert_equal_msg(x, y, m, f, l)  __analysis_assume((x)==(y))
-
-# define _ci_verify(exp, file, line) \
-  do { \
-    (void)(exp); \
-  } while (0)
-
-# define CI_DEBUG_TRY(exp) \
-  do { \
-    (void)(exp); \
-  } while (0)
-
-# define CI_TRACE(exp,fmt)
-# define CI_TRACE_INT(integer)
-# define CI_TRACE_INT32(integer)
-# define CI_TRACE_INT64(integer)
-# define CI_TRACE_UINT(integer)
-# define CI_TRACE_UINT32(integer)
-# define CI_TRACE_UINT64(integer)
-# define CI_TRACE_HEX(integer)
-# define CI_TRACE_HEX32(integer)
-# define CI_TRACE_HEX64(integer)
-# define CI_TRACE_PTR(pointer)
-# define CI_TRACE_STRING(string)
-# define CI_TRACE_MAC(mac)
-# define CI_TRACE_IP(ip_be32)
-# define CI_TRACE_ARP(arp_pkt)
-
-#elif defined(NDEBUG)
+#if defined(NDEBUG)
 
 # define _ci_check(exp, file, line)
 # define _ci_assert2(e, x, y, file, line)
