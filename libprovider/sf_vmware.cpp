@@ -2204,24 +2204,6 @@ fail:
         return 0;
     }
 
-    /// Check that a value can be fit into specified number of bits.
-    ///
-    /// @param value      Value to check
-    /// @param bits       Number of bits
-    ///
-    /// @return 0 if value is not too large, -1 otherwise
-    static int checkValueBitSize(uint32_t value, uint32_t bits)
-    {
-        uint32_t max_val;
-
-        max_val = (1 << bits) - 1;
-
-        if (value > max_val)
-            return -1;
-
-        return 0;
-    }
-
     /// Get privileges of a given physical or virtual function.
     ///
     /// @param fd           File descriptor on which to call ioctl()
@@ -2239,37 +2221,39 @@ fail:
     {
         struct efx_mcdi_request *mcdi_req = NULL;
 
+        uint32_t function;
+
         mcdi_req = &ioc.u.mcdi_request;
         memset(mcdi_req, 0, sizeof(*mcdi_req));
-
-        if (checkValueBitSize(
-                          pf,
-                          MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_PF_WIDTH) < 0)
-        {
-            PROVIDER_LOG_ERR("PF value %u is too big", pf);
-            return -1;
-        }
-
-        if (checkValueBitSize(
-                          vf,
-                          MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_VF_WIDTH) < 0)
-        {
-            PROVIDER_LOG_ERR("VF value %u is too big", pf);
-            return -1;
-        }
 
         mcdi_req->cmd = MC_CMD_PRIVILEGE_MASK;
         mcdi_req->len = MC_CMD_PRIVILEGE_MASK_IN_LEN;
 
-        mcdi_req->payload[MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_OFST / 4] =
-            (pf << MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_PF_LBN) |
-            (vf << MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_VF_LBN);
+        try {
+            function = 0;
+            SET_MCDI_FIELD_PART(PRIVILEGE_MASK_IN_FUNCTION, PF,
+                                function, pf);
+            SET_MCDI_FIELD_PART(PRIVILEGE_MASK_IN_FUNCTION, VF,
+                                function, vf);
+            SET_MCDI_FIELD(mcdi_req->payload, PRIVILEGE_MASK_IN_FUNCTION,
+                           function);
+        }
+        catch (ProviderException &)
+        {
+            return -1;
+        }
 
         if (doMCDICall(fd, ioc) < 0)
             return -1;
 
-        privs =
-          mcdi_req->payload[MC_CMD_PRIVILEGE_MASK_OUT_OLD_MASK_OFST / 4];
+        try {
+            privs = GET_MCDI_FIELD(mcdi_req->payload,
+                                   PRIVILEGE_MASK_OUT_OLD_MASK);
+        }
+        catch (const ProviderException &)
+        {
+            return -1;
+        }
 
         return 0;
     }
@@ -2387,21 +2371,7 @@ cleanup:
     {
         struct efx_mcdi_request *mcdi_req = NULL;
 
-        if (checkValueBitSize(
-                          pf,
-                          MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_PF_WIDTH) < 0)
-        {
-            PROVIDER_LOG_ERR("PF value %u is too big", pf);
-            return -1;
-        }
-
-        if (checkValueBitSize(
-                          vf,
-                          MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_VF_WIDTH) < 0)
-        {
-            PROVIDER_LOG_ERR("VF value %u is too big", pf);
-            return -1;
-        }
+        uint32_t function;
 
         mcdi_req = &ioc.u.mcdi_request;
         memset(mcdi_req, 0, sizeof(*mcdi_req));
@@ -2409,18 +2379,28 @@ cleanup:
         mcdi_req->cmd = MC_CMD_PRIVILEGE_MODIFY;
         mcdi_req->len = MC_CMD_PRIVILEGE_MODIFY_IN_LEN;
 
-        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_FN_GROUP_OFST / 4] =
-              MC_CMD_PRIVILEGE_MODIFY_IN_ONE;
+        try {
+            SET_MCDI_FIELD(mcdi_req->payload, PRIVILEGE_MODIFY_IN_FN_GROUP,
+                           MC_CMD_PRIVILEGE_MODIFY_IN_ONE);
 
-        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_OFST / 4] =
-            (pf << MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_PF_LBN) |
-            (vf << MC_CMD_PRIVILEGE_MODIFY_IN_FUNCTION_VF_LBN);
+            function = 0;
+            SET_MCDI_FIELD_PART(PRIVILEGE_MODIFY_IN_FUNCTION, PF,
+                                function, pf);
+            SET_MCDI_FIELD_PART(PRIVILEGE_MODIFY_IN_FUNCTION, VF,
+                                function, vf);
+            SET_MCDI_FIELD(mcdi_req->payload, PRIVILEGE_MODIFY_IN_FUNCTION,
+                           function);
 
-        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_ADD_MASK_OFST / 4] =
-            added_privs;
-
-        mcdi_req->payload[MC_CMD_PRIVILEGE_MODIFY_IN_REMOVE_MASK_OFST / 4] =
-            removed_privs;
+            SET_MCDI_FIELD(mcdi_req->payload, PRIVILEGE_MODIFY_IN_ADD_MASK,
+                           added_privs);
+            SET_MCDI_FIELD(mcdi_req->payload,
+                           PRIVILEGE_MODIFY_IN_REMOVE_MASK,
+                           removed_privs);
+        }
+        catch (const ProviderException &)
+        {
+            return -1;
+        }
 
         if (doMCDICall(fd, ioc) < 0)
             return -1;
