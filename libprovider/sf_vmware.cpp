@@ -73,11 +73,13 @@ extern "C" {
 
 #include <cimple/Mutex.h>
 #include <cimple/Auto_Mutex.h>
+#include <cimple/Cond.h>
 #include <cimple/CimpleConfig.h>
 
 #include "sf_mcdi_sensors.h"
 #include "sf_alerts.h"
 #include "sf_pci_ids.h"
+#include "sf_locks.h"
 
 #include "sf_base64.h"
 
@@ -167,7 +169,17 @@ namespace solarflare
     using cimple::cast;
     using cimple::Mutex;
     using cimple::Auto_Mutex;
+    using cimple::Cond;
     using cimple::Time;
+
+    ///
+    /// Lock protecting NICs from simultaneous access.
+    /// Ideally this should be per-NIC, but unfortunately we do not
+    /// have global NIC objects, each thread has its own.
+    /// Most methods do not need any protection, so they acquire
+    /// this lock in a shared mode. Methods updating firmware need
+    /// to acquire it in an exclusive mode.
+    static SharedLock nicsLock;
 
     ///
     /// Structure for storing nv_context pointers
@@ -1618,6 +1630,8 @@ fail:
                                               bool force,
                                               const char *base64_hash)
     {
+        AutoSharedLock auto_shared_lock(nicsLock, true);
+
         String          strPath;
         String          strDefPath;
         unsigned int    subType;
@@ -2504,7 +2518,7 @@ fail:
 
             return true;
         }
-        
+
         virtual bool forAllPorts(ConstElementEnumerator& en) const
         {
             int i = 0;
@@ -3586,6 +3600,8 @@ cleanup:
     
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         NICDescrs   nics;
         int         i;
         bool        res;
@@ -3609,11 +3625,15 @@ cleanup:
 
     bool VMwareSystem::forAllNICs(ElementEnumerator& en)
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         return forAllNICs((ConstElementEnumerator&) en); 
     }
 
     bool VMwareSystem::forAllPackages(ConstElementEnumerator& en) const
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
@@ -3621,6 +3641,8 @@ cleanup:
     
     bool VMwareSystem::forAllPackages(ElementEnumerator& en)
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         if (!en.process(kernelPackage))
             return false;
         return en.process(mgmtPackage);
@@ -3662,6 +3684,8 @@ cleanup:
                                              String &img_name,
                                              VersionInfo &current_version)
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         switch (type)
         {
             case FIRMWARE_BOOTROM:
@@ -3690,6 +3714,8 @@ cleanup:
                                              bool &applicable,
                                              VersionInfo &imgVersion)
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         VersionInfo currentVersion;
     
         if (getNICFwVersion(nic, type, currentVersion) < 0)
@@ -3829,6 +3855,8 @@ cleanup:
 
     String VMwareSystem::getSFUDevices()
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         sfu_device   *devs;
         int           devs_count;
         unsigned int  i;
@@ -3896,6 +3924,8 @@ cleanup:
                                     struct sfu_device **dev,
                                     int *devs_count)
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         unsigned int i;
 
         if (!sfu_dev_initialized)
@@ -3939,6 +3969,8 @@ cleanup:
                                 bool try_other_devs,
                                 String &correct_dev)
     {
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         struct sfu_device         *devs;
         struct sfu_device         *dev = NULL;
         const struct sfu_device   *dev2 = NULL;
@@ -3964,6 +3996,8 @@ cleanup:
                              unsigned int subtype)
     {
         Auto_Mutex    guard(NVCtxArrLock); 
+
+        AutoSharedLock auto_shared_lock(nicsLock, false);
 
         nv_context   *ctx = NULL;
 
@@ -4019,6 +4053,8 @@ cleanup:
     {
         Auto_Mutex    guard(NVCtxArrLock); 
 
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         int i;
 
         i = findNVCtxById(nv_ctx);
@@ -4037,6 +4073,8 @@ cleanup:
     size_t VMwareSystem::NVPartSize(unsigned int nv_ctx)
     {
         Auto_Mutex    guard(NVCtxArrLock); 
+
+        AutoSharedLock auto_shared_lock(nicsLock, false);
 
         int i;
 
@@ -4119,6 +4157,8 @@ cleanup:
     {
         Auto_Mutex    guard(NVCtxArrLock); 
 
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         return performNVRead(false, nv_ctx, length, offset,
                              data);
     }
@@ -4128,6 +4168,8 @@ cleanup:
     {
         Auto_Mutex    guard(NVCtxArrLock); 
 
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         return performNVRead(true, nv_ctx, 0, 0, data);
     }
 
@@ -4135,6 +4177,8 @@ cleanup:
                                  const String &data)
     {
         Auto_Mutex    guard(NVCtxArrLock); 
+
+        AutoSharedLock auto_shared_lock(nicsLock, true);
     
         int       i;
         char     *buf;
@@ -4187,6 +4231,8 @@ cleanup:
         size_t    enc_size;
         char     *encoded_buf = NULL;
 
+        AutoSharedLock auto_shared_lock(nicsLock, false);
+
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
         {
@@ -4226,6 +4272,8 @@ cleanup:
         int       fd;
         char     *decoded = NULL;
         ssize_t   dec_size = 0;
+
+        AutoSharedLock auto_shared_lock(nicsLock, true);
 
         dec_size = base64_dec_size(data.c_str());
         if (dec_size < 0)
@@ -4278,6 +4326,8 @@ cleanup:
         ssize_t  dec_size;
         size_t   enc_size;
         char    *encoded;
+
+        AutoSharedLock auto_shared_lock(nicsLock, true);
 
         memset(&ioc, 0, sizeof(ioc));
         strncpy(ioc.if_name, dev_name.c_str(), sizeof(ioc.if_name));
@@ -4358,6 +4408,8 @@ cleanup:
         ssize_t  dec_size;
         size_t   enc_size;
         char    *encoded = NULL;
+
+        AutoSharedLock auto_shared_lock(nicsLock, true);
 
         dec_size = base64_dec_size(payload.c_str());
         if (dec_size < 0)
