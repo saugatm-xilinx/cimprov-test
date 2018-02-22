@@ -2321,7 +2321,10 @@ fail:
             case SFVMK_LINK_SPEED_100_MBPS: return Speed(Port::Speed100M);
             case SFVMK_LINK_SPEED_1000_MBPS: return Speed(Port::Speed1G);
             case SFVMK_LINK_SPEED_10000_MBPS: return Speed(Port::Speed10G);
+            case SFVMK_LINK_SPEED_25000_MBPS: return Speed(Port::Speed25G);
             case SFVMK_LINK_SPEED_40000_MBPS: return Speed(Port::Speed40G);
+            case SFVMK_LINK_SPEED_50000_MBPS: return Speed(Port::Speed50G);
+            case SFVMK_LINK_SPEED_100000_MBPS: return Speed(Port::Speed100G);
             default: return Speed(Port::SpeedUnknown);
         }
     }
@@ -2339,7 +2342,10 @@ fail:
             case Port::Speed100M: linkSpeed.speed = SFVMK_LINK_SPEED_100_MBPS; break;
             case Port::Speed1G: linkSpeed.speed = SFVMK_LINK_SPEED_1000_MBPS; break;
             case Port::Speed10G: linkSpeed.speed = SFVMK_LINK_SPEED_10000_MBPS; break;
+            case Port::Speed25G: linkSpeed.speed = SFVMK_LINK_SPEED_25000_MBPS; break;
             case Port::Speed40G: linkSpeed.speed = SFVMK_LINK_SPEED_40000_MBPS; break;
+            case Port::Speed50G: linkSpeed.speed = SFVMK_LINK_SPEED_50000_MBPS; break;
+            case Port::Speed100G: linkSpeed.speed = SFVMK_LINK_SPEED_100000_MBPS; break;
             default:
                 THROW_PROVIDER_EXCEPTION_FMT("Nonstandard speed specified");
         }

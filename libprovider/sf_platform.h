@@ -202,7 +202,10 @@ namespace solarflare
             Speed100M,
             Speed1G,
             Speed10G,
-            Speed40G
+            Speed25G,
+            Speed40G,
+            Speed50G,
+            Speed100G
         };
         static uint64 speedBPS(Speed sp);
         static Speed speedValue(uint64 sp);
@@ -277,8 +280,14 @@ namespace solarflare
                 return uint64(1000) * 1000 * 1000; // 1g
             case Speed10G:
                 return uint64(10000) * 1000 * 1000; // 10g
+            case Speed25G:
+                return uint64(25000) * 1000 * 1000; // 25g
             case Speed40G:
                 return uint64(40000) * 1000 * 1000; // 40g
+            case Speed50G:
+                return uint64(50000) * 1000 * 1000; // 50g
+            case Speed100G:
+                return uint64(100000) * 1000 * 1000; // 100g
             default:
                 return 0;
         }
@@ -300,9 +309,18 @@ namespace solarflare
             case uint64(10000) * 1000 * 1000:
             case uint64(10000) * 1024 * 1024:
                 return Speed10G;
+            case uint64(25000) * 1000 * 1000:
+            case uint64(25000) * 1024 * 1024:
+                return Speed25G;
             case uint64(40000) * 1000 * 1000:
             case uint64(40000) * 1024 * 1024:
                 return Speed40G;
+            case uint64(50000) * 1000 * 1000:
+            case uint64(50000) * 1024 * 1024:
+                return Speed50G;
+            case uint64(100000) * 1000 * 1000:
+            case uint64(100000) * 1024 * 1024:
+                return Speed100G;
             default:
                 return SpeedUnknown;
         }
