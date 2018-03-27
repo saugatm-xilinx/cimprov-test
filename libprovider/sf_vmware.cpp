@@ -730,6 +730,22 @@ fail:
     }
 
     ///
+    /// Check whether a given device type is supported.
+    ///
+    /// @param type     Device type.
+    ///
+    /// @return true if device type is supported, false otherwise.
+    ///
+    static bool isDevTypeSupported(int type)
+    {
+        if (type == SFU_DEVICE_TYPE_SIENA ||
+            type == SFU_DEVICE_TYPE_HUNTINGTON)
+            return true;
+
+        return false;
+    }
+
+    ///
     /// Get descriptions for all Solarflare NICs on the machine.
     ///
     /// @param nics          [out] Where to save NIC descriptions
@@ -925,7 +941,8 @@ fail:
                                CHAR2INT(pci_conf[9]);
 
                 if (vendor_id != VENDOR_SF_VALUE ||
-                    device_class != CLASS_NET_VALUE)
+                    device_class != CLASS_NET_VALUE ||
+                    !isDevTypeSupported(SFU_DEVICE_TYPE(device_id)))
                     break;
 
                 for (i = 0; i < (int)devs.size(); i++)
