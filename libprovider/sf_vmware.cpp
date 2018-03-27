@@ -739,7 +739,8 @@ fail:
     static bool isDevTypeSupported(int type)
     {
         if (type == SFU_DEVICE_TYPE_SIENA ||
-            type == SFU_DEVICE_TYPE_HUNTINGTON)
+            type == SFU_DEVICE_TYPE_HUNTINGTON ||
+            type == SFU_DEVICE_TYPE_MEDFORD)
             return true;
 
         return false;
@@ -1304,9 +1305,11 @@ fail:
 
             nvram_data = vpd;
         }
-        else if (device_type == SFU_DEVICE_TYPE_HUNTINGTON)
+        else if (device_type == SFU_DEVICE_TYPE_HUNTINGTON ||
+                 device_type == SFU_DEVICE_TYPE_MEDFORD)
         {
             nvram_partition_t partition;
+            uint32_t          tag;
 
             if (staticVPD)
                 nvram_type = NVRAM_PARTITION_TYPE_STATIC_CONFIG;
@@ -1333,10 +1336,18 @@ fail:
                 return -1;
             }
 
-            if ((rc = tlv_find(&partition.tlv_cursor,
-                               (staticVPD ?
-                                  TLV_TAG_PF_STATIC_VPD(0) :
-                                  TLV_TAG_PF_DYNAMIC_VPD(0)))) != TLV_OK)
+            if (device_type == SFU_DEVICE_TYPE_HUNTINGTON)
+            {
+                tag = (staticVPD ? TLV_TAG_PF_STATIC_VPD(0) :
+                                   TLV_TAG_PF_DYNAMIC_VPD(0));
+            }
+            else
+            {
+                tag = (staticVPD ? TLV_TAG_GLOBAL_STATIC_VPD :
+                                   TLV_TAG_GLOBAL_DYNAMIC_VPD);
+            }
+
+            if ((rc = tlv_find(&partition.tlv_cursor, tag)) != TLV_OK)
             {
                 PROVIDER_LOG_ERR("tlv_find() returned %d", rc);
                 close(fd);
@@ -1344,22 +1355,52 @@ fail:
                 return -1;
             }
 
-            if (staticVPD)
+            if (device_type == SFU_DEVICE_TYPE_HUNTINGTON)
             {
-                vpd = reinterpret_cast<struct tlv_pf_static_vpd *>
-                                    (partition.tlv_cursor.current)->bytes;
-                vpd_len = le32_to_host(
-                            reinterpret_cast<struct tlv_pf_static_vpd *>
-                                    (partition.tlv_cursor.current)->length);
+                if (staticVPD)
+                {
+                    struct tlv_pf_static_vpd *p;
+
+                    p = reinterpret_cast<struct tlv_pf_static_vpd *>
+                                          (partition.tlv_cursor.current);
+
+                    vpd = p->bytes;
+                    vpd_len = le32_to_host(p->length);
+                }
+                else
+                {
+                    struct tlv_pf_dynamic_vpd *p;
+
+                    p = reinterpret_cast<struct tlv_pf_dynamic_vpd *>
+                                          (partition.tlv_cursor.current);
+
+                    vpd = p->bytes;
+                    vpd_len = le32_to_host(p->length);
+
+                }
             }
             else
             {
-                vpd = reinterpret_cast<struct tlv_pf_dynamic_vpd *>
-                                    (partition.tlv_cursor.current)->bytes;
-                vpd_len = le32_to_host(
-                            reinterpret_cast<struct tlv_pf_dynamic_vpd *>
-                                    (partition.tlv_cursor.current)->length);
-           
+                if (staticVPD)
+                {
+                    struct tlv_global_static_vpd *p;
+
+                    p = reinterpret_cast<struct tlv_global_static_vpd *>
+                                          (partition.tlv_cursor.current);
+
+                    vpd = p->bytes;
+                    vpd_len = le32_to_host(p->length);
+                }
+                else
+                {
+                    struct tlv_global_dynamic_vpd *p;
+
+                    p = reinterpret_cast<struct tlv_global_dynamic_vpd *>
+                                          (partition.tlv_cursor.current);
+
+                    vpd = p->bytes;
+                    vpd_len = le32_to_host(p->length);
+                }
             }
         }
         else
@@ -1484,10 +1525,9 @@ fail:
 
         int nativeType = getNativeFirmwareType(type, device_type);
 
-        if (device_type != SFU_DEVICE_TYPE_SIENA &&
-            device_type != SFU_DEVICE_TYPE_HUNTINGTON)
+        if (!isDevTypeSupported(device_type))
         {
-            PROVIDER_LOG_ERR("%s(): incorrect device type %d",
+            PROVIDER_LOG_ERR("%s(): unknown device type %d",
                              __FUNCTION__, device_type);
             return -1;
         }
@@ -5128,7 +5168,9 @@ cleanup:
             }
         }
         else if (SFU_DEVICE_TYPE(pci_device_id) ==
-                                          SFU_DEVICE_TYPE_HUNTINGTON)
+                                          SFU_DEVICE_TYPE_HUNTINGTON ||
+                 SFU_DEVICE_TYPE(pci_device_id) ==
+                                          SFU_DEVICE_TYPE_MEDFORD)
         {
             if (siocEFXGetBootROMVersionEF10(ifname, 0, fd,
                                              false, ver) == 0)
