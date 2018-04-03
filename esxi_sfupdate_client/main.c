@@ -2692,42 +2692,45 @@ main(int argc, const char *argv[])
                 !(fw_url != NULL && fw_url_no_local_access))
             {
                 controller_exp_img_name[0] = '\0';
-                findAvailableUpdate(curl, cim_namespace,
-                                    svc_mcfw_inst,
-                                    nic_inst,
-                                    fw_url == NULL ? fw_path : fw_url,
-                                    fw_url == NULL ? 0 : 1,
-                                    &controller_applicable_found,
-                                    &controller_ver_a,
-                                    &controller_ver_b,
-                                    &controller_ver_c,
-                                    &controller_ver_d,
-                                    controller_exp_img_name);
+                if (svc_mcfw_inst != NULL)
+                    findAvailableUpdate(curl, cim_namespace,
+                                        svc_mcfw_inst,
+                                        nic_inst,
+                                        fw_url == NULL ? fw_path : fw_url,
+                                        fw_url == NULL ? 0 : 1,
+                                        &controller_applicable_found,
+                                        &controller_ver_a,
+                                        &controller_ver_b,
+                                        &controller_ver_c,
+                                        &controller_ver_d,
+                                        controller_exp_img_name);
 
                 bootrom_exp_img_name[0] = '\0';
-                findAvailableUpdate(curl, cim_namespace,
-                                    svc_bootrom_inst,
-                                    nic_inst,
-                                    fw_url == NULL ? fw_path : fw_url,
-                                    fw_url == NULL ? 0 : 1,
-                                    &bootrom_applicable_found,
-                                    &bootrom_ver_a,
-                                    &bootrom_ver_b,
-                                    &bootrom_ver_c,
-                                    &bootrom_ver_d,
-                                    bootrom_exp_img_name);
+                if (svc_bootrom_inst != NULL)
+                    findAvailableUpdate(curl, cim_namespace,
+                                        svc_bootrom_inst,
+                                        nic_inst,
+                                        fw_url == NULL ? fw_path : fw_url,
+                                        fw_url == NULL ? 0 : 1,
+                                        &bootrom_applicable_found,
+                                        &bootrom_ver_a,
+                                        &bootrom_ver_b,
+                                        &bootrom_ver_c,
+                                        &bootrom_ver_d,
+                                        bootrom_exp_img_name);
                 uefirom_exp_img_name[0] = '\0';
-                findAvailableUpdate(curl, cim_namespace,
-                                    svc_uefirom_inst,
-                                    nic_inst,
-                                    fw_url == NULL ? fw_path : fw_url,
-                                    fw_url == NULL ? 0 : 1,
-                                    &uefirom_applicable_found,
-                                    &uefirom_ver_a,
-                                    &uefirom_ver_b,
-                                    &uefirom_ver_c,
-                                    &uefirom_ver_d,
-                                    uefirom_exp_img_name);
+                if (svc_uefirom_inst != NULL)
+                    findAvailableUpdate(curl, cim_namespace,
+                                        svc_uefirom_inst,
+                                        nic_inst,
+                                        fw_url == NULL ? fw_path : fw_url,
+                                        fw_url == NULL ? 0 : 1,
+                                        &uefirom_applicable_found,
+                                        &uefirom_ver_a,
+                                        &uefirom_ver_b,
+                                        &uefirom_ver_c,
+                                        &uefirom_ver_d,
+                                        uefirom_exp_img_name);
             }
 
             snprintf(nic_tag_prev, MAX_NIC_TAG_LEN, "%s",
