@@ -1,4 +1,20 @@
+define check_func
+$(strip
+$(eval TMPIN=$(shell mktemp --suffix=.c)) \
+$(eval TMPOUT=$(shell mktemp)) \
+$(shell echo "#include <stdio.h>" >$(TMPIN); \
+		echo "#include <stdlib.h>" >>$(TMPIN); \
+		echo "int main() { " >>$(TMPIN); \
+		echo "void *p = (void *)$(1); return 0; }" \
+		>>$(TMPIN); \
+		$(CC) $(TMPIN) -o $(TMPOUT) 2>/dev/null; \
+		echo $$? ; \
+		rm $(TMPIN); rm $(TMPOUT)))
+endef
+
 VSNPRINTF_FIX=
+GETENV_FIX=
+
 ifneq (,$(findstring mingw,$(PLATFORM)))
     CC=$(PLATFORM)-gcc
     XML2_LIBS=-lxml2 -lz -liconv -lws2_32
@@ -11,19 +27,8 @@ ifneq (,$(findstring mingw,$(PLATFORM)))
     CPP=$(PLATFORM)-cpp
     MY_CPPFLAGS=-I./libs_includes/windows/$(PLATFORM)/
 
-    TMPIN:=$(shell mktemp --suffix=.c)
-    TMPOUT:=$(shell mktemp)
-    RESULT:=$(shell echo "\#include <stdio.h>" >$(TMPIN); \
-                    echo "\#include <stdlib.h>" >>$(TMPIN); \
-                    echo "int main() { " >>$(TMPIN); \
-                    echo "void *p = (void *)__ms_vsnprintf; return 0; }" \
-                    >>$(TMPIN); \
-                    $(CC) $(TMPIN) -o $(TMPOUT) 2>/dev/null; \
-                    echo $$?; \
-                    rm $(TMPIN); rm $(TMPOUT))
-
-    ifneq (0,$(RESULT))
-        VSNPRINTF_FIX=vsnprintf_fix.o
+    ifeq (0,$(call check_func,__ms_vsnprintf))
+        VSNPRINTF_FIX=vsnprintf_fix.c
     endif
 else
     CC=gcc
@@ -40,8 +45,12 @@ else
     endif
     FILE_SUFFIX=
     CPP=cpp
+
+    ifneq (0,$(call check_func,__secure_getenv))
+        GETENV_FIX=secure_getenv_fix.c
+    endif
 endif
-MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC
+MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC -D_GNU_SOURCE
 
 ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
                 $(CPP) $(MY_CPPFLAGS) 1>/dev/null 2>/dev/null; echo $$?))
@@ -49,11 +58,10 @@ ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
 endif
 
 sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c cim_client.c \
-  			curl_aux.c $(VSNPRINTF_FIX)
-	$(CC) -g main.c fw_images.c cim_client.c curl_aux.c \
-	      -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
-	      $(XML2_CFLAGS) $(MY_LIBS) $(VSNPRINTF_FIX)
-	if test x != x$(VSNPRINTF_FIX) ; then rm $(VSNPRINTF_FIX); fi
+  			curl_aux.c $(VSNPRINTF_FIX) $(GETENV_FIX)
+	$(CC) -no-pie -g main.c fw_images.c cim_client.c curl_aux.c \
+	      $(VSNPRINTF_FIX) $(GETENV_FIX) -o $@ $(MY_CPPFLAGS) \
+	      $(MY_CFLAGS) $(XML2_CFLAGS) $(MY_LIBS)
 
 .PHONY : fw_images.c
 fw_images.c :
@@ -62,7 +70,7 @@ fw_images.c :
 
 DISTDIR = esxi_sfupdate-1.0
 
-DISTFILES = main.c vsnprintf_fix.c curl_aux.c curl_aux.h \
+DISTFILES = main.c vsnprintf_fix.c secure_getenv_fix.c curl_aux.c curl_aux.h \
 	    		cim_client.c cim_client.h Makefile README \
 	    		esxi_sfupdate_client.spec \
 			fw_images.h include_fw_imgs.sh sf_base64.h \
