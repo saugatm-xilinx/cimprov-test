@@ -100,6 +100,7 @@ endif
 
 ifeq ($(PROVIDER_PLATFORM), vmware)
 libprovider_SOURCES += SF_NVAPI_Provider.cpp
+libprovider_SOURCES += SF_API_Provider.cpp
 endif
 
 ifeq ($(PROVIDER_PLATFORM), $(filter $(PROVIDER_PLATFORM),linux vmware))

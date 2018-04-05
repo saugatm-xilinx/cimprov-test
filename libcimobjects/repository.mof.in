@@ -159,6 +159,17 @@ WMIONLY([[
 };
 
 m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[
+
+INSTANCE
+class SF_API : CIM_ManagedElement {
+    [Override("ElementName"), Key] string ElementName;
+
+    uint32 GetPFVFByPCI([IN] string PCIAddr,
+                        [OUT] uint32 PF,
+                        [OUT] uint32 VF,
+                        [OUT] String NICTag);
+};
+
 INSTANCE
 class SF_NVAPI : CIM_ManagedElement {
     [Override("ElementName"), Key] string ElementName;

@@ -166,13 +166,20 @@ namespace solarflare
         /// @return Is the address pointing to a slot?
         bool isSlot() const { return fnId == unknown; }
 
+        ///
+        /// Parse a string with PCI address.
+        ///
+        /// @pram str     String with PCI address.
+        ///
+        /// @return 0 on success, -1 on failure.
+        int parse(const char *str);
+
         /// Return a new  PCI address with a function id set to @p f
         /// Useful to construct device PCI address from slot address
         PCIAddress fn(unsigned f) const
         {
             return PCIAddress(pciDomain, pciBus, deviceId, f);
         }
-        
     };
 
     /// @brief NIC's vital product data (VPD) representation
