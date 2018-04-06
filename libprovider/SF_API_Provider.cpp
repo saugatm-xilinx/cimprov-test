@@ -233,22 +233,36 @@ Invoke_Method_Status SF_API_Provider::GetPFVFByPCI(
     return INVOKE_METHOD_OK;
 }
 
-Invoke_Method_Status SF_API_Provider::GetFuncPrivileges(
-    const SF_API* self,
-    const Property<uint32> &PhysicalFunction,
-    const Property<uint32> &VirtualFunction,
-    const Property<String> &PCIAddr,
-    const Property<String> &CallingDev,
-    Property<Array_String>& PrivilegeNames,
-    Property<Array_uint32>& Privileges,
-    Property<uint32>& return_value)
+///
+/// Process common arguments of GetFuncPrivileges() and
+/// ModifyFuncPrivileges().
+///
+/// @note If PCIAddr is specified, PF/VF will be computed from it.
+///       If CallingDev is not specified, calling_if will be set to
+///       an interface with ADMIN privilege on the NIC on which
+///       a function with a given PCI address resides. If PCIAddr
+///       is not specified, CallingDev must be specified.
+///       If PhysicalFunction is not specified, then operation
+///       is meant to be performed for the calling_if itself.
+///
+/// @param PhysicalFunction     PhysicalFunction parameter.
+/// @param VirtualFunction      VirtualFunction parameter.
+/// @param PCIAddr              PCI address of target function.
+/// @param CallingDev           Device name on which to issue requests.
+/// @param pf                   Where to save PF number.
+/// @param vf                   Where to save VF number.
+/// @param calling_if           Where to save interface name on which
+///                             request will be issued.
+///
+/// @return 0 on success, -1 on failure.
+static int parseFuncArguments(const Property<uint32> &PhysicalFunction,
+                              const Property<uint32> &VirtualFunction,
+                              const Property<String> &PCIAddr,
+                              const Property<String> &CallingDev,
+                              Property<uint32> &pf,
+                              Property<uint32> &vf,
+                              String &calling_if)
 {
-    Property<uint32>  pf;
-    Property<uint32>  vf;
-    String            calling_if;
-
-    return_value.set(Error);
-
     if (!PhysicalFunction.null)
         pf.set(PhysicalFunction.value);
 
@@ -266,7 +280,7 @@ Invoke_Method_Status SF_API_Provider::GetFuncPrivileges(
             finder.findAdminIf(true);
 
         if (finder.setAddr(PCIAddr.value.c_str()) < 0)
-            return INVOKE_METHOD_OK;
+            return -1;
 
         System::target.forAllNICs(finder);
 
@@ -284,18 +298,70 @@ Invoke_Method_Status SF_API_Provider::GetFuncPrivileges(
             PROVIDER_LOG_ERR("Failed to find function "
                              "with PCI address '%s'",
                              PCIAddr.value.c_str());
-            return INVOKE_METHOD_OK;
+            return -1;
         }
     }
 
     if (calling_if.empty())
     {
         PROVIDER_LOG_ERR("Cannot find interface on which to get privileges");
-        return INVOKE_METHOD_OK;
+        return -1;
     }
+
+    return 0;
+}
+
+Invoke_Method_Status SF_API_Provider::GetFuncPrivileges(
+    const SF_API* self,
+    const Property<uint32> &PhysicalFunction,
+    const Property<uint32> &VirtualFunction,
+    const Property<String> &PCIAddr,
+    const Property<String> &CallingDev,
+    Property<Array_String>& PrivilegeNames,
+    Property<Array_uint32>& Privileges,
+    Property<uint32>& return_value)
+{
+    Property<uint32>  pf;
+    Property<uint32>  vf;
+    String            calling_if;
+
+    return_value.set(Error);
+
+    if (parseFuncArguments(PhysicalFunction, VirtualFunction,
+                           PCIAddr, CallingDev, pf, vf,
+                           calling_if) < 0)
+        return INVOKE_METHOD_OK;
 
     if (System::target.getFuncPrivileges(calling_if, pf, vf,
                                          PrivilegeNames, Privileges) == 0)
+        return_value.set(OK);
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_API_Provider::ModifyFuncPrivileges(
+    const SF_API* self,
+    const Property<uint32> &PhysicalFunction,
+    const Property<uint32> &VirtualFunction,
+    const Property<String> &PCIAddr,
+    const Property<String> &CallingDev,
+    const Property<String>& AddedMask,
+    const Property<String>& RemovedMask,
+    Property<uint32>& return_value)
+{
+    Property<uint32>  pf;
+    Property<uint32>  vf;
+    String            calling_if;
+
+    return_value.set(Error);
+
+    if (parseFuncArguments(PhysicalFunction, VirtualFunction,
+                           PCIAddr, CallingDev, pf, vf,
+                           calling_if) < 0)
+        return INVOKE_METHOD_OK;
+
+    if (System::target.modifyFuncPrivileges(calling_if, pf, vf,
+                                            AddedMask, RemovedMask) == 0)
         return_value.set(OK);
 
     return INVOKE_METHOD_OK;
