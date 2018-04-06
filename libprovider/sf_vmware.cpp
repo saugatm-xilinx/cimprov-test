@@ -34,6 +34,7 @@ extern "C" {
 #include "ci/tools/byteorder.h"
 #include "ci/tools/bitfield.h"
 #include "image.h"
+#include "firmware.h"
 
 #include "tlv_partition.h"
 #include "tlv_layout.h"
@@ -4099,58 +4100,103 @@ cleanup:
                                         VersionInfo *imgVersion,
                                         bool force)
     {
-        image_header_t    header;
-        FILE             *f;
+        FILE             *f = NULL;
+        ssize_t           fsize;
+        int               rc;
+        uint8_t          *buf = NULL;
         VersionInfo       newVersion;
+        bool              result = false;
+        sfupdate_image_t  image;
+        image_header_t   *header = NULL;
 
-        memset(&header, 0, sizeof(header));
+        memset(&image, 0, sizeof(image));
 
         f = fopen(filename, "r");
         if (f == NULL)
         {
             PROVIDER_LOG_ERR("%s(): attempt to open '%s' failed",
                              __FUNCTION__, filename);
-            return false;
+            goto cleanup;
         }
 
-        if (fread(&header, 1, sizeof(header), f) != sizeof(header))
+        rc = fseek(f, 0L, SEEK_END);
+        if (rc < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): fseek() failed with errno %d (%s)",
+                             __FUNCTION__, errno, strerror(errno));
+            goto cleanup;
+        }
+
+        fsize = ftell(f);
+        if (fsize < 0)
+        {
+            PROVIDER_LOG_ERR("%s(): ftell() failed with errno %d (%s)",
+                             __FUNCTION__, errno, strerror(errno));
+            goto cleanup;
+        }
+        rewind(f);
+
+        try {
+            buf = new uint8_t[fsize];
+        }
+        catch (...)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to allocate memory",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+
+        if (fread(buf, 1, fsize, f) != fsize)
         {
             PROVIDER_LOG_ERR("%s(): failed to read firmware image "
-                             "header from '%s'",
+                             "from '%s'",
                              __FUNCTION__, filename);
-            fclose(f);
-            return false;
+            goto cleanup;
         }
-        fclose(f);
 
-        if (header.ih_magic != IMAGE_HEADER_MAGIC)
+        if (init_image_from_buffer(buf, fsize, &image) != 0)
+        {
+            PROVIDER_LOG_ERR("%s(): init_image_from_buffer() failed",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+
+        header = image.reflash_header;
+        if (header == NULL)
+        {
+            PROVIDER_LOG_ERR("%s(): failed to obtain image header",
+                             __FUNCTION__);
+            goto cleanup;
+        }
+
+        if (header->ih_magic != IMAGE_HEADER_MAGIC)
         {
             PROVIDER_LOG_ERR("%s(): firmware image header magic mismatch",
                              __FUNCTION__);
-            return false;
+            goto cleanup;
         }
 
-        if (!((header.ih_type == IMAGE_TYPE_BOOTROM &&
+        if (!((header->ih_type == IMAGE_TYPE_BOOTROM &&
                fwType == FIRMWARE_BOOTROM) ||
-              (header.ih_type == IMAGE_TYPE_MCFW &&
+              (header->ih_type == IMAGE_TYPE_MCFW &&
                fwType == FIRMWARE_MCFW)))
         {
             PROVIDER_LOG_ERR("%s(): firmware image type mismatch",
                              __FUNCTION__);
-            return false;
+            goto cleanup;
         }
 
-        if (header.ih_subtype != subType)
+        if (header->ih_subtype != subType)
         {
             PROVIDER_LOG_ERR("%s(): firmware image subtype mismatch",
                              __FUNCTION__);
-            return false;
+            goto cleanup;
         }
 
-        newVersion = VersionInfo(header.ih_code_version_a,
-                                 header.ih_code_version_b,
-                                 header.ih_code_version_c,
-                                 header.ih_code_version_d);
+        newVersion = VersionInfo(header->ih_code_version_a,
+                                 header->ih_code_version_b,
+                                 header->ih_code_version_c,
+                                 header->ih_code_version_d);
         if (imgVersion != NULL)
             *imgVersion = newVersion;
 
@@ -4159,10 +4205,18 @@ cleanup:
             PROVIDER_LOG_ERR("%s(): firmware of the same or newer "
                              "version is installed already",
                              __FUNCTION__);
-            return false;
+            goto cleanup;
         }
 
-        return true;
+        result = true;
+cleanup:
+
+        if (f != NULL)
+            fclose(f);
+        if (buf != NULL)
+            delete[] buf;
+
+        return result;
     }
 
     ///
