@@ -1,3 +1,9 @@
+/* 
+ * This is NOT the original source file. Do NOT edit it.
+ * To update the board and firmware ids, please edit the copy in
+ * the sfregistry repo and then, in that repo,
+ * make -C doc firmware_ids
+ */
 /**************************************************************************\
 *//*! \file
 ** <L5_PRIVATE L5_SOURCE>
@@ -31,6 +37,7 @@ enum {
   FIRMWARE_TYPE_FCFW_BACKUP = 9,
   FIRMWARE_TYPE_CPLD = 10,
   FIRMWARE_TYPE_MUMFW = 11,
+  FIRMWARE_TYPE_UEFIROM = 12,
 };
 
 enum {
@@ -51,6 +58,7 @@ enum {
   FIRMWARE_BOOTROM_SUBTYPE_FARMINGDALE = 4,
   FIRMWARE_BOOTROM_SUBTYPE_GREENPORT = 5,
   FIRMWARE_BOOTROM_SUBTYPE_MEDFORD = 6,
+  FIRMWARE_BOOTROM_SUBTYPE_MEDFORD2 = 7,
 };
 
 enum {
@@ -82,6 +90,16 @@ enum {
   FIRMWARE_MCFW_SUBTYPE_NIMRUD = 30,
   FIRMWARE_MCFW_SUBTYPE_SPARTA = 31,
   FIRMWARE_MCFW_SUBTYPE_THEBES = 32,
+  FIRMWARE_MCFW_SUBTYPE_ICARUS = 33,
+  FIRMWARE_MCFW_SUBTYPE_JERICHO = 34,
+  FIRMWARE_MCFW_SUBTYPE_BYBLOS = 35,
+  FIRMWARE_MCFW_SUBTYPE_GROAT = 36,
+  FIRMWARE_MCFW_SUBTYPE_SHILLING = 37,
+  FIRMWARE_MCFW_SUBTYPE_FLORIN = 38,
+  FIRMWARE_MCFW_SUBTYPE_THREEPENCE = 39,
+  FIRMWARE_MCFW_SUBTYPE_CYCLOPS = 40,
+  FIRMWARE_MCFW_SUBTYPE_PENNY = 41,
+  FIRMWARE_MCFW_SUBTYPE_BOB = 42,
 };
 
 enum {
@@ -115,6 +133,19 @@ enum {
 
 enum {
   FIRMWARE_MUMFW_SUBTYPE_MADAM_BLUE = 1,       /* Sorrento MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_ICARUS = 2,           /* Malaga MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_JERICHO = 3,          /* Emma MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_BYBLOS = 4,           /* Pagnell MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_SHILLING = 5,         /* Bradford R1.x MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_FLORIN = 6,           /* Bingley MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_THREEPENCE = 7,       /* Baildon MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_CYCLOPS = 8,          /* Talbot MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_PENNY = 9,            /* Batley MUM firmware */
+  FIRMWARE_MUMFW_SUBTYPE_BOB = 10,             /* Bradford R2.x MUM firmware */
+};
+
+enum {
+  FIRMWARE_UEFIROM_SUBTYPE_ALL = 0,
 };
 
 #endif

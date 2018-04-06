@@ -31,21 +31,15 @@ enum nv_part_type {
   NV_PART_FPGA_BACKUP,
   NV_PART_LICENSE,
   NV_PART_MUMFW,
+  NV_PART_UEFI,
+  NV_PART_STATUS,
+  NV_PART_NTYPES
 };
 
 #if defined(__sun) && defined (__SVR4)
-  #include "sfxge_ioc.h"
+#include "sfxge_ioc.h"
 
-/* Solaris requires this to be available to allow us to access the fd */
-struct nv_context {
-  int fd;
-  char netif_name[NETIF_NAME_SIZE];
-  size_t part_size;
-  unsigned int  driver_image_type;
-};
-
-sfxge_nvram_ioc_t*
-nv_read_version(struct nv_context* nv, enum nv_part_type type,  sfxge_nvram_ioc_t* snip);
+int nv_strioctl(struct nv_context* nv, int cmd, void* buf, int len);
 #endif
 
 #if defined(__FreeBSD__)
@@ -86,6 +80,7 @@ nv_open_ports(const struct sfu_device* dev, enum nv_part_type type,
 
 int nv_read_all(struct nv_context* context, void* buf);
 int nv_write_all(struct nv_context* context, const void* buf, uint32_t length,
+                 bool full_erase,
                  void (*progress)(const char* status, int percent));
 ssize_t nv_read(struct nv_context* nv, char* buf, size_t nbytes, off_t offset);
 void nv_close(struct nv_context* context);

@@ -61,8 +61,7 @@
  * The private ioctl is numbered %SIOCEFX and is implemented on
  * both sockets and a char device (/dev/sfc_control).  Sockets are
  * more reliable as they do not depend on a device node being
- * created on disk.  However, on VMware ESX only char ioctls will
- * work.
+ * created on disk.
  */
 
 /* Efx private ioctl number */
@@ -128,9 +127,6 @@ struct efx_set_carrier_ioctl {
 	__u8 on;
 };
 
-
-/* For resetting the XAUI link between Falcon and the PHY *******************/
-#define EFX_RESET_XAUI 0xef0a
 
 /* For setting the PHY power state ******************************************/
 #define EFX_SET_PHY_POWER 0xef0b
@@ -350,7 +346,7 @@ struct efx_timespec {
 
 #define EFX_TS_INIT_FLAGS_PTP_V2_ENHANCED 0x80000000
 
-#if !defined(__KERNEL__) || defined(__VMKLNX__)
+#if !defined(__KERNEL__)
 
 enum {
 	SOF_TIMESTAMPING_TX_HARDWARE = (1<<0),
@@ -395,7 +391,7 @@ struct hwtstamp_config {
 	int rx_filter;
 };
 
-#endif /* !__KERNEL__ || __VMKLNX__ */
+#endif /* !__KERNEL__ */
 
 #if !defined(EFX_HAVE_NET_TSTAMP)
 

@@ -1065,10 +1065,12 @@ namespace solarflare
         //
         // @param nv_ctx        NV context id
         // @param data          Data to be written
+        // @param full_erase    If true, erase whole partition.
         //
         // @return 0 on success, -1 on failure
         virtual int NVWriteAll(unsigned int nv_ctx,
-                               const String &data)
+                               const String &data,
+                               bool full_erase)
         {
             return -1;
         }
