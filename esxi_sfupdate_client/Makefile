@@ -57,9 +57,18 @@ ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
     MY_CPPFLAGS:=$(MY_CPPFLAGS) -DNCURSES_CURSES_H
 endif
 
+GCC_OPTS=
+ifeq (1,$(shell gcc -no-pie 2>&1 | grep -i "unrecognized"; echo $$?))
+    # This is necessary because otherwise gcc may think it builds
+    # a shared library and fail because -fPIC was not used when
+    # building some of the static libraries to which this program
+    # links.
+    GCC_OPTS=-no-pie
+endif
+
 sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c cim_client.c \
   			curl_aux.c $(VSNPRINTF_FIX) $(GETENV_FIX)
-	$(CC) -no-pie -g main.c fw_images.c cim_client.c curl_aux.c \
+	$(CC) $(GCC_OPTS) -g main.c fw_images.c cim_client.c curl_aux.c \
 	      $(VSNPRINTF_FIX) $(GETENV_FIX) -o $@ $(MY_CPPFLAGS) \
 	      $(MY_CFLAGS) $(XML2_CFLAGS) $(MY_LIBS)
 
