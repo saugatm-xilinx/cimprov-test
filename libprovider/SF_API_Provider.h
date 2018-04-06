@@ -58,6 +58,16 @@ public:
         Property<String>& NICTag,
         Property<uint32>& return_value);
 
+    Invoke_Method_Status GetFuncPrivileges(
+        const SF_API* self,
+        const Property<uint32> &PhysicalFunction,
+        const Property<uint32> &VirtualFunction,
+        const Property<String> &PCIAddr,
+        const Property<String> &CallingDev,
+        Property<Array_String>& PrivilegeNames,
+        Property<Array_uint32>& Privileges,
+        Property<uint32>& return_value);
+
     /*@END@*/
 };
 
