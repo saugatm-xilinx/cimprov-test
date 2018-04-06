@@ -30,10 +30,6 @@ extern int
 dynamic_cfg_accessible(const struct sfu_device* dev,
                        const struct sfu_device** nv_dev);
 
-/* Device supports dynamic config context */
-extern bool
-dynamic_cfg_supported(const struct sfu_device* dev);
-
 /* Open and close dynamic config context */
 extern struct dynamic_cfg_context*
 dynamic_cfg_open(struct sfu_device* dev);

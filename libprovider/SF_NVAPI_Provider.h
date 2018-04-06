@@ -102,6 +102,7 @@ public:
         const SF_NVAPI* self,
         const Property<uint32>& NVContext,
         const Property<String>& Data,
+        const Property<boolean>& FullErase,
         Property<uint32>& return_value);
 
     Invoke_Method_Status MCDIV1Command(

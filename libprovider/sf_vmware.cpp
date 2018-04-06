@@ -4495,7 +4495,8 @@ cleanup:
         virtual int NVReadAll(unsigned int nv_ctx,
                               String &data);
         virtual int NVWriteAll(unsigned int nv_ctx,
-                               const String &data);
+                               const String &data,
+                               bool full_erase);
 
         virtual int getDriverLoadParameters(String &loadParams);
         virtual int setDriverLoadParameters(const String &loadParams);
@@ -5114,7 +5115,8 @@ cleanup:
     }
 
     int VMwareSystem::NVWriteAll(unsigned int nv_ctx,
-                                 const String &data)
+                                 const String &data,
+                                 bool full_erase)
     {
         Auto_Mutex    guard(NVCtxArrLock); 
     
@@ -5144,7 +5146,8 @@ cleanup:
             return -1;
         }
 
-        rc = nv_write_all(NVCtxArr[i].ctx, buf, dec_size, NULL);
+        rc = nv_write_all(NVCtxArr[i].ctx, buf, dec_size, full_erase,
+                          NULL);
         if (rc < 0)
         {
             PROVIDER_LOG_ERR("nv_write_all() failed, errno %d('%s')",

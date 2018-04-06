@@ -27,7 +27,7 @@
 #include <sys/socket.h>
 
 #define NETIF_NAME_SIZE	IFNAMSIZ
-#define PCI_ADDR_SIZE	1 /* small as it's not used in solaris sfudpate */
+#define PCI_ADDR_SIZE	(4 + 1 + 3 + 1 + 3 + 1 + 3 + 1) /* format: dom:bus:dev.fn */
 #endif
 
 #if defined(__FreeBSD__)
@@ -44,7 +44,7 @@
 #endif
 
 #if defined(__APPLE__) && defined (__MACH__)
-#define NETIF_NAME_SIZE	(4 + 1)  /* format "enNN", N=0..99 */
+#define NETIF_NAME_SIZE	(6 + 1)  /* format "enNN", N=0..99 */
 #define PCI_ADDR_SIZE	(14 + 1) /* format: "bb:dd.f(s:s)" */
 #endif
 
@@ -136,7 +136,8 @@ enum sfu_device_types {
   SFU_DEVICE_TYPE_FALCON     = 0x0700,
   SFU_DEVICE_TYPE_SIENA      = 0x0800,
   SFU_DEVICE_TYPE_HUNTINGTON = 0x0900,
-  SFU_DEVICE_TYPE_MEDFORD    = 0x0A00
+  SFU_DEVICE_TYPE_MEDFORD    = 0x0A00,
+  SFU_DEVICE_TYPE_MEDFORD2   = 0x0B00
 };
 
 #define SFU_DEVICE_TYPE(pci_id) ((pci_id) & 0x0F00)
@@ -144,13 +145,22 @@ enum sfu_device_types {
 static inline bool is_ef10_device(const struct sfu_device *dev)
 {
   return (SFU_DEVICE_TYPE(dev->pci_device_id) == SFU_DEVICE_TYPE_HUNTINGTON) ||
-         (SFU_DEVICE_TYPE(dev->pci_device_id) == SFU_DEVICE_TYPE_MEDFORD);
+         (SFU_DEVICE_TYPE(dev->pci_device_id) == SFU_DEVICE_TYPE_MEDFORD) ||
+         (SFU_DEVICE_TYPE(dev->pci_device_id) == SFU_DEVICE_TYPE_MEDFORD2);
 }
 
 static inline bool device_has_global_vpd(const struct sfu_device *dev)
 {
-  return (SFU_DEVICE_TYPE(dev->pci_device_id) == SFU_DEVICE_TYPE_MEDFORD);
+  return (SFU_DEVICE_TYPE(dev->pci_device_id) == SFU_DEVICE_TYPE_MEDFORD) ||
+         (SFU_DEVICE_TYPE(dev->pci_device_id) == SFU_DEVICE_TYPE_MEDFORD2);
 }
+
+/* Device supports dynamic config context (which might be inaccessible) */
+static inline bool device_has_dynamic_cfg(const struct sfu_device* dev)
+{
+  return (SFU_DEVICE_TYPE(dev->pci_device_id) != SFU_DEVICE_TYPE_FALCON);
+}
+
 
 /* Printing helpers. */
 #define SFU_DEV_NAME_FMT      "%s (%s)"
@@ -162,11 +172,18 @@ extern uint32_t sfu_parse_pci_addr(const struct sfu_device* dev);
 #define SFU_NO_PCI_ADDR (0xffffffff)
 #define SFU_PCI_ADDR_MASK_NO_PF (0xffffff00)
 
-static inline uint32_t parse_pci_addr_no_pf(const struct sfu_device* dev) {
-  uint32_t rc = sfu_parse_pci_addr(dev);
-  if(rc != SFU_NO_PCI_ADDR)
-    rc &= SFU_PCI_ADDR_MASK_NO_PF;
-  return rc;
+/* Check if devices are on the same board, by comparing PCIe bus addresses.
+** Note that a guest OS may see a synthetic bus heirarchy invented by the
+** hypervisor, and so bus addresses for hardware passthrough functions may
+** not be matched correctly.
+*/
+static inline bool sfu_device_same_board(const struct sfu_device* dev,
+                                         const struct sfu_device* dev2) {
+  uint32_t addr = sfu_parse_pci_addr(dev);
+  uint32_t addr2 = sfu_parse_pci_addr(dev2);
+
+  return (addr != SFU_NO_PCI_ADDR) && (addr2 != SFU_NO_PCI_ADDR) &&
+    ((addr & SFU_PCI_ADDR_MASK_NO_PF) == (addr2 & SFU_PCI_ADDR_MASK_NO_PF));
 }
 
 /* Verify that the given NUL-terminated string is a valid Solarflare
@@ -185,4 +202,9 @@ extern struct nv_context* sfu_nv_open(struct sfu_device* dev, int part, int sub)
 ** struct has been fully initialised/grouped. The possibility is determined
 ** by the serial number (which, on Linux at least, is not available for VFs).*/
 extern bool sfu_maybe_vf(const struct sfu_device* dev);
+
+/* Return the driver version string for a given interface, if available.
+   Return NULL on failure.  The caller must free the allocated string. */
+extern char* sfu_get_driver_version(struct sfu_device* dev);
+
 #endif /* !SFUTILS_SFU_DEVICE_H */

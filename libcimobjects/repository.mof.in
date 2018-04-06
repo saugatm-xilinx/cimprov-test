@@ -191,7 +191,8 @@ class SF_NVAPI : CIM_ManagedElement {
                      [OUT] string Data);
 
     uint32 NVWriteAll([IN] uint32 NVContext,
-                      [IN] string Data);
+                      [IN] string Data,
+                      [IN] boolean FullErase);
 
     uint32 MCDIRead([IN] string Device,
                     [IN] uint32 PartitionType,

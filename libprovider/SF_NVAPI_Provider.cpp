@@ -406,11 +406,13 @@ Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
     const SF_NVAPI* self,
     const Property<uint32>& NVContext,
     const Property<String>& Data,
+    const Property<boolean>& FullErase,
     Property<uint32>& return_value)
 {
     int rc;
 
     ForbidUnload forbid_unload;
+    bool         full_erase = false;
 
     if (NVContext.null || Data.null)
     {
@@ -421,8 +423,12 @@ Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
         return INVOKE_METHOD_OK;
     }
 
+    if (!FullErase.null)
+        full_erase = FullErase.value;
+
     rc = solarflare::System::target.NVWriteAll(NVContext.value,
-                                               Data.value);
+                                               Data.value,
+                                               full_erase);
 
     if (rc >= 0)
         return_value.set(OK);
