@@ -240,50 +240,6 @@ namespace solarflare
         virtual const CIMHelper *cimDispatch(const cimple::Meta_Class& mc) const;
 
         ///
-        /// Get privileges of a given physical or virtual function.
-        ///
-        /// @param pf                   Physical function number
-        /// @param vf                   Virtual function number
-        /// @param privilegeNames [out] Array of privilege names
-        /// @param privileges     [out] Array of privilege numbers in the
-        ///                             same order (each number is index of
-        ///                             corresponding bit in privilege
-        ///                             mask)
-        ///
-        /// @return 0 on success, -1 on failure
-        virtual int getPrivileges(
-                        const Property<uint32> &pf,
-                        const Property<uint32> &vf,
-                        Property<Array_String> &privilegeNames,
-                        Property<Array_uint32> &privileges) const
-        {
-            return -1;
-        }
-
-        ///
-        /// Modify privileges of a physical or virtual function.
-        ///
-        /// @param pf                   Physical function number
-        /// @param vf                   Virtual function number
-        /// @param addedMask            Added privileges
-        /// @param removedMask          Removed privileges
-        ///
-        /// @note addedMask and removedMask have the folloding format:
-        ///       PRIVILEGE := privilege_name | ":"privilege_bit_index
-        ///       MASK := PRIVILEGE | MASK"|"PRIVILEGE
-        ///       Example: ONLOAD|:3|INSECURE
-        ///
-        /// @return 0 on success, -1 on failure
-        virtual int modifyPrivileges(
-                        const Property<uint32> &pf,
-                        const Property<uint32> &vf,
-                        const Property<String> &addedMask,
-                        const Property<String> &removedMask)
-        {
-            return -1;
-        }
-
-        ///
         /// Get interrupt moderation parameters.
         ///
         /// @param paramNames           Parameter names

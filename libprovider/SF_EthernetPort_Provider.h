@@ -116,22 +116,6 @@ public:
         Property<uint32>& return_value);
 
 #ifdef TARGET_CIM_SERVER_esxi
-    Invoke_Method_Status GetPrivileges(
-        const SF_EthernetPort* self,
-        const Property<uint32> &PhysicalFunction,
-        const Property<uint32> &VirtualFunction,
-        Property<Array_String>& PrivilegeNames,
-        Property<Array_uint32>& Privileges,
-        Property<uint32>& return_value);
-
-    Invoke_Method_Status ModifyPrivileges(
-        const SF_EthernetPort* self,
-        const Property<uint32> &PhysicalFunction,
-        const Property<uint32> &VirtualFunction,
-        const Property<String>& AddedMask,
-        const Property<String>& RemovedMask,
-        Property<uint32>& return_value);
-
     Invoke_Method_Status GetIntrModeration(
         const SF_EthernetPort* self,
         const Property<Array_String>& ParamNames,
