@@ -7,13 +7,14 @@ $(shell echo "#include <stdio.h>" >$(TMPIN); \
 		echo "int main() { " >>$(TMPIN); \
 		echo "void *p = (void *)$(1); return 0; }" \
 		>>$(TMPIN); \
-		$(CC) $(TMPIN) -o $(TMPOUT) 2>/dev/null; \
+		$(CC) $(MY_CPPFLAGS) $(TMPIN) -o $(TMPOUT) 2>/dev/null; \
 		echo $$? ; \
 		rm $(TMPIN); rm $(TMPOUT)))
 endef
 
 VSNPRINTF_FIX=
 GETENV_FIX=
+MY_CPPFLAGS:=-D_GNU_SOURCE
 
 ifneq (,$(findstring mingw,$(PLATFORM)))
     CC=$(PLATFORM)-gcc
@@ -25,7 +26,7 @@ ifneq (,$(findstring mingw,$(PLATFORM)))
     MY_CFLAGS=-DCURL_STATICLIB -L./libs/windows/$(PLATFORM)/
     FILE_SUFFIX=.exe
     CPP=$(PLATFORM)-cpp
-    MY_CPPFLAGS=-I./libs_includes/windows/$(PLATFORM)/
+    MY_CPPFLAGS:=$(MY_CPPFLAGS) -I./libs_includes/windows/$(PLATFORM)/
 
     ifeq (0,$(call check_func,__ms_vsnprintf))
         VSNPRINTF_FIX=vsnprintf_fix.c
@@ -38,10 +39,10 @@ else
              -lcurl -lssl -lcrypto -lz -lm -lrt -Wl,-Bdynamic -ldl
     ifeq (,$(shell file /bin/bash | grep 'x86-64'))
         MY_CFLAGS=-L./libs/linux/32/
-        MY_CPPFLAGS=-I./libs_includes/linux/32/
+        MY_CPPFLAGS:=$(MY_CPPFLAGS) -I./libs_includes/linux/32/
     else
         MY_CFLAGS=-L./libs/linux/64/
-        MY_CPPFLAGS=-I./libs_includes/linux/64/
+        MY_CPPFLAGS:=$(MY_CPPFLAGS) -I./libs_includes/linux/64/
     endif
     FILE_SUFFIX=
     CPP=cpp
@@ -49,8 +50,11 @@ else
     ifneq (0,$(call check_func,__secure_getenv))
         GETENV_FIX=secure_getenv_fix.c
     endif
+    ifeq (0,$(call check_func,secure_getenv))
+        MY_CPPFLAGS:=$(MY_CPPFLAGS) -DSECURE_GETENV_FOUND=1
+    endif
 endif
-MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC -D_GNU_SOURCE
+MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC
 
 ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
                 $(CPP) $(MY_CPPFLAGS) 1>/dev/null 2>/dev/null; echo $$?))

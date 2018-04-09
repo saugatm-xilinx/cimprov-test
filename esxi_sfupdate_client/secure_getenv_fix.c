@@ -8,6 +8,10 @@
  */
 char *__secure_getenv(const char *name)
 {
+#ifdef SECURE_GETENV_FOUND
     return secure_getenv(name);
+#else
+    return getenv(name);
+#endif
 }
 
