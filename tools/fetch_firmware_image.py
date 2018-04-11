@@ -33,12 +33,13 @@ class FirmwareImageDetails(object):
         self.mcfw_subtype = {'sparta':31, 'thebes':32, 'icarus':33,
                              'jericho':34, 'byblos':35, 'groat':36,
                              'shilling':37, 'florin':38, 'threepence':39,
-                             'cyclops':40, 'penny':41}
+                             'cyclops':40, 'penny':41, 'bob':42}
         self.bootrom_subtype = {'medford':6, 'medford2':7}
         self.uefirom_subtype = {'universal':0}
         self.firmware_list = ['mcfw-sparta', 'mcfw-thebes', 'mcfw-icarus',
                               'mcfw-jericho', 'mcfw-byblos', 'mcfw-cyclops',
-                              'mcfw-shilling', 'mcfw-florin', 'edk2', 'gpxe']
+                              'mcfw-shilling', 'mcfw-florin', 'mcfw-bob',
+                              'edk2', 'gpxe']
 
 
     def get_image_type(self, image_type_arg):
@@ -271,8 +272,10 @@ def get_bootrom_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
         ivydir = ImageOutputDir.ivy_base_dir + name + '/default/' + rev + '/bins/'
         medford_bootrom_file = 'SFC9220.mrom'
         medford_ini_file = 'SFC9220.mrom.ini'
+        medford_bootrom_dat_file = 'SFC9220.dat'
         medford2_bootrom_file = 'SFC9250.mrom'
         medford2_ini_file = 'SFC9250.mrom.ini'
+        medford2_bootrom_dat_file = 'SFC9250.dat'
         for updatefile in os.listdir(ivydir):
             if (updatefile.endswith(medford_bootrom_file)or
                     updatefile.endswith(medford2_bootrom_file)):
@@ -280,11 +283,11 @@ def get_bootrom_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
                 if updatefile.endswith(medford_bootrom_file):
                     subtype = firmware_img_obj.get_bootrom_subtype('medford')
                     inifilename = medford_ini_file
-                    datfilename = medford_bootrom_file
+                    datfilename = medford_bootrom_dat_file
                 else:
                     subtype = firmware_img_obj.get_bootrom_subtype('medford2')
                     inifilename = medford2_ini_file
-                    datfilename = medford2_bootrom_file
+                    datfilename = medford2_bootrom_dat_file
                 srcfilepath = os.path.join(ivydir, updatefile)
                 destfilepath = os.path.join(outdir_handle.base_output_dir,
                                             updatefile)
