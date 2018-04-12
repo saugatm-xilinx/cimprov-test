@@ -1,4 +1,21 @@
+define check_func
+$(strip
+$(eval TMPIN=$(shell mktemp --suffix=.c)) \
+$(eval TMPOUT=$(shell mktemp)) \
+$(shell echo "#include <stdio.h>" >$(TMPIN); \
+		echo "#include <stdlib.h>" >>$(TMPIN); \
+		echo "int main() { " >>$(TMPIN); \
+		echo "void *p = (void *)$(1); return 0; }" \
+		>>$(TMPIN); \
+		$(CC) $(MY_CPPFLAGS) $(TMPIN) -o $(TMPOUT) 2>/dev/null; \
+		echo $$? ;  \
+                rm $(TMPIN); rm $(TMPOUT)))
+endef
+
 VSNPRINTF_FIX=
+GETENV_FIX=
+MY_CPPFLAGS:=-D_GNU_SOURCE
+
 ifneq (,$(findstring mingw,$(PLATFORM)))
     CC=$(PLATFORM)-gcc
     XML2_LIBS=-lxml2 -lz -liconv -lws2_32
@@ -9,21 +26,10 @@ ifneq (,$(findstring mingw,$(PLATFORM)))
     MY_CFLAGS=-DCURL_STATICLIB -L./libs/windows/$(PLATFORM)/
     FILE_SUFFIX=.exe
     CPP=$(PLATFORM)-cpp
-    MY_CPPFLAGS=-I./libs_includes/windows/$(PLATFORM)/
+    MY_CPPFLAGS:= $(MY_CPPFLAGS) -I./libs_includes/windows/$(PLATFORM)/
 
-    TMPIN:=$(shell mktemp --suffix=.c)
-    TMPOUT:=$(shell mktemp)
-    RESULT:=$(shell echo "\#include <stdio.h>" >$(TMPIN); \
-                    echo "\#include <stdlib.h>" >>$(TMPIN); \
-                    echo "int main() { " >>$(TMPIN); \
-                    echo "void *p = (void *)__ms_vsnprintf; return 0; }" \
-                    >>$(TMPIN); \
-                    $(CC) $(TMPIN) -o $(TMPOUT) 2>/dev/null; \
-                    echo $$?; \
-                    rm $(TMPIN); rm $(TMPOUT))
-
-    ifneq (0,$(RESULT))
-        VSNPRINTF_FIX=vsnprintf_fix.o
+    ifeq (0,$(call check_func,__ms_vsnprintf))
+        VSNPRINTF_FIX=vsnprintf_fix.c
     endif
 else
     CC=gcc
@@ -33,15 +39,23 @@ else
              -lcurl -lssl -lcrypto -lz -lm -lrt -Wl,-Bdynamic -ldl
     ifeq (,$(shell file /bin/bash | grep 'x86-64'))
         MY_CFLAGS=-L./libs/linux/32/
-        MY_CPPFLAGS=-I./libs_includes/linux/32/
+        MY_CPPFLAGS:= $(MY_CPPFLAGS) -I./libs_includes/linux/32/
     else
         MY_CFLAGS=-L./libs/linux/64/
-        MY_CPPFLAGS=-I./libs_includes/linux/64/
+        MY_CPPFLAGS:= $(MY_CPPFLAGS) -I./libs_includes/linux/64/
     endif
     FILE_SUFFIX=
     CPP=cpp
+
+    ifneq (0,$(call check_func,__secure_getenv))
+        GETENV_FIX=secure_getenv_fix.c
+    endif
+    ifeq (0,$(call check_func,secure_getenv))
+        MY_CPPFLAGS:=$(MY_CPPFLAGS) -DSECURE_GETENV_FOUND=1
+    endif
 endif
 MY_CPPFLAGS:=$(MY_CPPFLAGS) -DLIBXML_STATIC
+
 TOP ?= .
 V5IMPORT_DIR             = common
 V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/default/src/driver/common/
@@ -55,8 +69,17 @@ ifeq (0,$(shell echo "\#include <ncurses/curses.h>" | \
 endif
 
 
+GCC_OPTS=
+ifeq (1,$(shell gcc -no-pie 2>&1 | grep -i "unrecognized"; echo $$?))
+    # This is necessary because otherwise gcc may think it builds
+    # a shared library and fail because -fPIC was not used when
+    # building some of the static libraries to which this program
+    # links.
+    GCC_OPTS=-no-pie
+endif
+
 sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c cim_client.c \
-  			curl_aux.c $(VSNPRINTF_FIX)
+  			curl_aux.c $(VSNPRINTF_FIX) $(GETENV_FIX)
 	rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_IMGFILE)
 	rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_CRCFILE)
 	rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EF10_SIMGFILE)
@@ -64,10 +87,10 @@ sfupdate_esxi$(FILE_SUFFIX): main.c fw_images.c cim_client.c \
 	wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_CRCFILE)
 	wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EF10_SIMGFILE)
 
-	$(CC) -g main.c fw_images.c cim_client.c curl_aux.c common/ef10_image.c common/efx_crc32.c\
+	$(CC) $(GCC_OPTS) -g main.c fw_images.c cim_client.c curl_aux.c \
+              $(VSNPRINTF_FIX) $(GETENV_FIX) common/ef10_image.c common/efx_crc32.c\
 	      -o $@ $(MY_CPPFLAGS) $(MY_CFLAGS) \
-	      $(XML2_CFLAGS) $(MY_LIBS) $(VSNPRINTF_FIX)
-	if test x != x$(VSNPRINTF_FIX) ; then rm $(VSNPRINTF_FIX); fi
+	      $(XML2_CFLAGS) $(MY_LIBS)
 
 .PHONY : fw_images.c
 fw_images.c :
@@ -76,9 +99,9 @@ fw_images.c :
 
 DISTDIR = esxi_sfupdate-1.0
 
-DISTFILES = main.c vsnprintf_fix.c curl_aux.c curl_aux.h common\efx.h common\efsys.h\
-			common\efx_impl.h cim_client.c cim_client.h Makefile README \
-	    		esxi_sfupdate_client.spec \
+DISTFILES = main.c vsnprintf_fix.c secure_getenv_fix.c curl_aux.c curl_aux.h \
+                        common\efx.h common\efsys.h common\efx_impl.h cim_client.c \
+                        cim_client.h Makefile README  esxi_sfupdate_client.spec \
 			fw_images.h include_fw_imgs.sh sf_base64.h \
 			cim_log.h libs libs_includes
 
