@@ -397,6 +397,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
     const SF_NVAPI* self,
     const Property<uint32>& NVContext,
     const Property<String>& Data,
+    const Property<boolean>& FullErase,
     Property<uint32>& return_value)
 {
     return INVOKE_METHOD_UNSUPPORTED;
