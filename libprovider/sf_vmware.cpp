@@ -174,15 +174,6 @@ namespace solarflare
     using cimple::Time;
 
     ///
-    /// Lock protecting NICs from simultaneous access.
-    /// Ideally this should be per-NIC, but unfortunately we do not
-    /// have global NIC objects, each thread has its own.
-    /// Most methods do not need any protection, so they acquire
-    /// this lock in a shared mode. Methods updating firmware need
-    /// to acquire it in an exclusive mode.
-    static SharedLock nicsLock;
-
-    ///
     /// Structure for storing nv_context pointers
     ///
     typedef class NVContextDescr {
@@ -1701,8 +1692,6 @@ fail:
                                               bool force,
                                               const char *base64_hash)
     {
-        AutoSharedLock auto_shared_lock(nicsLock, true);
-
         String          strPath;
         String          strDefPath;
         unsigned int    subType;

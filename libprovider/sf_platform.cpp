@@ -22,6 +22,8 @@ namespace solarflare
 {
     using cimple::Auto_Mutex;
 
+    SharedLock nicsLock;
+
     const unsigned Diagnostic::maxRecordedEvents = 128;
 
     String Diagnostic::DiagnosticThread::getThreadID() const
