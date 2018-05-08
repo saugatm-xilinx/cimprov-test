@@ -225,6 +225,8 @@ Invoke_Method_Status SF_SoftwareInstallationService_Provider::InstallFromURI(
     const Property<Array_String>& InstallOptionsValues,
     Property<uint32>& return_value)
 {
+    solarflare::AutoSharedLock auto_shared_lock(solarflare::nicsLock, true);
+
     const CIM_ComputerSystem *sys = NULL;
 
     String base64_hash;

@@ -16,6 +16,7 @@
 
 #include "sf_core.h"
 #include "sf_logging.h"
+#include "sf_locks.h"
 
 // Classes that should be subclassed for specific platform
 
@@ -39,6 +40,19 @@ namespace solarflare
     using cimple::Array;
     using cimple::Array_String;
     using cimple::Array_uint32;
+
+    ///
+    /// Lock protecting NICs from simultaneous access.
+    /// Ideally this should be per-NIC, but unfortunately we do not
+    /// have global NIC objects, each thread has its own.
+    /// Most methods do not need any protection, so they acquire
+    /// this lock in a shared mode. Methods updating firmware need
+    /// to acquire it in an exclusive mode.
+    ///
+    /// Note: if a thread wants to acquire this lock in an exclusive
+    ///       mode, it should not try to acquire it in a shared mode
+    ///       before that, or deadlock may happen.
+    extern SharedLock nicsLock;
 
     class NIC;
 
