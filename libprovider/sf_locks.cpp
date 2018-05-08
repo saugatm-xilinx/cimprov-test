@@ -100,11 +100,11 @@ namespace solarflare
 
     void SharedLock::lock_exclusive()
     {
-        lock_shared();
-
         // This will prevent other threads
         // from acquiring lock.
         mutex_shared.lock();
+
+        lock_shared();
 
         // Wait until other threads release
         // their locks.
@@ -119,8 +119,8 @@ namespace solarflare
 
     void SharedLock::unlock_exclusive()
     {
-        mutex_shared.unlock();
         unlock_shared();
+        mutex_shared.unlock();
     }
 
     AutoSharedLock::AutoSharedLock(SharedLock &lock, bool exclusive) :
