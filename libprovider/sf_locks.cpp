@@ -31,12 +31,18 @@ namespace solarflare
         ptr = (unsigned int *)pthread_getspecific(key);
         if (ptr == NULL)
         {
-            ptr = new unsigned int;
+            ptr = (unsigned int *)malloc(sizeof(*ptr));
+            if (ptr == NULL)
+                THROW_PROVIDER_EXCEPTION_FMT("Out of memory");
+
             *ptr = 0;
             rc = pthread_setspecific(key, ptr);
             if (rc != 0)
+            {
+                free(ptr);
                 THROW_PROVIDER_EXCEPTION_FMT(
                             "pthread_setspecific() returned %d", rc);
+            }
         }
 
         if (*ptr > 0xffff)
