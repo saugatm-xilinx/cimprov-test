@@ -2967,6 +2967,8 @@ cleanup:
         bool         is_num = false;
         unsigned int flag = 0;
 
+        mask = 0;
+
         for (i = 0; ; i++)
         {
             if (str[i] == ':')
