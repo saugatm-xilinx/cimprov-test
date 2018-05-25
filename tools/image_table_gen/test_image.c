@@ -52,8 +52,7 @@ int main(int argc, const char *argv[])
 
     if (argc < 2)
     {
-        fprintf(stderr, "File is not specified\n",
-                argv[1]);
+        fprintf(stderr, "File is not specified\n");
         goto cleanup;
     }
 
