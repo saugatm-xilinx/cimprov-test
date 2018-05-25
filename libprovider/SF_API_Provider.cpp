@@ -263,6 +263,9 @@ static int parseFuncArguments(const Property<uint32> &PhysicalFunction,
                               Property<uint32> &vf,
                               String &calling_if)
 {
+    pf.clear();
+    vf.clear();
+
     if (!PhysicalFunction.null)
         pf.set(PhysicalFunction.value);
 
