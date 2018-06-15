@@ -75,6 +75,18 @@ else
         sed -i "s/DESC_CIMOM_RESTART=.*$/DESC_CIMOM_RESTART=false/g" Makefile
     fi
 
+
+    if test $cimpdk_v1 -eq 6 -a $cimpdk_v2 -eq 5 ; then
+
+	var1=`grep -n -m 1 sfcbmof Makefile | cut -d : -f1`
+        sed  -i "$var1"'i\	    sfcbmof -d ${STAGEDIR}/${REGROOT}/repository/ \\\
+	      -n root/cimv2 \\\
+	      -o classSchemas \\\
+	      -I ${SCHEMADIR} \\\
+	      -i CIM_Schema.mof \\\
+	      ${STAGEDIR}/${STAGEROOT}/mofs/root/cimv2/root.mof; \\'  Makefile
+    fi
+
     sed -i "s/^\(.*Packaging file for.*\)$/\1\n\t.\/fix_bulletin.pl \${VIB_BULLETIN_XML}/" Makefile
 
     # This fixes the bug with renaming our provider to li.so
