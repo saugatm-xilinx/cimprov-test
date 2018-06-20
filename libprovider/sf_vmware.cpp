@@ -2898,28 +2898,21 @@ fail:
 #if defined(TARGET_CIM_SERVER_esxi_native)
     MACAddress VMwareInterface::currentMAC() const
     {
-        NicMgmtProperties prop = {0};
-        char devName[SFVMK_DEV_NAME_LEN];
+        char                 devName[SFVMK_DEV_NAME_LEN];
+        sfvmk_macAddress_t   macAddress;
 
         if (boundPort == NULL)
             return MACAddress(0, 0, 0, 0, 0, 0);
-
-        NicMgmtPortName ports[SFVMK_MGMT_MAX_PORTS];
-        NicMgmtLinkMode linkModes[SFVMK_MGMT_MAX_LINK_MODES];
-        NicMgmtWakeonOption wakeOptions[SF_NICMGMT_MAX_WAKEON_TYPES];
-
-        prop.supportedPortsInfo.ports = ports;
-        prop.supportedPortsInfo.numFilled = SFVMK_MGMT_MAX_PORTS;
-
-        prop.advLinkModesInfo.advModes = linkModes;
-        prop.advLinkModesInfo.numFilled = SFVMK_MGMT_MAX_LINK_MODES;
-
-        prop.wakeOnOptionsInfo.option = wakeOptions;
-        prop.wakeOnOptionsInfo.numFilled = SF_NICMGMT_MAX_WAKEON_TYPES;
-
         strncpy(devName, ((VMwarePort *)boundPort)->dev_name.c_str(), sizeof(devName));
-        if (NicMgmtCall(NICMGMT_GET_PROPERTIES, devName, &prop) == VMK_OK)
-            return MACAddress(prop.macAddress);
+	if (DrvMgmtCall(devName, SFVMK_CB_MAC_ADDRESS_GET, &macAddress) != VMK_OK)
+            PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed", __FUNCTION__);
+        else
+            return MACAddress(macAddress.macAddress[0],
+                              macAddress.macAddress[1],
+                              macAddress.macAddress[2],
+                              macAddress.macAddress[3],
+                              macAddress.macAddress[4],
+                              macAddress.macAddress[5]);
 
         return MACAddress(0, 0, 0, 0, 0, 0);
      }
