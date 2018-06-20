@@ -40,7 +40,6 @@ else
     sed -i "s/\${PROV_NAMESPACE}.reg/repository.reg/g" Makefile
 
     sed -i "s/\${PROJDIR}\/src/\${PROJDIR}\/solarflare/g" Makefile
-    sed -i "s/PROV_NAME=example-vmkmgmt/PROV_NAME=__PROVIDER_NAME__/g" Makefile
     sed -i "s/PROV_NAMESPACE=acme/PROV_NAMESPACE=solarflare/g" Makefile
     sed -i "s/DESC_VENDOR=.*/DESC_VENDOR=__PROVIDER_VENDOR_SHORT__/g" Makefile
     sed -i "s/DESC_VENDOR_EMAIL=.*/DESC_VENDOR_EMAIL=__PROVIDER_VENDOR_EMAIL__/g" Makefile
@@ -55,7 +54,6 @@ else
     sed -i "s/\${CURRENT_DIR}\/descriptor.xml/\${CURRENT_DIR}\/oem\/descriptor.xml/g" Makefile
     sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
     sed -i "s/BULL_KBURL=.*/BULL_KBURL=none/g" Makefile
-    sed -i "s/BULL_VENDOR_CODE=ZZZ/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
     sed -i "s/VIB_BULLETIN_ID=.*$/VIB_BULLETIN_ID=\${BULL_VENDOR_CODE}-\${DESC_NAME}-\${DESC_VERSION}/g" Makefile
     sed -i "s/PROV_VIB_BASENAME=.*$/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-\${PROV_NAME}-\${DESC_VERSION}/g" Makefile
     sed -i "/^CC_LIB/ s/$/ -lvmkuserlib -lnicmgmt/" Makefile
@@ -76,8 +74,10 @@ else
     fi
 
 
-    if test $cimpdk_v1 -eq 6 -a $cimpdk_v2 -eq 5 ; then
-
+    if test $cimpdk_v1 -eq 6 ; then
+        if test $cimpdk_v2 -ge 5 ; then
+        sed -i "s/BULL_VENDOR_CODE=ZZZ/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
+        sed -i "s/PROV_NAME=example-vmkmgmt/PROV_NAME=__PROVIDER_NAME__/g" Makefile
 	var1=`grep -n -m 1 sfcbmof Makefile | cut -d : -f1`
         sed  -i "$var1"'i\	    sfcbmof -d ${STAGEDIR}/${REGROOT}/repository/ \\\
 	      -n root/cimv2 \\\
@@ -85,6 +85,10 @@ else
 	      -I ${SCHEMADIR} \\\
 	      -i CIM_Schema.mof \\\
 	      ${STAGEDIR}/${STAGEROOT}/mofs/root/cimv2/root.mof; \\'  Makefile
+        else
+            sed -i "s/BULL_VENDOR_CODE=VMW/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
+            sed -i "s/PROV_NAME=acme/PROV_NAME=__PROVIDER_NAME__/g" Makefile
+        fi
     fi
 
     sed -i "s/^\(.*Packaging file for.*\)$/\1\n\t.\/fix_bulletin.pl \${VIB_BULLETIN_XML}/" Makefile
