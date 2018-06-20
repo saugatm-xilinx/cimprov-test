@@ -12,7 +12,6 @@
 #define SOLARFLARE_SF_NATIVE_VMWARE_H 1
 
 #include "userMgmtSrc/sfvmk_mgmt_interface.h"
-#include "sf_nicMgmtApi.h"
 
 extern vmk_MgmtApiSignature sfvmk_mgmtSig;
 
