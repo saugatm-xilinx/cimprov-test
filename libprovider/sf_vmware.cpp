@@ -2220,38 +2220,21 @@ fail:
     static bool getLinkStatus(const String &devFile,
                               const String &devName)
     {
-        NicMgmtProperties    prop = {0};
+        bool                 linkStatus = false;
         char                 deviceName[SFVMK_DEV_NAME_LEN];
-        NicMgmtPortName      ports[SFVMK_MGMT_MAX_PORTS];
-        NicMgmtLinkMode      linkModes[SFVMK_MGMT_MAX_LINK_MODES];
-        NicMgmtWakeonOption  wakeOptions[SF_NICMGMT_MAX_WAKEON_TYPES];
-
-        prop.supportedPortsInfo.ports = ports;
-        prop.supportedPortsInfo.numFilled = SFVMK_MGMT_MAX_PORTS;
-
-        prop.advLinkModesInfo.advModes = linkModes;
-        prop.advLinkModesInfo.numFilled = SFVMK_MGMT_MAX_LINK_MODES;
-
-        prop.wakeOnOptionsInfo.option = wakeOptions;
-        prop.wakeOnOptionsInfo.numFilled = SF_NICMGMT_MAX_WAKEON_TYPES;
-
+        UNUSED(devFile);
         if (strncpy_check(deviceName, devName.c_str(), SFVMK_DEV_NAME_LEN) < 0)
         {
             PROVIDER_LOG_ERR("%s(): Interface name is too long", __FUNCTION__);
             return true;
         }
-        if ((NicMgmtCall(NICMGMT_GET_PROPERTIES, deviceName, &prop)) != VMK_OK)
+	if (DrvMgmtCall(deviceName, SFVMK_CB_LINK_STATUS_GET, &linkStatus) != VMK_OK)
         {
-            PROVIDER_LOG_ERR("%s(): NicMgmtCall failed", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed", __FUNCTION__);
             return true;
         }
         else
-        {
-            if (strcasecmp_start(prop.linkStatus, "Up") == 0)
-                return true;
-            else
-                return false;
-        }
+            return linkStatus;
     }
 #else
     static bool getLinkStatus(const String &devFile,
