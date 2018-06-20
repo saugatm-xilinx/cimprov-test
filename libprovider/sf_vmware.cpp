@@ -791,33 +791,20 @@ fail:
     ///
     /// Get Names for all  NICs on the machine.
     ///
-    /// @param pNicNameList          [out] NICs name List
-    ///
-    /// @param portCount             [out] total port count
+    /// @param ifaceList          [out] NICs name List
     ///
     /// @return 0 on success or -1 in case of error
     ///
-    static int getNICNameList(NicMgmtVmnicName **pNicNameList, int &portCount)
+    static int getNICNameList(sfvmk_ifaceList_t *ifaceList)
     {
-        if (NicMgmtCall(NICMGMT_GET_NIC_LIST, &portCount, *pNicNameList) == ENOMEM)
+        if ((DrvMgmtCall(NULL, SFVMK_CB_IFACE_LIST_GET, ifaceList)) != VMK_OK)
         {
-            *pNicNameList = (NicMgmtVmnicName*) calloc((portCount), sizeof(NicMgmtVmnicName));
-            if (*pNicNameList == NULL)
-            {
-                PROVIDER_LOG_ERR("%s(): Memory Allocation Failed", __FUNCTION__);
-                return -1;
-            }
-	    if (NicMgmtCall(NICMGMT_GET_NIC_LIST, &portCount, *pNicNameList) != 0)
-            {
-                PROVIDER_LOG_ERR("%s(): NIC Mgmt Second Call Failed", __FUNCTION__);
-                free(*pNicNameList);
-                return -1;
-            }
+                 PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
+                 return -1;
         }
-        else
-        {
-            PROVIDER_LOG_ERR("%s(): NICMgmt for Port Count Call Failed", __FUNCTION__);
-            return -1;
+        if (ifaceList->ifaceCount >= SFVMK_MAX_INTERFACE) {
+            PROVIDER_LOG_ERR("%s():Invalid interface count %d\n", __FUNCTION__, ifaceList->ifaceCount);
+            return -EINVAL;
         }
         return 0;
     }
@@ -848,16 +835,17 @@ fail:
     static int getNICs(NICDescrs &nics)
     {
         int                  i=0, j=0, k=0;
-        NicMgmtVmnicName     *pNicNameList = NULL;
+        sfvmk_ifaceList_t    ifaceList;
         int                  portCount = 0;
         sfvmk_mgmtCbTypes_t  cmd;
         sfvmk_pciInfo_t      pciInfo;
 
-        if( getNICNameList(&pNicNameList, portCount) < 0)
+        if (getNICNameList(&ifaceList) < 0)
         {
                 PROVIDER_LOG_ERR("%s(): Getting  NIC Name List Failed", __FUNCTION__);
                 return -1;
         }
+        portCount = ifaceList.ifaceCount;
         for (i = 0; i < portCount; i++)
         {
             NICDescr  tmp_nic;
@@ -866,7 +854,7 @@ fail:
 
             memset(&pciInfo, 0, sizeof(sfvmk_pciInfo_t));
             cmd = SFVMK_CB_PCI_INFO_GET;
-            if (DrvMgmtCall(pNicNameList[i], cmd, &pciInfo) != VMK_OK)
+            if (DrvMgmtCall(ifaceList.ifaceArray[i].string, cmd, &pciInfo) != VMK_OK)
                 continue;
 
             if (!isDevTypeSupported(pciInfo.deviceId))
@@ -876,7 +864,6 @@ fail:
                 &cur_domain, &cur_bus, &cur_dev, &cur_fn) != 4)
             {
                 PROVIDER_LOG_ERR("%s(): Incorrect BDF info", __FUNCTION__);
-                free(pNicNameList);
                 return -1;
             }
 
@@ -904,11 +891,10 @@ fail:
 
             tmp_port.pci_fn = cur_fn;
             tmp_port.dev_file = ""; //Set to Empty as file path not to be used in NativeDrvier.
-            tmp_port.dev_name = pNicNameList[i];
+            tmp_port.dev_name = ifaceList.ifaceArray[i].string;
             nics[j].ports.append(tmp_port);
         }
 
-        free(pNicNameList);
 	sortNICsPorts(nics);
 
         return 0;
@@ -1403,6 +1389,7 @@ fail:
          return 0;
     }
 
+
     /// See description in libprovider/sf_native_vmware.h
     int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam)
     {
@@ -1410,11 +1397,14 @@ fail:
 	sfvmk_mgmtDevInfo_t mgmtParam = {0};
 	bool drv_interaction_status = true;
 
-	if (strncpy_check((char *)mgmtParam.deviceName, devName,
-						SFVMK_DEV_NAME_LEN) < 0)
+        if (devName != NULL)
         {
-            PROVIDER_LOG_ERR("Interface name [%s] is too long", devName);
-	    return VMK_FAILURE;
+	    if (strncpy_check((char *)mgmtParam.deviceName, devName,
+	                                          SFVMK_DEV_NAME_LEN) < 0)
+            {
+                PROVIDER_LOG_ERR("Interface name [%s] is too long", devName);
+	        return VMK_FAILURE;
+            }
         }
 
         if (vmk_MgmtUserInit(&sfvmk_mgmtSig, 0, &mgmtHandle))
@@ -4266,25 +4256,25 @@ cleanup:
     VersionInfo VMwareDriver::version() const
     {
 	sfvmk_versionInfo_t verInfo = {0};
-	NicMgmtVmnicName *nicNameList = NULL;
+	sfvmk_ifaceList_t ifaceList;
         unsigned int i;
 	int portCount = 0;
 
-	// Trying to retrieve nic list using nicMgmtApi
-	if (getNICNameList(&nicNameList, portCount) < 0)
+         // Trying to retrieve nic list
+	if (getNICNameList(&ifaceList) < 0)
 	{
 	    PROVIDER_LOG_ERR("Nic Name list retrieval failed");
 	}
 	else
 	{
+            portCount = ifaceList.ifaceCount;
 	    verInfo.type = SFVMK_GET_DRV_VERSION;
 
             for (i = 0; i < portCount; i++)
             {
-	        if (DrvMgmtCall(nicNameList[i], SFVMK_CB_VERINFO_GET,
+	        if (DrvMgmtCall(ifaceList.ifaceArray[i].string, SFVMK_CB_VERINFO_GET,
 				&verInfo) == VMK_OK)
 		{
-		    free(nicNameList);
 	            return VersionInfo(vmk_NameToString(&verInfo.version));
 		}
 	    }
@@ -4296,7 +4286,6 @@ cleanup:
 	// Solarflare interfaces are presented) - we try to get it
 	// from VMware root/cimv2 standard objects.
 
-	free(nicNameList);
         return vmwareGetDriverVersion();
     }
 #endif
