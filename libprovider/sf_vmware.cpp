@@ -2439,27 +2439,7 @@ fail:
 #else
     bool VMwarePort::fullDuplex() const
     {
-	NicMgmtProperties prop = {0};
-	NicMgmtPortName ports[SFVMK_MGMT_MAX_PORTS];
-        NicMgmtLinkMode linkModes[SFVMK_MGMT_MAX_LINK_MODES];
-        NicMgmtWakeonOption wakeOptions[SF_NICMGMT_MAX_WAKEON_TYPES];
-
-        prop.supportedPortsInfo.ports = ports;
-        prop.supportedPortsInfo.numFilled = SFVMK_MGMT_MAX_PORTS;
-
-        prop.advLinkModesInfo.advModes = linkModes;
-        prop.advLinkModesInfo.numFilled = SFVMK_MGMT_MAX_LINK_MODES;
-
-        prop.wakeOnOptionsInfo.option = wakeOptions;
-        prop.wakeOnOptionsInfo.numFilled = SF_NICMGMT_MAX_WAKEON_TYPES;
-
-	if (NicMgmtCall(NICMGMT_GET_PROPERTIES, (void *)dev_name.c_str(), &prop) == VMK_OK)
-	{
-	    if (strcasecmp_start(prop.duplexSetting, "Full") == 0)
-	        return true;
-	    return false;
-	}
-
+        /* For Medford family boards, the full duplex is always enabled*/
 	return true;
     }
 
