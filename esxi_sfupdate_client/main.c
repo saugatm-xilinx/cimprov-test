@@ -2090,7 +2090,6 @@ findAvailableUpdate(CURL *curl, const char *namespace,
 
     img_type = strtol(img_type_str, NULL, 10);
     img_subtype = strtol(img_subtype_str, NULL, 10);
-    printf("Image Type:%d Image SubType:%d\n",img_type,img_subtype); 
     subdir = getFwSubdirName(svc_name);
     if (subdir != NULL && strlen(img_name) != 0 &&
         req_img_name != NULL)
