@@ -29,4 +29,4 @@ namespace solarflare
     extern int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam);
 }
 
-#endif // SOLARFLARE_SF_NATIVE_VMWARE_NVRAM_H
+#endif // SOLARFLARE_SF_NATIVE_VMWARE_H
