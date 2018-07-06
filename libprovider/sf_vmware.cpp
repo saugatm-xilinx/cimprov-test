@@ -4057,7 +4057,7 @@ cleanup:
         }
         sfvmk_imgUpdate_t imgUpdate;
 
-        imgUpdate.pFileBuffer = (vmk_uint64)pBuffer;
+        imgUpdate.pFileBuffer = (vmk_uint64)((vmk_uint32)pBuffer);
         imgUpdate.size = fileSize;
 
         PROVIDER_LOG_DBG("Image Update called for  fwType:%d with image version:%d.%d.%d.%d",
