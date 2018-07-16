@@ -15,6 +15,8 @@ PROVIDER_LIBRARY = solarflare_nic_provider
 ##! Base name for a provider package
 PROVIDER_NAME = solarflare-cim-provider
 
+##! Below variables PROVIDER_VERSION_MAJOR, PROVIDER_VERSION_MINOR &
+##! PROVIDER_REVISION are updated by scripts/createtag.
 ##! Major version of the CIM provider
 PROVIDER_VERSION_MAJOR = 2
 
