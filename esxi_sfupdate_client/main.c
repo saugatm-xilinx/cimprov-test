@@ -122,6 +122,13 @@ static int   fw_url_no_local_access = 0;
  */
 static int   fw_url_use_cim_transf = 0;
 
+/**
+ * Tool version
+ * The version number is same as cimprovider version
+ * It gets update by scripts/createtag script
+ */
+static char* tool_version = "v2.1.0.7";
+
 /* Default HTTP port */
 #define DEF_HTTP_PORT "5988"
 
@@ -371,7 +378,6 @@ parseCmdLine(int argc, const char *argv[])
                 goto cleanup;
         }
     }
-
     if (opt != -1)
     {
         ERROR_MSG("%s:%s", poptBadOption(optCon, 0),
@@ -2493,6 +2499,8 @@ main(int argc, const char *argv[])
     memset(&assoc_cntr_rsp, 0, sizeof(assoc_cntr_rsp));
     memset(&assoc_sw_rsp, 0, sizeof(assoc_sw_rsp));
     memset(&assoc_nic_rsp, 0, sizeof(assoc_nic_rsp));
+
+    printf("sfupdate_esxi version %s\n", tool_version);
 
     if (parseCmdLine(argc, argv) < 0)
         exit(2);
