@@ -127,7 +127,7 @@ static int   fw_url_use_cim_transf = 0;
  * The version number is same as cimprovider version
  * It gets update by scripts/createtag script
  */
-static char* tool_version = "v2.1.0.7";
+static char* tool_version = "v2.1.0.8";
 
 /* Default HTTP port */
 #define DEF_HTTP_PORT "5988"
