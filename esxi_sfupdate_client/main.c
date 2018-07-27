@@ -127,7 +127,7 @@ static int   fw_url_use_cim_transf = 0;
  * The version number is same as cimprovider version
  * It gets update by scripts/createtag script
  */
-static char* tool_version = "v2.1.0.8";
+static char* tool_version = "v2.1.0.9";
 
 /* Default HTTP port */
 #define DEF_HTTP_PORT "5988"
@@ -2500,7 +2500,7 @@ main(int argc, const char *argv[])
     memset(&assoc_sw_rsp, 0, sizeof(assoc_sw_rsp));
     memset(&assoc_nic_rsp, 0, sizeof(assoc_nic_rsp));
 
-    printf("sfupdate_esxi version %s\n", tool_version);
+    printf("sfupdate_esxi version %s\n", v2.1.0.9;);
 
     if (parseCmdLine(argc, argv) < 0)
         exit(2);
