@@ -106,9 +106,9 @@ fi
 provider_major_ver=$(echo "$tagvalue" | cut -d '.' -f1)
 provider_minor_ver=$(echo "$tagvalue" | cut -d '.' -f2)
 provider_revision=$(echo "$tagvalue" | cut -d '.' -f3).$(echo "$tagvalue" | cut -d '.' -f4)
-sanitychecks
+#sanitychecks
 checktagexists &&
      fail "Tag already exists"
-updatecimprov_version
+#updatecimprov_version
 updatesfupdate_version
-tagcimprovider
+#tagcimprovider
