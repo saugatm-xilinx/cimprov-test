@@ -28,7 +28,7 @@ usage () {
 hgcommit () {
     local filename=$1 msg=$2
     msg "Committing $filename with message -$msg"
-    hg --noninteractive commit -m "$msg"
+    hg --noninteractive commit $filename -m "$msg"
 }
 
 hgtag() {
@@ -84,7 +84,7 @@ updatesfupdate_version() {
     local filename=../esxi_sfupdate_client/main.c
     if [[ -e $filename ]]; then
         msg "Changing esxi_sfupdate version"
-        sed -i "s/\(tool_version=\).*;/\1\"$tagparam\";/g" $filename
+        sed -i "s/\(tool_version = \).*;/\1\"$tagparam\";/" $filename
     else
         fail "File not found"
     fi
@@ -106,9 +106,9 @@ fi
 provider_major_ver=$(echo "$tagvalue" | cut -d '.' -f1)
 provider_minor_ver=$(echo "$tagvalue" | cut -d '.' -f2)
 provider_revision=$(echo "$tagvalue" | cut -d '.' -f3).$(echo "$tagvalue" | cut -d '.' -f4)
-#sanitychecks
+sanitychecks
 checktagexists &&
      fail "Tag already exists"
-#updatecimprov_version
+updatecimprov_version
 updatesfupdate_version
-#tagcimprovider
+tagcimprovider
