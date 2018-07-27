@@ -2500,7 +2500,7 @@ main(int argc, const char *argv[])
     memset(&assoc_sw_rsp, 0, sizeof(assoc_sw_rsp));
     memset(&assoc_nic_rsp, 0, sizeof(assoc_nic_rsp));
 
-    printf("sfupdate_esxi version %s\n", tool_version;);
+    printf("sfupdate_esxi version %s\n", tool_version);
 
     if (parseCmdLine(argc, argv) < 0)
         exit(2);
