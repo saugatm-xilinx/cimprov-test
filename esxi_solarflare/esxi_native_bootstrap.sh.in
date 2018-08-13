@@ -74,6 +74,9 @@ else
 
 
     if test $cimpdk_v1 -eq 6 ; then
+        sed -i "s/DESC_ACCEPTANCE_LEVEL=accepted/DESC_ACCEPTANCE_LEVEL=certified/g" Makefile
+        sed -i "s/KEYPATH=\/opt\/vmware\/vibtools\/testcerts\/accepted\.key/KEYPATH=\/opt\/vmware\/vibtools\/testcerts\/vmware.key/g" Makefile
+        sed -i "s/CERTPATH=\/opt\/vmware\/vibtools\/testcerts\/accepted\.cert/CERTPATH=\/opt\/vmware\/vibtools\/testcerts\/vmware.cert/g" Makefile
         if test $cimpdk_v2 -ge 5 ; then
         sed -i "s/BULL_VENDOR_CODE=ZZZ/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
         sed -i "s/PROV_NAME=example-vmkmgmt/PROV_NAME=__PROVIDER_NAME__/g" Makefile
