@@ -33,12 +33,14 @@ class FirmwareImageDetails(object):
         self.mcfw_subtype = {'sparta':31, 'thebes':32, 'icarus':33,
                              'jericho':34, 'byblos':35, 'groat':36,
                              'shilling':37, 'florin':38, 'threepence':39,
-                             'cyclops':40, 'penny':41, 'bob':42}
+                             'cyclops':40, 'penny':41, 'bob':42,
+                             'hog':43, 'sovereign':44, 'solidus':45}
         self.bootrom_subtype = {'medford':6, 'medford2':7}
         self.uefirom_subtype = {'universal':0}
         self.firmware_list = ['mcfw-sparta', 'mcfw-thebes', 'mcfw-icarus',
                               'mcfw-jericho', 'mcfw-byblos', 'mcfw-cyclops',
                               'mcfw-shilling', 'mcfw-florin', 'mcfw-bob',
+                              'mcfw-hog', 'mcfw-sovereign', 'mcfw-solidus',
                               'edk2', 'gpxe']
 
 
