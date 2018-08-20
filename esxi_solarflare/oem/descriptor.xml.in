@@ -115,7 +115,7 @@
    <!-- certified / accepted / partner / community -->
    <!-- Defaults to community if not specified    -->
    <!-- TODO: This value may be overridden by the signing code. -->
-   <acceptance-level>certified</acceptance-level>
+   <acceptance-level>accepted</acceptance-level>
 
    <!-- Defaults to false -->
    <live-install-allowed>false</live-install-allowed>
