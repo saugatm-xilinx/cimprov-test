@@ -23,7 +23,7 @@
 	     as product/component and version information, if
 	     applicable.  The bulletin ID must not contain spaces. -->
 
-	<id>SLF-__PROVIDER_NAME__-__PROVIDER_VERSION__-__PROVIDER_REVISION__</id>
+	<id>SFC-__PROVIDER_NAME__-__PROVIDER_VERSION__-__PROVIDER_REVISION__</id>
 
 	<!-- The name of your company. -->
 
