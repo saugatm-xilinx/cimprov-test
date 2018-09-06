@@ -159,6 +159,9 @@ extern "C" {
 // Maximum number of stored nv_context pointers
 #define MAX_NV_CTX_ID 1000
 
+// Maximum MC Reboot Timeout value
+#define CIMPROV_MC_REBOOT_TIME_OUT_SEC 11
+
 extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
 }
@@ -3905,16 +3908,6 @@ cleanup:
         FILE   *fPtr =  NULL;
         char   *pBuffer = NULL;
 #endif
-        VitalProductData vpd = ((VMwareNIC *)owner)->vitalProductData();
-
-#if 0
-        // We intend to update firmware only for these two NIC models,
-        // skipping any other
-        if (strcmp(vpd.part().c_str(), "SFN6122F") != 0 &&
-            strcmp(vpd.part().c_str(), "SFN5162F") != 0)
-            return SWElement::Install_NA;
-#endif
-
         if (((VMwareNIC *)owner)->ports.size() <= 0)
         {
             PROVIDER_LOG_ERR("No ports found");
@@ -4081,6 +4074,8 @@ cleanup:
             rc = -1;
             goto cleanup;
         }
+        if (fwType == FIRMWARE_MCFW)
+            sleep(CIMPROV_MC_REBOOT_TIME_OUT_SEC);
 
 cleanup:
            if (pBuffer)
