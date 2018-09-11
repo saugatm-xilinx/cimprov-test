@@ -36,12 +36,12 @@ class FirmwareImageDetails(object):
                              'cyclops':40, 'penny':41, 'bob':42,
                              'hog':43, 'sovereign':44, 'solidus':45}
         self.bootrom_subtype = {'medford':6, 'medford2':7}
-        self.uefirom_subtype = {'universal':0}
+        self.uefirom_subtype = {'medford_x64':0, 'medford_aarch64':1}
         self.firmware_list = ['mcfw-sparta', 'mcfw-thebes', 'mcfw-icarus',
                               'mcfw-jericho', 'mcfw-byblos', 'mcfw-cyclops',
                               'mcfw-shilling', 'mcfw-florin', 'mcfw-bob',
                               'mcfw-hog', 'mcfw-sovereign', 'mcfw-solidus',
-                              'edk2', 'gpxe']
+                              'gpxe', 'uefi_medford_x64', 'uefi_medford_aarch64']
 
 
     def get_image_type(self, image_type_arg):
@@ -240,17 +240,23 @@ def get_mc_uefi_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
                                                                     temppath)
                         json_handle.create_json_object(jsonobj, "mcfw")
                 else:
-                    newfilename = updatefile
+                    subtype_index = name.find('_')
+                    if subtype_index == -1:
+                        fail('Cannot determine firmware subtype')
+                    else:
+                        subtype_index += 1
+                    uefirom_subtype = name[subtype_index:]
+                    newfilename = uefirom_subtype.upper() + '.dat'
                     srcfilepath = os.path.join(ivydir, updatefile)
                     destfilepath = os.path.join(outdir_handle.uefi_dir,
-                                                updatefile)
+                                                newfilename)
                     shutil.copy(srcfilepath, destfilepath)
                     print "Adding File: " + newfilename
                     if json_handle.create_json_file == 1:
                         basedirlen = len(outdir_handle.base_output_dir)
                         temppath = destfilepath[basedirlen:]
                         typeval = firmware_img_obj.get_image_type("uefirom")
-                        subtype = firmware_img_obj.get_uefirom_subtype('universal')
+                        subtype = firmware_img_obj.get_uefirom_subtype(uefirom_subtype)
                         jsonobj = json_handle.create_image_metadata(newfilename,
                                                                     typeval,
                                                                     subtype,
@@ -387,7 +393,7 @@ def main():
                     if firmware_img_obj.check_firmware_list(dependency.
                                                             get('name')):
                         if((dependency.get('name')).find('mcfw') > -1 or
-                           (dependency.get('name')).find('edk2') > -1):
+                           (dependency.get('name')).find('uefi') > -1):
                             get_mc_uefi_file(dependency.get('name'),
                                              dependency.get('rev'),
                                              firmware_img_obj,
