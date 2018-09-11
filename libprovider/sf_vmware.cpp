@@ -1717,7 +1717,8 @@ fail:
         { FIRMWARE_MCFW, 8, "ZEBEDEE.dat" },
 
         // UEFI
-        { FIRMWARE_UEFIROM, 0, "sfc_uefi.dat" },
+        { FIRMWARE_UEFIROM, 0, "MEDFORD_X64.dat" },
+        { FIRMWARE_UEFIROM, 1, "MEDFORD_AARCH64.dat" },
 
         { FIRMWARE_UNKNOWN, 0, NULL},
     };
