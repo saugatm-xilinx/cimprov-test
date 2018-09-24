@@ -64,3 +64,4 @@ SF_JobError
 SF_JobSuccess
 SF_Alert
 m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[SF_NVAPI]], [[]])
+m4_ifelse(TARGET_CIM_SERVER, [[esxi]], [[SF_API]], [[]])

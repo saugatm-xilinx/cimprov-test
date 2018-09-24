@@ -616,6 +616,28 @@ namespace solarflare
         {
             return OrderedElement::name(genericName());
         }
+
+	///
+	/// Get PF/VF corresponding to a given PCI address.
+	///
+	/// @param searchPCIAddr       PCI address.
+	/// @param found               Will be set to true if
+	///                            PF/VF with provided PCI address
+	///                            was found.
+	/// @param pf_out              Where to save PF.
+	/// @param vf_out              Where to save VF.
+	/// @param vf_null             Will be set to true if PF was
+	///                            found.
+	///
+	/// @return 0 on success, -1 on failure.
+	virtual int getPFVFByPCIAddr(const PCIAddress &searchPCIAddr,
+                                     bool &found, uint32 &pf_out,
+                                     uint32 &vf_out,
+                                     bool &vf_null) const
+        {
+            found = false;
+            return 0;
+        }
     };
 
     /// @brief An abstract driver class.

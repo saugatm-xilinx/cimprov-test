@@ -2623,8 +2623,6 @@ fail:
         if (setIoctlIf(ioc, ifName) < 0)
             return -1;
 
-        ioc.cmd = EFX_MCDI_REQUEST;
-
         fd = open(DEV_SFC_CONTROL, O_RDWR);
         if (fd < 0)
         {
@@ -2637,22 +2635,148 @@ fail:
         return 0;
     }
 
+    /// Execute MCDIv2 command, check results.
+    ///
+    /// @param fd       File descriptor on which to call ioctl()
+    /// @param ioc      efx_ioctl structure
+    ///
+    /// @return 0 on success, -1 on failure
+    static int doMCDI2Call(int fd,
+                          struct efx_ioctl &ioc)
+    {
+        struct efx_mcdi_request2 *mcdi_req = NULL;
+
+        mcdi_req = &ioc.u.mcdi_request2;
+	ioc.cmd = EFX_MCDI_REQUEST2;
+
+        if (ioctl(fd, SIOCEFX, &ioc) < 0)
+        {
+            PROVIDER_LOG_ERR("ioctl(SIOCEFX:mcdi_cmd=0x%x) "
+                             "failed, errno %d ('%s')",
+                             (unsigned int)mcdi_req->cmd, errno,
+                             strerror(errno));
+            return -1;
+        }
+
+	if (mcdi_req->flags & EFX_MCDI_REQUEST_ERROR)
+        {
+            PROVIDER_LOG_ERR("MCDIv2 request 0x%x failed, errno %u (%s)",
+                             (unsigned int)mcdi_req->cmd,
+                             (unsigned int)mcdi_req->host_errno,
+                             strerror(mcdi_req->host_errno));
+            return -1;
+        }
+
+        return 0;
+    }
+
+    ///
+    /// Do MCDI proxied call on specified PF/VF.
+    ///
+    /// @param fd       File descriptor on which to call ioctl().
+    /// @param ioc      Pointer to filled efx_ioctl structure.
+    /// @param pf       PF for which to perform MCDI call.
+    /// @param vf       VF for which to perform MCDI call
+    ///                 (may be MC_CMD_PROXY_CMD_IN_VF_NULL).
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int doMCDIProxyCall(int fd,
+                               struct efx_ioctl &ioc,
+                               uint32_t pf,
+                               uint32_t vf)
+    {
+        struct efx_mcdi_request2  *mcdi_req;
+        struct efx_mcdi_request2   proxy_req;
+
+        size_t    req_size;
+        uint32_t  function;
+
+        uint32_t  hdr[2] = { 0, };
+        uint32_t  error;
+
+        mcdi_req = &ioc.u.mcdi_request2;
+        req_size = mcdi_req->inlen + sizeof(hdr);
+
+        if (req_size + MC_CMD_PROXY_CMD_IN_LEN >
+                                    sizeof(proxy_req.payload))
+        {
+            PROVIDER_LOG_ERR("%s(): MCDI request is too big to "
+                             "be encapsulated", __FUNCTION__);
+            return -1;
+        }
+
+        memset(&proxy_req, 0, sizeof(proxy_req));
+        proxy_req.cmd = MC_CMD_PROXY_CMD;
+        proxy_req.inlen = MC_CMD_PROXY_CMD_IN_LEN + req_size;
+        proxy_req.outlen = sizeof(proxy_req.payload);
+
+        try {
+            function = 0;
+            SET_MCDI_FIELD_PART(PROXY_CMD_IN_TARGET, PF,
+                                function, pf);
+            SET_MCDI_FIELD_PART(PROXY_CMD_IN_TARGET, VF,
+                                function, vf);
+            SET_MCDI_FIELD(proxy_req.payload, PROXY_CMD_IN_TARGET,
+                           function);
+        }
+        catch (ProviderException &)
+        {
+            return -1;
+        }
+
+        memset(hdr, 0, sizeof(hdr));
+        hdr[0] = (1 << MCDI_HEADER_RESYNC_LBN |
+                  MC_CMD_V2_EXTN << MCDI_HEADER_CODE_LBN);
+        hdr[1] = (mcdi_req->cmd << MC_CMD_V2_EXTN_IN_EXTENDED_CMD_LBN |
+                  mcdi_req->inlen << MC_CMD_V2_EXTN_IN_ACTUAL_LEN_LBN);
+
+        memcpy((uint8_t *)proxy_req.payload + MC_CMD_PROXY_CMD_IN_LEN,
+               hdr, sizeof(hdr));
+        memcpy((uint8_t *)proxy_req.payload + MC_CMD_PROXY_CMD_IN_LEN +
+               sizeof(hdr),
+               mcdi_req->payload, mcdi_req->inlen);
+        memcpy(mcdi_req, &proxy_req, sizeof(proxy_req));
+
+        if (doMCDI2Call(fd, ioc) < 0)
+            return -1;
+
+        memcpy(hdr, mcdi_req->payload, sizeof(hdr));
+        memcpy(&proxy_req.payload, mcdi_req->payload,
+               sizeof(mcdi_req->payload));
+        memcpy(mcdi_req, &proxy_req, sizeof(proxy_req));
+        memcpy(mcdi_req->payload,
+               (uint8_t *)proxy_req.payload + sizeof(hdr),
+               sizeof(proxy_req.payload) - sizeof(hdr));
+
+        error = ((hdr[0] >> MCDI_HEADER_ERROR_LBN) &
+                 ((1 << MCDI_HEADER_ERROR_WIDTH) - 1));
+        if (error != 0)
+        {
+            PROVIDER_LOG_ERR("%s(): proxied MCDI command 0x%x failed",
+                             __FUNCTION__, mcdi_req->cmd);
+            return -1;
+        }
+
+        return 0;
+    }
+
     /// Execute MCDI command, check results.
     ///
     /// @param fd       File descriptor on which to call ioctl()
     /// @param ioc      efx_ioctl structure
     ///
     /// @return 0 on success, -1 on failure
-    static int doMCDICall(int &fd,
+    static int doMCDICall(int fd,
                           struct efx_ioctl &ioc)
     {
         struct efx_mcdi_request *mcdi_req = NULL;
 
         mcdi_req = &ioc.u.mcdi_request;
+        ioc.cmd = EFX_MCDI_REQUEST;
 
         if (ioctl(fd, SIOCEFX, &ioc) < 0)
         {
-            PROVIDER_LOG_ERR("ioctl(SIOCEFX:mcdi_cmd=%u) "
+            PROVIDER_LOG_ERR("ioctl(SIOCEFX:mcdi_cmd=0x%x) "
                              "failed, errno %d ('%s')",
                              (unsigned int)mcdi_req->cmd, errno,
                              strerror(errno));
@@ -2661,10 +2785,297 @@ fail:
 
         if (mcdi_req->rc != 0)
         {
-            PROVIDER_LOG_ERR("MCDI request %u returned %u",
+            PROVIDER_LOG_ERR("MCDI request 0x%x returned %u",
                              (unsigned int)mcdi_req->cmd,
                              (unsigned int)mcdi_req->rc);
             return -1;
+        }
+
+        return 0;
+    }
+
+    ///
+    /// Get Current number of Physical Functions
+    ///
+    /// @param fd       File descriptor on which to call ioctl().
+    /// @param ioc      Filled efx_ioctl structure.
+    /// @param num      Where to save number of PFs.
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int getPFsNum(int fd,
+                         struct efx_ioctl &ioc,
+                         unsigned int &num)
+    {
+        struct efx_mcdi_request2 *mcdi_req = NULL;
+
+        mcdi_req = &ioc.u.mcdi_request2;
+        memset(mcdi_req, 0, sizeof(*mcdi_req));
+
+        mcdi_req->cmd = MC_CMD_GET_PF_COUNT;
+        mcdi_req->inlen = MC_CMD_GET_PF_COUNT_IN_LEN;
+        mcdi_req->outlen = MC_CMD_GET_PF_COUNT_OUT_LEN;
+
+        if (doMCDI2Call(fd, ioc) < 0)
+            return -1;
+
+        try {
+            num = GET_MCDI_FIELD(mcdi_req->payload,
+                                 GET_PF_COUNT_OUT_PF_COUNT);
+        }
+        catch (const ProviderException &)
+        {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    ///
+    /// Data obtained with MC_CMD_GET_SRIOV_CFG.
+    ///
+    typedef struct sriov_info {
+        uint32_t vf_current;    ///< Number of VFs configured.
+        uint32_t vf_offset;     ///< RID offset of the first VF.
+        uint32_t vf_stride;     ///< RID stride between consecutive VFs.
+    } sriov_info;
+
+    ///
+    /// Get SRIOV configuration of a given PF.
+    ///
+    /// @param fd         File descriptor on which to call ioctl().
+    /// @param ioc        Filled efx_ioctl structure.
+    /// @param use_proxy  If true, use MC_CMD_PROXY_CMD to call
+    ///                   MC_CMD_GET_SRIOV_CFG on a specified PF.
+    ///                   If false, MC_CMD_GET_SRIOV_CFG will be
+    ///                   called for an interface specified in @p ioc.
+    /// @param pf         For which PF to obtain configuration
+    ///                   (should be set if use_proxy is true).
+    /// @param info       Where to save SRIOV configuration.
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int getPFSRIOVInfo(int fd,
+                              struct efx_ioctl &ioc,
+                              bool use_proxy,
+                              uint32_t pf,
+                              sriov_info &info)
+    {
+        struct efx_mcdi_request2 *mcdi_req = NULL;
+
+        memset(&info, 0, sizeof(info));
+
+        mcdi_req = &ioc.u.mcdi_request2;
+        memset(mcdi_req, 0, sizeof(*mcdi_req));
+
+        mcdi_req->cmd = MC_CMD_GET_SRIOV_CFG;
+        mcdi_req->inlen = MC_CMD_GET_SRIOV_CFG_IN_LEN;
+        mcdi_req->outlen = MC_CMD_GET_SRIOV_CFG_OUT_LEN;
+
+        if (use_proxy)
+        {
+            if (doMCDIProxyCall(fd, ioc, pf,
+                                MC_CMD_PROXY_CMD_IN_VF_NULL) < 0)
+                return -1;
+        }
+        else
+        {
+            if (doMCDI2Call(fd, ioc) < 0)
+                return -1;
+        }
+
+        try {
+            info.vf_current = GET_MCDI_FIELD(mcdi_req->payload,
+                                             GET_SRIOV_CFG_OUT_VF_CURRENT);
+            info.vf_offset = GET_MCDI_FIELD(mcdi_req->payload,
+                                            GET_SRIOV_CFG_OUT_VF_OFFSET);
+            info.vf_stride = GET_MCDI_FIELD(mcdi_req->payload,
+                                            GET_SRIOV_CFG_OUT_VF_STRIDE);
+        }
+        catch (const ProviderException &)
+        {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    ///
+    /// Get PF/VF of an interface.
+    ///
+    /// @param fd         File descriptor on which to call ioctl().
+    /// @param ioc        Filled efx_ioctl structure.
+    /// @param pf         Where to save PF.
+    /// @param vf         Where to save VF.
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int getPFVF(int fd,
+                       struct efx_ioctl &ioc,
+                       uint32_t &pf,
+                       uint32_t &vf)
+    {
+        struct efx_mcdi_request2 *mcdi_req = NULL;
+
+        mcdi_req = &ioc.u.mcdi_request2;
+        memset(mcdi_req, 0, sizeof(*mcdi_req));
+
+        mcdi_req->cmd = MC_CMD_GET_FUNCTION_INFO;
+        mcdi_req->inlen = MC_CMD_GET_FUNCTION_INFO_IN_LEN;
+        mcdi_req->outlen = MC_CMD_GET_FUNCTION_INFO_OUT_LEN;
+
+        if (doMCDI2Call(fd, ioc) < 0)
+            return -1;
+
+        try {
+            pf = GET_MCDI_FIELD(mcdi_req->payload,
+                                GET_FUNCTION_INFO_OUT_PF);
+            vf = GET_MCDI_FIELD(mcdi_req->payload,
+                                GET_FUNCTION_INFO_OUT_VF);
+        }
+        catch (const ProviderException &)
+        {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    ///
+    /// Check whether a given number is PCIAddress::unknown.
+    /// If it is, return 0, otherwise return the given number.
+    ///
+    /// @param n      Number to process.
+    ///
+    /// @return Result.
+    static uint32_t PCIUnknownToZero(uint32_t n)
+    {
+        if (n == PCIAddress::unknown)
+            return 0;
+
+        return n;
+    }
+
+    ///
+    /// Convert PCI address to RID.
+    ///
+    /// @param addr     PCI address.
+    /// @param rid      Where to save RID.
+    ///
+    /// @return 0 on success, -1 on failure,
+    static int PCIAddrToRID(const PCIAddress addr,
+                            uint32_t &rid)
+    {
+        unsigned int dom = PCIUnknownToZero(addr.domain());
+        unsigned int bus = PCIUnknownToZero(addr.bus());
+        unsigned int dev = PCIUnknownToZero(addr.device());
+        unsigned int fn = PCIUnknownToZero(addr.fn());
+
+        if ((fn > 7 && dev != 0) || fn > 255 || dev > 0x1f || bus > 255 ||
+            dom > 0xffff)
+        {
+            PROVIDER_LOG_ERR("Cannot convert %x:%x:%x.%x to RID",
+                             dom, bus, dev, fn);
+            return -1;
+        }
+
+        rid = (dom << 16) + (bus << 8) + (dev << 3) + fn;
+
+        return 0;
+    }
+
+    ///
+    /// Get PF/VF corresponding to a given PCI address.
+    ///
+    ///
+    /// @param fd             File descriptor on which to call ioctl().
+    /// @param ioc            Filled efx_ioctl structure.
+    /// @param dev_name       Device name (will be set in @p ioc if
+    ///                        not NULL).
+    /// @param devPCIAddr     PCI address of a device on which this function
+    ///                       is called.
+    /// @param searchPCIAddr  PCI address for which PF/VF should be found.
+    /// @param found          Will be set to TRUE if PF/VF corresponding to
+    ///                       @p searchPCIAddr were found on the device.
+    /// @param pf_out         Where to save PF.
+    /// @param vf_out         Where to save VF (may be
+    ///                       MC_CMD_PRIVILEGE_MASK_IN_VF_NULL).
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int PCIToPFVF(int fd,
+                         struct efx_ioctl &ioc,
+                         const char *dev_name,
+                         const PCIAddress &devPCIAddr,
+                         const PCIAddress &searchPCIAddr,
+                         bool &found,
+                         uint32_t &pf_out,
+                         uint32_t &vf_out)
+    {
+        int                 rc;
+        uint32_t            pf;
+        uint32_t            vf;
+        uint32_t            rid;
+        uint32_t            cur_rid;
+        uint32_t            pfs_num;
+        uint32_t            pf0_rid;
+        uint32_t            vf0_rid;
+        uint32_t            i;
+
+        sriov_info info;
+
+        found = false;
+        memset(&info, 0, sizeof(info));
+
+        if (dev_name != NULL)
+        {
+            if (setIoctlIf(ioc, dev_name) < 0)
+                return -1;
+        }
+
+        if (getPFVF(fd, ioc, pf, vf) < 0)
+            return -1;
+
+        if (getPFsNum(fd, ioc, pfs_num) < 0)
+            return -1;
+
+        if (PCIAddrToRID(devPCIAddr, cur_rid) < 0)
+            return -1;
+        if (PCIAddrToRID(searchPCIAddr, rid) < 0)
+            return -1;
+
+        if (vf != MC_CMD_PRIVILEGE_MASK_IN_VF_NULL)
+        {
+            if (getPFSRIOVInfo(fd, ioc, true, pf, info) < 0)
+                return -1;
+
+            pf0_rid = cur_rid - vf * info.vf_stride - info.vf_offset - pf;
+        }
+        else
+        {
+            pf0_rid = cur_rid - pf;
+        }
+
+        if (rid >= pf0_rid && rid < pf0_rid + pfs_num)
+        {
+            found = true;
+            pf_out = rid - pf0_rid;
+            vf_out = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
+            return 0;
+        }
+
+        for (i = 0; i < pfs_num; i++)
+        {
+            if (getPFSRIOVInfo(fd, ioc, true, i, info) < 0)
+                return -1;
+
+            vf0_rid = pf0_rid + i + info.vf_offset;
+
+            if (rid >= vf0_rid &&
+                rid < vf0_rid + info.vf_current * info.vf_stride &&
+                (rid - vf0_rid) % info.vf_stride == 0)
+            {
+                pf_out = i;
+                vf_out = (rid - vf0_rid) / info.vf_stride;
+                found = true;
+                break;
+            }
         }
 
         return 0;
@@ -3677,6 +4088,11 @@ cleanup:
         {
             return pci_device_id;
         }
+
+	virtual int getPFVFByPCIAddr(const PCIAddress &searchPCIAddr,
+                                     bool &found, uint32 &pf_out,
+                                     uint32 &vf_out,
+                                     bool &vf_null) const;
     };
 
     int VMwareNIC::getFullVPD(bool staticVPD,
@@ -3747,6 +4163,49 @@ cleanup:
     {
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
+
+#ifndef TARGET_CIM_SERVER_esxi_native
+    int VMwareNIC::getPFVFByPCIAddr(const PCIAddress &searchPCIAddr,
+                                    bool &found, uint32 &pf_out,
+                                    uint32 &vf_out,
+                                    bool &vf_null) const
+    {
+        unsigned int      i;
+        int               rc = -1;
+        int               fd;
+        struct efx_ioctl  ioc;
+        unsigned int      privs;
+
+        if (prepareMCDICall("", fd, ioc) < 0)
+            goto cleanup;
+
+        found = false;
+        for (i = 0; i < this->ports.size(); i++)
+        {
+            rc = PCIToPFVF(fd, ioc, this->ports[i].dev_name.c_str(),
+                           this->ports[i].pciAddress(),
+                           searchPCIAddr, found, pf_out, vf_out);
+
+            if (rc == 0)
+                break;
+        }
+
+        rc = 0;
+
+cleanup:
+
+        if (fd >= 0 && close(fd) < 0)
+            PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
+                             errno, strerror(errno));
+
+        if (vf_out == MC_CMD_PRIVILEGE_MASK_IN_VF_NULL)
+            vf_null = true;
+        else
+            vf_null = false;
+
+        return rc;
+    }
+#endif
 
     ///
     /// Get information about required firmware image.
