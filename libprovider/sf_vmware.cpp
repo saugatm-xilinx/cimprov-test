@@ -2661,6 +2661,9 @@ fail:
     ///
     /// Do MCDI proxied call on specified PF/VF.
     ///
+    /// @note This function expects MCDIv2 request in @p ioc,
+    ///       it will not work correctly with MCDIv1.
+    ///
     /// @param fd       File descriptor on which to call ioctl().
     /// @param ioc      Pointer to filled efx_ioctl structure.
     /// @param pf       PF for which to perform MCDI call.
@@ -2675,6 +2678,7 @@ fail:
     {
         struct efx_mcdi_request2  *mcdi_req;
         struct efx_mcdi_request2   proxy_req;
+        struct efx_mcdi_request2   saved_req;
 
         size_t    req_size;
         uint32_t  function;
@@ -2723,15 +2727,20 @@ fail:
         memcpy((uint8_t *)proxy_req.payload + MC_CMD_PROXY_CMD_IN_LEN +
                sizeof(hdr),
                mcdi_req->payload, mcdi_req->inlen);
+
+	memcpy(&saved_req, mcdi_req, sizeof(saved_req));
         memcpy(mcdi_req, &proxy_req, sizeof(proxy_req));
 
         if (doMCDI2Call(fd, ioc) < 0)
+	{
+	    memcpy(mcdi_req, &saved_req, sizeof(saved_req));
             return -1;
+	}
 
         memcpy(hdr, mcdi_req->payload, sizeof(hdr));
         memcpy(&proxy_req.payload, mcdi_req->payload,
                sizeof(mcdi_req->payload));
-        memcpy(mcdi_req, &proxy_req, sizeof(proxy_req));
+        memcpy(mcdi_req, &saved_req, sizeof(saved_req));
         memcpy(mcdi_req->payload,
                (uint8_t *)proxy_req.payload + sizeof(hdr),
                sizeof(proxy_req.payload) - sizeof(hdr));
