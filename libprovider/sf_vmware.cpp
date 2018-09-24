@@ -1819,10 +1819,9 @@ fail:
 
         int nativeType = getNativeFirmwareType(type, device_type);
 
-        if (device_type != SFU_DEVICE_TYPE_SIENA &&
-            device_type != SFU_DEVICE_TYPE_HUNTINGTON)
+	if (!isDevTypeSupported(device_type))
         {
-            PROVIDER_LOG_ERR("%s(): incorrect device type %d",
+            PROVIDER_LOG_ERR("%s(): unknown device type %d",
                              __FUNCTION__, device_type);
             return -1;
         }
@@ -6050,7 +6049,9 @@ cleanup:
             }
         }
         else if (SFU_DEVICE_TYPE(pci_device_id) ==
-                                          SFU_DEVICE_TYPE_HUNTINGTON)
+                                          SFU_DEVICE_TYPE_HUNTINGTON ||
+		 SFU_DEVICE_TYPE(pci_device_id) ==
+					  SFU_DEVICE_TYPE_MEDFORD)
         {
             if (siocEFXGetBootROMVersionEF10(ifname, 0, fd,
                                              false, ver) == 0)
