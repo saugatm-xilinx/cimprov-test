@@ -68,6 +68,16 @@ public:
         Property<Array_uint32>& Privileges,
         Property<uint32>& return_value);
 
+    Invoke_Method_Status ModifyFuncPrivileges(
+        const SF_API* self,
+        const Property<uint32> &PhysicalFunction,
+        const Property<uint32> &VirtualFunction,
+        const Property<String> &PCIAddr,
+        const Property<String> &CallingDev,
+        const Property<String>& AddedMask,
+        const Property<String>& RemovedMask,
+        Property<uint32>& return_value);
+
     /*@END@*/
 };
 

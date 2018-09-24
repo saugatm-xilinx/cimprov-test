@@ -3451,7 +3451,18 @@ cleanup:
         return 0;
     }
 
-    int VMwarePort::modifyPrivileges(
+    ///
+    /// Modify privileges of a NIC function.
+    ///
+    /// @param portName       Port on which to call ioctl().
+    /// @param pf             Physical function.
+    /// @param vf             Virtual function (may be not set).
+    /// @param addedMask      Privileges to be added.
+    /// @param removedMask    Privileges to be removed.
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int doModifyPrivileges(
+		    const char *portName,
                     const Property<uint32> &pf,
                     const Property<uint32> &vf,
                     const Property<String> &addedMask,
@@ -3466,18 +3477,27 @@ cleanup:
         int               fd = -1;
         int               rc = -1;
 
+	if (prepareMCDICall(portName, fd, ioc) < 0)
+            goto cleanup;
+
         if (pf.null)
         {
-            PROVIDER_LOG_ERR("PhysicalFunction was not specified");
-            goto cleanup;
+	    if (getPFVF(fd, ioc, pf_value, vf_value) < 0)
+                goto cleanup;
         }
-
-        pf_value = pf.value;
-
-        if (vf.null)
-           vf_value = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
         else
-           vf_value = vf.value;
+	{
+            pf_value = pf.value;
+
+            if (vf.null)
+            {
+                vf_value = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
+            }
+            else
+            {
+                vf_value = vf.value;
+            }
+        }
 
         if (!addedMask.null)
         {
@@ -3493,9 +3513,6 @@ cleanup:
                 goto cleanup;
         }
 
-        if (prepareMCDICall(this->dev_name.c_str(), fd, ioc) < 0)
-            goto cleanup;
-
         if (modifyFunctionPrivileges(fd, ioc, pf_value, vf_value,
                                      added_privs, removed_privs) < 0)
             goto cleanup;
@@ -3506,6 +3523,16 @@ cleanup:
             PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
                              errno, strerror(errno));
         return rc;
+    }
+
+    int VMwarePort::modifyPrivileges(
+                    const Property<uint32> &pf,
+                    const Property<uint32> &vf,
+                    const Property<String> &addedMask,
+                    const Property<String> &removedMask)
+    {
+        return doModifyPrivileges(this->dev_name.c_str(),
+                                  pf, vf, addedMask, removedMask);
     }
 
     int VMwarePort::getIntrModeration(const Array_String &paramNames,
@@ -4305,6 +4332,7 @@ cleanup:
 
         return rc;
     }
+
 #endif
 
     ///
@@ -5507,6 +5535,14 @@ cleanup:
                                   const Property<uint32> &vf,
                                   Property<Array_String> &privilegeNames,
                                   Property<Array_uint32> &privileges) const;
+
+
+	virtual int modifyFuncPrivileges(
+                                  const String &dev_name,
+                                  const Property<uint32> &pf,
+                                  const Property<uint32> &vf,
+                                  const Property<String> &addedMask,
+                                  const Property<String> &removedMask) const;
     };
 
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -6442,6 +6478,17 @@ cleanup:
     {
         return doGetPrivileges(dev_name.c_str(), pf, vf,
                                privilegeNames, privileges);
+    }
+
+    int VMwareSystem::modifyFuncPrivileges(
+                              const String &dev_name,
+                              const Property<uint32> &pf,
+                              const Property<uint32> &vf,
+                              const Property<String> &addedMask,
+                              const Property<String> &removedMask) const
+    {
+        return doModifyPrivileges(dev_name.c_str(),
+                                  pf, vf, addedMask, removedMask);
     }
 #endif
 
