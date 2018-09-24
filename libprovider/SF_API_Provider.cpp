@@ -93,6 +93,8 @@ Modify_Instance_Status SF_API_Provider::modify_instance(
 class DevFinder : public solarflare::ConstElementEnumerator
 {
     PCIAddress searchAddr;    ///< PCI address to find.
+    bool       getAdminIf;    ///< If true, obtain name of an interface
+			      /// with ADMIN privilege
 
     bool    success;          ///< Will be set to true if
                               ///  PF/VF was succesfully found.
@@ -102,13 +104,27 @@ class DevFinder : public solarflare::ConstElementEnumerator
                               ///  found).
     String  NICTag;           ///< Tag of the NIC on which a function
                               ///  was found.
+    String  AdminIntf;        ///< Interface with ADMIN privilege
+                              ///  on the NIC on which a function was
+                              ///  found.
 
 protected:
     virtual bool process(const SystemElement& elem);
 
 public:
     DevFinder() : searchAddr(0, 0, 0, 0),
+		  getAdminIf(false),
                   success(false) {}
+
+    ///
+    /// Specify whether an interface with ADMIN privilege
+    /// should be retrieved from NIC.
+    ///
+    /// @param getAdmin     If true, interface will be retrieved.
+    void findAdminIf(bool getAdmin)
+    {
+        getAdminIf = getAdmin;
+    }
 
     ///
     /// Set PCI address to be searched for.
@@ -150,6 +166,13 @@ public:
     ///
     /// @return NIC's tag.
     const String &Tag() const { return NICTag; }
+
+    ///
+    /// Get name of an interface with ADMIN privilege
+    /// (findAdminIf() should be used before iterating for this to work).
+    ///
+    /// @return Interface name.
+    const String &AdminIfName() const { return AdminIntf; }
 };
 
 bool DevFinder::process(const SystemElement& elem)
@@ -167,6 +190,8 @@ bool DevFinder::process(const SystemElement& elem)
     {
         success = true;
         NICTag = nic.tag();
+	if (getAdminIf)
+            nic.getAdminInterface(AdminIntf);
     }
 
     return true;
@@ -204,6 +229,74 @@ Invoke_Method_Status SF_API_Provider::GetPFVFByPCI(
         NICTag.set(finder.Tag());
         return_value.set(OK);
     }
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_API_Provider::GetFuncPrivileges(
+    const SF_API* self,
+    const Property<uint32> &PhysicalFunction,
+    const Property<uint32> &VirtualFunction,
+    const Property<String> &PCIAddr,
+    const Property<String> &CallingDev,
+    Property<Array_String>& PrivilegeNames,
+    Property<Array_uint32>& Privileges,
+    Property<uint32>& return_value)
+{
+    Property<uint32>  pf;
+    Property<uint32>  vf;
+    String            calling_if;
+
+    return_value.set(Error);
+
+    if (!PhysicalFunction.null)
+        pf.set(PhysicalFunction.value);
+
+    if (!VirtualFunction.null)
+        vf.set(VirtualFunction.value);
+
+    if (!CallingDev.null)
+        calling_if = CallingDev.value;
+
+    if (!PCIAddr.null)
+    {
+        DevFinder finder;
+
+        if (CallingDev.null)
+            finder.findAdminIf(true);
+
+        if (finder.setAddr(PCIAddr.value.c_str()) < 0)
+            return INVOKE_METHOD_OK;
+
+        System::target.forAllNICs(finder);
+
+        if (finder.isFound())
+        {
+            pf.set(finder.PF());
+            if (!finder.VF_NULL())
+                vf.set(finder.VF());
+
+            if (CallingDev.null)
+                calling_if = finder.AdminIfName();
+        }
+        else
+        {
+            PROVIDER_LOG_ERR("Failed to find function "
+                             "with PCI address '%s'",
+                             PCIAddr.value.c_str());
+            return INVOKE_METHOD_OK;
+        }
+    }
+
+    if (calling_if.empty())
+    {
+        PROVIDER_LOG_ERR("Cannot find interface on which to get privileges");
+        return INVOKE_METHOD_OK;
+    }
+
+    if (System::target.getFuncPrivileges(calling_if, pf, vf,
+                                         PrivilegeNames, Privileges) == 0)
+        return_value.set(OK);
 
     return INVOKE_METHOD_OK;
 }

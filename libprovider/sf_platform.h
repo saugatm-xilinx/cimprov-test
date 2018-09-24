@@ -638,6 +638,17 @@ namespace solarflare
             found = false;
             return 0;
         }
+
+	///
+	/// Get name of an interface having ADMIN privilege.
+	///
+	/// @param ifName   Where to save name of the interface.
+	///
+	/// @return 0 on success, -1 on failure.
+	virtual int getAdminInterface(String &ifName) const
+	{
+	    return -1;
+	}
     };
 
     /// @brief An abstract driver class.
@@ -1213,6 +1224,33 @@ namespace solarflare
                                   unsigned int &host_errno,
                                   int &ioctl_rc,
                                   unsigned int &ioctl_errno)
+        {
+            return -1;
+        }
+
+	///
+	/// Get privileges of a NIC function (physical or virtual).
+	///
+	/// @note If both @p pf and @p vf are not set, then privileges are
+	///       obtained for @p dev_name itself.
+	///
+	/// @param dev_name             Device name on which to make
+	///                             request.
+	/// @param pf                   Physical function number.
+	/// @param vf                   Virtual function number.
+	/// @param privilegeNames [out] Array of privilege names.
+	/// @param privileges     [out] Array of privilege numbers in the
+	///                             same order (each number is index of
+	///                             corresponding bit in privilege
+	///                             mask).
+	///
+	/// @return 0 on success, -1 on failure.
+	virtual int getFuncPrivileges(
+                                  const String &dev_name,
+                                  const Property<uint32> &pf,
+                                  const Property<uint32> &vf,
+                                  Property<Array_String> &privilegeNames,
+                                  Property<Array_uint32> &privileges) const
         {
             return -1;
         }

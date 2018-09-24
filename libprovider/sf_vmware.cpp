@@ -3135,6 +3135,38 @@ fail:
         return 0;
     }
 
+    ///
+    /// Get privileges of a function associated with a given interface.
+    ///
+    /// @param fd       File descriptor on which to call ioctl().
+    /// @param ioc      Pointer to filled efx_ioctl structure.
+    /// @param ifName   Interface name (will be set in @p ioc if not NULL).
+    /// @param privs    Where to save obtained privileges.
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int getIntfFuncPrivileges(int fd,
+                                     struct efx_ioctl &ioc,
+                                     const char *ifName,
+                                     unsigned int &privs)
+    {
+        uint32_t    pf;
+        uint32_t    vf;
+
+        if (ifName != NULL)
+        {
+            if (setIoctlIf(ioc, ifName) < 0)
+                return -1;
+        }
+
+        if (getPFVF(fd, ioc, pf, vf) < 0)
+            return -1;
+
+        if (getFunctionPrivileges(fd, ioc, pf, vf, privs) < 0)
+            return -1;
+
+        return 0;
+    }
+
     /// Get string name of a given privilege flag.
     ///
     /// @param flag       Privilege flag
@@ -3168,40 +3200,56 @@ fail:
         return "<UNKNOWN>";
     }
 
-    int VMwarePort::getPrivileges(
+    ///
+    /// Get privileges of a NIC function.
+    ///
+    /// @param portName       Port on which to call ioctl().
+    /// @param pf             Physical function.
+    /// @param vf             Virtual function (may be not set).
+    /// @param privilegeNames Where to save privilege names.
+    /// @param privileges     Where to save privilege values.
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int doGetPrivileges(
+                    const char *portName,
                     const Property<uint32> &pf,
                     const Property<uint32> &vf,
                     Property<Array_String> &privilegeNames,
-                    Property<Array_uint32> &privileges) const
+                    Property<Array_uint32> &privileges)
     {
         uint32_t privs = 0;
-        uint32_t pf_value = 0;
-        uint32_t vf_value = 0;
         uint32_t flag = 0;
         uint32_t i = 0;
 
+        unsigned int        pf_value;
+        unsigned int        vf_value;
         struct efx_ioctl    ioc;
         int                 fd = -1;
         int                 rc = -1;
 
+        if (prepareMCDICall(portName, fd, ioc) < 0)
+            goto cleanup;
+
         if (pf.null)
         {
-            PROVIDER_LOG_ERR("PhysicalFunction was not specified");
-            goto cleanup;
+            if (getPFVF(fd, ioc, pf_value, vf_value) < 0)
+                goto cleanup;
+        }
+        else
+        {
+            pf_value = pf.value;
+
+            if (vf.null)
+            {
+                vf_value = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
+            }
+            else
+            {
+                vf_value = vf.value;
+            }
         }
 
-        pf_value = pf.value;
-
-        if (vf.null)
-            vf_value = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
-        else
-            vf_value = vf.value;
-
-        if (prepareMCDICall(this->dev_name.c_str(), fd, ioc) < 0)
-            goto cleanup;
-
-        if (getFunctionPrivileges(fd, ioc, pf_value, vf_value,
-                                  privs) < 0)
+        if (getFunctionPrivileges(fd, ioc, pf_value, vf_value, privs) < 0)
             goto cleanup;
 
         privileges.null = false;
@@ -3226,6 +3274,16 @@ cleanup:
                              errno, strerror(errno));
 
         return rc;
+    }
+
+    int VMwarePort::getPrivileges(
+                    const Property<uint32> &pf,
+                    const Property<uint32> &vf,
+                    Property<Array_String> &privilegeNames,
+                    Property<Array_uint32> &privileges) const
+    {
+	return doGetPrivileges(this->dev_name.c_str(), pf, vf,
+                               privilegeNames, privileges);
     }
 
     ///
@@ -4093,6 +4151,8 @@ cleanup:
                                      bool &found, uint32 &pf_out,
                                      uint32 &vf_out,
                                      bool &vf_null) const;
+
+	virtual int getAdminInterface(String &ifName) const;
     };
 
     int VMwareNIC::getFullVPD(bool staticVPD,
@@ -4202,6 +4262,46 @@ cleanup:
             vf_null = true;
         else
             vf_null = false;
+
+        return rc;
+    }
+
+    int VMwareNIC::getAdminInterface(String &ifName) const
+    {
+        unsigned int      i;
+        int               rc = -1;
+        int               fd;
+        struct efx_ioctl  ioc;
+        unsigned int      privs;
+
+        ifName = "";
+
+        if (prepareMCDICall("", fd, ioc) < 0)
+            goto cleanup;
+
+        for (i = 0; i < this->ports.size(); i++)
+        {
+            if (getIntfFuncPrivileges(fd, ioc,
+                                      this->ports[i].dev_name.c_str(),
+                                      privs) < 0)
+                continue;
+
+            if (privs & MC_CMD_PRIVILEGE_MASK_IN_GRP_ADMIN)
+            {
+                ifName = this->ports[i].dev_name;
+                rc = 0;
+                goto cleanup;
+            }
+        }
+
+        PROVIDER_LOG_ERR("Failed to find interface with ADMIN privilege on "
+                         "NIC '%s'", this->tag().c_str());
+
+cleanup:
+
+        if (fd >= 0 && close(fd) < 0)
+            PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
+                             errno, strerror(errno));
 
         return rc;
     }
@@ -5400,8 +5500,15 @@ cleanup:
                               uint32 part_type,
                               uint32 offset,
                               const String &data);
+
+	virtual int getFuncPrivileges(
+                                  const String &dev_name,
+                                  const Property<uint32> &pf,
+                                  const Property<uint32> &vf,
+                                  Property<Array_String> &privilegeNames,
+                                  Property<Array_uint32> &privileges) const;
     };
-    
+
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
     {
         AutoSharedLock auto_shared_lock(nicsLock, false);
@@ -6324,6 +6431,19 @@ cleanup:
             delete[] encoded;
         return rc;
     }
+
+#ifndef TARGET_CIM_SERVER_esxi_native
+    int VMwareSystem::getFuncPrivileges(
+                                  const String &dev_name,
+                                  const Property<uint32> &pf,
+                                  const Property<uint32> &vf,
+                                  Property<Array_String> &privilegeNames,
+                                  Property<Array_uint32> &privileges) const
+    {
+        return doGetPrivileges(dev_name.c_str(), pf, vf,
+                               privilegeNames, privileges);
+    }
+#endif
 
     static Ref<VMware_KernelModuleService> getKernelModuleService()
     {

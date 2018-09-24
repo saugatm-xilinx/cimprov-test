@@ -167,6 +167,13 @@ class SF_API : CIM_ManagedElement {
                         [OUT] uint32 PF,
                         [OUT] uint32 VF,
                         [OUT] String NICTag);
+
+    uint32 GetFuncPrivileges([IN] uint32 PhysicalFunction,
+                             [IN] uint32 VirtualFunction,
+                             [IN] string PCIAddr,
+                             [IN] string CallingDev,
+                             [OUT,ArrayType("Indexed")] string PrivilegeNames[],
+                             [OUT,ArrayType("Indexed")] uint32 Privileges[]);
 };
 
 INSTANCE
