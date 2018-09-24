@@ -2292,6 +2292,12 @@ fail:
 
         virtual void initialize() {};
 
+	virtual int getPrivileges(
+                        const Property<uint32> &pf,
+                        const Property<uint32> &vf,
+                        Property<Array_String> &privilegeNames,
+                        Property<Array_uint32> &privileges) const;
+
         virtual int getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const;
         virtual int setIntrModeration(const Array_String &paramNames,
@@ -2574,6 +2580,254 @@ fail:
     }
 
 #ifndef TARGET_CIM_SERVER_esxi_native
+
+    /// Set interface name for SIOCEFX call.
+    ///
+    /// @param ioc      efx_ioctl structure
+    /// @param ifName   Interface name
+    ///
+    /// @return 0 on success, -1 on failure
+    static int setIoctlIf(struct efx_ioctl &ioc,
+                          const char *ifName)
+    {
+        if (strlen(ifName) > sizeof(ioc.if_name) - 1)
+        {
+            PROVIDER_LOG_ERR("Too long interface name %s",
+                             ifName);
+            return -1;
+        }
+
+        strncpy(ioc.if_name, ifName, sizeof(ioc.if_name));
+
+        return 0;
+    }
+
+    /// Prepare parameters for SIOCEFX MCDI call.
+    ///
+    /// @param ifName         Interface name
+    /// @param fd       [out] File descriptor for ioctl()
+    /// @param ioc      [out] efx_ioctl structure where to
+    ///                       fill if_name and cmd fields
+    ///
+    /// @return 0 on success, -1 on failure
+    static int prepareMCDICall(const char *ifName,
+                               int &fd,
+                               struct efx_ioctl &ioc)
+    {
+        memset(&ioc, 0, sizeof(ioc));
+        if (setIoctlIf(ioc, ifName) < 0)
+            return -1;
+
+        ioc.cmd = EFX_MCDI_REQUEST;
+
+        fd = open(DEV_SFC_CONTROL, O_RDWR);
+        if (fd < 0)
+        {
+            PROVIDER_LOG_ERR("Failed to open '%s', errno %d ('%s')",
+                             DEV_SFC_CONTROL, errno,
+                             strerror(errno));
+            return -1;
+        }
+
+        return 0;
+    }
+
+    /// Execute MCDI command, check results.
+    ///
+    /// @param fd       File descriptor on which to call ioctl()
+    /// @param ioc      efx_ioctl structure
+    ///
+    /// @return 0 on success, -1 on failure
+    static int doMCDICall(int &fd,
+                          struct efx_ioctl &ioc)
+    {
+        struct efx_mcdi_request *mcdi_req = NULL;
+
+        mcdi_req = &ioc.u.mcdi_request;
+
+        if (ioctl(fd, SIOCEFX, &ioc) < 0)
+        {
+            PROVIDER_LOG_ERR("ioctl(SIOCEFX:mcdi_cmd=%u) "
+                             "failed, errno %d ('%s')",
+                             (unsigned int)mcdi_req->cmd, errno,
+                             strerror(errno));
+            return -1;
+        }
+
+        if (mcdi_req->rc != 0)
+        {
+            PROVIDER_LOG_ERR("MCDI request %u returned %u",
+                             (unsigned int)mcdi_req->cmd,
+                             (unsigned int)mcdi_req->rc);
+            return -1;
+        }
+
+        return 0;
+    }
+
+    /// Check that a value can be fit into specified number of bits.
+    ///
+    /// @param value      Value to check
+    /// @param bits       Number of bits
+    ///
+    /// @return 0 if value is not too large, -1 otherwise
+    static int checkValueBitSize(uint32_t value, uint32_t bits)
+    {
+        uint32_t max_val;
+
+        max_val = (1 << bits) - 1;
+
+        if (value > max_val)
+            return -1;
+
+        return 0;
+    }
+
+    /// Get privileges of a given physical or virtual function.
+    ///
+    /// @param fd           File descriptor on which to call ioctl()
+    /// @param ioc          efx_ioctl structure
+    /// @param pf           Physical Function number
+    /// @param vf           Virtual Function number
+    /// @param privs  [out] Where to save obtained privileges mask
+    ///
+    /// @return 0 on success, -1 on error
+    static int getFunctionPrivileges(int fd,
+                                     struct efx_ioctl &ioc,
+                                     uint32_t pf,
+                                     uint32_t vf,
+                                     unsigned int &privs)
+    {
+        struct efx_mcdi_request *mcdi_req = NULL;
+
+        mcdi_req = &ioc.u.mcdi_request;
+        memset(mcdi_req, 0, sizeof(*mcdi_req));
+
+        if (checkValueBitSize(
+                          pf,
+                          MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_PF_WIDTH) < 0)
+        {
+            PROVIDER_LOG_ERR("PF value %u is too big", pf);
+            return -1;
+        }
+
+        if (checkValueBitSize(
+                          vf,
+                          MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_VF_WIDTH) < 0)
+        {
+            PROVIDER_LOG_ERR("VF value %u is too big", pf);
+            return -1;
+        }
+
+        mcdi_req->cmd = MC_CMD_PRIVILEGE_MASK;
+        mcdi_req->len = MC_CMD_PRIVILEGE_MASK_IN_LEN;
+
+        mcdi_req->payload[MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_OFST / 4] =
+            (pf << MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_PF_LBN) |
+            (vf << MC_CMD_PRIVILEGE_MASK_IN_FUNCTION_VF_LBN);
+
+        if (doMCDICall(fd, ioc) < 0)
+            return -1;
+
+        privs =
+          mcdi_req->payload[MC_CMD_PRIVILEGE_MASK_OUT_OLD_MASK_OFST / 4];
+
+        return 0;
+    }
+
+    /// Get string name of a given privilege flag.
+    ///
+    /// @param flag       Privilege flag
+    ///
+    /// @return String name ("<UNKNOWN>" if flag is not known)
+    static const char *privilege_flag2name(unsigned int flag)
+    {
+#define PRIVILEGE_FLAG2NAME(_p) \
+    case MC_CMD_PRIVILEGE_MASK_IN_GRP_ ## _p: \
+        return #_p;
+
+        switch (flag)
+        {
+            PRIVILEGE_FLAG2NAME(ADMIN);
+            PRIVILEGE_FLAG2NAME(LINK);
+            PRIVILEGE_FLAG2NAME(ONLOAD);
+            PRIVILEGE_FLAG2NAME(PTP);
+            PRIVILEGE_FLAG2NAME(INSECURE_FILTERS);
+            PRIVILEGE_FLAG2NAME(MAC_SPOOFING);
+            PRIVILEGE_FLAG2NAME(UNICAST);
+            PRIVILEGE_FLAG2NAME(MULTICAST);
+            PRIVILEGE_FLAG2NAME(BROADCAST);
+            PRIVILEGE_FLAG2NAME(ALL_MULTICAST);
+            PRIVILEGE_FLAG2NAME(PROMISCUOUS);
+            PRIVILEGE_FLAG2NAME(MAC_SPOOFING_TX);
+            PRIVILEGE_FLAG2NAME(CHANGE_MAC);
+            PRIVILEGE_FLAG2NAME(UNRESTRICTED_VLAN);
+            PRIVILEGE_FLAG2NAME(INSECURE);
+        }
+
+        return "<UNKNOWN>";
+    }
+
+    int VMwarePort::getPrivileges(
+                    const Property<uint32> &pf,
+                    const Property<uint32> &vf,
+                    Property<Array_String> &privilegeNames,
+                    Property<Array_uint32> &privileges) const
+    {
+        uint32_t privs = 0;
+        uint32_t pf_value = 0;
+        uint32_t vf_value = 0;
+        uint32_t flag = 0;
+        uint32_t i = 0;
+
+        struct efx_ioctl    ioc;
+        int                 fd = -1;
+        int                 rc = -1;
+
+        if (pf.null)
+        {
+            PROVIDER_LOG_ERR("PhysicalFunction was not specified");
+            goto cleanup;
+        }
+
+        pf_value = pf.value;
+
+        if (vf.null)
+            vf_value = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
+        else
+            vf_value = vf.value;
+
+        if (prepareMCDICall(this->dev_name.c_str(), fd, ioc) < 0)
+            goto cleanup;
+
+        if (getFunctionPrivileges(fd, ioc, pf_value, vf_value,
+                                  privs) < 0)
+            goto cleanup;
+
+        privileges.null = false;
+        privilegeNames.null = false;
+
+        for (i = 0; i < 32; i++)
+        {
+            flag = (1 << i);
+            if (privs & flag)
+            {
+                privileges.value.append(i);
+                privilegeNames.value.append(privilege_flag2name(flag));
+            }
+        }
+
+        rc = 0;
+
+cleanup:
+
+        if (fd >= 0 && close(fd) < 0)
+            PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
+                             errno, strerror(errno));
+
+        return rc;
+    }
+
     int VMwarePort::getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const
     {

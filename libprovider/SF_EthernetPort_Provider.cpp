@@ -305,6 +305,102 @@ void IntrModerationProc::handler(solarflare::SystemElement& se, unsigned)
         ok = true;
 }
 
+///
+/// Iterator used to call getPrivileges() method on
+///
+/// a specified SF_EthernetPort instance.
+///
+class GetPrivilegesProc : public solarflare::ActionForAll
+{
+    bool inst_processed;                    ///< Whether an instance
+                                            ///  was processed
+    bool failure;                           ///< Whether some failure
+                                            ///  occured
+    const Property<uint32> &PF;             ///< Physical Function
+    const Property<uint32> &VF;             ///< Virtual Function
+    Property<Array_String> &PrivilegeNames; ///< Obtained privilege
+                                            ///  names
+    Property<Array_uint32> &Privileges;     ///< Obtained privilege
+                                            ///  bit indexes
+
+
+protected:
+    virtual void handler(solarflare::SystemElement& se, unsigned);
+
+public:
+    GetPrivilegesProc(const Instance *inst,
+                      const Property<uint32> &pf,
+                      const Property<uint32> &vf,
+                      Property<Array_String> &names,
+                      Property<Array_uint32> &values) :
+        solarflare::ActionForAll(inst), PF(pf), VF(vf),
+        PrivilegeNames(names), Privileges(values),
+        inst_processed(false), failure(false) {}
+
+    /// Check whether getPrivileges() method was called successfully
+    ///
+    /// @return true on success, false on failure
+    bool isOK() const { return inst_processed && !failure; }
+};
+
+void GetPrivilegesProc::handler(solarflare::SystemElement& se, unsigned)
+{
+    int rc;
+
+    Port *port = static_cast<Interface&>(se).port();
+
+    if (failure)
+        return;
+
+    if (inst_processed)
+    {
+        PROVIDER_LOG_ERR("%s(): trying to call GetPrivileges() "
+                         " on more than one port at once",
+                         __FUNCTION__);
+        failure = true;
+        return;
+    }
+
+    if (port == NULL)
+    {
+        PROVIDER_LOG_ERR("%s(): failed to find port object corresponding "
+                         "to interface", __FUNCTION__);
+        failure = true;
+        return;
+
+    }
+
+    inst_processed = true;
+
+    rc = port->getPrivileges(PF, VF,
+                             PrivilegeNames, Privileges);
+    if (rc < 0)
+        failure = true;
+}
+
+Invoke_Method_Status SF_EthernetPort_Provider::GetPrivileges(
+        const SF_EthernetPort* self,
+        const Property<uint32> &PhysicalFunction,
+        const Property<uint32> &VirtualFunction,
+        Property<Array_String>& PrivilegeNames,
+        Property<Array_uint32>& Privileges,
+        Property<uint32>& return_value)
+{
+    GetPrivilegesProc proc(cast<Instance *>(self),
+                           PhysicalFunction,
+                           VirtualFunction,
+                           PrivilegeNames,
+                           Privileges);
+
+    proc.forInterface();
+    if (proc.isOK())
+        return_value.set(OK);
+    else
+        return_value.set(Error);
+
+    return INVOKE_METHOD_OK;
+}
+
 Invoke_Method_Status SF_EthernetPort_Provider::GetIntrModeration(
     const SF_EthernetPort* self,
     const Property<Array_String>& ParamNames,
