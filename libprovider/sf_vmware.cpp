@@ -2291,18 +2291,6 @@ fail:
 
         virtual void initialize() {};
 
-	virtual int getPrivileges(
-                        const Property<uint32> &pf,
-                        const Property<uint32> &vf,
-                        Property<Array_String> &privilegeNames,
-                        Property<Array_uint32> &privileges) const;
-
-	virtual int modifyPrivileges(
-                        const Property<uint32> &pf,
-                        const Property<uint32> &vf,
-                        const Property<String> &addedMask,
-                        const Property<String> &removedMask);
-
         virtual int getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const;
         virtual int setIntrModeration(const Array_String &paramNames,
@@ -3276,16 +3264,6 @@ cleanup:
         return rc;
     }
 
-    int VMwarePort::getPrivileges(
-                    const Property<uint32> &pf,
-                    const Property<uint32> &vf,
-                    Property<Array_String> &privilegeNames,
-                    Property<Array_uint32> &privileges) const
-    {
-	return doGetPrivileges(this->dev_name.c_str(), pf, vf,
-                               privilegeNames, privileges);
-    }
-
     ///
     /// Modify privileges of a physical or virtual function.
     ///
@@ -3523,16 +3501,6 @@ cleanup:
             PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
                              errno, strerror(errno));
         return rc;
-    }
-
-    int VMwarePort::modifyPrivileges(
-                    const Property<uint32> &pf,
-                    const Property<uint32> &vf,
-                    const Property<String> &addedMask,
-                    const Property<String> &removedMask)
-    {
-        return doModifyPrivileges(this->dev_name.c_str(),
-                                  pf, vf, addedMask, removedMask);
     }
 
     int VMwarePort::getIntrModeration(const Array_String &paramNames,
