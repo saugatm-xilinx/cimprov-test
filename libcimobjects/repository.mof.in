@@ -276,6 +276,11 @@ ESXICOMMON([[
                          [OUT,ArrayType("Indexed")] string PrivilegeNames[],
                          [OUT,ArrayType("Indexed")] uint32 Privileges[]);
 
+    uint32 ModifyPrivileges([IN] uint32 PhysicalFunction,
+                            [IN] uint32 VirtualFunction,
+                            [IN] string AddedMask,
+                            [IN] string RemovedMask);
+
     uint32 GetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],
                              [OUT,ArrayType("Indexed")] uint32 ParamValues[]);
     uint32 SetIntrModeration([IN,ArrayType("Indexed")] string ParamNames[],

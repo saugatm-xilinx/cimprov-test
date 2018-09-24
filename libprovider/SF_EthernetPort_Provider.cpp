@@ -378,6 +378,72 @@ void GetPrivilegesProc::handler(solarflare::SystemElement& se, unsigned)
         failure = true;
 }
 
+///
+/// Iterator used to call modifyPrivilege() method on a specified port.
+///
+class ModifyPrivilegesProc : public solarflare::ActionForAll
+{
+    bool inst_processed;                  ///< Whether an instance was
+                                          ///  processed
+    bool failure;                         ///< Whether failure occured
+
+    const Property<uint32> &PF;           ///< Physical Function
+    const Property<uint32> &VF;           ///< Virtual Function
+    const Property<String> &AddedMask;    ///< Privileges to add
+    const Property<String> &RemovedMask;  ///< Privileges to remove
+protected:
+    virtual void handler(solarflare::SystemElement& se, unsigned);
+
+public:
+    ModifyPrivilegesProc(const Instance *inst,
+                         const Property<uint32> &pf,
+                         const Property<uint32> &vf,
+                         const Property<String> &addedMask,
+                         const Property<String> &removedMask) :
+        solarflare::ActionForAll(inst), PF(pf), VF(vf),
+        AddedMask(addedMask), RemovedMask(removedMask),
+        inst_processed(false), failure(false) {}
+
+    /// Check whether modifyPrivileges() method was called successfully
+    ///
+    /// @return true on success, false on failure
+    bool isOK() const { return inst_processed && !failure; }
+};
+
+void ModifyPrivilegesProc::handler(solarflare::SystemElement& se, unsigned)
+{
+    int rc;
+
+    Port *port = static_cast<Interface&>(se).port();
+
+    if (failure)
+        return;
+
+    if (inst_processed)
+    {
+        PROVIDER_LOG_ERR("%s(): trying to call ModifyPrivileges() "
+                         " on more than one port at once",
+                         __FUNCTION__);
+        return;
+    }
+
+    if (port == NULL)
+    {
+        PROVIDER_LOG_ERR("%s(): failed to find port object corresponding "
+                         "to interface", __FUNCTION__);
+        failure = true;
+        return;
+
+    }
+
+    inst_processed = true;
+
+    rc = port->modifyPrivileges(PF, VF,
+                                AddedMask, RemovedMask);
+    if (rc < 0)
+        failure = true;
+}
+
 Invoke_Method_Status SF_EthernetPort_Provider::GetPrivileges(
         const SF_EthernetPort* self,
         const Property<uint32> &PhysicalFunction,
@@ -391,6 +457,29 @@ Invoke_Method_Status SF_EthernetPort_Provider::GetPrivileges(
                            VirtualFunction,
                            PrivilegeNames,
                            Privileges);
+
+    proc.forInterface();
+    if (proc.isOK())
+        return_value.set(OK);
+    else
+        return_value.set(Error);
+
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_EthernetPort_Provider::ModifyPrivileges(
+    const SF_EthernetPort* self,
+    const Property<uint32> &PhysicalFunction,
+    const Property<uint32> &VirtualFunction,
+    const Property<String>& AddedMask,
+    const Property<String>& RemovedMask,
+    Property<uint32>& return_value)
+{
+    ModifyPrivilegesProc proc(cast<Instance *>(self),
+                              PhysicalFunction,
+                              VirtualFunction,
+                              AddedMask,
+                              RemovedMask);
 
     proc.forInterface();
     if (proc.isOK())
