@@ -32,10 +32,10 @@ ifeq ($(CIM_SERVER),pegasus)
 libcimobjects_EXTRA_MOF += IBMPSG_ComputerSystem IBMSD_ComputerSystem IBMSD_SPComputerSystem IBMSD_Chassis PG_ComputerSystem PG_RegisteredProfile
 endif
 ifeq ($(CIM_SERVER),$(filter $(CIM_SERVER),esxi_native esxi))
-libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem OMC_Chassis VMware_KernelModuleService
+libcimobjects_EXTRA_MOF += OMC_UnitaryComputerSystem OMC_Chassis VMware_KernelModuleService SF_API
 endif
 ifeq  ($(CIM_SERVER),esxi)
-libcimobjects_EXTRA_MOF += SF_NVAPI SF_API
+libcimobjects_EXTRA_MOF += SF_NVAPI
 endif
 ifeq ($(CIM_SERVER),wmi)
 libcimobjects_EXTRA_MOF += Win32_ComputerSystem Win32_SystemEnclosure

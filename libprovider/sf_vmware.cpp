@@ -4153,13 +4153,14 @@ cleanup:
         {
             return pci_device_id;
         }
-
+#ifndef TARGET_CIM_SERVER_esxi_native
 	virtual int getPFVFByPCIAddr(const PCIAddress &searchPCIAddr,
                                      bool &found, uint32 &pf_out,
                                      uint32 &vf_out,
                                      bool &vf_null) const;
 
 	virtual int getAdminInterface(String &ifName) const;
+#endif
     };
 
     int VMwareNIC::getFullVPD(bool staticVPD,
@@ -5564,7 +5565,7 @@ cleanup:
                               uint32 part_type,
                               uint32 offset,
                               const String &data);
-
+#ifndef TARGET_CIM_SERVER_esxi_native
 	virtual int getFuncPrivileges(
                                   const String &dev_name,
                                   const Property<uint32> &pf,
@@ -5579,6 +5580,7 @@ cleanup:
                                   const Property<uint32> &vf,
                                   const Property<String> &addedMask,
                                   const Property<String> &removedMask) const;
+#endif
     };
 
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const

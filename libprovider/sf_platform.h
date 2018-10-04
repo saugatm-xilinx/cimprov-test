@@ -572,7 +572,7 @@ namespace solarflare
         {
             return OrderedElement::name(genericName());
         }
-
+#ifndef TARGET_CIM_SERVER_esxi_native
 	///
 	/// Get PF/VF corresponding to a given PCI address.
 	///
@@ -605,6 +605,7 @@ namespace solarflare
 	{
 	    return -1;
 	}
+#endif
     };
 
     /// @brief An abstract driver class.
@@ -1183,7 +1184,7 @@ namespace solarflare
         {
             return -1;
         }
-
+#ifndef TARGET_CIM_SERVER_esxi_native
 	///
 	/// Get privileges of a NIC function (physical or virtual).
 	///
@@ -1236,6 +1237,7 @@ namespace solarflare
         {
             return -1;
         }
+#endif
     };
 
 } // namespace

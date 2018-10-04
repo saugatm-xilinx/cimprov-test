@@ -87,6 +87,7 @@ Modify_Instance_Status SF_API_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
+#ifndef TARGET_CIM_SERVER_esxi_native
 ///
 /// Enumerator used to call getPFVFByPCIAddr() on every NIC.
 ///
@@ -115,7 +116,6 @@ public:
     DevFinder() : searchAddr(0, 0, 0, 0),
 		  getAdminIf(false),
                   success(false) {}
-
     ///
     /// Specify whether an interface with ADMIN privilege
     /// should be retrieved from NIC.
@@ -136,7 +136,26 @@ public:
     {
         return searchAddr.parse(pciAddr);
     }
+    ///
+    /// Specify whether an interface with ADMIN privilege
+    /// should be retrieved from NIC.
+    ///
+    /// @param getAdmin     If true, interface will be retrieved.
+    void findAdminIf(bool getAdmin)
+    {
+	//Place holder
+    }
 
+    ///
+    /// Set PCI address to be searched for.
+    ///
+    /// @param pciAddr      String with PCI address.
+    ///
+    /// @return 0 on success, -1 on failure.
+    int setAddr(const char *pciAddr)
+    {
+        return success;
+    }
     ///
     /// Check whether a device function was found.
     ///
@@ -369,7 +388,44 @@ Invoke_Method_Status SF_API_Provider::ModifyFuncPrivileges(
 
     return INVOKE_METHOD_OK;
 }
+#else
+Invoke_Method_Status SF_API_Provider::GetPFVFByPCI(
+    const SF_API* self,
+    const Property<String>& PCIAddr,
+    Property<uint32>& PF,
+    Property<uint32>& VF,
+    Property<String>& NICTag,
+    Property<uint32>& return_value)
+{
+    return INVOKE_METHOD_OK;
+}
 
+Invoke_Method_Status SF_API_Provider::GetFuncPrivileges(
+    const SF_API* self,
+    const Property<uint32> &PhysicalFunction,
+    const Property<uint32> &VirtualFunction,
+    const Property<String> &PCIAddr,
+    const Property<String> &CallingDev,
+    Property<Array_String>& PrivilegeNames,
+    Property<Array_uint32>& Privileges,
+    Property<uint32>& return_value)
+{
+    return INVOKE_METHOD_OK;
+}
+
+Invoke_Method_Status SF_API_Provider::ModifyFuncPrivileges(
+    const SF_API* self,
+    const Property<uint32> &PhysicalFunction,
+    const Property<uint32> &VirtualFunction,
+    const Property<String> &PCIAddr,
+    const Property<String> &CallingDev,
+    const Property<String>& AddedMask,
+    const Property<String>& RemovedMask,
+    Property<uint32>& return_value)
+{
+    return INVOKE_METHOD_OK;
+}
+#endif
 /*@END@*/
 
 CIMPLE_NAMESPACE_END

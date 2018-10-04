@@ -78,6 +78,7 @@ namespace solarflare
 
     const unsigned PCIAddress::unknown = unsigned(-1);
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     int PCIAddress::parse(const char *str)
     {
         unsigned int i;
@@ -110,4 +111,5 @@ namespace solarflare
 
         return 0;
     }
+#endif
 }

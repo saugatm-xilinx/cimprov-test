@@ -120,6 +120,7 @@ libprovider_DIR = libprovider
 
 ifeq ($(CIM_SERVER), esxi_native)
 libprovider_SOURCES += userMgmtSrc/sfvmk_mgmt_interface.c
+libprovider_SOURCES += SF_API_Provider.cpp
 endif
 
 ifeq ($(PROVIDER_PLATFORM),windows)
