@@ -114,7 +114,7 @@ extern "C" {
 // These values are used to distinguish our network
 // interfaces from other devices
 #define CLASS_NET_VALUE     0x20000
-#define VENDOR_SF_VALUE     0x1924 
+#define VENDOR_SF_VALUE     0x1924
 
 #define EFX_MAX_MTU (9 * 1024)
 
@@ -168,7 +168,7 @@ extern "C" {
 
 using namespace std;
 
-namespace solarflare 
+namespace solarflare
 {
     using cimple::Instance;
     using cimple::CIM_EthernetPort;
@@ -212,7 +212,7 @@ namespace solarflare
     static int
     findNVCtxById(unsigned int ctx_id)
     {
-        unsigned int i; 
+        unsigned int i;
 
         for (i = 0; i < NVCtxArr.size(); i++)
         {
@@ -251,7 +251,7 @@ namespace solarflare
     /// Is a symbol a space?
     ///
     /// @param c   symbol
-    /// 
+    ///
     /// @result 1 if space, 0 otherwise
     ///
     static int isSpace(const char c)
@@ -322,12 +322,12 @@ namespace solarflare
     {
         int srcLen = strlen(src);
         if (destLen >= (srcLen + 1))
-	{
+        {
             strncpy(dest,src,srcLen);
             dest[srcLen] = '\0';
             return srcLen;
-	}
-	return -1;
+        }
+        return -1;
     }
 
     ///
@@ -555,7 +555,7 @@ fail:
 
         for (i = 0; i < _MAX_FDS; i++)
         {
-            fds[i] = open("/dev/null", O_WRONLY); 
+            fds[i] = open("/dev/null", O_WRONLY);
             if (fds[i] < 0)
                 break;
         }
@@ -685,7 +685,7 @@ fail:
     static int getDirContents(const char *dirPath, Array<String> &arr)
     {
 #define INIT_BUF_SIZE 1024
-        
+
         char   *buf = new char[INIT_BUF_SIZE];
         size_t  bufSize = INIT_BUF_SIZE;
         int     fd = -1;
@@ -802,8 +802,8 @@ fail:
     {
         if ((DrvMgmtCall(NULL, SFVMK_CB_IFACE_LIST_GET, ifaceList)) != VMK_OK)
         {
-                 PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
-                 return -1;
+            PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
+            return -1;
         }
         if (ifaceList->ifaceCount >= SFVMK_MAX_INTERFACE) {
             PROVIDER_LOG_ERR("%s():Invalid interface count %d\n", __FUNCTION__, ifaceList->ifaceCount);
@@ -825,6 +825,7 @@ fail:
     {
         if (type >= SFU_DEVICE_TYPE_MEDFORD)
             return true;
+
         return false;
     }
 
@@ -837,7 +838,7 @@ fail:
     ///
     static int getNICs(NICDescrs &nics)
     {
-        int                  i=0, j=0, k=0;
+        int                  i = 0, j = 0, k = 0;
         sfvmk_ifaceList_t    ifaceList;
         int                  portCount = 0;
         sfvmk_mgmtCbTypes_t  cmd;
@@ -845,8 +846,8 @@ fail:
 
         if (getNICNameList(&ifaceList) < 0)
         {
-                PROVIDER_LOG_ERR("%s(): Getting  NIC Name List Failed", __FUNCTION__);
-                return -1;
+            PROVIDER_LOG_ERR("%s(): Getting  NIC Name List Failed", __FUNCTION__);
+            return -1;
         }
         portCount = ifaceList.ifaceCount;
         for (i = 0; i < portCount; i++)
@@ -876,8 +877,8 @@ fail:
                    (nics[j].pci_domain == cur_domain &&
                    (nics[j].pci_bus > cur_bus ||
                    (nics[j].pci_bus == cur_bus &&
-                   nics[j].pci_device >= cur_dev))))
-                       break;
+                    nics[j].pci_device >= cur_dev))))
+                    break;
             }
 
             if (j == (int)nics.size() ||
@@ -898,7 +899,7 @@ fail:
             nics[j].ports.append(tmp_port);
         }
 
-	sortNICsPorts(nics);
+        sortNICsPorts(nics);
 
         return 0;
     }
@@ -1121,7 +1122,7 @@ fail:
                         cur_fn == devs[i].pci_fn_num)
                         break;
                 }
-                
+
                 if (i == (int)devs.size())
                 {
                     PROVIDER_LOG_ERR("Failed to find device "
@@ -1170,7 +1171,7 @@ fail:
             }
         }
 
-	sortNICsPorts(nics);
+        sortNICsPorts(nics);
         return 0;
     }
 #endif
@@ -1260,7 +1261,7 @@ fail:
 
         uint8_t sum = 0;
 
-        parsedFields.clear(); 
+        parsedFields.clear();
 
         while (vpd < end)
         {
@@ -1362,8 +1363,8 @@ fail:
          vpdInfoData      tagArr[] = {{ VPD_TAG_ID, "", "IDTag" },
                                       { VPD_TAG_R, "PN", "PN" },
                                       { VPD_TAG_R, "SN", "SN" }};
-         int              tagCount = sizeof(tagArr)/sizeof(vpdInfoData);
          sfvmk_vpdInfo_t  vpdInfo;
+         int              tagCount = sizeof(tagArr)/sizeof(vpdInfoData);
          int              i;
 
          for (i = 0; i < tagCount; i++)
@@ -1375,6 +1376,7 @@ fail:
                  vpdInfo.vpdKeyword = 0;
              else
                  vpdInfo.vpdKeyword = ( tagArr[i].keyWord[0] | tagArr[i].keyWord[1] << 8);
+
              if ((DrvMgmtCall(ifname, SFVMK_CB_VPD_REQUEST, &vpdInfo)) != VMK_OK)
              {
                  PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
@@ -1396,42 +1398,43 @@ fail:
     /// See description in libprovider/sf_native_vmware.h
     int DrvMgmtCall(const char *devName, sfvmk_mgmtCbTypes_t cmdCode, void *cmdParam)
     {
-	vmk_MgmtUserHandle mgmtHandle;
-	sfvmk_mgmtDevInfo_t mgmtParam = {0};
-	bool drv_interaction_status = true;
+        vmk_MgmtUserHandle mgmtHandle;
+        sfvmk_mgmtDevInfo_t mgmtParam = {0};
+        bool drv_interaction_status = true;
 
         if (devName != NULL)
         {
-	    if (strncpy_check((char *)mgmtParam.deviceName, devName,
-	                                          SFVMK_DEV_NAME_LEN) < 0)
+            if (strncpy_check((char *)mgmtParam.deviceName, devName,
+                                                  SFVMK_DEV_NAME_LEN) < 0)
             {
                 PROVIDER_LOG_ERR("Interface name [%s] is too long", devName);
-	        return VMK_FAILURE;
+                return VMK_FAILURE;
             }
         }
 
         if (vmk_MgmtUserInit(&sfvmk_mgmtSig, 0, &mgmtHandle))
         {
             PROVIDER_LOG_ERR("vmk_MgmtUserInit failed");
-	    return VMK_FAILURE;
+            return VMK_FAILURE;
         }
 
-	if (vmk_MgmtUserCallbackInvoke(mgmtHandle, VMK_MGMT_NO_INSTANCE_ID,
-						cmdCode, &mgmtParam, cmdParam))
+        if (vmk_MgmtUserCallbackInvoke(mgmtHandle, VMK_MGMT_NO_INSTANCE_ID,
+                                                cmdCode, &mgmtParam, cmdParam))
         {
             PROVIDER_LOG_ERR("vmk_MgmtUserCallbackInvoke failed");
-	    drv_interaction_status = false;
+            drv_interaction_status = false;
         }
 
-	if (vmk_MgmtUserDestroy(mgmtHandle))
+        if (vmk_MgmtUserDestroy(mgmtHandle))
         {
             PROVIDER_LOG_ERR("vmk_MgmtUserDestroy failed");
-	    return VMK_FAILURE;
+            return VMK_FAILURE;
         }
 
-	if (drv_interaction_status)
-	    return mgmtParam.status;
-	return VMK_FAILURE;
+        if (drv_interaction_status)
+            return mgmtParam.status;
+
+        return VMK_FAILURE;
     }
  #else
     static int getVPD(const char *ifname, int port_number,
@@ -1737,16 +1740,16 @@ fail:
         switch (fwType)
         {
             case FIRMWARE_BOOTROM:
-                    return NVRAM_PARTITION_TYPE_EXPANSION_ROM;
+                return NVRAM_PARTITION_TYPE_EXPANSION_ROM;
 
             case FIRMWARE_MCFW:
-                    return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
+                return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
 
             case FIRMWARE_UEFIROM:
-                    return NVRAM_PARTITION_TYPE_EXPANSION_UEFI;
+                return NVRAM_PARTITION_TYPE_EXPANSION_UEFI;
 
             default:
-                return -1;
+                 return -1;
         }
         return -1;
     }
@@ -1780,37 +1783,37 @@ fail:
     /// @param type               Firmware type
     /// @param device_type        Device type (Siena, Huntington, etc)
     /// @param subtype      [out] Firmware subtype
-    /// 
+    ///
     /// @return 0 on success, -1 on error
     ///
 #ifdef TARGET_CIM_SERVER_esxi_native
     static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
                             int device_type, unsigned int &subtype)
     {
-	UNUSED(device_type);
+        UNUSED(device_type);
 
-	sfvmk_nvramCmd_t nvram_read_req = {0};
+        sfvmk_nvramCmd_t nvram_read_req = {0};
 
-	// NVRAM type field should be selected from the
-	// fields that are declared in sfvmk_mgmt_interface.h
-	if (type == FIRMWARE_BOOTROM)
-	    nvram_read_req.type = SFVMK_NVRAM_BOOTROM;
+        // NVRAM type field should be selected from the
+        // fields that are declared in sfvmk_mgmt_interface.h
+        if (type == FIRMWARE_BOOTROM)
+            nvram_read_req.type = SFVMK_NVRAM_BOOTROM;
         else if (type == FIRMWARE_MCFW)
-	    nvram_read_req.type = SFVMK_NVRAM_MC;
+            nvram_read_req.type = SFVMK_NVRAM_MC;
         else if (type == FIRMWARE_UEFIROM)
-	    nvram_read_req.type = SFVMK_NVRAM_UEFIROM;
+            nvram_read_req.type = SFVMK_NVRAM_UEFIROM;
         else
         {
-	    PROVIDER_LOG_ERR("%s(): Unknown Firmware Type", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): Unknown Firmware Type", __FUNCTION__);
             return -1;
         }
 
         //SFVMK_NVRAM_OP_GET_VER returns both subtype and version number
-	nvram_read_req.op = SFVMK_NVRAM_OP_GET_VER;
+        nvram_read_req.op = SFVMK_NVRAM_OP_GET_VER;
 
-	if (DrvMgmtCall(ifName, SFVMK_CB_NVRAM_REQUEST, &nvram_read_req) != VMK_OK)
+        if (DrvMgmtCall(ifName, SFVMK_CB_NVRAM_REQUEST, &nvram_read_req) != VMK_OK)
         {
-	    PROVIDER_LOG_ERR("%s(): NVRAM read failed", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): NVRAM read failed", __FUNCTION__);
             return -1;
         }
         subtype = nvram_read_req.subtype;
@@ -2193,7 +2196,7 @@ fail:
     {
         int          fd;
         struct ifreq ifr;
-        
+
         memset(&ifr, 0, sizeof(ifr));
         fd = open(dev_file, O_RDWR);
         if (fd < 0)
@@ -2234,15 +2237,17 @@ fail:
     static bool getLinkStatus(const String &devFile,
                               const String &devName)
     {
-        bool                 linkStatus = false;
-        char                 deviceName[SFVMK_DEV_NAME_LEN];
         UNUSED(devFile);
+
+        bool    linkStatus = false;
+        char    deviceName[SFVMK_DEV_NAME_LEN];
+
         if (strncpy_check(deviceName, devName.c_str(), SFVMK_DEV_NAME_LEN) < 0)
         {
             PROVIDER_LOG_ERR("%s(): Interface name is too long", __FUNCTION__);
             return true;
         }
-	if (DrvMgmtCall(deviceName, SFVMK_CB_LINK_STATUS_GET, &linkStatus) != VMK_OK)
+        if (DrvMgmtCall(deviceName, SFVMK_CB_LINK_STATUS_GET, &linkStatus) != VMK_OK)
         {
             PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed", __FUNCTION__);
             return true;
@@ -2277,12 +2282,12 @@ fail:
                     Port(i), owner(up), pci_fn(descr.pci_fn),
                     dev_file(descr.dev_file.c_str()),
                     dev_name(descr.dev_name.c_str())
-        {} 
-       
+        {}
+
         virtual bool linkStatus() const;
         virtual Speed linkSpeed() const;
         virtual void linkSpeed(Speed sp);
-            
+
         /// @return full-duplex state
         virtual bool fullDuplex() const;
         /// enable or disable full-duplex mode depending on @p fd
@@ -2291,7 +2296,7 @@ fail:
         virtual bool autoneg() const;
         /// enable/disable autonegotiation according to @p an
         virtual void autoneg(bool an);
-        
+
         /// causes a renegotiation like 'ethtool -r'
         virtual void renegotiate();
 
@@ -2374,10 +2379,10 @@ fail:
 
         linkSpeed.type = SFVMK_MGMT_DEV_OPS_GET;
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &linkSpeed) != VMK_OK)
+        if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &linkSpeed) != VMK_OK)
             return Speed(Port::SpeedUnknown);
 
-	switch (linkSpeed.speed)
+        switch (linkSpeed.speed)
         {
             case SFVMK_LINK_SPEED_10_MBPS: return Speed(Port::Speed10M);
             case SFVMK_LINK_SPEED_100_MBPS: return Speed(Port::Speed100M);
@@ -2398,7 +2403,7 @@ fail:
         linkSpeed.type = SFVMK_MGMT_DEV_OPS_SET;
         linkSpeed.autoNeg = VMK_FALSE;
 
-	switch (sp)
+        switch (sp)
         {
             case Port::Speed10M: linkSpeed.speed = SFVMK_LINK_SPEED_10_MBPS; break;
             case Port::Speed100M: linkSpeed.speed = SFVMK_LINK_SPEED_100_MBPS; break;
@@ -2412,13 +2417,13 @@ fail:
                 THROW_PROVIDER_EXCEPTION_FMT("Nonstandard speed specified");
         }
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &linkSpeed) != VMK_OK)
-	    THROW_PROVIDER_EXCEPTION_FMT("Link Speed Configuration Failed");
+        if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &linkSpeed) != VMK_OK)
+            THROW_PROVIDER_EXCEPTION_FMT("Link Speed Configuration Failed");
     }
 #endif
 #ifndef TARGET_CIM_SERVER_esxi_native
     bool VMwarePort::fullDuplex() const
-    { 
+    {
         struct ethtool_cmd edata;
 
         memset(&edata, 0, sizeof(edata));
@@ -2433,7 +2438,7 @@ fail:
     }
 
     void VMwarePort::fullDuplex(bool fd)
-    { 
+    {
         struct ethtool_cmd edata;
 
         memset(&edata, 0, sizeof(edata));
@@ -2454,7 +2459,7 @@ fail:
     bool VMwarePort::fullDuplex() const
     {
         /* For Medford family boards, the full duplex is always enabled*/
-	return true;
+        return true;
     }
 
     void VMwarePort::fullDuplex(bool fd)
@@ -2475,7 +2480,7 @@ fail:
         if (edata.autoneg == AUTONEG_DISABLE)
             return false;
 
-        return true;          
+        return true;
     }
 
     void VMwarePort::autoneg(bool an)
@@ -2502,10 +2507,11 @@ fail:
 
         speedNeg.type = SFVMK_MGMT_DEV_OPS_GET;
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST,
-			&speedNeg) == VMK_OK)
-	    return (speedNeg.autoNeg == VMK_TRUE);
-	return true;
+        if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST,
+                        &speedNeg) == VMK_OK)
+            return (speedNeg.autoNeg == VMK_TRUE);
+
+        return true;
     }
 
     void VMwarePort::autoneg(bool an)
@@ -2514,14 +2520,14 @@ fail:
 
         speedNeg.type = SFVMK_MGMT_DEV_OPS_GET;
 
-	if ((DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST,
-			 &speedNeg) != VMK_OK) || (speedNeg.autoNeg == an))
-	    return;
+        if ((DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST,
+                         &speedNeg) != VMK_OK) || (speedNeg.autoNeg == an))
+            return;
 
-	speedNeg.autoNeg = an;
-	speedNeg.type = SFVMK_MGMT_DEV_OPS_SET;
+        speedNeg.autoNeg = an;
+        speedNeg.type = SFVMK_MGMT_DEV_OPS_SET;
 
-	DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &speedNeg);
+        DrvMgmtCall(dev_name.c_str(), SFVMK_CB_LINK_SPEED_REQUEST, &speedNeg);
     }
 #endif
 
@@ -2608,7 +2614,7 @@ fail:
 
         for (i = 0; i < paramNames.size(); i++)
         {
-	    GCOALESCE_IF(rx_coalesce_usecs);
+            GCOALESCE_IF(rx_coalesce_usecs);
             else GCOALESCE_IF(rx_max_coalesced_frames);
             else GCOALESCE_IF(rx_coalesce_usecs_irq);
             else GCOALESCE_IF(rx_max_coalesced_frames_irq);
@@ -2639,7 +2645,7 @@ fail:
                 return -1;
             }
         }
-    
+
         return 0;
     }
 
@@ -2663,7 +2669,7 @@ fail:
 
         for (i = 0; i < paramNames.size(); i++)
         {
-	    SCOALESCE_IF(rx_coalesce_usecs);
+            SCOALESCE_IF(rx_coalesce_usecs);
             else SCOALESCE_IF(rx_max_coalesced_frames);
             else SCOALESCE_IF(rx_coalesce_usecs_irq);
             else SCOALESCE_IF(rx_max_coalesced_frames_irq);
@@ -2706,25 +2712,25 @@ fail:
     int VMwarePort::getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const
     {
-	sfvmk_intrCoalsParam_t intCoalsParam;
+        sfvmk_intrCoalsParam_t intCoalsParam;
         unsigned int i;
 
-	intCoalsParam.type = SFVMK_MGMT_DEV_OPS_GET;
+        intCoalsParam.type = SFVMK_MGMT_DEV_OPS_GET;
 
 #define GCOALESCE_IF(x_) \
     if (strcasecmp(paramNames[i].c_str(), \
                    #x_) == 0)             \
         paramValues.append(intCoalsParam.x_)
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
-			&intCoalsParam) != VMK_OK)
-	{
-	    PROVIDER_LOG_ERR("Interrupt Moderation parameter retrieval failed");
+        if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
+                        &intCoalsParam) != VMK_OK)
+        {
+            PROVIDER_LOG_ERR("Interrupt Moderation parameter retrieval failed");
             return -1;
-	}
+        }
         for (i = 0; i < paramNames.size(); i++)
         {
-	    GCOALESCE_IF(rxUsecs);
+            GCOALESCE_IF(rxUsecs);
             else GCOALESCE_IF(rxMaxFrames);
             else GCOALESCE_IF(txUsecs);
             else GCOALESCE_IF(txMaxFrames);
@@ -2746,7 +2752,7 @@ fail:
                 PROVIDER_LOG_ERR("%s(): unknown interrupt moderation "
                                  "parameter %s", __FUNCTION__,
                                  paramNames[i].c_str());
-		paramValues.clear();
+                paramValues.clear();
                 return -1;
             }
         }
@@ -2757,27 +2763,27 @@ fail:
     int VMwarePort::setIntrModeration(const Array_String &paramNames,
                                       const Array_uint32 &paramValues)
     {
-	sfvmk_intrCoalsParam_t intCoalsParam;
+        sfvmk_intrCoalsParam_t intCoalsParam;
         unsigned int i;
 
-	intCoalsParam.type = SFVMK_MGMT_DEV_OPS_GET;
+        intCoalsParam.type = SFVMK_MGMT_DEV_OPS_GET;
 
 #define SCOALESCE_IF(x_) \
     if (strcasecmp(paramNames[i].c_str(), \
                    #x_) == 0)             \
         intCoalsParam.x_ = paramValues[i]
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
-			&intCoalsParam) != VMK_OK)
-	{
-	    PROVIDER_LOG_ERR("%s(): Interrupt Moderation parameter"
-			     "retrieval failed", __FUNCTION__);
+        if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
+                        &intCoalsParam) != VMK_OK)
+        {
+            PROVIDER_LOG_ERR("%s(): Interrupt Moderation parameter"
+                             "retrieval failed", __FUNCTION__);
             return -1;
-	}
+        }
 
         for (i = 0; i < paramNames.size(); i++)
         {
-	    SCOALESCE_IF(rxUsecs);
+            SCOALESCE_IF(rxUsecs);
             else SCOALESCE_IF(rxMaxFrames);
             else SCOALESCE_IF(txUsecs);
             else SCOALESCE_IF(txMaxFrames);
@@ -2803,14 +2809,14 @@ fail:
             }
         }
 
-	intCoalsParam.type = SFVMK_MGMT_DEV_OPS_SET;
+        intCoalsParam.type = SFVMK_MGMT_DEV_OPS_SET;
 
-	if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
-			&intCoalsParam) != VMK_OK)
-	{
-	    PROVIDER_LOG_ERR("Interrupt Coalesce parameter configuration failed");
-	    return -1;
-	}
+        if (DrvMgmtCall(dev_name.c_str(), SFVMK_CB_INTR_MODERATION_REQUEST,
+                        &intCoalsParam) != VMK_OK)
+        {
+            PROVIDER_LOG_ERR("Interrupt Coalesce parameter configuration failed");
+            return -1;
+        }
         return 0;
     }
 #endif
@@ -2859,7 +2865,7 @@ fail:
         // esxcli.
         if (boundPort != NULL)
             return boundPort->linkStatus();
-        
+
         THROW_PROVIDER_EXCEPTION;
         return false;
     }
@@ -2917,8 +2923,10 @@ fail:
 
         if (boundPort == NULL)
             return MACAddress(0, 0, 0, 0, 0, 0);
+
         strncpy(devName, ((VMwarePort *)boundPort)->dev_name.c_str(), sizeof(devName));
-	if (DrvMgmtCall(devName, SFVMK_CB_MAC_ADDRESS_GET, &macAddress) != VMK_OK)
+
+        if (DrvMgmtCall(devName, SFVMK_CB_MAC_ADDRESS_GET, &macAddress) != VMK_OK)
             PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed", __FUNCTION__);
         else
             return MACAddress(macAddress.macAddress[0],
@@ -3048,7 +3056,7 @@ fail:
     public:
         VMwareDiagnostic(const NIC *o) :
             Diagnostic(sampleDescr), owner(o), testPassed(NotKnown) {}
-        virtual Result syncTest() 
+        virtual Result syncTest()
         {
             // ETHTOOL_TEST is not available on ESXi -
             // see bug 35580
@@ -3139,17 +3147,17 @@ fail:
 #ifdef TARGET_CIM_SERVER_esxi_native
         virtual bool forAllFw(ElementEnumerator& en)
         {
-            if(!en.process(nicFw))
+            if (!en.process(nicFw))
                 return false;
-            if(!en.process(rom))
+            if (!en.process(rom))
                 return false;
             return en.process(uefirom);
         }
         virtual bool forAllFw(ConstElementEnumerator& en) const
         {
-            if(!en.process(nicFw))
+            if (!en.process(nicFw))
                 return false;
-            if(!en.process(rom))
+            if (!en.process(rom))
                 return false;
             return en.process(uefirom);
         }
@@ -3199,7 +3207,7 @@ fail:
 
             return true;
         }
-        
+
         virtual bool forAllInterfaces(ConstElementEnumerator& en) const
         {
             int i = 0;
@@ -3215,7 +3223,7 @@ fail:
         {
             return en.process(diag);
         }
-        
+
         virtual bool forAllDiagnostics(ConstElementEnumerator& en) const
         {
             return en.process(diag);
@@ -3242,7 +3250,7 @@ fail:
                           staticVPD, parsedFields);
     }
 
-    VitalProductData VMwareNIC::vitalProductData() const 
+    VitalProductData VMwareNIC::vitalProductData() const
     {
         Array<VPDField> parsedFields;
 
@@ -3363,6 +3371,7 @@ fail:
                 defPath.append("mcfw/");
             else
                 defPath.append("uefirom/");
+
             defPath.append(fName);
         }
 
@@ -3430,7 +3439,7 @@ fail:
             rc = SWElement::Install_Error;
             goto curl_fail;
         }
-        if ((rc_curl = 
+        if ((rc_curl =
               curl_easy_setopt(curl, CURLOPT_WRITEDATA,
                                f)) != CURLE_OK)
         {
@@ -3687,24 +3696,24 @@ cleanup:
         {
             PROVIDER_LOG_ERR("%s(): Failed to read filesize",
                              __FUNCTION__);
-             goto cleanup;
+            goto cleanup;
         }
         rewind(f);
         pBuffer = (char*) calloc(fileSize, sizeof(char));
         if (pBuffer == NULL)
         {
-             PROVIDER_LOG_ERR("%s(): Memory allocation failed.", __FUNCTION__);
-             goto cleanup;
+            PROVIDER_LOG_ERR("%s(): Memory allocation failed.", __FUNCTION__);
+            goto cleanup;
         }
         if (fread(pBuffer, 1, fileSize, f) != fileSize)
         {
-             PROVIDER_LOG_ERR("%s(): Failed to read firmware image.", __FUNCTION__);
-             goto cleanup;
+            PROVIDER_LOG_ERR("%s(): Failed to read firmware image.", __FUNCTION__);
+            goto cleanup;
         }
         if ((efx_check_reflash_image(pBuffer, fileSize, &imageInfo)) != 0)
         {
-             PROVIDER_LOG_ERR("%s(): Check Reflash Image Failed.", __FUNCTION__);
-             goto cleanup;
+            PROVIDER_LOG_ERR("%s(): Check Reflash Image Failed.", __FUNCTION__);
+            goto cleanup;
         }
         header = imageInfo.eii_headerp;
 
@@ -3892,7 +3901,7 @@ cleanup:
                                           bool force,
                                           const char *base64_hash)
     {
-        Auto_Mutex    guard(tmpFilesArrLock); 
+        Auto_Mutex    guard(tmpFilesArrLock);
 
         int   rc = 0;
         char  cmd[CMD_MAX_LEN];
@@ -4041,10 +4050,12 @@ cleanup:
             rc = -1;
             goto cleanup;
         }
+
         fseek(fPtr, 0, SEEK_END);
         fileSize = ftell(fPtr);
         rewind(fPtr);
         pBuffer = (char*) calloc(fileSize, sizeof(char));
+
         if (pBuffer == NULL)
         {
             PROVIDER_LOG_ERR("%s(): memory allocation failed",
@@ -4059,6 +4070,7 @@ cleanup:
             rc = -1;
             goto cleanup;
         }
+
         sfvmk_imgUpdate_t imgUpdate;
 
         imgUpdate.pFileBuffer = (vmk_uint64)((vmk_uint32)pBuffer);
@@ -4068,10 +4080,10 @@ cleanup:
                           fwType, imgVersion.major(), imgVersion.minor(),
                           imgVersion.revision(), imgVersion.build());
 
-	if (DrvMgmtCall(((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
+        if (DrvMgmtCall(((VMwareNIC *)owner)->ports[0].dev_name.c_str(),
                         SFVMK_CB_IMG_UPDATE, &imgUpdate) != VMK_OK)
         {
-	    PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
+            PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
             rc = -1;
             goto cleanup;
         }
@@ -4172,8 +4184,8 @@ cleanup:
 
         unsigned int i;
 
-	if (getDirContents(DEV_PATH, devDirList) < 0)
-	    return VersionInfo(DEFAULT_VERSION_STR);
+        if (getDirContents(DEV_PATH, devDirList) < 0)
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         for (i = 0; i < devDirList.size(); i++)
         {
@@ -4205,7 +4217,7 @@ cleanup:
                    return VersionInfo(drvinfo.version);
             }
             else
-	      close(fd);
+                close(fd);
         }
 
         // We failed to get it via ethtool (possible reason: no
@@ -4217,36 +4229,36 @@ cleanup:
 #else
     VersionInfo VMwareDriver::version() const
     {
-	sfvmk_versionInfo_t verInfo = {0};
-	sfvmk_ifaceList_t ifaceList;
+        sfvmk_versionInfo_t verInfo = {0};
+        sfvmk_ifaceList_t ifaceList;
         unsigned int i;
-	int portCount = 0;
+        int portCount = 0;
 
-         // Trying to retrieve nic list
-	if (getNICNameList(&ifaceList) < 0)
-	{
-	    PROVIDER_LOG_ERR("Nic Name list retrieval failed");
-	}
-	else
-	{
+        // Trying to retrieve nic list
+        if (getNICNameList(&ifaceList) < 0)
+        {
+            PROVIDER_LOG_ERR("Nic Name list retrieval failed");
+        }
+        else
+        {
             portCount = ifaceList.ifaceCount;
-	    verInfo.type = SFVMK_GET_DRV_VERSION;
+            verInfo.type = SFVMK_GET_DRV_VERSION;
 
             for (i = 0; i < portCount; i++)
             {
-	        if (DrvMgmtCall(ifaceList.ifaceArray[i].string, SFVMK_CB_VERINFO_GET,
-				&verInfo) == VMK_OK)
-		{
-	            return VersionInfo(vmk_NameToString(&verInfo.version));
-		}
-	    }
+                if (DrvMgmtCall(ifaceList.ifaceArray[i].string, SFVMK_CB_VERINFO_GET,
+                                &verInfo) == VMK_OK)
+                {
+                    return VersionInfo(vmk_NameToString(&verInfo.version));
+                }
+            }
 
-	    PROVIDER_LOG_ERR("%s(): Solarflare Network Device not found", __FUNCTION__);
-	}
+            PROVIDER_LOG_ERR("%s(): Solarflare Network Device not found", __FUNCTION__);
+        }
 
-	// We failed to get it via Driver Management API (possible reason: no
-	// Solarflare interfaces are presented) - we try to get it
-	// from VMware root/cimv2 standard objects.
+        // We failed to get it via Driver Management API (possible reason: no
+        // Solarflare interfaces are presented) - we try to get it
+        // from VMware root/cimv2 standard objects.
 
         return vmwareGetDriverVersion();
     }
@@ -4255,7 +4267,7 @@ cleanup:
         const Package *owner;
         VersionInfo vers;
     public:
-        VMwareLibrary(const Package *pkg, const String& d, const String& sn, 
+        VMwareLibrary(const Package *pkg, const String& d, const String& sn,
                      const VersionInfo& v) :
             Library(d, sn), owner(pkg), vers(v) {}
         virtual VersionInfo version() const { return vers; }
@@ -4292,7 +4304,7 @@ cleanup:
         {
             return en.process(kernelDriver);
         }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const
         {
             return en.process(kernelDriver);
         }
@@ -4323,7 +4335,7 @@ cleanup:
         {
             return en.process(providerLibrary);
         }
-        virtual bool forAllSoftware(ConstElementEnumerator& en) const 
+        virtual bool forAllSoftware(ConstElementEnumerator& en) const
         {
             return en.process(providerLibrary);
         }
@@ -4483,7 +4495,7 @@ cleanup:
                               uint32 offset,
                               const String &data);
     };
-    
+
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
     {
         AutoSharedLock auto_shared_lock(nicsLock, false);
@@ -4513,7 +4525,7 @@ cleanup:
     {
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
-        return forAllNICs((ConstElementEnumerator&) en); 
+        return forAllNICs((ConstElementEnumerator&) en);
     }
 
     bool VMwareSystem::forAllPackages(ConstElementEnumerator& en) const
@@ -4524,7 +4536,7 @@ cleanup:
             return false;
         return en.process(mgmtPackage);
     }
-    
+ 
     bool VMwareSystem::forAllPackages(ElementEnumerator& en)
     {
         AutoSharedLock auto_shared_lock(nicsLock, false);
@@ -4618,7 +4630,7 @@ cleanup:
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
         VersionInfo currentVersion;
-    
+
         if (getNICFwVersion(nic, type, currentVersion) < 0)
             return -1;
 
@@ -4629,12 +4641,12 @@ cleanup:
 
     String VMwareSystem::createTmpFile()
     {
-        Auto_Mutex    guard(tmpFilesArrLock); 
+        Auto_Mutex    guard(tmpFilesArrLock);
         char          tmp_file[] = "/tmp/sf_firmware_XXXXXX";
         int           fd = -1;
         uint64        now;
         unsigned int  i;
-        
+
         TmpFileDescr fileDescr;
 
         fd = mkstemp(tmp_file);
@@ -4662,7 +4674,7 @@ cleanup:
     int VMwareSystem::tmpFileBase64Append(const String &fileName,
                                           const String &base64Str)
     {
-        Auto_Mutex    guard(tmpFilesArrLock); 
+        Auto_Mutex    guard(tmpFilesArrLock);
         ssize_t       decSize = base64_dec_size(base64Str.c_str());
         ssize_t       rc;
         char         *data;
@@ -4731,7 +4743,7 @@ cleanup:
 
     int VMwareSystem::removeTmpFile(String fileName)
     {
-        Auto_Mutex    guard(tmpFilesArrLock); 
+        Auto_Mutex    guard(tmpFilesArrLock);
         unsigned int  i;
 
         if (unlink(fileName.c_str()) < 0)
@@ -4823,7 +4835,7 @@ cleanup:
         delete[] encoded;
         free(devs);
 
-        return result; 
+        return result;
     }
 #endif
 
@@ -4909,7 +4921,7 @@ cleanup:
         if (try_other_devs && exists && dev2 != NULL)
             correct_dev = String(dev2->netif_name);
         free(devs);
- 
+
         return exists;
     }
 
@@ -4917,7 +4929,7 @@ cleanup:
                              unsigned int type,
                              unsigned int subtype)
     {
-        Auto_Mutex    guard(NVCtxArrLock); 
+        Auto_Mutex    guard(NVCtxArrLock);
 
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
@@ -4973,7 +4985,7 @@ cleanup:
 
     int VMwareSystem::NVClose(unsigned int nv_ctx)
     {
-        Auto_Mutex    guard(NVCtxArrLock); 
+        Auto_Mutex    guard(NVCtxArrLock);
 
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
@@ -4994,7 +5006,7 @@ cleanup:
 
     size_t VMwareSystem::NVPartSize(unsigned int nv_ctx)
     {
-        Auto_Mutex    guard(NVCtxArrLock); 
+        Auto_Mutex    guard(NVCtxArrLock);
 
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
@@ -5077,7 +5089,7 @@ cleanup:
                              sint64 offset,
                              String &data)
     {
-        Auto_Mutex    guard(NVCtxArrLock); 
+        Auto_Mutex    guard(NVCtxArrLock);
 
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
@@ -5088,7 +5100,7 @@ cleanup:
     int VMwareSystem::NVReadAll(unsigned int nv_ctx,
                                 String &data)
     {
-        Auto_Mutex    guard(NVCtxArrLock); 
+        Auto_Mutex    guard(NVCtxArrLock);
 
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
@@ -5099,10 +5111,10 @@ cleanup:
                                  const String &data,
                                  bool full_erase)
     {
-        Auto_Mutex    guard(NVCtxArrLock); 
+        Auto_Mutex    guard(NVCtxArrLock);
 
         AutoSharedLock auto_shared_lock(nicsLock, true);
-    
+
         int       i;
         char     *buf;
         ssize_t   dec_size;
@@ -5281,7 +5293,7 @@ cleanup:
             PROVIDER_LOG_ERR("%s(): failed to decode "
                              "payload", __FUNCTION__);
             return -1;
-        
+
         }
 
         fd = open(DEV_SFC_CONTROL, O_RDWR);
@@ -5448,7 +5460,7 @@ cleanup:
 
         if (!km_svc)
             return -1;
-        
+
         method = VMware_KernelModuleService_GetModuleLoadParameter_method::create();
         if (!method)
             return -1;
@@ -5487,7 +5499,7 @@ cleanup:
 
         if (!km_svc)
             return -1;
-        
+
         method = VMware_KernelModuleService_SetModuleLoadParameter_method::create();
         if (!method)
             return -1;
@@ -5543,15 +5555,16 @@ cleanup:
         const char *devName;
 
         if ((((VMwareNIC *)owner)->ports.size() <= 0))
-	    return VersionInfo(DEFAULT_VERSION_STR);
+            return VersionInfo(DEFAULT_VERSION_STR);
 
-	devName = ((VMwareNIC *)owner)->ports[0].dev_name.c_str();
+        devName = ((VMwareNIC *)owner)->ports[0].dev_name.c_str();
 
-	verInfo.type = SFVMK_GET_FW_VERSION;
+        verInfo.type = SFVMK_GET_FW_VERSION;
 
-	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
-	   return VersionInfo(vmk_NameToString(&verInfo.version));
-	return VersionInfo(DEFAULT_VERSION_STR);
+        if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+            return VersionInfo(vmk_NameToString(&verInfo.version));
+
+        return VersionInfo(DEFAULT_VERSION_STR);
     }
 #endif
 
@@ -5612,15 +5625,16 @@ cleanup:
         const VMwareNIC  *nic = reinterpret_cast<const VMwareNIC *>(owner);
 
         if (nic == NULL || nic->ports.size() < 1)
-	    return VersionInfo(DEFAULT_VERSION_STR);
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         devName = nic->ports[0].dev_name.c_str();
 
-	verInfo.type = SFVMK_GET_ROM_VERSION;
+        verInfo.type = SFVMK_GET_ROM_VERSION;
 
-	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
-	    return VersionInfo(vmk_NameToString(&verInfo.version));
-	return VersionInfo(DEFAULT_VERSION_STR);
+        if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+            return VersionInfo(vmk_NameToString(&verInfo.version));
+
+        return VersionInfo(DEFAULT_VERSION_STR);
     }
 
     VersionInfo VMwareUEFIROM::version() const
@@ -5631,15 +5645,16 @@ cleanup:
         const VMwareNIC  *nic = reinterpret_cast<const VMwareNIC *>(owner);
 
         if (nic == NULL || nic->ports.size() < 1)
-	    return VersionInfo(DEFAULT_VERSION_STR);
+            return VersionInfo(DEFAULT_VERSION_STR);
 
         devName = nic->ports[0].dev_name.c_str();
 
-	verInfo.type = SFVMK_GET_UEFI_VERSION;
+        verInfo.type = SFVMK_GET_UEFI_VERSION;
 
-	if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
-	    return VersionInfo(vmk_NameToString(&verInfo.version));
-	return VersionInfo(DEFAULT_VERSION_STR);
+        if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+            return VersionInfo(vmk_NameToString(&verInfo.version));
+
+        return VersionInfo(DEFAULT_VERSION_STR);
     }
 #endif
 
