@@ -32,7 +32,6 @@
 extern "C" {
 #include "efx_ioctl.h"
 #include "sfu_device.h"
-#include "nv.h"
 #include "ci/mgmt/mc_flash_layout.h"
 #include "efx_regs_mcdi.h"
 #include "ci/tools/byteorder.h"
@@ -88,6 +87,7 @@ extern "C" {
 #include "sf_alerts.h"
 #include "sf_pci_ids.h"
 #include "sf_locks.h"
+#include "sf_native_nv.h"
 
 #include "sf_base64.h"
 
@@ -189,7 +189,7 @@ namespace solarflare
     ///
     typedef class NVContextDescr {
     public:
-        struct nv_context   *ctx;
+        nv_context   *ctx;
         unsigned int         id;
 
         // This is required to use cimple::Array

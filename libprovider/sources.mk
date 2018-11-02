@@ -117,7 +117,8 @@ endif
 libprovider_DIR = libprovider
 
 ifeq ($(CIM_SERVER), esxi_native)
-libprovider_SOURCES += userMgmtSrc/sfvmk_mgmt_interface.c
+libprovider_SOURCES += sf_native_nv.cpp \
+        userMgmtSrc/sfvmk_mgmt_interface.c
 endif
 
 ifeq ($(PROVIDER_PLATFORM),windows)
