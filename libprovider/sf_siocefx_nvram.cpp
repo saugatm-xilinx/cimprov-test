@@ -151,10 +151,6 @@ namespace solarflare
                          const char *devName,
                          uint32_t type)
     {
-        unsigned int    end = offset + len;
-	unsigned int    chunk;
-        uint8_t        *ptr = data;
-	bool nv_read_status = true;
 
 	UNUSED(fd);
 	UNUSED(isSock);
@@ -165,27 +161,15 @@ namespace solarflare
 	// fields that are declared in sfvmk_mgmt_interface.h
 	nvram_read_req.type = (sfvmk_nvramType_t)type;
 	nvram_read_req.op = SFVMK_NVRAM_OP_READ;
-
-        for ( ; offset < end; )
-        {
-            chunk = min(end - offset, SFVMK_NVRAM_MAX_PAYLOAD);
-	    nvram_read_req.offset = offset;
-	    nvram_read_req.size = chunk;
-
-	    if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST, &nvram_read_req) != VMK_OK)
-            {
+        nvram_read_req.data = ((vmk_uint64)(vmk_uint32)data);
+	nvram_read_req.offset = offset;
+	nvram_read_req.size = len;
+        if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST,
+                        &nvram_read_req) != VMK_OK) {
 	        PROVIDER_LOG_ERR("%s(): NVRAM read failed", __FUNCTION__);
-		nv_read_status = false;
-		break;
+                return -1;
 	    }
 
-            memcpy(ptr, nvram_read_req.data, chunk);
-            ptr += chunk;
-            offset += chunk;
-        }
-
-	if (nv_read_status == false)
-            return -1;
         return 0;
     }
 #endif
@@ -262,46 +246,23 @@ namespace solarflare
                           const char *devName,
                           uint32_t type)
     {
-        unsigned int    end = offset + len;
-        unsigned int    write_len;
-        uint8_t         *ptr = data;
-        uint32_t        *payload;
-	bool nv_write_status = true;
-
 	UNUSED(fd);
 	UNUSED(isSock);
+	UNUSED(offset);
 
 	sfvmk_nvramCmd_t nvram_write_req = {0};
 
 	// NVRAM type field should be selected from the
 	// fields that are declared in sfvmk_mgmt_interface.h
 	nvram_write_req.type = (sfvmk_nvramType_t)type;
-	nvram_write_req.op = SFVMK_NVRAM_OP_WRITE;
-
-        for ( ; offset < end; )
-        {
-
-            write_len = min(len, SFVMK_NVRAM_MAX_PAYLOAD);
-
-	    nvram_write_req.offset = offset;
-	    nvram_write_req.size = write_len;
-
-	    memcpy(nvram_write_req.data, ptr, write_len);
-
-	    if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST, &nvram_write_req) != VMK_OK)
-            {
-	        PROVIDER_LOG_ERR("%s(): NVRAM write failed", __FUNCTION__);
-		nv_write_status = false;
-		break;
-	    }
-
-            ptr += write_len;
-            offset += write_len;
-            len -= write_len;
-        }
-
-	if (nv_write_status == false)
+	nvram_write_req.op = SFVMK_NVRAM_OP_WRITEALL;
+        nvram_write_req.size = len;
+        nvram_write_req.data =  ((vmk_uint64)(vmk_uint32)data);
+	if (DrvMgmtCall(devName, SFVMK_CB_NVRAM_REQUEST,
+                        &nvram_write_req) != VMK_OK) {
+            PROVIDER_LOG_ERR("%s(): NVRAM write failed", __FUNCTION__);
 	    return -1;
+        }
         return 0;
     }
 #endif

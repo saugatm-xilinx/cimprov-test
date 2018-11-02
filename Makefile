@@ -200,11 +200,7 @@ PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFO
 ##! Branch argument to provided with make command in following format
 ##! make CONFIG=native-vmware/default LOCATION=solarflare BRANCH=dev2 platform
 ifeq ($(CIM_SERVER),esxi_native)
-ifeq ($(BRANCH),dev2)
-USRMGMTINTF_BRANCH       = sfvmk_dev_p2/native_drv
-else
-USRMGMTINTF_BRANCH       = 21bf41f8b1c0/native_drv
-endif
+USRMGMTINTF_BRANCH       = default/native_drv
 USRMGMTINTF_URL          = http://source.uk.solarflarecom.com/hg/incoming/esxi_sfc/rawfile
 USRMGMT_INCLFILE         = sfvmk_mgmt_interface.h
 USRMGMT_SRCFILE          = sfvmk_mgmt_interface.c
