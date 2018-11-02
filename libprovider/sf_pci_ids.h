@@ -10,7 +10,8 @@ namespace solarflare
       SFU_DEVICE_TYPE_FALCON     = 0x0700,
       SFU_DEVICE_TYPE_SIENA      = 0x0800,
       SFU_DEVICE_TYPE_HUNTINGTON = 0x0900,
-      SFU_DEVICE_TYPE_MEDFORD    = 0x0A00
+      SFU_DEVICE_TYPE_MEDFORD    = 0x0A00,
+      SFU_DEVICE_TYPE_MEDFORD2   = 0x0B00
     };
 };
 
