@@ -49,20 +49,12 @@ Get_Instance_Status SF_NVAPI_Provider::get_instance(
     return GET_INSTANCE_UNSUPPORTED;
 }
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Enum_Instances_Status SF_NVAPI_Provider::enum_instances(
-    const SF_NVAPI* model,
-    Enum_Instances_Handler<SF_NVAPI>* handler)
-{
-    return ENUM_INSTANCES_ACCESS_DENIED;
-}
-#else
 Enum_Instances_Status SF_NVAPI_Provider::enum_instances(
     const SF_NVAPI* model,
     Enum_Instances_Handler<SF_NVAPI>* handler)
 {
     SF_NVAPI *inst = SF_NVAPI::create();
- 
+
     if (inst == NULL)
         return ENUM_INSTANCES_FAILED;
 
@@ -73,7 +65,6 @@ Enum_Instances_Status SF_NVAPI_Provider::enum_instances(
     handler->handle(inst);
     return ENUM_INSTANCES_OK;
 }
-#endif
 
 Create_Instance_Status SF_NVAPI_Provider::create_instance(
     SF_NVAPI* instance)
@@ -94,15 +85,6 @@ Modify_Instance_Status SF_NVAPI_Provider::modify_instance(
     return MODIFY_INSTANCE_UNSUPPORTED;
 }
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::getSFUDevices(
-    const SF_NVAPI* self,
-    Property<String>& Devices,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::getSFUDevices(
     const SF_NVAPI* self,
     Property<String>& Devices,
@@ -123,22 +105,7 @@ Invoke_Method_Status SF_NVAPI_Provider::getSFUDevices(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::NVExists(
-    const SF_NVAPI* self,
-    const Property<String>& Device,
-    const Property<uint32>& Type,
-    const Property<uint32>& Subtype,
-    const Property<boolean>& TryOtherDevs,
-    Property<boolean>& Exists,
-    Property<String>& CorrectDevice,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::NVExists(
     const SF_NVAPI* self,
     const Property<String>& Device,
@@ -181,20 +148,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVExists(
     return_value.set(OK);
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::NVOpen(
-    const SF_NVAPI* self,
-    const Property<String>& Device,
-    const Property<uint32>& Type,
-    const Property<uint32>& Subtype,
-    Property<uint32>& NVContext,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::NVOpen(
     const SF_NVAPI* self,
     const Property<String>& Device,
@@ -214,7 +168,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVOpen(
         return_value.set(InvalidParameter);
         return INVOKE_METHOD_OK;
     }
-    
+
     nv_cntx = solarflare::System::target.NVOpen(Device.value,
                                                 Type.value,
                                                 Subtype.value);
@@ -232,17 +186,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVOpen(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::NVClose(
-    const SF_NVAPI* self,
-    const Property<uint32>& NVContext,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::NVClose(
     const SF_NVAPI* self,
     const Property<uint32>& NVContext,
@@ -264,18 +208,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVClose(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::NVPartSize(
-    const SF_NVAPI* self,
-    const Property<uint32>& NVContext,
-    Property<uint64>& PartSize,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::NVPartSize(
     const SF_NVAPI* self,
     const Property<uint32>& NVContext,
@@ -300,20 +233,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVPartSize(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::NVRead(
-    const SF_NVAPI* self,
-    const Property<uint32>& NVContext,
-    const Property<uint64>& Length,
-    const Property<sint64>& Offset,
-    Property<String>& Data,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::NVRead(
     const SF_NVAPI* self,
     const Property<uint32>& NVContext,
@@ -348,18 +268,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVRead(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::NVReadAll(
-    const SF_NVAPI* self,
-    const Property<uint32>& NVContext,
-    Property<String>& Data,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::NVReadAll(
     const SF_NVAPI* self,
     const Property<uint32>& NVContext,
@@ -390,19 +299,7 @@ Invoke_Method_Status SF_NVAPI_Provider::NVReadAll(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
-    const SF_NVAPI* self,
-    const Property<uint32>& NVContext,
-    const Property<String>& Data,
-    const Property<boolean>& FullErase,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
     const SF_NVAPI* self,
     const Property<uint32>& NVContext,
@@ -438,7 +335,6 @@ Invoke_Method_Status SF_NVAPI_Provider::NVWriteAll(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
 #ifdef TARGET_CIM_SERVER_esxi_native
 Invoke_Method_Status SF_NVAPI_Provider::MCDIV1Command(
