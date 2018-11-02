@@ -31,7 +31,6 @@
 
 extern "C" {
 #include "efx_ioctl.h"
-#include "sfu_device.h"
 #include "ci/mgmt/mc_flash_layout.h"
 #include "efx_regs_mcdi.h"
 #include "ci/tools/byteorder.h"
@@ -88,6 +87,7 @@ extern "C" {
 #include "sf_pci_ids.h"
 #include "sf_locks.h"
 #include "sf_native_nv.h"
+#include "sf_native_device.h"
 
 #include "sf_base64.h"
 
@@ -4403,8 +4403,8 @@ cleanup:
         };
 
         int findSFUDevice(const String &dev_name,
-                          struct sfu_device **devs,
-                          struct sfu_device **dev,
+                          sfu_device **devs,
+                          sfu_device **dev,
                           int *devs_count);
     protected:
         void setupNICs()
@@ -4841,8 +4841,8 @@ cleanup:
 
 #ifdef TARGET_CIM_SERVER_esxi_native
     int VMwareSystem::findSFUDevice(const String &dev_name,
-                                    struct sfu_device **devs,
-                                    struct sfu_device **dev,
+                                    sfu_device **devs,
+                                    sfu_device **dev,
                                     int *devs_count)
     {
         UNUSED(dev_name);
@@ -4905,9 +4905,9 @@ cleanup:
     {
         AutoSharedLock auto_shared_lock(nicsLock, false);
 
-        struct sfu_device         *devs;
-        struct sfu_device         *dev = NULL;
-        const struct sfu_device   *dev2 = NULL;
+        sfu_device         *devs;
+        sfu_device         *dev = NULL;
+        const sfu_device   *dev2 = NULL;
 
         int           devs_count;
         bool          exists = false;

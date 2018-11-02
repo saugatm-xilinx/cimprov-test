@@ -118,6 +118,7 @@ libprovider_DIR = libprovider
 
 ifeq ($(CIM_SERVER), esxi_native)
 libprovider_SOURCES += sf_native_nv.cpp \
+        sf_native_device.cpp \
         userMgmtSrc/sfvmk_mgmt_interface.c
 endif
 
