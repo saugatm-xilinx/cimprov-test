@@ -13,6 +13,12 @@
 
 #include "userMgmtSrc/sfvmk_mgmt_interface.h"
 
+// VPD tags (used for VPD processing)
+#define VPD_TAG_ID   0x02
+#define VPD_TAG_END  0x0f
+#define VPD_TAG_R    0x10
+#define VPD_TAG_W    0x11
+
 extern vmk_MgmtApiSignature sfvmk_mgmtSig;
 
 namespace solarflare

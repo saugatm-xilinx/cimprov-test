@@ -121,12 +121,6 @@ extern "C" {
 // Convert character to integer properly
 #define CHAR2INT(x)         ((int)(x & 0x000000ff))
 
-// VPD tags (used for VPD processing)
-#define VPD_TAG_ID   0x02
-#define VPD_TAG_END  0x0f
-#define VPD_TAG_R    0x10
-#define VPD_TAG_W    0x11
-
 // Length Definitions for VPD Info Structure
 #define VPD_KEYWORD_LEN 3
 #define VPD_FIELDNAME_LEN 6
@@ -798,7 +792,7 @@ fail:
     ///
     /// @return 0 on success or -1 in case of error
     ///
-    static int getNICNameList(sfvmk_ifaceList_t *ifaceList)
+    int getNICNameList(sfvmk_ifaceList_t *ifaceList)
     {
         if ((DrvMgmtCall(NULL, SFVMK_CB_IFACE_LIST_GET, ifaceList)) != VMK_OK)
         {
@@ -4353,16 +4347,6 @@ cleanup:
 
         bool sfu_dev_initialized;
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-        VMwareSystem()
-        {
-            setenv(CIMPLEHOME_ENVVAR, "/tmp/", 1);
-
-            curl_global_init(CURL_GLOBAL_ALL);
-            onAlert.setFillPortAlertsInfo(vmwareFillPortAlertsInfo);
-            sfu_dev_initialized = true;
-        };
-#else
         VMwareSystem()
         {
             setenv(CIMPLEHOME_ENVVAR, "/tmp/", 1);
@@ -4386,7 +4370,6 @@ cleanup:
                 sfu_dev_initialized = false;
             }
         };
-#endif
 
         ~VMwareSystem()
         {
@@ -4766,12 +4749,6 @@ cleanup:
         return 0;
     }
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-    String VMwareSystem::getSFUDevices()
-    {
-        return String("");
-    }
-#else
     String VMwareSystem::getSFUDevices()
     {
         AutoSharedLock auto_shared_lock(nicsLock, false);
@@ -4819,7 +4796,9 @@ cleanup:
                        PCI_ADDR_PREF,
                        devs[i].pci_addr);
             buf.format("%s%u\n", PORT_INDEX_PREF, devs[i].port_index);
+#ifndef TARGET_CIM_SERVER_esxi_native
             buf.format("%s%d\n", PHY_TYPE_PREF, devs[i].phy_type);
+#endif
             for (j = 0; j < (unsigned int)devs_count; j++)
                 if (&(devs[j]) == devs[i].master_port)
                     break;
@@ -4837,24 +4816,10 @@ cleanup:
 
         return result;
     }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
     int VMwareSystem::findSFUDevice(const String &dev_name,
                                     sfu_device **devs,
                                     sfu_device **dev,
-                                    int *devs_count)
-    {
-        UNUSED(dev_name);
-        UNUSED(devs);
-        UNUSED(dev);
-        UNUSED(devs_count);
-        return -1;
-    }
-#else
-    int VMwareSystem::findSFUDevice(const String &dev_name,
-                                    struct sfu_device **devs,
-                                    struct sfu_device **dev,
                                     int *devs_count)
     {
         AutoSharedLock auto_shared_lock(nicsLock, false);
@@ -4895,7 +4860,6 @@ cleanup:
 
         return 0;
     }
-#endif
 
     bool VMwareSystem::NVExists(const String &dev_name,
                                 unsigned int type,
