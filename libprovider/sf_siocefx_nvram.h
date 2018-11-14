@@ -13,8 +13,9 @@
 
 #include <stdint.h>
 
-namespace solarflare 
+namespace solarflare
 {
+#ifndef TARGET_CIM_SERVER_esxi_native
     ///
     /// Read NVRAM data from NIC with help of SIOCEFX private ioctl
     ///
@@ -123,6 +124,7 @@ namespace solarflare
                                      int port_index,
                                      int fd, bool isSock,
                                      VersionInfo &ver);
+#endif
 }
 
 #endif // SOLARFLARE_SF_SIOCEFX_NVRAM_H

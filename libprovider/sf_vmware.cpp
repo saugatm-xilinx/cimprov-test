@@ -4449,6 +4449,7 @@ cleanup:
         virtual int getDriverLoadParameters(String &loadParams);
         virtual int setDriverLoadParameters(const String &loadParams);
 
+#ifndef TARGET_CIM_SERVER_esxi_native
         virtual int MCDIV1Command(const String &dev_name,
                                   unsigned int &cmd,
                                   unsigned int &len,
@@ -4477,6 +4478,7 @@ cleanup:
                               uint32 part_type,
                               uint32 offset,
                               const String &data);
+#endif
     };
 
     bool VMwareSystem::forAllNICs(ConstElementEnumerator& en) const
@@ -5119,6 +5121,7 @@ cleanup:
         return 0;
     }
 
+#ifndef TARGET_CIM_SERVER_esxi_native
     int VMwareSystem::MCDIRead(const String &dev_name,
                                uint32 part_type,
                                uint32 len,
@@ -5382,6 +5385,7 @@ cleanup:
             delete[] encoded;
         return rc;
     }
+#endif
 
     static Ref<VMware_KernelModuleService> getKernelModuleService()
     {

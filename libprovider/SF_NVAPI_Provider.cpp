@@ -350,7 +350,48 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIV1Command(
 {
     return INVOKE_METHOD_UNSUPPORTED;
 }
+
+Invoke_Method_Status SF_NVAPI_Provider::MCDIV2Command(
+    const SF_NVAPI* self,
+    const Property<String>& Device,
+    Property<uint32>& Command,
+    Property<uint32>& InLen,
+    Property<uint32>& OutLen,
+    Property<uint32>& Flags,
+    Property<String>& Payload,
+    Property<uint32>& Host_errno,
+    Property<sint32>& Ioctl_rc,
+    Property<uint32>& Ioctl_errno,
+    Property<uint32>& return_value)
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
+Invoke_Method_Status SF_NVAPI_Provider::MCDIRead(
+    const SF_NVAPI* self,
+    const Property<String>& Device,
+    const Property<uint32>& PartitionType,
+    const Property<uint32>& Length,
+    const Property<uint32>& Offset,
+    Property<String>& Data,
+    Property<uint32>& return_value)
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
+Invoke_Method_Status SF_NVAPI_Provider::MCDIWrite(
+    const SF_NVAPI* self,
+    const Property<String>& Device,
+    const Property<uint32>& PartitionType,
+    const Property<uint32>& Offset,
+    const Property<String>& Data,
+    Property<uint32>& return_value)
+{
+    return INVOKE_METHOD_UNSUPPORTED;
+}
+
 #else
+
 Invoke_Method_Status SF_NVAPI_Provider::MCDIV1Command(
     const SF_NVAPI* self,
     const Property<String>& Device,
@@ -403,25 +444,7 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIV1Command(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::MCDIV2Command(
-    const SF_NVAPI* self,
-    const Property<String>& Device,
-    Property<uint32>& Command,
-    Property<uint32>& InLen,
-    Property<uint32>& OutLen,
-    Property<uint32>& Flags,
-    Property<String>& Payload,
-    Property<uint32>& Host_errno,
-    Property<sint32>& Ioctl_rc,
-    Property<uint32>& Ioctl_errno,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::MCDIV2Command(
     const SF_NVAPI* self,
     const Property<String>& Device,
@@ -486,21 +509,7 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIV2Command(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::MCDIRead(
-    const SF_NVAPI* self,
-    const Property<String>& Device,
-    const Property<uint32>& PartitionType,
-    const Property<uint32>& Length,
-    const Property<uint32>& Offset,
-    Property<String>& Data,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::MCDIRead(
     const SF_NVAPI* self,
     const Property<String>& Device,
@@ -536,20 +545,7 @@ Invoke_Method_Status SF_NVAPI_Provider::MCDIRead(
 
     return INVOKE_METHOD_OK;
 }
-#endif
 
-#ifdef TARGET_CIM_SERVER_esxi_native
-Invoke_Method_Status SF_NVAPI_Provider::MCDIWrite(
-    const SF_NVAPI* self,
-    const Property<String>& Device,
-    const Property<uint32>& PartitionType,
-    const Property<uint32>& Offset,
-    const Property<String>& Data,
-    Property<uint32>& return_value)
-{
-    return INVOKE_METHOD_UNSUPPORTED;
-}
-#else
 Invoke_Method_Status SF_NVAPI_Provider::MCDIWrite(
     const SF_NVAPI* self,
     const Property<String>& Device,
