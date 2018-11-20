@@ -62,7 +62,6 @@ namespace solarflare {
         return NULL;
     }
     if (subtype != nvram_partition.subtype) {
-        PROVIDER_LOG_ERR("%s(): Sub type match  failed", __FUNCTION__);
         return NULL;
     }
 
