@@ -555,7 +555,8 @@ namespace solarflare
         FIRMWARE_UNKNOWN = 0, ///< Unknown firmware
         FIRMWARE_BOOTROM,     ///< BootROM
         FIRMWARE_MCFW,        ///< MC firmware
-        FIRMWARE_UEFIROM      ///< UEFI ROM
+        FIRMWARE_UEFIROM,     ///< UEFI ROM
+        FIRMWARE_SUCFW      ///< SUC firmware
     } UpdatedFirmwareType;
 } // namespace
 

@@ -435,6 +435,21 @@ namespace solarflare
         virtual const String& genericName() const { return uefiromName; }
     };
 
+    /// @brief Abstract class for sucfw. Implementors shall subclass it
+    /// for platform-specific behaviour
+    class SUCFW : public Firmware {
+        // Class-wide name and description for all sucfw instances; to be
+        // passed into superclass.
+        static const String sucfwName;
+        static const char sucfwDescription[];
+        // fixme: same as FW
+        static const char sucfwSysname[];
+    public:
+        /// Constructor
+        SUCFW() : Firmware(sucfwDescription, sucfwSysname) {};
+        /// @return Same class name for all instances
+        virtual const String& genericName() const { return sucfwName; }
+    };
 
     class Driver;
 

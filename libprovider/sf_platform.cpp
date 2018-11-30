@@ -139,6 +139,10 @@ namespace solarflare
     const char UEFIROM::uefiromDescription[] = "NIC UEFIROM";
     const char UEFIROM::uefiromSysname[] = "";
 
+    const String SUCFW::sucfwName = "SUCFW";
+    const char SUCFW::sucfwDescription[] = "NIC SUCFW";
+    const char SUCFW::sucfwSysname[] = "";
+
     const char NIC::nicDescription[] = "Solarflare NIC";
     const String NIC::nicName = "Ethernet Adapter";
 

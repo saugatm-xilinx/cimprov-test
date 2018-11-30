@@ -1717,6 +1717,24 @@ fail:
         { FIRMWARE_UEFIROM, 0, "MEDFORD_X64.dat" },
         { FIRMWARE_UEFIROM, 1, "MEDFORD_AARCH64.dat" },
 
+        // SUCFW
+        { FIRMWARE_SUCFW, 2, "ICARUS.dat" },
+        { FIRMWARE_SUCFW, 3, "JERICHO.dat" },
+        { FIRMWARE_SUCFW, 4, "BYBLOS.dat" },
+        { FIRMWARE_SUCFW, 5, "SHILLING.dat" },
+        { FIRMWARE_SUCFW, 6, "FLORIN.dat" },
+        { FIRMWARE_SUCFW, 7, "THREEPENCE.dat" },
+        { FIRMWARE_SUCFW, 8, "CYCLOPS.dat" },
+        { FIRMWARE_SUCFW, 9, "PENNY.dat" },
+        { FIRMWARE_SUCFW, 10, "BOB.dat" },
+        { FIRMWARE_SUCFW, 11, "HOG.dat" },
+        { FIRMWARE_SUCFW, 12, "SOVEREIGN.dat" },
+        { FIRMWARE_SUCFW, 13, "SOLIDUS.dat" },
+        { FIRMWARE_SUCFW, 14, "SIXPENCE.dat" },
+        { FIRMWARE_SUCFW, 15, "CROWN.dat" },
+
+
+
         { FIRMWARE_UNKNOWN, 0, NULL},
     };
 
@@ -1742,6 +1760,8 @@ fail:
             case FIRMWARE_UEFIROM:
                 return NVRAM_PARTITION_TYPE_EXPANSION_UEFI;
 
+            case FIRMWARE_SUCFW:
+                return NVRAM_PARTITION_TYPE_SUC_FIRMWARE;
             default:
                  return -1;
         }
@@ -1796,6 +1816,8 @@ fail:
             nvram_read_req.type = SFVMK_NVRAM_MC;
         else if (type == FIRMWARE_UEFIROM)
             nvram_read_req.type = SFVMK_NVRAM_UEFIROM;
+        else if (type == FIRMWARE_SUCFW)
+            nvram_read_req.type = SFVMK_NVRAM_MUM;
         else
         {
             PROVIDER_LOG_ERR("%s(): Unknown Firmware Type", __FUNCTION__);
@@ -3042,6 +3064,28 @@ fail:
         virtual void initialize() {};
     };
 
+    class VMwareSUCFW : public SUCFW {
+        const NIC *owner;
+    public:
+        VMwareSUCFW(const NIC *o) :
+            owner(o) {}
+        virtual const NIC *nic() const { return owner; }
+        virtual VersionInfo version() const;
+
+        virtual InstallRC syncInstall(const char *file_name,
+                                      bool force,
+                                      const char *base64_hash)
+        {
+            return vmwareInstallFirmwareType(file_name, owner,
+                                             FIRMWARE_SUCFW,
+                                             version(),
+                                             force,
+                                             base64_hash);
+        }
+
+        virtual void initialize() {};
+    };
+
     class VMwareDiagnostic : public Diagnostic {
         const NIC *owner;
         Result testPassed;
@@ -3071,6 +3115,7 @@ fail:
         VMwareNICFirmware nicFw;
         VMwareBootROM rom;
         VMwareUEFIROM uefirom;
+        VMwareSUCFW sucfw;
         VMwareDiagnostic diag;
 
         int pci_domain;
@@ -3106,6 +3151,7 @@ fail:
             nicFw.initialize();
             rom.initialize();
             uefirom.initialize();
+            sucfw.initialize();
         }
         virtual void setupDiagnostics()
         {
@@ -3118,6 +3164,7 @@ fail:
             nicFw(this),
             rom(this),
             uefirom(this),
+            sucfw(this),
             diag(this), pci_domain(descr.pci_domain),
             pci_bus(descr.pci_bus), pci_device(descr.pci_device),
             pci_device_id(descr.pci_device_id)
@@ -3145,7 +3192,9 @@ fail:
                 return false;
             if (!en.process(rom))
                 return false;
-            return en.process(uefirom);
+            if (!en.process(uefirom))
+                return false;
+            return en.process(sucfw);
         }
         virtual bool forAllFw(ConstElementEnumerator& en) const
         {
@@ -3153,7 +3202,9 @@ fail:
                 return false;
             if (!en.process(rom))
                 return false;
-            return en.process(uefirom);
+            if (!en.process(uefirom))
+                return false;
+            return en.process(sucfw);
         }
 #else
         virtual bool forAllFw(ElementEnumerator& en)
@@ -3363,8 +3414,10 @@ fail:
                 defPath.append("bootrom/");
             else if (fwType == FIRMWARE_MCFW)
                 defPath.append("mcfw/");
-            else
+            else if (fwType == FIRMWARE_UEFIROM)
                 defPath.append("uefirom/");
+            else
+                defPath.append("sucfw/");
 
             defPath.append(fName);
         }
@@ -3722,7 +3775,9 @@ cleanup:
               (header->eih_type == IMAGE_TYPE_MCFW &&
                fwType == FIRMWARE_MCFW) ||
               (header->eih_type == IMAGE_TYPE_UEFIROM &&
-               fwType == FIRMWARE_UEFIROM)))
+               fwType == FIRMWARE_UEFIROM) ||
+              (header->eih_type == IMAGE_TYPE_MUMFW &&
+               fwType == FIRMWARE_SUCFW)))
         {
             PROVIDER_LOG_ERR("%s(): firmware image type mismatch",
                              __FUNCTION__);
@@ -4558,6 +4613,13 @@ cleanup:
                 version = uefirom.version();
                 break;
             }
+
+            case FIRMWARE_SUCFW:
+            {
+                VMwareSUCFW sucfw(&nic);
+                version = sucfw.version();
+                break;
+            }
 #endif
 
             default:
@@ -4591,6 +4653,10 @@ cleanup:
 #ifdef TARGET_CIM_SERVER_esxi_native
             case FIRMWARE_UEFIROM:
                 img_type = IMAGE_TYPE_UEFIROM;
+                break;
+
+            case FIRMWARE_SUCFW:
+                img_type = IMAGE_TYPE_MUMFW;
                 break;
 #endif
 
@@ -5618,6 +5684,26 @@ cleanup:
         devName = nic->ports[0].dev_name.c_str();
 
         verInfo.type = SFVMK_GET_UEFI_VERSION;
+
+        if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
+            return VersionInfo(vmk_NameToString(&verInfo.version));
+
+        return VersionInfo(DEFAULT_VERSION_STR);
+    }
+
+    VersionInfo VMwareSUCFW::version() const
+    {
+        sfvmk_versionInfo_t verInfo = {0};
+        const char *devName;
+
+        const VMwareNIC  *nic = reinterpret_cast<const VMwareNIC *>(owner);
+
+        if (nic == NULL || nic->ports.size() < 1)
+            return VersionInfo(DEFAULT_VERSION_STR);
+
+        devName = nic->ports[0].dev_name.c_str();
+
+        verInfo.type = SFVMK_GET_SUC_VERSION;
 
         if (DrvMgmtCall(devName, SFVMK_CB_VERINFO_GET, &verInfo) == VMK_OK)
             return VersionInfo(vmk_NameToString(&verInfo.version));

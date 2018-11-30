@@ -392,6 +392,8 @@ Invoke_Method_Status
 #if defined(TARGET_CIM_SERVER_esxi_native)
     else if (strcmp(self->Name.value.c_str(), "UEFIROM") == 0)
         fwType = FIRMWARE_UEFIROM;
+    else if (strcmp(self->Name.value.c_str(), "SUCFW") == 0)
+        fwType = FIRMWARE_SUCFW;
 #endif
     else
     {
@@ -449,7 +451,8 @@ Invoke_Method_Status
     if (self->Name.null ||
         (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
          strcmp(self->Name.value.c_str(), "Firmware") != 0 &&
-         strcmp(self->Name.value.c_str(), "UEFIROM") != 0))
+         strcmp(self->Name.value.c_str(), "UEFIROM") != 0 &&
+         strcmp(self->Name.value.c_str(), "SUCFW") != 0))
 #else
     if (self->Name.null ||
         (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
@@ -496,7 +499,8 @@ Invoke_Method_Status
     if (self->Name.null ||
         (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
          strcmp(self->Name.value.c_str(), "Firmware") != 0 &&
-         strcmp(self->Name.value.c_str(), "UEFIROM") != 0))
+         strcmp(self->Name.value.c_str(), "UEFIROM") != 0 &&
+         strcmp(self->Name.value.c_str(), "SUCFW") != 0))
 #else
     if (self->Name.null ||
         (strcmp(self->Name.value.c_str(), "BootROM") != 0 &&
@@ -599,6 +603,8 @@ Invoke_Method_Status
 #if defined(TARGET_CIM_SERVER_esxi_native)
     else if (strcmp(self->Name.value.c_str(), "UEFIROM") == 0)
         fwType = FIRMWARE_UEFIROM;
+    else if (strcmp(self->Name.value.c_str(), "SUCFW") == 0)
+        fwType = FIRMWARE_SUCFW;
 #endif
     else
     {
