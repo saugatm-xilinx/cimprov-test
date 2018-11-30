@@ -103,6 +103,9 @@ static int   update_bootrom = 0;
 /** Whether we should update UEFIROM firmware or not */
 static int   update_uefirom = 0;
 
+/** Whether we should update SUCFW firmware or not */
+static int   update_sucfw = 0;
+
 /**
  * Whether we can skip asking user for confirmation before firmware update
  * or not
@@ -141,6 +144,7 @@ static char* tool_version = "v2.1.0.16";
 #define SVC_BOOTROM_NAME "BootROM"
 #define SVC_MCFW_NAME "Firmware"
 #define SVC_UEFIROM_NAME "UEFIROM"
+#define SVC_SUCFW_NAME "SUCFW"
 
 /** Command line options */
 enum {
@@ -160,6 +164,7 @@ enum {
     OPT_CONTROLLER,             /**< Process controller firmware */
     OPT_BOOTROM,                /**< Process BootROM firmware */
     OPT_UEFIROM,                /**< Process UEFIROM firmware */
+    OPT_SUCFW,                  /**< Process SUC firmware */
     OPT_YES,                    /**< Don't ask user for confirmation when
                                      updating firmware */
     OPT_WRITE,                  /**< Perform firmware update */
@@ -195,6 +200,7 @@ parseCmdLine(int argc, const char *argv[])
     int   controller = 0;
     int   bootrom = 0;
     int   uefirom = 0;
+    int   sucfw = 0;
     int   y = 0;
     int   w = 0;
     int   url_no_local_access = 0;
@@ -254,6 +260,11 @@ parseCmdLine(int argc, const char *argv[])
         { "uefirom", '\0', POPT_ARG_NONE, NULL,
           OPT_UEFIROM,
           "Process UEFIROM firmware",
+          NULL },
+
+        { "sucfw", '\0', POPT_ARG_NONE, NULL,
+          OPT_SUCFW,
+          "Process SUC firmware",
           NULL },
 
         { "yes", 'y', POPT_ARG_NONE, NULL,
@@ -356,6 +367,10 @@ parseCmdLine(int argc, const char *argv[])
                 uefirom = 1;
                 break;
 
+            case OPT_SUCFW:
+                sucfw = 1;
+                break;
+
             case OPT_YES:
                 y = 1;
                 break;
@@ -451,6 +466,7 @@ cleanup:
         update_controller = controller;
         update_bootrom = bootrom;
         update_uefirom = uefirom;
+        update_sucfw = sucfw;
         yes = y;
         do_update = w;
         fw_url_no_local_access = url_no_local_access;
@@ -748,8 +764,10 @@ call_install_from_uri(CURL *curl, const char *namespace,
         firmware_type = "BootROM";
     else if (strcmp(svc_name, SVC_MCFW_NAME) == 0)
         firmware_type = "Controller";
-    else
+    else if (strcmp(svc_name, SVC_UEFIROM_NAME) == 0)
         firmware_type = "UEFIROM";
+    else
+        firmware_type = "SUCFW";
 
     printf("Updating %s firmware for ", firmware_type);
     if (target == NULL)
@@ -971,6 +989,8 @@ getFwSubdirName(const char *svc_name)
         subdir = "mcfw";
     else if (strcmp(svc_name, SVC_UEFIROM_NAME) == 0)
         subdir = "uefirom";
+    else if (strcmp(svc_name, SVC_SUCFW_NAME) == 0)
+        subdir = "sucfw";
 
     return subdir;
 }
@@ -1222,6 +1242,7 @@ install_from_local_source(CURL *curl, const char *namespace,
         {
             char *ver = NULL;
 
+            if (!strcmp(svc_name, SVC_SUCFW_NAME) == 0)
             CHECK_RESPONSE_EXT(
                 rc_rsp,
                 call_get_required_fw_image_name(curl, namespace,
@@ -1229,6 +1250,17 @@ install_from_local_source(CURL *curl, const char *namespace,
                                                 &call_rsp),
                 call_rsp,
                 "Failed to get required firmware image name");
+            else {
+                // for sucfw, Firmare type might not be supported on board
+                // so call to get firmware image might fail
+                // and we dont want to print any error message in that case
+                rc = call_get_required_fw_image_name(curl, namespace,
+                                        svc, p,
+                                        &call_rsp);
+                if (rc < 0 || call_rsp.error_returned ||
+                    strcmp(call_rsp.returned_value, "0") != 0)
+                        rc_rsp = -1;
+            }
 
             if (rc_rsp < 0)
             {
@@ -1636,7 +1668,7 @@ typedef int (*firmware_install_f)(
 
 /**
  * Get SF_SofwareInstallationService instances responsible for
- * updating BootROM, Controller and UEFIROM firmware.
+ * updating BootROM, Controller, UEFIROM and SUC firmware.
  *
  * @param curl                     CURL pointer returned by curl_easy_init()
  * @param namespace                Provider namespace
@@ -1646,6 +1678,8 @@ typedef int (*firmware_install_f)(
  *                                 Controller firmware update
  * @param svc_uefirom_inst   [out] Service instance responsible for
  *                                 UEFIROM firmware update
+ * @param svc_sucfw_inst     [out] Service instance responsible for
+ *                                 SUC firmware update
  *
  * @return 0 on success, -1 on failure
  */
@@ -1653,7 +1687,8 @@ static int
 getInstServices(CURL *curl, const char *namespace,
                 xmlCimInstance **svc_mcfw_inst,
                 xmlCimInstance **svc_bootrom_inst,
-                xmlCimInstance **svc_uefirom_inst)
+                xmlCimInstance **svc_uefirom_inst,
+                xmlCimInstance **svc_sucfw_inst)
 {
     response_descr  svcs_rsp;
     xmlCimInstance *svc_inst = NULL;
@@ -1694,6 +1729,10 @@ getInstServices(CURL *curl, const char *namespace,
         else if (strcmp(name, SVC_UEFIROM_NAME) == 0 &&
                  svc_uefirom_inst != NULL)
             *svc_uefirom_inst = svc_inst;
+        else if (strcmp(name, SVC_SUCFW_NAME) == 0 &&
+                 svc_sucfw_inst != NULL)
+            *svc_sucfw_inst = svc_inst;
+
         free(name);
     }
 
@@ -1703,6 +1742,8 @@ getInstServices(CURL *curl, const char *namespace,
         *svc_bootrom_inst = xmlCimInstanceDup(*svc_bootrom_inst);
     if (svc_uefirom_inst != NULL)
         *svc_uefirom_inst = xmlCimInstanceDup(*svc_uefirom_inst);
+    if (svc_sucfw_inst != NULL)
+        *svc_sucfw_inst = xmlCimInstanceDup(*svc_sucfw_inst);
 
     clear_response(&svcs_rsp);
     return 0;
@@ -1718,6 +1759,7 @@ getInstServices(CURL *curl, const char *namespace,
  * @param controller        Whether to update controller firmware or not
  * @param bootrom           Whether to update BootROM firmware or not
  * @param uefirom           Whether to update UEFIROM firmware or not
+ * @param sucfw             Whether to update SUC firmware or not
  * @param firmware_source   Firmware image(s) URL
  * @param url_specified     Firmware URL was specified (not local path)
  * @param force             --force option was specified
@@ -1728,9 +1770,8 @@ int
 update_firmware(CURL *curl, const char *namespace,
                 xmlCimInstance *nic_inst,
                 int controller, int bootrom, int uefirom,
-                const char *firmware_source,
-                int url_specified,
-                int force)
+                int sucfw, const char *firmware_source,
+                int url_specified, int force)
 {
     response_descr  log_rsp;
     response_descr  rec_rsp;
@@ -1747,6 +1788,7 @@ update_firmware(CURL *curl, const char *namespace,
     xmlCimInstance *svc_mcfw_inst = NULL;
     xmlCimInstance *svc_bootrom_inst = NULL;
     xmlCimInstance *svc_uefirom_inst = NULL;
+    xmlCimInstance *svc_sucfw_inst = NULL;
     xmlCimInstance *log_inst = NULL;
     xmlCimInstance *rec_inst = NULL;
 
@@ -1768,12 +1810,14 @@ update_firmware(CURL *curl, const char *namespace,
     if ((rc = getInstServices(curl, namespace,
                               &svc_mcfw_inst,
                               &svc_bootrom_inst,
-                              &svc_uefirom_inst)) != 0)
+                              &svc_uefirom_inst,
+                              &svc_sucfw_inst)) != 0)
         goto cleanup;
 
     if ((svc_mcfw_inst == NULL && controller) ||
         (svc_bootrom_inst == NULL && bootrom) ||
-        (svc_uefirom_inst == NULL && uefirom))
+        (svc_uefirom_inst == NULL && uefirom) ||
+        (svc_sucfw_inst == NULL && sucfw))
     {
         ERROR_MSG("Failed to find appropriate "
                   "SF_SoftwareInstallationService instance");
@@ -1924,6 +1968,35 @@ update_firmware(CURL *curl, const char *namespace,
             clear_response(&call_rsp);
         }
 
+        if (sucfw)
+        {
+            CHECK_RESPONSE(
+                    rc_rsp,
+                    func_install(curl, namespace,
+                                 svc_sucfw_inst,
+                                 nic_inst, firmware_source,
+                                 url_specified,
+                                 force, NULL, &call_rsp),
+                    call_rsp,
+                    "Attempt to update "
+                    "SUCFW firmware failed");
+            if (rc_rsp >= 0 && func_install != install_from_local_source &&
+                strcmp(call_rsp.returned_value, "0") != 0)
+            {
+                ERROR_MSG_PLAIN("InstallFromURI() returned %s when "
+                                "trying to update SUCFW firmware",
+                                call_rsp.returned_value);
+                rc = -1;
+                print_err_recs = 1;
+            }
+            else if (rc_rsp < 0)
+            {
+                rc = -1;
+                print_err_recs = 1;
+            }
+            clear_response(&call_rsp);
+        }
+
         if (print_err_recs && log_available)
         {
             int saved_rc = 0;
@@ -1994,6 +2067,7 @@ cleanup:
     freeXmlCimInstance(svc_mcfw_inst);
     freeXmlCimInstance(svc_bootrom_inst);
     freeXmlCimInstance(svc_uefirom_inst);
+    freeXmlCimInstance(svc_sucfw_inst);
     clear_response(&call_rsp);
     clear_response(&log_rsp);
     clear_response(&rec_rsp);
@@ -2064,14 +2138,25 @@ findAvailableUpdate(CURL *curl, const char *namespace,
                   "of SF_SoftwareInstallationService instance");
         return -1;
     }
-
-    CHECK_RESPONSE_EXT(
-        rc_rsp,
-        call_get_required_fw_image_name(curl, namespace,
+    if (!strcmp(svc_name, SVC_SUCFW_NAME) == 0)
+        CHECK_RESPONSE_EXT(
+            rc_rsp,
+            call_get_required_fw_image_name(curl, namespace,
+                                            svc_inst, nic_inst,
+                                            &call_rsp),
+            call_rsp,
+            "Failed to get required firmware image name");
+    else {
+         // for sucfw, Firmare type might not be supported on board
+         // so call to get firmware image might fail
+         // and we dont want to print any error message in that case
+        rc = call_get_required_fw_image_name(curl, namespace,
                                         svc_inst, nic_inst,
-                                        &call_rsp),
-        call_rsp,
-        "Failed to get required firmware image name");
+                                        &call_rsp);
+        if (rc < 0 || call_rsp.error_returned ||
+            strcmp(call_rsp.returned_value, "0") != 0)
+                rc_rsp = -1;
+    }
     if (rc_rsp < 0)
     {
         rc = -1;
@@ -2453,6 +2538,7 @@ main(int argc, const char *argv[])
     xmlCimInstance *svc_mcfw_inst = NULL;
     xmlCimInstance *svc_bootrom_inst = NULL;
     xmlCimInstance *svc_uefirom_inst = NULL;
+    xmlCimInstance *svc_sucfw_inst = NULL;
 
     int controller_applicable_found = 0;
     int controller_ver_a = 0;
@@ -2472,6 +2558,13 @@ main(int argc, const char *argv[])
     int uefirom_ver_c = 0;
     int uefirom_ver_d = 0;
     char uefirom_exp_img_name[MAX_IMG_NAME_LEN];
+    int sucfw_applicable_found = 0;
+    int sucfw_ver_a = 0;
+    int sucfw_ver_b = 0;
+    int sucfw_ver_c = 0;
+    int sucfw_ver_d = 0;
+    int sucfw_valid = 0;
+    char sucfw_exp_img_name[MAX_IMG_NAME_LEN];
     int ver_check;
 
     char nic_tag_prev[MAX_NIC_TAG_LEN] = "";
@@ -2479,6 +2572,7 @@ main(int argc, const char *argv[])
     int  have_applicable_bootrom = 0;
     int  have_applicable_controller = 0;
     int  have_applicable_uefirom = 0;
+    int  have_applicable_sucfw = 0;
 
     CURL        *curl = NULL;
     CURLcode     res;
@@ -2545,11 +2639,13 @@ main(int argc, const char *argv[])
         add_port ? ":" : "",
         add_port ? (use_https ? DEF_HTTPS_PORT : DEF_HTTP_PORT) : "");
 
-    if (!update_controller && !update_bootrom && !update_uefirom)
+    if (!update_controller && !update_bootrom &&
+        !update_uefirom && !update_sucfw)
     {
         update_controller = 1;
         update_bootrom = 1;
         update_uefirom = 1;
+        update_sucfw = 1;
     }
 
     setbuf(stderr, NULL);
@@ -2570,7 +2666,8 @@ main(int argc, const char *argv[])
         if ((rc = getInstServices(curl, cim_namespace,
                                   &svc_mcfw_inst,
                                   &svc_bootrom_inst,
-                                  &svc_uefirom_inst)) != 0)
+                                  &svc_uefirom_inst,
+                                  &svc_sucfw_inst)) != 0)
             goto cleanup;
 
         CHECK_RESPONSE(
@@ -2738,6 +2835,19 @@ main(int argc, const char *argv[])
                                         &uefirom_ver_c,
                                         &uefirom_ver_d,
                                         uefirom_exp_img_name);
+                sucfw_exp_img_name[0] = '\0';
+                if (svc_sucfw_inst != NULL)
+                    sucfw_valid = findAvailableUpdate(curl, cim_namespace,
+                                        svc_sucfw_inst,
+                                        nic_inst,
+                                        fw_url == NULL ? fw_path : fw_url,
+                                        fw_url == NULL ? 0 : 1,
+                                        &sucfw_applicable_found,
+                                        &sucfw_ver_a,
+                                        &sucfw_ver_b,
+                                        &sucfw_ver_c,
+                                        &sucfw_ver_d,
+                                        sucfw_exp_img_name);
             }
 
             snprintf(nic_tag_prev, MAX_NIC_TAG_LEN, "%s",
@@ -2885,6 +2995,48 @@ main(int argc, const char *argv[])
                         }
                     }
                 }
+                else if (strcmp(description, "NIC SUCFW") == 0 &&
+                         update_sucfw )
+                {
+                    if (sucfw_valid < 0 ) {
+                        printf("SUCFW Not Applicable\n");
+                        continue;
+                    }
+
+                    printf("SUCFW version: %s\n", version);
+                    if (!(fw_url != NULL && fw_url_no_local_access))
+                    {
+                        ver_check = checkVersion(version,
+                                                 sucfw_ver_a,
+                                                 sucfw_ver_b,
+                                                 sucfw_ver_c,
+                                                 sucfw_ver_d);
+                        if (sucfw_applicable_found)
+                            printf(
+                                "    Available update: %d.%d.%d.%d%s\n",
+                                sucfw_ver_a,
+                                sucfw_ver_b,
+                                sucfw_ver_c,
+                                sucfw_ver_d,
+                                ver_check == 0 && !force_update?
+                                   " (won't be applied without --force)" :
+                                   "");
+                        else if (strlen(sucfw_exp_img_name) == 0)
+                            printf("    No update available\n");
+                        else
+                            printf("    No update available "
+                                   "(you may look for %s)\n",
+                                   sucfw_exp_img_name);
+
+                        if (sucfw_applicable_found &&
+                            (ver_check == 1 || force_update))
+                        {
+                            have_applicable_imgs = 1;
+                            have_applicable_sucfw = 1;
+                        }
+                    }
+                }
+
 
                 free(description);
                 free(version);
@@ -2919,26 +3071,44 @@ main(int argc, const char *argv[])
                               have_applicable_bootrom);
             update_uefirom = (update_uefirom &&
                               have_applicable_uefirom);
+            update_sucfw = (update_sucfw &&
+                              have_applicable_sucfw);
         }
 
         if (!have_applicable_imgs)
             printf("\nThere is no firmware images which can be "
                    "used for update\n");
         if (do_update && have_applicable_imgs &&
-            (update_controller || update_bootrom || update_uefirom))
+            (update_controller || update_bootrom || update_uefirom || update_sucfw))
         {
             if (!yes)
             {
                 char yes_str[4];
-                int  i;
+                char string[40];
+                char *arr[] ={"SUCFW", "UEFIROM", "BOOTROM", "Controller"};
+
+                int fw_bmap = update_controller<<3 | update_bootrom <<2
+                              | update_uefirom <<1 | update_sucfw;
+                int i = 3;
+                string[0] = '\0';
+                while (fw_bmap) {
+                    if (fw_bmap & 1<<i) {
+                        fw_bmap = fw_bmap ^ 1<<i;
+                        if (!strlen(string))
+                            strcat(string, arr[i]);
+                        else {
+                            if (fw_bmap > 0)
+                                strcat(string, ", ");
+                            else
+                                strcat(string, " and ");
+                            strcat(string, arr[i]);
+                        }
+                    }
+                    i--;
+                }
+
                 printf("\nDo you want to update %s firmware on %s? [yes/no]",
-                       update_controller && update_bootrom && update_uefirom?
-                       "Controller, BootROM and UEFIROM" :
-                            (update_controller && update_bootrom ? "Controller and BootROM":
-                            (update_controller && update_uefirom ? "Controller and UEFIROM":
-                            (update_uefirom && update_bootrom ? "UEFIROM and BootROM":
-                            (update_controller ? "Controller":
-                            (update_bootrom ? "BootROM" : "UEFIROM"))))),
+                            string,
                        interface_name == NULL ? "all NICs" : interface_name);
                 fgets(yes_str, sizeof(yes_str), stdin);
                 for (i = 0; i < sizeof(yes_str); i++)
@@ -2954,7 +3124,7 @@ main(int argc, const char *argv[])
                 update_firmware(curl, cim_namespace,
                                 interface_name == NULL ? NULL : nic_inst,
                                 update_controller, update_bootrom,
-                                update_uefirom,
+                                update_uefirom, update_sucfw,
                                 fw_url == NULL ? fw_path : fw_url,
                                 fw_url == NULL ? 0 : 1,
                                 force_update) < 0)
@@ -2985,6 +3155,7 @@ cleanup:
     freeXmlCimInstance(svc_mcfw_inst);
     freeXmlCimInstance(svc_bootrom_inst);
     freeXmlCimInstance(svc_uefirom_inst);
+    freeXmlCimInstance(svc_sucfw_inst);
 
     clear_response(&ei_ports_rsp);
     clear_response(&assoc_cntr_rsp);
