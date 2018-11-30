@@ -108,12 +108,16 @@ namespace solarflare {
     return 0;
   }
 
-  /*#PORT# -> return values of this function
-  ** < 0 error
-  ** > 0 success
-  ** 0 ignore this interface and carry on
-  ** this will need some analysis to see when 0 and when <0  has to be returned
-  */
+  /*
+   * Fills up the sfu_device structure for a interface
+   *
+   * @param dev          pointer to sfu_device type
+   * @param netif_name   char pointer
+   *
+   * @return > 0         for success
+   * @return < 0         failure in parsing
+   * @return 0           Ignore the device
+   */
   static int
   device_fill(sfu_device *dev, const char *netif_name)
   {
@@ -123,7 +127,6 @@ namespace solarflare {
     sfvmk_vpdInfo_t vpdInfo;
     int i = 0;
     char SN_keyWord[3]= {"SN"};
-    /* #PORT# -> add error handling for all of the following*/
     strncpy(dev->netif_name, netif_name, sizeof(dev->netif_name) - 1);
 
     if (DrvMgmtCall(netif_name, SFVMK_CB_MAC_ADDRESS_GET, &macAddress) != VMK_OK) {

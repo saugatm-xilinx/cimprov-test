@@ -201,7 +201,6 @@ namespace solarflare {
     nvram_partition.data =  ((vmk_uint64)(vmk_uint32)buf);
     nvram_partition.erasePart = full_erase;
 
-    /* #PORT# Error handling if the management call fails */
     if (DrvMgmtCall(nv->devName, SFVMK_CB_NVRAM_REQUEST, &nvram_partition) != VMK_OK)
       return 0;
 
