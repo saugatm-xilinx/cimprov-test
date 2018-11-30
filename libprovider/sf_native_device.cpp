@@ -127,8 +127,8 @@ namespace solarflare {
     strncpy(dev->netif_name, netif_name, sizeof(dev->netif_name) - 1);
 
     if (DrvMgmtCall(netif_name, SFVMK_CB_MAC_ADDRESS_GET, &macAddress) != VMK_OK) {
-        PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed", __FUNCTION__);
-        return -1;
+        PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed for MAC Adderss", __FUNCTION__);
+        goto ignore;
     }
     snprintf(dev->mac_addr, MAC_ADDR_STR_SIZE,
            "%02X-%02X-%02X-%02X-%02X-%02X",
@@ -139,8 +139,10 @@ namespace solarflare {
            macAddress.macAddress[4],
            macAddress.macAddress[5]);
 
-    if (DrvMgmtCall(netif_name, SFVMK_CB_PCI_INFO_GET, &pciInfo) != VMK_OK)
-      return -1;
+    if (DrvMgmtCall(netif_name, SFVMK_CB_PCI_INFO_GET, &pciInfo) != VMK_OK) {
+      PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed for PCI Info", __FUNCTION__);
+      goto ignore;
+    }
     dev->pci_device_id =  pciInfo.vendorId << 16 | pciInfo.deviceId;
     dev->pci_subsystem_id = pciInfo.subVendorId << 16 | pciInfo.subDeviceId;
     strncpy(dev->pci_addr, vmk_NameToString(&pciInfo.pciBDF), PCI_ADDR_SIZE);
@@ -152,8 +154,8 @@ namespace solarflare {
     vpdInfo.vpdTag = VPD_TAG_R;
     vpdInfo.vpdKeyword = SN_keyWord[0] | SN_keyWord[1] << 8;
     if ((DrvMgmtCall(netif_name, SFVMK_CB_VPD_REQUEST, &vpdInfo)) != VMK_OK) {
-      PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
-      return -1;
+      PROVIDER_LOG_ERR("%s(): DrvMgmtCall failed for VPD Request", __FUNCTION__);
+      goto ignore;
     }
     strncpy(dev->serial_number, (const char *)vpdInfo.vpdPayload, vpdInfo.vpdLen);
 
@@ -162,6 +164,10 @@ namespace solarflare {
     dev->master_port = NULL;
 
     return 1;
+
+    ignore:
+      PROVIDER_LOG_ERR("%s(): Ignoring invalid interface %s", __FUNCTION__, netif_name);
+      return 0;
   }
 
   int sfu_device_init(void)
@@ -190,7 +196,7 @@ namespace solarflare {
     {
        PROVIDER_LOG_ERR("%s(): Getting  NIC Name List Failed", __FUNCTION__);
        return -1;
-     }
+    }
     count = ifaceList.ifaceCount;
     *pdevs = (sfu_device*)calloc(count, sizeof(**pdevs));
     if( !*pdevs ) {
