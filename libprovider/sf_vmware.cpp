@@ -1738,58 +1738,6 @@ fail:
         { FIRMWARE_UNKNOWN, 0, NULL},
     };
 
-    /// Get native firmware type ID used to obtain information about it via
-    /// SIOCEFX ioctl().
-    ///
-    /// @param fwType       Updated firmware type ID
-    /// @param device_type  Device type (Siena, Huntington, etc)
-    ///
-    /// @return Native firmware type
-    ///
-#ifdef TARGET_CIM_SERVER_esxi_native
-    int getNativeFirmwareType(UpdatedFirmwareType fwType, int device_type)
-    {
-        switch (fwType)
-        {
-            case FIRMWARE_BOOTROM:
-                return NVRAM_PARTITION_TYPE_EXPANSION_ROM;
-
-            case FIRMWARE_MCFW:
-                return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
-
-            case FIRMWARE_UEFIROM:
-                return NVRAM_PARTITION_TYPE_EXPANSION_UEFI;
-
-            case FIRMWARE_SUCFW:
-                return NVRAM_PARTITION_TYPE_SUC_FIRMWARE;
-            default:
-                 return -1;
-        }
-        return -1;
-    }
-#else
-    int getNativeFirmwareType(UpdatedFirmwareType fwType, int device_type)
-    {
-        switch (fwType)
-        {
-            case FIRMWARE_BOOTROM:
-                if (device_type == SFU_DEVICE_TYPE_SIENA)
-                    return MC_CMD_NVRAM_TYPE_EXP_ROM;
-                else
-                    return NVRAM_PARTITION_TYPE_EXPANSION_ROM;
-
-            case FIRMWARE_MCFW:
-                if (device_type == SFU_DEVICE_TYPE_SIENA)
-                    return MC_CMD_NVRAM_TYPE_MC_FW;
-                else
-                    return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
-
-            default:
-                return -1;
-        }
-        return -1;
-    }
-#endif
     ///
     /// Get subtype of a specific type of firmware installed on NIC.
     ///
@@ -1837,6 +1785,36 @@ fail:
         return 0;
     }
 #else
+    /// Get native firmware type ID used to obtain information about it via
+    /// SIOCEFX ioctl().
+    ///
+    /// @param fwType       Updated firmware type ID
+    /// @param device_type  Device type (Siena, Huntington, etc)
+    ///
+    /// @return Native firmware type
+    ///
+    int getNativeFirmwareType(UpdatedFirmwareType fwType, int device_type)
+    {
+        switch (fwType)
+        {
+            case FIRMWARE_BOOTROM:
+                if (device_type == SFU_DEVICE_TYPE_SIENA)
+                    return MC_CMD_NVRAM_TYPE_EXP_ROM;
+                else
+                    return NVRAM_PARTITION_TYPE_EXPANSION_ROM;
+
+            case FIRMWARE_MCFW:
+                if (device_type == SFU_DEVICE_TYPE_SIENA)
+                    return MC_CMD_NVRAM_TYPE_MC_FW;
+                else
+                    return NVRAM_PARTITION_TYPE_MC_FIRMWARE;
+
+            default:
+                return -1;
+        }
+        return -1;
+    }
+
     static int getFwSubType(const char *ifName, UpdatedFirmwareType type,
                             int device_type, unsigned int &subtype)
     {
