@@ -6,6 +6,7 @@ images as mentioned in the input firmwareFamilyVersion's ivy.xml file
 to the output directory mentioned.
 The output directory consists the following structure -
        <output Dir>/firmware/mcfw
+       <output Dir>/firmware/sucfw
        <output Dir>/firmware/bootrom
        <output Dir>/firmware/uefirom
 
@@ -24,65 +25,15 @@ import os
 import sys
 import optparse
 import shutil
+import ctypes
 import xml.etree.ElementTree as xmlparser
 
-class FirmwareImageDetails(object):
-    """ Class fetches the firmware variants details"""
-    def __init__(self):
-        self.image_type = {'mcfw':3, 'bootrom':2, 'uefirom':12}
-        self.mcfw_subtype = {'sparta':31, 'thebes':32, 'icarus':33,
-                             'jericho':34, 'byblos':35, 'groat':36,
-                             'shilling':37, 'florin':38, 'threepence':39,
-                             'cyclops':40, 'penny':41, 'bob':42,
-                             'hog':43, 'sovereign':44, 'solidus':45,
-                             'sixpence':46, 'crown':47}
-        self.bootrom_subtype = {'medford':6, 'medford2':7}
-        self.uefirom_subtype = {'medford_x64':0, 'medford_aarch64':1}
-        self.firmware_list = ['mcfw-sparta', 'mcfw-thebes', 'mcfw-icarus',
-                              'mcfw-jericho', 'mcfw-byblos', 'mcfw-cyclops',
-                              'mcfw-shilling', 'mcfw-florin', 'mcfw-bob',
-                              'mcfw-hog', 'mcfw-sovereign', 'mcfw-solidus',
-                              'mcfw-sixpence', 'mcfw-crown',
-                              'gpxe', 'uefi_medford_x64', 'uefi_medford_aarch64']
 
+_check_image = ctypes.cdll.LoadLibrary('./libfetch_image.so')
 
-    def get_image_type(self, image_type_arg):
-        """ Function returns the image type number """
-        try:
-            return self.image_type[image_type_arg]
-        except KeyError:
-            print "Unknown Firmware Image type"
-            raise
-
-    def get_mcfw_subtype(self, mcfw_type_arg):
-        """ Function returns the mcfw sub type number """
-        try:
-            return self.mcfw_subtype[mcfw_type_arg]
-        except KeyError:
-            print "Unknown MCFW sub type"
-            raise
-
-    def get_bootrom_subtype(self, boot_type_arg):
-        """ Function returns the bootrom sub type number """
-        try:
-            return self.bootrom_subtype[boot_type_arg]
-        except KeyError:
-            print "Unknown bootrom sub type"
-            raise
-
-    def get_uefirom_subtype(self, uefi_type_arg):
-        """ Function returns the uefirom sub type number """
-        try:
-            return self.uefirom_subtype[uefi_type_arg]
-        except KeyError:
-            print "Unknown uefirom sub type"
-            raise
-
-    def check_firmware_list(self, name):
-        """ Function checks if the image type is present in
-            firmware list """
-        return  name in self.firmware_list
-
+_check_image.check_reflash_image.argtypes = (ctypes.c_void_p, ctypes.c_uint32,
+                                                              ctypes.POINTER(ctypes.c_uint32))
+_check_image.check_reflash_image.restypes = (ctypes.c_int)
 
 class ImageOutputDir(object):
     """ Class stores the details of firmware variants """
@@ -94,6 +45,7 @@ class ImageOutputDir(object):
         self.output_dir = dir_arg
         self.base_output_dir = dir_arg
         self.mcfw_dir = None
+        self.sucfw_dir = None
         self.uefi_dir = None
         self.boot_dir = None
 
@@ -129,6 +81,10 @@ class ImageOutputDir(object):
             if not os.path.exists(self.mcfw_dir):
                 os.mkdir(self.mcfw_dir)
 
+            self.sucfw_dir = os.path.join(self.output_dir, "sucfw")
+            if not os.path.exists(self.sucfw_dir):
+                os.mkdir(self.sucfw_dir)
+
             self.uefi_dir = os.path.join(self.output_dir, "uefirom")
             if not os.path.exists(self.uefi_dir):
                 os.mkdir(self.uefi_dir)
@@ -148,6 +104,7 @@ class JsonParsing(object):
     mcfw_list = []
     bootrom_list = []
     uefirom_list = []
+    sucfw_list = []
 
     def __init__(self, file_name, flag):
         self.create_json_file = flag
@@ -187,6 +144,8 @@ class JsonParsing(object):
             self.bootrom_list.append(json_obj)
         elif firmware_type == 'uefirom':
             self.uefirom_list.append(json_obj)
+        elif firmware_type == 'sucfw':
+            self.sucfw_list.append(json_obj)
 
     def writejsonfile(self):
         """ Creates the final JSON file """
@@ -194,9 +153,11 @@ class JsonParsing(object):
             mcfw_file_dict = {'files' : self.mcfw_list}
             boot_file_dict = {'files' : self.bootrom_list}
             uefi_file_dict = {'files' : self.uefirom_list}
+            sucfw_file_dict = {'files' : self.sucfw_list}
             json_file_dict = {'controller' : mcfw_file_dict,
                               'bootROM' : boot_file_dict,
-                              'uefiROM' : uefi_file_dict}
+                              'uefiROM' : uefi_file_dict,
+                              'sucfw' : sucfw_file_dict}
             with open(self.json_file_name, 'a') as filehandle:
                 json.dump(json_file_dict, filehandle)
         except:
@@ -209,7 +170,34 @@ def fail(msg):
     print >>sys.stderr, msg
     sys.exit(1)
 
-def get_mc_uefi_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
+def read_image_hdr(destfilepath, image_type):
+    """ Function checks the image header for type and subtype value """
+    file_size = os.path.getsize(destfilepath)
+    fd = open(destfilepath,'rb')
+    data = fd.read()
+    result = _check_image.check_reflash_image(data, file_size, image_type)
+    fd.close()
+    return result
+
+def create_json(name, rev, outdir_handle, json_handle, image_type, newfilename, destfilepath):
+    """ Function creates a json object """
+    basedirlen = len(outdir_handle.base_output_dir)
+    temppath = destfilepath[basedirlen:]
+    jsonobj = json_handle.create_image_metadata(newfilename,
+                                                image_type[0],
+                                                image_type[1],
+                                                rev,
+                                                temppath)
+    if name.find("mcfw") > -1:
+        json_handle.create_json_object(jsonobj, "mcfw")
+    elif name.find("sucfw") > -1:
+        json_handle.create_json_object(jsonobj, "sucfw")
+    elif name.find("uefi") > -1:
+        json_handle.create_json_object(jsonobj, "uefirom")
+    else:
+        json_handle.create_json_object(jsonobj, "bootrom")
+
+def get_mc_uefi_file(name, rev, outdir_handle, json_handle):
     """ Gets MCFW and UEFIROM files from version specified in ivy.xml
         and copies them to output directory. Also creates a Json object
         of the image metadata """
@@ -223,57 +211,77 @@ def get_mc_uefi_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
                         fail('Cannot determine firmware subtype')
                     else:
                         subtype_index += 1
+                    srcfilepath = os.path.join(ivydir, updatefile)
                     controller_subtype = name[subtype_index:]
                     newfilename = controller_subtype.upper() + '.dat'
-                    srcfilepath = os.path.join(ivydir, updatefile)
                     destfilepath = os.path.join(outdir_handle.mcfw_dir,
                                                 newfilename)
                     shutil.copy(srcfilepath, destfilepath)
-                    print "Adding File: " + newfilename
+                    image_type = (ctypes.c_uint32 * 2)()
+                    result = read_image_hdr(destfilepath, image_type)
+                    if result != 0:
+                        fail('Not able to Check MCFW image',result)
+
+                    print "{ FIRMWARE_MCFW, " + str(image_type[1]) + ", " + \
+                                                   "\"" + newfilename + "\"" + " },"
                     if json_handle.create_json_file == 1:
-                        basedirlen = len(outdir_handle.base_output_dir)
-                        temppath = destfilepath[basedirlen:]
-                        typeval = firmware_img_obj.get_image_type("mcfw")
-                        subtype = firmware_img_obj.get_mcfw_subtype(controller_subtype)
-                        jsonobj = json_handle.create_image_metadata(newfilename,
-                                                                    typeval,
-                                                                    subtype,
-                                                                    rev,
-                                                                    temppath)
-                        json_handle.create_json_object(jsonobj, "mcfw")
+                        create_json(name, rev, outdir_handle, json_handle,
+                                                   image_type, newfilename, destfilepath)
+                elif name.find("sucfw") > -1:
+                    subtype_index = name.find('-')
+                    if subtype_index == -1:
+                        fail('Cannot determine firmware subtype')
+                    else:
+                        subtype_index += 1
+                    srcfilepath = os.path.join(ivydir, updatefile)
+                    sucfw_subtype = name[subtype_index:]
+                    newfilename = sucfw_subtype.upper() + '.dat'
+                    destfilepath = os.path.join(outdir_handle.sucfw_dir,
+                                                newfilename)
+                    shutil.copy(srcfilepath, destfilepath)
+                    image_type = (ctypes.c_uint32 * 2)()
+                    result = read_image_hdr(destfilepath, image_type)
+                    if result != 0:
+                        fail('Not able to Check SUCFW image',result)
+
+                    print "{ FIRMWARE_SUCFW, " + str(image_type[1]) + ", " + \
+                                                   "\"" + newfilename + "\"" + " },"
+                    if json_handle.create_json_file == 1:
+                        create_json(name, rev, outdir_handle, json_handle,
+                                                   image_type, newfilename, destfilepath)
                 else:
                     subtype_index = name.find('_')
                     if subtype_index == -1:
                         fail('Cannot determine firmware subtype')
                     else:
                         subtype_index += 1
+                    srcfilepath = os.path.join(ivydir, updatefile)
                     uefirom_subtype = name[subtype_index:]
                     newfilename = uefirom_subtype.upper() + '.dat'
-                    srcfilepath = os.path.join(ivydir, updatefile)
                     destfilepath = os.path.join(outdir_handle.uefi_dir,
                                                 newfilename)
                     shutil.copy(srcfilepath, destfilepath)
-                    print "Adding File: " + newfilename
+                    image_type = (ctypes.c_uint32 * 2)()
+                    result = read_image_hdr(destfilepath, image_type)
+                    if result != 0:
+                        fail('Not able to Check UEFIROM image',result)
+
+                    print "{ FIRMWARE_UEFIROM, " + str(image_type[1]) + ", " + \
+                                                   "\"" + newfilename + "\"" + " },"
                     if json_handle.create_json_file == 1:
-                        basedirlen = len(outdir_handle.base_output_dir)
-                        temppath = destfilepath[basedirlen:]
-                        typeval = firmware_img_obj.get_image_type("uefirom")
-                        subtype = firmware_img_obj.get_uefirom_subtype(uefirom_subtype)
-                        jsonobj = json_handle.create_image_metadata(newfilename,
-                                                                    typeval,
-                                                                    subtype,
-                                                                    rev,
-                                                                    temppath)
-                        json_handle.create_json_object(jsonobj, "uefirom")
+                        create_json(name, rev, outdir_handle, json_handle,
+                                                   image_type, newfilename, destfilepath)
     except KeyError:
         fail("Fail to get Image details. Exiting")
     except OSError:
         if name.find("mcfw") > -1:
             fail("Fail to generate mcfw dat Image. Exiting")
+        elif name.find("sucfw") > -1:
+            fail("Fail to generate sucfw dat Image. Exiting")
         else:
             fail("Fail to generate uefirom dat Image. Exiting")
 
-def get_bootrom_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
+def get_bootrom_file(name, rev, outdir_handle, json_handle):
     """ Gets BOOTROM files from version specified in ivy.xml and
         copies them to output directory. Also creates a Json object of
         the image metadata. Support added for both medford and medford2
@@ -291,11 +299,9 @@ def get_bootrom_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
                     updatefile.endswith(medford2_bootrom_file)):
                 inifilefound = 0
                 if updatefile.endswith(medford_bootrom_file):
-                    subtype = firmware_img_obj.get_bootrom_subtype('medford')
                     inifilename = medford_ini_file
                     datfilename = medford_bootrom_dat_file
                 else:
-                    subtype = firmware_img_obj.get_bootrom_subtype('medford2')
                     inifilename = medford2_ini_file
                     datfilename = medford2_bootrom_dat_file
                 srcfilepath = os.path.join(ivydir, updatefile)
@@ -319,17 +325,17 @@ def get_bootrom_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
                               destfilepath + " " + bootromfile)
                     if ret_val != 0:
                         fail("Unable to crate bootrom file. Exiting.")
-                    print "Adding File: " + datfilename
+                        continue
+                    image_type = (ctypes.c_uint32 * 2)()
+                    result = read_image_hdr(bootromfile, image_type)
+                    if result != 0:
+                        fail('Not able to Check BOOTROM image',result)
+
+                    print "{ FIRMWARE_BOOTROM, " + str(image_type[1]) + ", " + \
+                                               "\"" + datfilename + "\"" + " },"
                     if json_handle.create_json_file == 1:
-                        basedirlen = len(outdir_handle.base_output_dir)
-                        temppath = bootromfile[basedirlen:]
-                        typeval = firmware_img_obj.get_image_type("bootrom")
-                        jsonobj = json_handle.create_image_metadata(datfilename,
-                                                                    typeval,
-                                                                    subtype,
-                                                                    rev,
-                                                                    temppath)
-                        json_handle.create_json_object(jsonobj, "bootrom")
+                        create_json(name, rev, outdir_handle, json_handle,
+                                                   image_type, datfilename, bootromfile)
                     os.remove(destfilepath)
                     os.remove(destinifilepath)
                 else:
@@ -338,7 +344,6 @@ def get_bootrom_file(name, rev, firmware_img_obj, outdir_handle, json_handle):
         fail("Fail to get Bootrom Image details. Exiting")
     except OSError:
         fail("Fail to generate Bootrom dat Image. Exiting")
-
 
 def main():
     """ Starting point of script execution. Parses the inputs
@@ -349,7 +354,6 @@ def main():
         encode_file_mc = 'http://source.uk.solarflarecom.com'
         encode_file_url = encode_file_mc + encode_file_dir
         encode_file_url = encode_file_url + ImageOutputDir.encode_file_name
-        firmware_img_obj = FirmwareImageDetails()
         parser = optparse.OptionParser(usage=
                                        """Usage: %prog [options]
                                           output_directory
@@ -392,21 +396,25 @@ def main():
         for child in root_node:
             if child.tag == "dependencies":
                 for dependency in child.getchildren():
-                    if firmware_img_obj.check_firmware_list(dependency.
-                                                            get('name')):
-                        if((dependency.get('name')).find('mcfw') > -1 or
-                           (dependency.get('name')).find('uefi') > -1):
+                    if((dependency.get('name')).find('mcfw') > -1 or
+                       (dependency.get('name')).find('uefi') > -1 or
+                       (dependency.get('name')).find('sucfw') > -1):
+                        if((dependency.get('conf')).find('siena') > -1 or
+                            (dependency.get('conf')).find('huntington') > -1 or
+		            (dependency.get('name')).find('aarch') > -1 or
+		            (dependency.get('name')).find('siena') > -1 or
+		            (dependency.get('name')).find('huntington') > -1):
+                            continue
+                        else:
                             get_mc_uefi_file(dependency.get('name'),
                                              dependency.get('rev'),
-                                             firmware_img_obj,
                                              outdir_handle,
                                              json_handle)
-                        else:
-                            get_bootrom_file(dependency.get('name'),
-                                             dependency.get('rev'),
-                                             firmware_img_obj,
-                                             outdir_handle,
-                                             json_handle)
+                    elif((dependency.get('name')).find('gpxe') > -1):
+                        get_bootrom_file(dependency.get('name'),
+                                         dependency.get('rev'),
+                                         outdir_handle,
+                                         json_handle)
         os.remove(encodefilepath)
         if json_handle.create_json_file == 1:
             json_handle.writejsonfile()
