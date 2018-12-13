@@ -24,7 +24,7 @@ Usage:
     $ ./set_vm_ptp_privilege.py info HOSTNAME VMNAME
 
     # Configure a Host-Local PTP Master VM.
-    $ ./set_vm_ptp_privilegeig.py set-master HOSTNAME VMNAME 
+    $ ./set_vm_ptp_privilege.py set-master HOSTNAME VMNAME
 
 [1] https://github.com/vmware/pyvmomi/tree/master/docs.
 """
@@ -289,5 +289,10 @@ def main():
         wbemconn = wbem_establish_connection(host_name, user, pwd)
     do_fn(host_ref, vm_ref, wbemconn)
     sys.exit(0)
+
+"""Added to pass SSL certificate verification """
+if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
+    getattr(ssl, '_create_unverified_context', None)):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 main()

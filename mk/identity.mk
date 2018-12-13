@@ -23,7 +23,7 @@ PROVIDER_VERSION_MINOR = 0
 PROVIDER_VERSION = $(PROVIDER_VERSION_MAJOR).$(PROVIDER_VERSION_MINOR)
 
 ##! Revision string (#.#) of the CIM provider
-PROVIDER_REVISION = 0.1
+PROVIDER_REVISION = 0.3
 VIB_ID = Solarflare_bootbank_$(PROVIDER_NAME)_$(PROVIDER_VERSION)-$(PROVIDER_REVISION)
 
 ##! Description string of the CIM provider
