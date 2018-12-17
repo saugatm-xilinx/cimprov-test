@@ -4689,14 +4689,6 @@ cleanup:
         fileDescr.creationTime = now;
         tmpFilesArr.append(fileDescr);
 
-        for (i = 0; i < tmpFilesArr.size(); i++)
-            if (now - tmpFilesArr[i].creationTime > 120000000)
-            {
-                unlink(tmpFilesArr[i].fileName.c_str());
-                tmpFilesArr.remove(i);
-                i--;
-            }
-
         return String(tmp_file);
     }
 
