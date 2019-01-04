@@ -799,7 +799,7 @@ fail:
             PROVIDER_LOG_ERR("%s(): Driver Management Call failed", __FUNCTION__);
             return -1;
         }
-        if (ifaceList->ifaceCount >= SFVMK_MAX_INTERFACE) {
+        if (ifaceList->ifaceCount > SFVMK_MAX_INTERFACE) {
             PROVIDER_LOG_ERR("%s():Invalid interface count %d\n", __FUNCTION__, ifaceList->ifaceCount);
             return -EINVAL;
         }
