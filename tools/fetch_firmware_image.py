@@ -38,6 +38,7 @@ _check_image.check_reflash_image.restypes = (ctypes.c_int)
 class ImageOutputDir(object):
     """ Class stores the details of firmware variants """
     ivy_base_dir = "/project/ivy/solarflare/"
+    vib_base_dir = "/root/stagedir/payloads/payload_data"
     encode_file_name = 'encode.py'
 
     def __init__(self, dir_arg):
@@ -312,7 +313,7 @@ def get_bootrom_file(name, rev, outdir_handle, json_handle,
 
         if ret_val != 0:
             fail("Unable to get ini files. Exiting.")
-        for updatefile in os.listdir(ivydir):
+        for updatefile in os.listdir(mrom_dir):
             if (updatefile.endswith(medford_bootrom_file)or
                     updatefile.endswith(medford2_bootrom_file)):
                 inifilefound = 0
@@ -336,7 +337,7 @@ def get_bootrom_file(name, rev, outdir_handle, json_handle,
 
                 if ret_val != 0:
                     fail("Unable to get ini files. Exiting.")
-                for inifile in os.listdir(inidir):
+                for inifile in os.listdir(ini_dir):
                     if inifile.endswith(inifilename):
                         srcfilepath = os.path.join(ini_dir, inifile)
                         destinifilepath = os.path.join(outdir_handle.
@@ -373,6 +374,30 @@ def get_bootrom_file(name, rev, outdir_handle, json_handle,
         fail("Fail to get Bootrom Image details. Exiting")
     except OSError:
         fail("Fail to generate Bootrom dat Image. Exiting")
+
+def create_vib_of_all_images(vib_base_dir, outdir_handle):
+    """ Creating a vib having all the firmware images"""
+    try:
+       opt_dir = vib_base_dir + "/opt"
+       image_dir = opt_dir + '/sfc/'
+       base_dir = outdir_handle.base_output_dir
+       if os.name == 'nt':
+           fail(" This operation will be performed only on Development VM")
+       else:
+           if not os.path.exists(opt_dir):
+               os.mkdir(opt_dir)
+           if not os.path.exists(image_dir):
+               os.mkdir(image_dir)
+       firmware_dir = base_dir + "firmware"
+       shutil.copy(base_dir + "FirmwareMetadata.json", opt_dir + "/sfc/")
+       os.system("cp -r " + firmware_dir + " " + image_dir)
+       ret_val = os.system("vibauthor -C -t /root/stagedir -v fw_images.vib -f --force")
+       if ret_val != 0:
+           fail("Unable to create vib: Exiting.")
+    except OSError:
+        fail("OS Environment error. Exiting.")
+    except IOError:
+        fail("Image File creation failed. Exiting.")
 
 def main():
     """ Starting point of script execution. Parses the inputs
@@ -477,6 +502,13 @@ def main():
         os.remove(encodefilepath)
         if json_handle.create_json_file == 1:
             json_handle.writejsonfile()
+        if (options.vib_author.lower() == 'true'):
+           if not os.path.exists(ImageOutputDir.vib_base_dir):
+               print("vib base directory does not exist. Creating.....")
+               ret_val = os.system('mkdir -p ' + ImageOutputDir.vib_base_dir)
+               if ret_val != 0:
+                   fail("Not able to create:",ImageOutputDir.vib_base_dir)
+           create_vib_of_all_images(ImageOutputDir.vib_base_dir, outdir_handle)
     except KeyError:
         fail("Image variant not determined. Exiting.")
     except OSError:
