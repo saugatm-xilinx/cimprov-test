@@ -376,11 +376,6 @@ def main():
     """ Starting point of script execution. Parses the inputs
         calls functions to copy images and generate json file. """
     try:
-        ivy_family_dir = "firmwarefamily/default/"
-        encode_file_dir = '/hg/incoming/v5/rawfile/default/scripts/'
-        encode_file_mc = 'http://source.uk.solarflarecom.com'
-        encode_file_url = encode_file_mc + encode_file_dir
-        encode_file_url = encode_file_url + ImageOutputDir.encode_file_name
         parser = optparse.OptionParser(usage=
                                        """Usage: %prog [options]
                                           output_directory
@@ -390,11 +385,21 @@ def main():
                                        version="%prog 1.0")
         parser.add_option("-f", "--file", dest="json_file_name",
                           help="Creates Json file with Image details")
+        parser.add_option("-t", "--tag", dest='v5_tag',
+                          help="tag/branch to access and retrieve files")
 
         options, args = parser.parse_args()
         if len(args) < 4:
             parser.print_help()
             fail("Exiting")
+        if not options.v5_tag:
+            options.v5_tag = 'default'
+        ivy_family_dir = "firmwarefamily/default/"
+        encode_file_dir = '/hg/incoming/v5/rawfile/' + options.v5_tag
+        encode_file_path = encode_file_dir + '/scripts/'
+        encode_file_mc = 'http://source.uk.solarflarecom.com'
+        encode_file_url = encode_file_mc + encode_file_path
+        encode_file_url = encode_file_url + ImageOutputDir.encode_file_name
         outdir_handle = ImageOutputDir(args[0])
         if not outdir_handle.check_output_dir():
             fail('')
