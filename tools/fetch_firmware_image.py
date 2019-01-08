@@ -24,6 +24,7 @@ import sys
 import optparse
 import shutil
 import ctypes
+import getpass
 import xml.etree.ElementTree as xmlparser
 
 if os.name == 'nt':
@@ -58,10 +59,7 @@ class ImageOutputDir(object):
             modified_dir = os.path.join(self.output_dir, "firmware")
             if os.path.exists(modified_dir):
                 print("Firmware sub directory present in:" + self.output_dir)
-                if os.name == 'nt':
-                    overwrite = input("Do you want to Overwrite it ?[y/n]")
-                else:
-                    overwrite = raw_input("Do you want to Overwrite it ?[y/n]")
+                overwrite = raw_input("Do you want to Overwrite it ?[y/n]")
                 if not overwrite == 'y':
                     print("ERROR: Cannot Overwrite " + modified_dir + " Exiting")
                     return False
@@ -112,12 +110,16 @@ class JsonParsing(object):
         self.create_json_file = flag
         self.json_file_name = file_name
 
-    def check_json_file(self, outdir_handle):
+    def check_json_file(self, outdir_handle, flag):
         """ Checks if the output Json file exists, if yes removes it
             and creates it"""
         try:
-            self.json_file_name = os.path.join(outdir_handle.output_dir,
-                                               self.json_file_name)
+            if flag == 0:
+                self.json_file_name = os.path.join(outdir_handle.output_dir,
+                                                   self.json_file_name)
+            else:
+                self.json_file_name = os.path.join(outdir_handle.base_output_dir,
+                                                   self.json_file_name)
             if os.path.exists(self.json_file_name):
                 print(self.json_file_name + " file exists. Over writing it")
                 os.remove(self.json_file_name)
@@ -382,11 +384,11 @@ def main():
                                           firmware_family_version
                                           username
                                           machinename""",
-                                       version="%prog 1.0")
-        parser.add_option("-f", "--file", dest="json_file_name",
-                          help="Creates Json file with Image details")
+                                       version="%prog 1.1")
         parser.add_option("-t", "--tag", dest='v5_tag',
                           help="tag/branch to access and retrieve files")
+        parser.add_option("-c", "--create_vib", dest='vib_author',
+                          help="[true] create a vib having all the images")
 
         options, args = parser.parse_args()
         if len(args) < 4:
@@ -411,12 +413,15 @@ def main():
         password = 'None'
         if not input_ivy_dir.startswith('v'):
             input_ivy_dir = 'v' + input_ivy_dir
-        if options.json_file_name is None:
-            print "Not Creating Json File"
-            json_handle = JsonParsing(None, 0)
+        if options.vib_author is None:
+            json_handle = JsonParsing('FirmwareMetadata.json', 1)
+            json_handle.check_json_file(outdir_handle, 0)
+        elif(options.vib_author.lower() == "true"):
+            json_handle = JsonParsing('FirmwareMetadata.json', 1)
+            json_handle.check_json_file(outdir_handle, 1)
         else:
-            json_handle = JsonParsing(options.json_file_name, 1)
-            json_handle.check_json_file(outdir_handle)
+            parser.print_help()
+            fail("Please provide correct value for -v ")
         ivydir = ImageOutputDir.ivy_base_dir + ivy_family_dir
         input_ivy_dir = ivydir + input_ivy_dir + "/"
         outdir_handle.ivy_file = input_ivy_dir + outdir_handle.ivy_file
