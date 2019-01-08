@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 """
 This script copies bootrom, uefirom and firmware(medford onwards)
 images as mentioned in the input firmwareFamilyVersion's ivy.xml file
@@ -28,9 +26,10 @@ import shutil
 import ctypes
 import xml.etree.ElementTree as xmlparser
 
-
-_check_image = ctypes.cdll.LoadLibrary('./libfetch_image.so')
-
+if os.name == 'nt':
+    _check_image = ctypes.CDLL('libfetch_image.dll')
+else:
+    _check_image = ctypes.cdll.LoadLibrary('./libfetch_image.so')
 _check_image.check_reflash_image.argtypes = (ctypes.c_void_p, ctypes.c_uint32,
                                                               ctypes.POINTER(ctypes.c_uint32))
 _check_image.check_reflash_image.restypes = (ctypes.c_int)
@@ -54,14 +53,17 @@ class ImageOutputDir(object):
             or creates the sub directrory"""
         try:
             if not os.path.exists(self.output_dir):
-                print "Output Directory doesn't exists"
+                print("Output Directory doesn't exists")
                 return False
             modified_dir = os.path.join(self.output_dir, "firmware")
             if os.path.exists(modified_dir):
-                print "Firmware sub directory present in:" + self.output_dir
-                overwrite = raw_input("Do you want to Overwrite it ?[y/n]")
+                print("Firmware sub directory present in:" + self.output_dir)
+                if os.name == 'nt':
+                    overwrite = input("Do you want to Overwrite it ?[y/n]")
+                else:
+                    overwrite = raw_input("Do you want to Overwrite it ?[y/n]")
                 if not overwrite == 'y':
-                    print "ERROR: Cannot Overwrite " + modified_dir + " Exiting"
+                    print("ERROR: Cannot Overwrite " + modified_dir + " Exiting")
                     return False
                 else:
                     self.output_dir = os.path.join(self.output_dir, "firmware")
@@ -70,7 +72,7 @@ class ImageOutputDir(object):
                 os.mkdir(self.output_dir)
             return True
         except OSError:
-            print "Fail to create output directory"
+            print("Fail to create output directory")
             raise
 
     def check_output_subdir(self):
@@ -93,7 +95,7 @@ class ImageOutputDir(object):
             if not os.path.exists(self.boot_dir):
                 os.mkdir(self.boot_dir)
         except OSError:
-            print "Fail to create output sub directory"
+            print("Fail to create output sub directory")
             raise
 
 
@@ -117,15 +119,15 @@ class JsonParsing(object):
             self.json_file_name = os.path.join(outdir_handle.output_dir,
                                                self.json_file_name)
             if os.path.exists(self.json_file_name):
-                print self.json_file_name + " file exists. Over writing it"
+                print(self.json_file_name + " file exists. Over writing it")
                 os.remove(self.json_file_name)
             filehandle = os.open(self.json_file_name, os.O_CREAT)
             os.close(filehandle)
         except OSError:
-            print "Fail to check output json file"
+            print("Fail to check output json file")
             raise
         except IOError:
-            print "Fail to create output json file"
+            print("Fail to create output json file")
             raise
 
     def create_image_metadata(self, nameval, firmwaretype, subtype,
@@ -161,13 +163,13 @@ class JsonParsing(object):
             with open(self.json_file_name, 'a') as filehandle:
                 json.dump(json_file_dict, filehandle)
         except:
-            print "Fail to write output json file"
+            print("Fail to write output json file")
             raise
 
 
 def fail(msg):
     """ Function prints the error message and exits """
-    print >>sys.stderr, msg
+    print(msg)
     sys.exit(1)
 
 def read_image_hdr(destfilepath, image_type):
@@ -197,7 +199,7 @@ def create_json(name, rev, outdir_handle, json_handle, image_type, newfilename, 
     else:
         json_handle.create_json_object(jsonobj, "bootrom")
 
-def get_dat_file(name, ivydir, outdir, image_type, username, machinename):
+def get_dat_file(name, ivydir, outdir, image_type, username, machinename, password):
     """ Using scp to get the dat image files from the repository"""
     try:
         if(name.find('mcfw') > -1):
@@ -219,8 +221,13 @@ def get_dat_file(name, ivydir, outdir, image_type, username, machinename):
         destfilepath = os.path.join(outdir, newfilename)
         image_file_path = outdir + '/' + filename
 
-        ret_val = os.system('scp -q ' + username + '@' + machinename + ":" + srcfilepath
-                                      + ' ' + outdir)
+        if os.name != 'nt':
+            ret_val = os.system('scp -q ' + username + '@' + machinename + ":" + srcfilepath
+                                          + ' ' + outdir)
+        else:
+            ret_val = os.system('pscp -q -pw ' + password + ' ' + username + '@'
+                                               + machinename + ":" + srcfilepath + ' '
+                                               + outdir)
         if ret_val != 0:
             fail("Unable to get dat file. Exiting.")
         shutil.move(image_file_path, destfilepath)
@@ -238,7 +245,7 @@ def get_dat_file(name, ivydir, outdir, image_type, username, machinename):
             fail("Fail to generate uefirom dat Image. Exiting")
     return newfilename
 
-def get_mc_uefi_file(name, rev, outdir_handle, json_handle, username, machinename):
+def get_mc_uefi_file(name, rev, outdir_handle, json_handle, username, machinename, password):
     """ Gets MCFW and UEFIROM files from version specified in ivy.xml
         and copies them to output directory. Also creates a Json object
         of the image metadata """
@@ -247,17 +254,20 @@ def get_mc_uefi_file(name, rev, outdir_handle, json_handle, username, machinenam
         image_type = (ctypes.c_uint32 * 2)()
         if name.find("mcfw") > -1:
             outdir = outdir_handle.mcfw_dir
-            newfilename = get_dat_file(name, ivydir, outdir, image_type, username, machinename)
+            newfilename = get_dat_file(name, ivydir, outdir, image_type,
+                                                   username, machinename, password)
             print "{ FIRMWARE_MCFW, " + str(image_type[1]) + ", " + \
                                            "\"" + newfilename + "\"" + " },"
         elif name.find("sucfw") > -1:
             outdir = outdir_handle.sucfw_dir
-            newfilename = get_dat_file(name, ivydir, outdir, image_type, username, machinename)
+            newfilename = get_dat_file(name, ivydir, outdir, image_type,
+                                                  username, machinename, password)
             print "{ FIRMWARE_SUCFW, " + str(image_type[1]) + ", " + \
                                              "\"" + newfilename + "\"" + " },"
         else:
             outdir = outdir_handle.uefi_dir
-            newfilename = get_dat_file(name, ivydir, outdir, image_type, username, machinename)
+            newfilename = get_dat_file(name, ivydir, outdir, image_type,
+                                                  username, machinename, password)
             print "{ FIRMWARE_UEFIROM, " + str(image_type[1]) + ", " + \
                                               "\"" + newfilename + "\"" + " },"
         destfilepath = os.path.join(outdir, newfilename)
@@ -274,24 +284,32 @@ def get_mc_uefi_file(name, rev, outdir_handle, json_handle, username, machinenam
         else:
             fail("Fail to generate uefirom dat Image. Exiting")
 
-def get_bootrom_file(name, rev, outdir_handle, json_handle, username, machinename):
+def get_bootrom_file(name, rev, outdir_handle, json_handle,
+                                username, machinename, password):
     """ Gets BOOTROM files from version specified in ivy.xml and
         copies them to output directory. Also creates a Json object of
         the image metadata. Support added for both medford and medford2
         boards """
     try:
-        ivydir = ImageOutputDir.ivy_base_dir + name + '/default/' + rev + '/bins/'
-        ini_dir = os.getcwd() + '/inis'
-        mrom_dir = os.getcwd() + '/bins'
+        ivydir = ImageOutputDir.ivy_base_dir + name + '/default/' + rev + '/bins'
+        curr_dir = os.getcwd()
+        ini_dir = curr_dir + '/inis'
+        mrom_dir = curr_dir + '/bins'
         medford_bootrom_file = 'SFC9220.mrom'
         medford_ini_file = 'SFC9220.mrom.ini'
         medford_bootrom_dat_file = 'SFC9220.dat'
         medford2_bootrom_file = 'SFC9250.mrom'
         medford2_ini_file = 'SFC9250.mrom.ini'
         medford2_bootrom_dat_file = 'SFC9250.dat'
-        ret_val = os.system('scp -qr ' + username + '@' + machinename + ":" + ivydir + '  .')
+        if os.name != 'nt':
+            ret_val = os.system('scp -qr ' + username + '@' + machinename + ":"
+                                           + ivydir + ' ' + curr_dir)
+        else:
+            ret_val = os.system('pscp -q -r -pw ' + password + ' ' + username + '@'
+                                                  + machinename + ":" + ivydir + ' ' + curr_dir)
+
         if ret_val != 0:
-            fail("Unable to get mrom files. Exiting.")
+            fail("Unable to get ini files. Exiting.")
         for updatefile in os.listdir(ivydir):
             if (updatefile.endswith(medford_bootrom_file)or
                     updatefile.endswith(medford2_bootrom_file)):
@@ -306,8 +324,14 @@ def get_bootrom_file(name, rev, outdir_handle, json_handle, username, machinenam
                 destfilepath = os.path.join(outdir_handle.base_output_dir,
                                             updatefile)
                 shutil.copy(srcfilepath, destfilepath)
-                inidir = ImageOutputDir.ivy_base_dir + name + '/default/' + rev + '/inis/'
-                ret_val = os.system('scp -qr ' + username + '@' + machinename + ":" + inidir + '  .')
+                inidir = ImageOutputDir.ivy_base_dir + name + '/default/' + rev + '/inis'
+                if os.name != 'nt':
+                    ret_val = os.system('scp -qr ' + username + '@' + machinename + ":"
+                                                   + inidir + ' ' + curr_dir)
+                else:
+                    ret_val = os.system('pscp -q -r -pw ' + password + ' ' + username + '@'
+                                                          + machinename + ":" + inidir + ' ' + curr_dir)
+
                 if ret_val != 0:
                     fail("Unable to get ini files. Exiting.")
                 for inifile in os.listdir(inidir):
@@ -332,8 +356,8 @@ def get_bootrom_file(name, rev, outdir_handle, json_handle, username, machinenam
                     if result != 0:
                         fail('Not able to Check BOOTROM image',result)
 
-                    print "{ FIRMWARE_BOOTROM, " + str(image_type[1]) + ", " + \
-                                               "\"" + datfilename + "\"" + " },"
+                    print("{ FIRMWARE_BOOTROM, " + str(image_type[1]) + ", " + \
+                                               "\"" + datfilename + "\"" + " },")
                     if json_handle.create_json_file == 1:
                         create_json(name, rev, outdir_handle, json_handle,
                                                    image_type, datfilename, bootromfile)
@@ -352,7 +376,7 @@ def main():
     """ Starting point of script execution. Parses the inputs
         calls functions to copy images and generate json file. """
     try:
-        ivy_family_dir = "firmwarefamily/default"
+        ivy_family_dir = "firmwarefamily/default/"
         encode_file_dir = '/hg/incoming/v5/rawfile/default/scripts/'
         encode_file_mc = 'http://source.uk.solarflarecom.com'
         encode_file_url = encode_file_mc + encode_file_dir
@@ -378,6 +402,8 @@ def main():
         input_ivy_dir = args[1]
         username = args[2]
         machinename = args[3]
+        curr_dir = os.getcwd()
+        password = 'None'
         if not input_ivy_dir.startswith('v'):
             input_ivy_dir = 'v' + input_ivy_dir
         if options.json_file_name is None:
@@ -387,21 +413,26 @@ def main():
             json_handle = JsonParsing(options.json_file_name, 1)
             json_handle.check_json_file(outdir_handle)
         ivydir = ImageOutputDir.ivy_base_dir + ivy_family_dir
-        input_ivy_dir = os.path.join(ivydir, input_ivy_dir)
-        outdir_handle.ivy_file = os.path.join(input_ivy_dir, outdir_handle.ivy_file)
-        ret_val = os.system('scp -q ' + username + '@' + machinename + ":" + outdir_handle.ivy_file + '  .')
+        input_ivy_dir = ivydir + input_ivy_dir + "/"
+        outdir_handle.ivy_file = input_ivy_dir + outdir_handle.ivy_file
+        if os.name != 'nt':
+            ret_val = os.system('scp -q ' + username + '@' + machinename
+                                          + ":" + outdir_handle.ivy_file + ' ' + curr_dir)
+        else:
+            password = getpass.getpass()
+            ret_val = os.system('pscp -q -pw ' + password + ' ' + username + '@'
+                                               + machinename + ":" + outdir_handle.ivy_file
+                                               + ' ' + curr_dir)
         if ret_val != 0:
             fail("Unable to get ivy_xml file. Exiting.")
        #getting encode.py from v5 repo
-        curr_dir = os.getcwd()
-        ivy_xml_file = curr_dir + '/ivy.xml'
-        encodefilepath = os.path.join(outdir_handle.base_output_dir,
-                                      ImageOutputDir.encode_file_name)
+        encodefilepath = outdir_handle.base_output_dir + ImageOutputDir.encode_file_name
         if not os.path.exists(encodefilepath):
             ret_val = os.system('wget -q -P ' + outdir_handle.base_output_dir
                       + ' ' + encode_file_url)
             if ret_val != 0:
                 fail("Unable to get encode file. Exiting.")
+        ivy_xml_file = curr_dir + '/ivy.xml'
         tree = xmlparser.parse(ivy_xml_file)
         root_node = tree.getroot()
         for child in root_node:
@@ -422,14 +453,16 @@ def main():
                                              outdir_handle,
                                              json_handle,
                                              username,
-                                             machinename)
+                                             machinename,
+                                             password)
                     elif((dependency.get('name')).find('gpxe') > -1):
                         get_bootrom_file(dependency.get('name'),
                                          dependency.get('rev'),
                                          outdir_handle,
                                          json_handle,
                                          username,
-                                         machinename)
+                                         machinename,
+                                         password)
         os.remove(ivy_xml_file)
         os.remove(encodefilepath)
         if json_handle.create_json_file == 1:
