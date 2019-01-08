@@ -357,18 +357,24 @@ def main():
         parser = optparse.OptionParser(usage=
                                        """Usage: %prog [options]
                                           output_directory
-                                          firmware_family_version""",
+                                          firmware_family_version
+                                          username
+                                          machinename""",
                                        version="%prog 1.0")
         parser.add_option("-f", "--file", dest="json_file_name",
                           help="Creates Json file with Image details")
+
         options, args = parser.parse_args()
-        if len(args) < 2:
-            fail("You must specify output directory & fimrware family version")
+        if len(args) < 4:
+            parser.print_help()
+            fail("Exiting")
         outdir_handle = ImageOutputDir(args[0])
         if not outdir_handle.check_output_dir():
             fail('')
         outdir_handle.check_output_subdir()
         input_ivy_dir = args[1]
+        username = args[2]
+        machinename = args[3]
         if not input_ivy_dir.startswith('v'):
             input_ivy_dir = 'v' + input_ivy_dir
         if options.json_file_name is None:
@@ -380,10 +386,12 @@ def main():
         ivydir = ImageOutputDir.ivy_base_dir + ivy_family_dir
         input_ivy_dir = os.path.join(ivydir, input_ivy_dir)
         outdir_handle.ivy_file = os.path.join(input_ivy_dir, outdir_handle.ivy_file)
-        if (not os.path.isfile(outdir_handle.ivy_file) or
-            not os.access(outdir_handle.ivy_file, os.R_OK)):
-            fail("Input Ivy File :"+ outdir_handle.ivy_file +" not acessible.")
+        ret_val = os.system('scp ' + username + '@' + machinename + ":" + outdir_handle.ivy_file + '  .')
+        if ret_val != 0:
+            fail("Unable to get ivy_xml file. Exiting.")
        #getting encode.py from v5 repo
+        curr_dir = os.getcwd()
+        ivy_xml_file = curr_dir + '/ivy.xml'
         encodefilepath = os.path.join(outdir_handle.base_output_dir,
                                       ImageOutputDir.encode_file_name)
         if not os.path.exists(encodefilepath):
@@ -391,7 +399,7 @@ def main():
                       + ' ' + encode_file_url)
             if ret_val != 0:
                 fail("Unable to get encode file. Exiting.")
-        tree = xmlparser.parse(outdir_handle.ivy_file)
+        tree = xmlparser.parse(ivy_xml_file)
         root_node = tree.getroot()
         for child in root_node:
             if child.tag == "dependencies":
