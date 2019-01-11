@@ -3054,11 +3054,15 @@ fail:
                                       bool force,
                                       const char *base64_hash)
         {
-            return vmwareInstallFirmwareType(file_name, owner,
-                                             FIRMWARE_SUCFW,
-                                             version(),
-                                             force,
-                                             base64_hash);
+            // Work around for Bug 84271
+            if (!strcmp(version().string().c_str(), "0.0.0.0"))
+                     return Install_OK;
+            else
+                return vmwareInstallFirmwareType(file_name, owner,
+                                                 FIRMWARE_SUCFW,
+                                                 version(),
+                                                 force,
+                                                 base64_hash);
         }
 
         virtual void initialize() {};

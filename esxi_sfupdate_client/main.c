@@ -1242,14 +1242,14 @@ install_from_local_source(CURL *curl, const char *namespace,
         {
             char *ver = NULL;
 
-            if (!strcmp(svc_name, SVC_SUCFW_NAME) == 0)
-            CHECK_RESPONSE_EXT(
-                rc_rsp,
-                call_get_required_fw_image_name(curl, namespace,
-                                                svc, p,
-                                                &call_rsp),
-                call_rsp,
-                "Failed to get required firmware image name");
+            if (strcmp(svc_name, SVC_SUCFW_NAME) != 0)
+                CHECK_RESPONSE_EXT(
+                    rc_rsp,
+                    call_get_required_fw_image_name(curl, namespace,
+                                                    svc, p,
+                                                    &call_rsp),
+                    call_rsp,
+                    "Failed to get required firmware image name");
             else {
                 // for sucfw, Firmare type might not be supported on board
                 // so call to get firmware image might fail
@@ -1626,6 +1626,7 @@ install_from_local_source(CURL *curl, const char *namespace,
         free(encoded);
 
 next_target:
+        rc_rsp = 0;
         clear_response(&call_rsp);
         if (p != NULL)
             p = p->next;
