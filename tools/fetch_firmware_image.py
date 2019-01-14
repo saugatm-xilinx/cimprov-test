@@ -503,12 +503,12 @@ def main():
         if json_handle.create_json_file == 1:
             json_handle.writejsonfile()
         if (options.vib_author.lower() == 'true'):
-           if not os.path.exists(ImageOutputDir.vib_base_dir):
-               print("vib base directory does not exist. Creating.....")
-               ret_val = os.system('mkdir -p ' + ImageOutputDir.vib_base_dir)
-               if ret_val != 0:
-                   fail("Not able to create:",ImageOutputDir.vib_base_dir)
-           create_vib_of_all_images(ImageOutputDir.vib_base_dir, outdir_handle)
+            if not os.path.exists(ImageOutputDir.vib_base_dir):
+                print("vib base directory does not exist. Creating.....")
+                ret_val = os.system('mkdir -p ' + ImageOutputDir.vib_base_dir)
+                if ret_val != 0:
+                    fail("Not able to create:",ImageOutputDir.vib_base_dir)
+            create_vib_of_all_images(ImageOutputDir.vib_base_dir, outdir_handle)
     except KeyError:
         fail("Image variant not determined. Exiting.")
     except OSError:
