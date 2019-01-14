@@ -502,7 +502,10 @@ def main():
         os.remove(encodefilepath)
         if json_handle.create_json_file == 1:
             json_handle.writejsonfile()
-        if (options.vib_author.lower() == 'true'):
+        if ((options.vib_author is None) or
+            (options.vib_author.lower() != 'true')):
+            print('Not creating vib')
+        else:
             if not os.path.exists(ImageOutputDir.vib_base_dir):
                 print("vib base directory does not exist. Creating.....")
                 ret_val = os.system('mkdir -p ' + ImageOutputDir.vib_base_dir)
