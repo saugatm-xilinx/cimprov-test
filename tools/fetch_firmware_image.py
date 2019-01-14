@@ -111,16 +111,12 @@ class JsonParsing(object):
         self.create_json_file = flag
         self.json_file_name = file_name
 
-    def check_json_file(self, outdir_handle, flag):
+    def check_json_file(self, outdir_handle):
         """ Checks if the output Json file exists, if yes removes it
             and creates it"""
         try:
-            if flag == 0:
-                self.json_file_name = os.path.join(outdir_handle.output_dir,
-                                                   self.json_file_name)
-            else:
-                self.json_file_name = os.path.join(outdir_handle.base_output_dir,
-                                                   self.json_file_name)
+            self.json_file_name = os.path.join(outdir_handle.output_dir,
+                                               self.json_file_name)
             if os.path.exists(self.json_file_name):
                 print(self.json_file_name + " file exists. Over writing it")
                 os.remove(self.json_file_name)
@@ -380,7 +376,7 @@ def create_vib_of_all_images(vib_base_dir, outdir_handle):
     try:
        opt_dir = vib_base_dir + "/opt"
        image_dir = opt_dir + '/sfc/'
-       base_dir = outdir_handle.base_output_dir
+       base_dir = outdir_handle.output_dir
        if os.name == 'nt':
            fail(" This operation will be performed only on Development VM")
        else:
@@ -388,9 +384,9 @@ def create_vib_of_all_images(vib_base_dir, outdir_handle):
                os.mkdir(opt_dir)
            if not os.path.exists(image_dir):
                os.mkdir(image_dir)
-       firmware_dir = base_dir + "firmware"
-       shutil.copy(base_dir + "FirmwareMetadata.json", opt_dir + "/sfc/")
-       os.system("cp -r " + firmware_dir + " " + image_dir)
+       ret_val = os.system("cp -r " + base_dir + " " + opt_dir + "/sfc/")
+       if ret_val != 0:
+           fail("Unable to copy firmware directory to create vib")
        ret_val = os.system("vibauthor -C -t /root/stagedir -v fw_images.vib -f --force")
        if ret_val != 0:
            fail("Unable to create vib: Exiting.")
@@ -438,12 +434,10 @@ def main():
         password = 'None'
         if not input_ivy_dir.startswith('v'):
             input_ivy_dir = 'v' + input_ivy_dir
-        if options.vib_author is None:
+        if ((options.vib_author is None) or
+            (options.vib_author.lower() == "true")):
             json_handle = JsonParsing('FirmwareMetadata.json', 1)
-            json_handle.check_json_file(outdir_handle, 0)
-        elif(options.vib_author.lower() == "true"):
-            json_handle = JsonParsing('FirmwareMetadata.json', 1)
-            json_handle.check_json_file(outdir_handle, 1)
+            json_handle.check_json_file(outdir_handle)
         else:
             parser.print_help()
             fail("Please provide correct value for -v ")
