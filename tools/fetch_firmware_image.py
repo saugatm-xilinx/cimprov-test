@@ -182,7 +182,7 @@ def read_image_hdr(destfilepath, image_type):
 
 def create_json(name, rev, outdir_handle, json_handle, image_type, newfilename, destfilepath):
     """ Function creates a json object """
-    basedirlen = len(outdir_handle.base_output_dir)
+    basedirlen = len(outdir_handle.base_output_dir) - 1
     temppath = destfilepath[basedirlen:]
     jsonobj = json_handle.create_image_metadata(newfilename,
                                                 image_type[0],
@@ -415,7 +415,7 @@ def main():
         if len(args) < 4:
             parser.print_help()
             fail("Exiting")
-        if not options.v5_tag:
+        if options.v5_tag is None:
             options.v5_tag = 'default'
         ivy_family_dir = "firmwarefamily/default/"
         encode_file_dir = '/hg/incoming/v5/rawfile/' + options.v5_tag

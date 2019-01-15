@@ -10,9 +10,9 @@ Please install all above binaries and set thier respective paths in environment 
 
 Linux:
 ------
-1.) Run below commands first hand on the remote machine which you want to use :-
+1.) Run below commands first on the on develoment vm you want to use :-
     a.) ssh-keygen -t rsa # ENTER to every field
-    b.) ssh-copy-id root@ddk_VM
+    b.) ssh-copy-id <user@remote_machine> ex. bsingh@chisel.uk.solarflarecom.com
 
 Command Usage:
 --------------
