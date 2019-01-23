@@ -34,6 +34,7 @@ import getpass
 import os
 import time
 import sys
+import ssl
 import pyVim
 import pyVim.connect
 import pyVmomi
