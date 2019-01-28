@@ -1254,12 +1254,12 @@ install_from_local_source(CURL *curl, const char *namespace,
                 // for sucfw, Firmare type might not be supported on board
                 // so call to get firmware image might fail
                 // and we dont want to print any error message in that case
-                rc = call_get_required_fw_image_name(curl, namespace,
+                rc_rsp = call_get_required_fw_image_name(curl, namespace,
                                         svc, p,
                                         &call_rsp);
-                if (rc < 0 || call_rsp.error_returned ||
+                if (call_rsp.error_returned ||
                     strcmp(call_rsp.returned_value, "0") != 0)
-                        rc_rsp = -1;
+                        goto next_target;
             }
 
             if (rc_rsp < 0)
