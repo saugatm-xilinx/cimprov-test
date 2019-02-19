@@ -26,6 +26,8 @@ ifeq ($(MAKECMDGOALS), doc)
 # nothing
 else ifeq  ($(MAKECMDGOALS), userdoc)
 # nothing
+else ifeq  ($(MAKECMDGOALS), clean)
+# nothing
 else
 ##! Configuration name (user-specified)
 ## \sa config/config.dox
@@ -96,6 +98,8 @@ else
 ifeq ($(MAKECMDGOALS),doc)
 # nothing
 else ifeq ($(MAKECMDGOALS),userdoc)
+# nothing
+else ifeq  ($(MAKECMDGOALS), clean)
 # nothing
 else
 $(error Unknown CIM_SERVER: $(CIM_SERVER))
@@ -267,4 +271,14 @@ userdoc : doc/Doxyfile.user $(TOP)/doc/Makefile.dox
 $(TOP)/doc/Makefile.dox : Makefile
 	$(AWK) -f ./scripts/mk2dox.awk $< >$@
 
+##! removes the build directory.
+.PHONY : clean
+clean :
+	rm -rf build/
+	rm -rf $(TOP)/libprovider/userMgmtSrc
+
+ifeq ($(MAKECMDGOALS), clean)
+# nothing
+else
 include $(TOP)/mk/rules.mk
+endif

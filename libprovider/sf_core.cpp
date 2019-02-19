@@ -95,12 +95,16 @@ namespace solarflare
 
         part = nic()->productNumber();
 
+#if defined(TARGET_CIM_SERVER_esxi_native)
+        return part;
+#else
         if (strcmp(part.c_str(), "SFN5162F") == 0)
             return String("47C9955");
         else if (strcmp(part.c_str(), "SFN6122F") == 0)
             return String("47C9963");
         else
             return String("unknown");
+#endif
     }
 
     const String DiagSWElement::diagSwGenName = "Diagnostic";
