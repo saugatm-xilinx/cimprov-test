@@ -204,6 +204,8 @@ PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFO
 ##! Branch argument to provided with make command in following format
 ##! make CONFIG=native-vmware/default LOCATION=solarflare BRANCH=dev2 platform
 ifeq ($(CIM_SERVER),esxi_native)
+
+V5_TAG                   =  v4_13_2_1006
 USRMGMTINTF_BRANCH       = default/native_drv
 USRMGMTINTF_URL          = http://source.uk.solarflarecom.com/hg/incoming/esxi_sfc/rawfile
 USRMGMT_INCLFILE         = sfvmk_mgmt_interface.h
@@ -211,7 +213,7 @@ USRMGMT_SRCFILE          = sfvmk_mgmt_interface.c
 USERMGMT_DIR		 = libprovider/userMgmtSrc
 
 V5IMPORT_DIR             = libprovider/v5_import/common
-V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/default/src/driver/common/
+V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/$(V5_TAG)/src/driver/common/
 V5IMPORT_IMGFILE	 = ef10_image.c
 V5IMPORT_CRCFILE	 = efx_crc32.c
 V5IMPORT_EFXTYPESFILE	 = efx_types.h
