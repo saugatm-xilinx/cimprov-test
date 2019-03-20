@@ -170,6 +170,12 @@ class SF_API : CIM_ManagedElement {
                              [OUT,ArrayType("Indexed")] string PrivilegeNames[],
                              [OUT,ArrayType("Indexed")] uint32 Privileges[]);
 
+    uint32 ModifyFuncPrivileges([IN] uint32 PhysicalFunction,
+                                [IN] uint32 VirtualFunction,
+                                [IN] string PCIAddr,
+                                [IN] string CallingDev,
+                                [IN] string AddedMask,
+                                [IN] string RemovedMask);
 };
 
 ESXICOMMON([[

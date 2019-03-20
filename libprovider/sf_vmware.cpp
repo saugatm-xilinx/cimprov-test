@@ -2309,6 +2309,10 @@ fail:
                     const Property<String> &PCIAddr,
                     Property<Array_String> &privilegeNames,
                     Property<Array_uint32> &privileges);
+        static int doModifyPrivileges(
+                    const Property<String> &PCIAddr,
+                    const Property<String> &addedMask,
+                    const Property<String> &removedMask);
 
         virtual int getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const;
@@ -2590,6 +2594,149 @@ fail:
             return MACAddress(a0, a1, a2, a3, a4, a5);
 #undef MAC_STR_SIZE
         }
+    }
+
+    /// Get string name of a given privilege flag.
+    ///
+    /// @param flag       Privilege flag
+    ///
+    /// @return String name ("<UNKNOWN>" if flag is not known)
+    static const char *privilege_flag2name(unsigned int flag)
+    {
+#define PRIVILEGE_FLAG2NAME(_p) \
+    case MC_CMD_PRIVILEGE_MASK_IN_GRP_ ## _p: \
+        return #_p;
+
+        switch (flag)
+        {
+            PRIVILEGE_FLAG2NAME(ADMIN);
+            PRIVILEGE_FLAG2NAME(LINK);
+            PRIVILEGE_FLAG2NAME(ONLOAD);
+            PRIVILEGE_FLAG2NAME(PTP);
+            PRIVILEGE_FLAG2NAME(INSECURE_FILTERS);
+            PRIVILEGE_FLAG2NAME(MAC_SPOOFING);
+            PRIVILEGE_FLAG2NAME(UNICAST);
+            PRIVILEGE_FLAG2NAME(MULTICAST);
+            PRIVILEGE_FLAG2NAME(BROADCAST);
+            PRIVILEGE_FLAG2NAME(ALL_MULTICAST);
+            PRIVILEGE_FLAG2NAME(PROMISCUOUS);
+            PRIVILEGE_FLAG2NAME(MAC_SPOOFING_TX);
+            PRIVILEGE_FLAG2NAME(CHANGE_MAC);
+            PRIVILEGE_FLAG2NAME(UNRESTRICTED_VLAN);
+            PRIVILEGE_FLAG2NAME(INSECURE);
+        }
+
+        return "<UNKNOWN>";
+    }
+
+    ///
+    /// Convert privilege name to flag.
+    ///
+    /// @param name     Name to convert
+    ///
+    /// @return Flag value (0 if name is not known
+    static unsigned int privilege_name2flag(const char *name)
+    {
+#define PRIVILEGE_NAME2FLAG(priv_) \
+    if (strcmp(name, #priv_) == 0) \
+        return MC_CMD_PRIVILEGE_MASK_IN_GRP_ ## priv_;
+
+        PRIVILEGE_NAME2FLAG(ADMIN);
+        PRIVILEGE_NAME2FLAG(LINK);
+        PRIVILEGE_NAME2FLAG(ONLOAD);
+        PRIVILEGE_NAME2FLAG(PTP);
+        PRIVILEGE_NAME2FLAG(INSECURE_FILTERS);
+        PRIVILEGE_NAME2FLAG(MAC_SPOOFING);
+        PRIVILEGE_NAME2FLAG(UNICAST);
+        PRIVILEGE_NAME2FLAG(MULTICAST);
+        PRIVILEGE_NAME2FLAG(BROADCAST);
+        PRIVILEGE_NAME2FLAG(ALL_MULTICAST);
+        PRIVILEGE_NAME2FLAG(PROMISCUOUS);
+        PRIVILEGE_NAME2FLAG(MAC_SPOOFING_TX);
+        PRIVILEGE_NAME2FLAG(CHANGE_MAC);
+        PRIVILEGE_NAME2FLAG(UNRESTRICTED_VLAN);
+        PRIVILEGE_NAME2FLAG(INSECURE);
+
+        PROVIDER_LOG_ERR("Unknown privilege '%s'", name);
+        return 0;
+    }
+
+    ///
+    /// Convert string representation of privileges mask to
+    /// numeric representation.
+    ///
+    /// @param str          String to convert
+    /// @param mask   [out] Where to save mask
+    ///
+    /// @note See comments for modifyPrivileges() method in
+    ///       sf_platform.h for mask format description.
+    ///
+    /// @return 0 on success, -1 on failure
+    static int privileges_str2mask(const char *str, uint32_t &mask)
+    {
+#define MAX_PRIV_LEN 512
+        unsigned int i = 0;
+        unsigned int j = 0;
+        char         priv_name[MAX_PRIV_LEN];
+        bool         is_num = false;
+        unsigned int flag = 0;
+
+        mask = 0;
+
+        for (i = 0; ; i++)
+        {
+            if (str[i] == ':')
+            {
+                is_num = true;
+            }
+            else if (str[i] == '|' || str[i] == '\0')
+            {
+                priv_name[j] = '\0';
+                j = 0;
+
+                if (is_num)
+                {
+                    char      *endp = NULL;
+                    long int   value = 0;
+
+                    value = strtol(priv_name, &endp, 10);
+                    if (value < 0 || value > 0xffff ||
+                        *endp != '\0')
+                    {
+                        PROVIDER_LOG_ERR("Failed to convert '%s' to number",
+                                         priv_name);
+                        return -1;
+                    }
+
+                    flag = 1 << value;
+                }
+                else
+                {
+                    flag = privilege_name2flag(priv_name);
+                    if (flag == 0)
+                        return -1;
+                }
+
+                mask = mask | flag;
+                is_num = false;
+            }
+            else
+            {
+                if (j >= MAX_PRIV_LEN - 2)
+                {
+                    PROVIDER_LOG_ERR("Too long privilege name in '%s'",
+                                     str);
+                    return -1;
+                }
+                priv_name[j] = str[i];
+                j++;
+            }
+
+            if (str[i] == '\0')
+                break;
+        }
+
+        return 0;
     }
 
 #ifndef TARGET_CIM_SERVER_esxi_native
@@ -3259,6 +3406,137 @@ cleanup:
         return rc;
     }
 
+    ///
+    /// Modify privileges of a physical or virtual function.
+    ///
+    /// @param fd             File descriptor on which to call ioctl()
+    /// @param ioc            efx_ioctl structure
+    /// @param pf             Physical Function number
+    /// @param vf             Virtual Function number
+    /// @param added_privs    Which privileges to add
+    /// @param removed_privs  Which privileges to remove
+    ///
+    /// @return 0 on success, -1 on error
+    static int modifyFunctionPrivileges(int fd,
+                                        struct efx_ioctl &ioc,
+                                        uint32_t pf,
+                                        uint32_t vf,
+                                        uint32_t added_privs,
+                                        uint32_t removed_privs)
+    {
+        struct efx_mcdi_request *mcdi_req = NULL;
+
+        uint32_t function;
+
+        mcdi_req = &ioc.u.mcdi_request;
+        memset(mcdi_req, 0, sizeof(*mcdi_req));
+
+        mcdi_req->cmd = MC_CMD_PRIVILEGE_MODIFY;
+        mcdi_req->len = MC_CMD_PRIVILEGE_MODIFY_IN_LEN;
+
+        try {
+            SET_MCDI_FIELD(mcdi_req->payload, PRIVILEGE_MODIFY_IN_FN_GROUP,
+                           MC_CMD_PRIVILEGE_MODIFY_IN_ONE);
+
+            function = 0;
+            SET_MCDI_FIELD_PART(PRIVILEGE_MODIFY_IN_FUNCTION, PF,
+                                function, pf);
+            SET_MCDI_FIELD_PART(PRIVILEGE_MODIFY_IN_FUNCTION, VF,
+                                function, vf);
+            SET_MCDI_FIELD(mcdi_req->payload, PRIVILEGE_MODIFY_IN_FUNCTION,
+                           function);
+
+            SET_MCDI_FIELD(mcdi_req->payload, PRIVILEGE_MODIFY_IN_ADD_MASK,
+                           added_privs);
+            SET_MCDI_FIELD(mcdi_req->payload,
+                           PRIVILEGE_MODIFY_IN_REMOVE_MASK,
+                           removed_privs);
+        }
+        catch (const ProviderException &)
+        {
+            return -1;
+        }
+
+        if (doMCDICall(fd, ioc) < 0)
+            return -1;
+
+        return 0;
+    }
+
+    ///
+    /// Modify privileges of a NIC function.
+    ///
+    /// @param portName       Port on which to call ioctl().
+    /// @param pf             Physical function.
+    /// @param vf             Virtual function (may be not set).
+    /// @param addedMask      Privileges to be added.
+    /// @param removedMask    Privileges to be removed.
+    ///
+    /// @return 0 on success, -1 on failure.
+    static int doModifyPrivileges(
+                    const char *portName,
+                    const Property<uint32> &pf,
+                    const Property<uint32> &vf,
+                    const Property<String> &addedMask,
+                    const Property<String> &removedMask)
+    {
+        uint32_t added_privs = 0;
+        uint32_t removed_privs = 0;
+        uint32_t pf_value = 0;
+        uint32_t vf_value = 0;
+
+        struct efx_ioctl  ioc;
+        int               fd = -1;
+        int               rc = -1;
+
+        if (prepareMCDICall(portName, fd, ioc) < 0)
+            goto cleanup;
+
+        if (pf.null)
+        {
+            if (getPFVF(fd, ioc, pf_value, vf_value) < 0)
+                goto cleanup;
+        }
+        else
+        {
+            pf_value = pf.value;
+
+            if (vf.null)
+            {
+                vf_value = MC_CMD_PRIVILEGE_MASK_IN_VF_NULL;
+            }
+            else
+            {
+                vf_value = vf.value;
+            }
+        }
+
+        if (!addedMask.null)
+        {
+            if (privileges_str2mask(addedMask.value.c_str(),
+                                    added_privs) < 0)
+                goto cleanup;
+        }
+
+        if (!removedMask.null)
+        {
+            if (privileges_str2mask(removedMask.value.c_str(),
+                                    removed_privs) < 0)
+                goto cleanup;
+        }
+
+        if (modifyFunctionPrivileges(fd, ioc, pf_value, vf_value,
+                                     added_privs, removed_privs) < 0)
+            goto cleanup;
+
+        rc = 0;
+cleanup:
+        if (fd >= 0 && close(fd) < 0)
+            PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
+                             errno, strerror(errno));
+        return rc;
+    }
+
     int VMwarePort::getIntrModeration(const Array_String &paramNames,
                                       Array_uint32 &paramValues) const
     {
@@ -3425,6 +3703,56 @@ cleanup:
 cleanup:
         if (rc < 0)
             PROVIDER_LOG_ERR("getFuncPrivileges failed");
+
+        return rc;
+    }
+
+    static int doModifyPrivileges(
+                    const Property<String> &PCIAddr,
+                    const Property<String> &addedMask,
+                    const Property<String> &removedMask)
+    {
+        uint32_t added_privs = 0;
+        uint32_t removed_privs = 0;
+
+        int      rc = -1;
+
+        sfvmk_privilege_t privs;
+
+        memset(&privs, 0, sizeof(sfvmk_privilege_t));
+
+        privs.type = SFVMK_MGMT_DEV_OPS_SET;
+        memcpy(&privs.pciInfo.pciBDF, PCIAddr.value.c_str(),
+                                   strlen(PCIAddr.value.c_str()));
+
+        if (!addedMask.null)
+        {
+            if (privileges_str2mask(addedMask.value.c_str(),
+                                    added_privs ) < 0)
+                goto cleanup;
+        }
+
+        if (!removedMask.null)
+        {
+            if (privileges_str2mask(removedMask.value.c_str(),
+                                    removed_privs) < 0)
+                goto cleanup;
+        }
+
+        privs.privMask = added_privs;
+        privs.privRemoveMask = removed_privs;
+
+        if (DrvMgmtCall(NULL,  SFVMK_CB_PRIVILEGE_REQUEST,
+                        &privs) != VMK_OK)
+        {
+            PROVIDER_LOG_ERR("Privilege Modifation failed");
+            return -1;
+        }
+
+        rc = 0;
+cleanup:
+        if (rc < 0)
+            PROVIDER_LOG_ERR("modifyPrivileges failed");
 
         return rc;
     }
@@ -6164,6 +6492,16 @@ cleanup:
                                privilegeNames, privileges);
     }
 
+    int VMwareSystem::modifyFuncPrivileges(
+                              const String &dev_name,
+                              const Property<uint32> &pf,
+                              const Property<uint32> &vf,
+                              const Property<String> &addedMask,
+                              const Property<String> &removedMask) const
+    {
+        return doModifyPrivileges(dev_name.c_str(),
+                                  pf, vf, addedMask, removedMask);
+    }
 #else
     int VMwareSystem::getFuncPrivileges(
                                   const Property<String> &PCIAddr,
@@ -6173,6 +6511,13 @@ cleanup:
         return doGetPrivileges(PCIAddr, privilegeNames, privileges);
     }
 
+    int VMwareSystem::modifyFuncPrivileges(
+                              const Property<String> &PCIAddr,
+                              const Property<String> &addedMask,
+                              const Property<String> &removedMask) const
+    {
+        return doModifyPrivileges(PCIAddr, addedMask, removedMask);
+    }
 #endif
     static Ref<VMware_KernelModuleService> getKernelModuleService()
     {
