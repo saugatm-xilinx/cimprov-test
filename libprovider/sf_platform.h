@@ -13,6 +13,7 @@
 
 #include <cimple/cimple.h>
 #include <cimple/Buffer.h>
+#include <cimple/Property.h>
 
 #include "sf_core.h"
 #include "sf_logging.h"
@@ -30,6 +31,7 @@
 ///
 namespace solarflare 
 {
+    using cimple::Property;
     using cimple::Buffer;
     using cimple::String;
     using cimple::Datetime;
@@ -1163,6 +1165,55 @@ namespace solarflare
         {
             return -1;
         }
+#ifndef TARGET_CIM_SERVER_esxi_native
+        ///
+        /// Get privileges of a NIC function (physical or virtual).
+        ///
+        /// @note If both @p pf and @p vf are not set, then privileges are
+        ///       obtained for @p dev_name itself.
+        ///
+        /// @param dev_name             Device name on which to make
+        ///                             request.
+        /// @param pf                   Physical function number.
+        /// @param vf                   Virtual function number.
+        /// @param privilegeNames [out] Array of privilege names.
+        /// @param privileges     [out] Array of privilege numbers in the
+        ///                             same order (each number is index of
+        ///                             corresponding bit in privilege
+        ///                             mask).
+        ///
+        /// @return 0 on success, -1 on failure.
+        virtual int getFuncPrivileges(
+                                  const String &dev_name,
+                                  const Property<uint32> &pf,
+                                  const Property<uint32> &vf,
+                                  Property<Array_String> &privilegeNames,
+                                  Property<Array_uint32> &privileges) const
+        {
+            return -1;
+        }
+#else
+        ///
+        /// Get privileges of a NIC function (physical or virtual).
+        ///
+        /// @param PCIAddr              PCI address on which to make
+        ///                             request.
+        /// @param privilegeNames [out] Array of privilege names.
+        /// @param privileges     [out] Array of privilege numbers in the
+        ///                             same order (each number is index of
+        ///                             corresponding bit in privilege
+        ///                             mask).
+        ///
+        /// @return 0 on success, -1 on failure.
+        virtual int getFuncPrivileges(
+                                  const Property<String> &PCIAddr,
+                                  Property<Array_String> &privilegeNames,
+                                  Property<Array_uint32> &privileges) const
+        {
+            return -1;
+        }
+#endif
+
     };
 
 } // namespace

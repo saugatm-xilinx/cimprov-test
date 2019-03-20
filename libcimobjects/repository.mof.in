@@ -160,6 +160,20 @@ WMIONLY([[
 
 ESXICOMMON([[
 INSTANCE
+class SF_API : CIM_ManagedElement {
+    [Override("ElementName"), Key] string ElementName;
+
+    uint32 GetFuncPrivileges([IN] uint32 PhysicalFunction,
+                             [IN] uint32 VirtualFunction,
+                             [IN] string PCIAddr,
+                             [IN] string CallingDev,
+                             [OUT,ArrayType("Indexed")] string PrivilegeNames[],
+                             [OUT,ArrayType("Indexed")] uint32 Privileges[]);
+
+};
+
+ESXICOMMON([[
+INSTANCE
 class SF_NVAPI : CIM_ManagedElement {
     [Override("ElementName"), Key] string ElementName;
 
