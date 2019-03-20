@@ -587,8 +587,41 @@ namespace solarflare
         {
             return OrderedElement::name(genericName());
         }
-    };
+#ifndef TARGET_CIM_SERVER_esxi_native
+        ///
+        /// Get PF/VF corresponding to a given PCI address.
+        ///
+        /// @param searchPCIAddr       PCI address.
+        /// @param found               Will be set to true if
+        ///                            PF/VF with provided PCI address
+        ///                            was found.
+        /// @param pf_out              Where to save PF.
+        /// @param vf_out              Where to save VF.
+        /// @param vf_null             Will be set to true if PF was
+        ///                            found.
+        ///
+        /// @return 0 on success, -1 on failure.
+        virtual int getPFVFByPCIAddr(const PCIAddress &searchPCIAddr,
+                                     bool &found, uint32 &pf_out,
+                                     uint32 &vf_out,
+                                     bool &vf_null) const
+        {
+            found = false;
+            return 0;
+        }
 
+        ///
+        /// Get name of an interface having ADMIN privilege.
+        ///
+        /// @param ifName   Where to save name of the interface.
+        ///
+        /// @return 0 on success, -1 on failure.
+        virtual int getAdminInterface(String &ifName) const
+        {
+            return -1;
+        }
+#endif
+    };
     /// @brief An abstract driver class.
     class Driver : public HostSWElement {
     public:

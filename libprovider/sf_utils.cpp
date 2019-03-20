@@ -77,4 +77,39 @@ namespace solarflare
     }
 
     const unsigned PCIAddress::unknown = unsigned(-1);
+
+#ifndef TARGET_CIM_SERVER_esxi_native
+    int PCIAddress::parse(const char *str)
+    {
+        unsigned int i;
+        unsigned int pdomain;
+        unsigned int pbus;
+        unsigned int pdevice;
+        unsigned int pfn;
+
+        if (sscanf(str, "%x:%x:%x.%x", &pdomain, &pbus,
+                   &pdevice, &pfn) == 4)
+        {
+            this->pciDomain = pdomain;
+            this->pciBus = pbus;
+            this->deviceId = pdevice;
+            this->fnId = pfn;
+        }
+        else if (sscanf(str, "%x:%x.%x", &pbus, &pdevice, &pfn) == 3)
+        {
+            this->pciDomain = PCIAddress::unknown;
+            this->pciBus = pbus;
+            this->deviceId = pdevice;
+            this->fnId = pfn;
+        }
+        else
+        {
+            PROVIDER_LOG_ERR("%s(): failed to parse '%s' as PCI address",
+                             __FUNCTION__, str);
+            return -1;
+        }
+
+        return 0;
+    }
+#endif
 }

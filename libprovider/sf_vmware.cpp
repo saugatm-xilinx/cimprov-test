@@ -3675,7 +3675,7 @@ cleanup:
         memset(&privs, 0, sizeof(sfvmk_privilege_t));
 
         privs.type = SFVMK_MGMT_DEV_OPS_GET;
-        memcpy(&privs.pciInfo.pciBDF, PCIAddr.value.c_str(),
+        memcpy(&privs.pciSBDF, PCIAddr.value.c_str(),
                                 strlen(PCIAddr.value.c_str()));
 
         if (DrvMgmtCall(NULL,  SFVMK_CB_PRIVILEGE_REQUEST,
@@ -3722,7 +3722,7 @@ cleanup:
         memset(&privs, 0, sizeof(sfvmk_privilege_t));
 
         privs.type = SFVMK_MGMT_DEV_OPS_SET;
-        memcpy(&privs.pciInfo.pciBDF, PCIAddr.value.c_str(),
+        memcpy(&privs.pciSBDF, PCIAddr.value.c_str(),
                                    strlen(PCIAddr.value.c_str()));
 
         if (!addedMask.null)
@@ -4315,6 +4315,14 @@ cleanup:
         {
             return pci_device_id;
         }
+#ifndef TARGET_CIM_SERVER_esxi_native
+        virtual int getPFVFByPCIAddr(const PCIAddress &searchPCIAddr,
+                                     bool &found, uint32 &pf_out,
+                                     uint32 &vf_out,
+                                     bool &vf_null) const;
+
+        virtual int getAdminInterface(String &ifName) const;
+#endif
     };
 
     int VMwareNIC::getFullVPD(bool staticVPD,
@@ -4385,6 +4393,90 @@ cleanup:
     {
         return PCIAddress(pci_domain, pci_bus, pci_device);
     }
+
+#ifndef TARGET_CIM_SERVER_esxi_native
+    int VMwareNIC::getPFVFByPCIAddr(const PCIAddress &searchPCIAddr,
+                                    bool &found, uint32 &pf_out,
+                                    uint32 &vf_out,
+                                    bool &vf_null) const
+    {
+        unsigned int      i;
+        int               rc = -1;
+        int               fd;
+        struct efx_ioctl  ioc;
+        unsigned int      privs;
+
+        if (prepareMCDICall("", fd, ioc) < 0)
+            goto cleanup;
+
+        found = false;
+        for (i = 0; i < this->ports.size(); i++)
+        {
+            rc = PCIToPFVF(fd, ioc, this->ports[i].dev_name.c_str(),
+                           this->ports[i].pciAddress(),
+                           searchPCIAddr, found, pf_out, vf_out);
+
+            if (rc == 0)
+                break;
+        }
+
+        rc = 0;
+
+cleanup:
+
+        if (fd >= 0 && close(fd) < 0)
+            PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
+                             errno, strerror(errno));
+
+        if (vf_out == MC_CMD_PRIVILEGE_MASK_IN_VF_NULL)
+            vf_null = true;
+        else
+            vf_null = false;
+
+        return rc;
+    }
+
+    int VMwareNIC::getAdminInterface(String &ifName) const
+    {
+        unsigned int      i;
+        int               rc = -1;
+        int               fd;
+        struct efx_ioctl  ioc;
+        unsigned int      privs;
+
+        ifName = "";
+
+        if (prepareMCDICall("", fd, ioc) < 0)
+            goto cleanup;
+
+        for (i = 0; i < this->ports.size(); i++)
+        {
+            if (getIntfFuncPrivileges(fd, ioc,
+                                      this->ports[i].dev_name.c_str(),
+                                      privs) < 0)
+                continue;
+
+            if (privs & MC_CMD_PRIVILEGE_MASK_IN_GRP_ADMIN)
+            {
+                ifName = this->ports[i].dev_name;
+                rc = 0;
+                goto cleanup;
+            }
+        }
+
+        PROVIDER_LOG_ERR("Failed to find interface with ADMIN privilege on "
+                         "NIC '%s'", this->tag().c_str());
+
+cleanup:
+
+        if (fd >= 0 && close(fd) < 0)
+            PROVIDER_LOG_ERR("close() failed, errno %d ('%s')",
+                             errno, strerror(errno));
+
+        return rc;
+    }
+
+#endif
 
     ///
     /// Get information about required firmware image.
@@ -5569,6 +5661,32 @@ cleanup:
                               uint32 part_type,
                               uint32 offset,
                               const String &data);
+
+        virtual int getFuncPrivileges(
+                                  const String &dev_name,
+                                  const Property<uint32> &pf,
+                                  const Property<uint32> &vf,
+                                  Property<Array_String> &privilegeNames,
+                                  Property<Array_uint32> &privileges) const;
+
+
+        virtual int modifyFuncPrivileges(
+                                  const String &dev_name,
+                                  const Property<uint32> &pf,
+                                  const Property<uint32> &vf,
+                                  const Property<String> &addedMask,
+                                  const Property<String> &removedMask) const;
+#else
+        virtual int getFuncPrivileges(
+                                  const Property<String> &PCIAddr,
+                                  Property<Array_String> &privilegeNames,
+                                  Property<Array_uint32> &privileges) const;
+
+
+        virtual int modifyFuncPrivileges(
+                                  const Property<String> &PCIAddr,
+                                  const Property<String> &addedMask,
+                                  const Property<String> &removedMask) const;
 #endif
     };
 

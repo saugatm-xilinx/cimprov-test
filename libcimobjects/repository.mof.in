@@ -163,6 +163,11 @@ INSTANCE
 class SF_API : CIM_ManagedElement {
     [Override("ElementName"), Key] string ElementName;
 
+    uint32 GetPFVFByPCI([IN] string PCIAddr,
+                        [OUT] uint32 PF,
+                        [OUT] uint32 VF,
+                        [OUT] String NICTag);
+
     uint32 GetFuncPrivileges([IN] uint32 PhysicalFunction,
                              [IN] uint32 VirtualFunction,
                              [IN] string PCIAddr,
@@ -178,7 +183,6 @@ class SF_API : CIM_ManagedElement {
                                 [IN] string RemovedMask);
 };
 
-ESXICOMMON([[
 INSTANCE
 class SF_NVAPI : CIM_ManagedElement {
     [Override("ElementName"), Key] string ElementName;
