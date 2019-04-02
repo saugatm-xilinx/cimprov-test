@@ -154,7 +154,7 @@ extern "C" {
 #define MAX_NV_CTX_ID 1000
 
 // Maximum MC Reboot Timeout value
-#define CIMPROV_MC_REBOOT_TIME_OUT_SEC 11
+#define CIMPROV_MC_REBOOT_TIME_OUT_SEC 30
 
 extern "C" {
     extern int sfupdate_main(int argc, char *argv[]);
@@ -5264,7 +5264,7 @@ cleanup:
             rc = -1;
             goto cleanup;
         }
-        if (fwType == FIRMWARE_MCFW)
+        if (fwType == FIRMWARE_MCFW || fwType == FIRMWARE_SUCFW)
             sleep(CIMPROV_MC_REBOOT_TIME_OUT_SEC);
 
 cleanup:
