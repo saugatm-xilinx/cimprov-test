@@ -42,7 +42,11 @@ namespace solarflare {
     NV_PART_MUMFW,
     NV_PART_UEFI,
     NV_PART_STATUS,
-    NV_PART_NTYPES
+    NV_PART_NTYPES,
+    NV_PART_DYNAMIC_CFG_DEFAULTS,
+    NV_PART_BOOTROM_CFG_DEFAULTS,
+    NV_PART_BUNDLE,
+    NV_PART_BUNDLE_METADATA
   };
 
   /* Initialise NVRAM access layer */
