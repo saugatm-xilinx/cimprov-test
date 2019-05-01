@@ -205,7 +205,6 @@ PLATFORM_BUILD = build/$(PROVIDER_PLATFORM)$(PROVIDER_BITNESS)/$(PROVIDER_PLATFO
 ##! make CONFIG=native-vmware/default LOCATION=solarflare BRANCH=dev2 platform
 ifeq ($(CIM_SERVER),esxi_native)
 
-V5_TAG                   =  v4_13_2_1006
 USRMGMTINTF_BRANCH       = default/native_drv
 USRMGMTINTF_URL          = http://source.uk.solarflarecom.com/hg/incoming/esxi_sfc/rawfile
 USRMGMT_INCLFILE         = sfvmk_mgmt_interface.h
@@ -213,11 +212,16 @@ USRMGMT_SRCFILE          = sfvmk_mgmt_interface.c
 USERMGMT_DIR		 = libprovider/userMgmtSrc
 
 V5IMPORT_DIR             = libprovider/v5_import/common
-V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/$(V5_TAG)/src/driver/common/
+V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/default/src/driver/common/
 V5IMPORT_IMGFILE	 = ef10_image.c
 V5IMPORT_CRCFILE	 = efx_crc32.c
 V5IMPORT_EFXTYPESFILE	 = efx_types.h
 V5IMPORT_EF10_SIMGFILE	 = ef10_signed_image_layout.h
+V5IMPORT_EFXANNOTEFILE	 = efx_annote.h
+V5IMPORT_EFXCHECKFILE	 = efx_check.h
+V5IMPORT_EFXPHYIDFILE	 = efx_phy_ids.h
+V5IMPORT_EF10_FIDFILE	 = ef10_firmware_ids.h
+V5IMPORT_EF10_IMPLFILE	 = ef10_impl.h
 
 endif
 ##! Creates a platform-specific build directory
@@ -235,11 +239,21 @@ ifeq ($(CIM_SERVER),esxi_native)
 		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_CRCFILE)
 		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EFXTYPESFILE)
 		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EF10_SIMGFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EF10_FIDFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EF10_IMPLFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EFXANNOTEFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EFXCHECKFILE)
+		@rm -f $(TOP)/$(V5IMPORT_DIR)/$(V5IMPORT_EFXPHYIDFILE)
 
 		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_IMGFILE)
 		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_CRCFILE)
 		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EFXTYPESFILE)
 		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EF10_SIMGFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EF10_FIDFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EF10_IMPLFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EFXANNOTEFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EFXCHECKFILE)
+		@wget -q -P $(TOP)/$(V5IMPORT_DIR)  $(V5IMPORT_URL)/$(V5IMPORT_EFXPHYIDFILE)
 endif
 		mkdir -p $(PLATFORM_BUILD)
 		cd $(PLATFORM_BUILD); $(HGLISTALL) | xargs -n1 dirname | sort -u | xargs -n1 mkdir -p
