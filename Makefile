@@ -211,8 +211,9 @@ USRMGMT_INCLFILE         = sfvmk_mgmt_interface.h
 USRMGMT_SRCFILE          = sfvmk_mgmt_interface.c
 USERMGMT_DIR		 = libprovider/userMgmtSrc
 
+ifneq ($(v5_TAG),)
 V5IMPORT_DIR             = libprovider/v5_import/common
-V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/default/src/driver/common/
+V5IMPORT_URL             = http://source.uk.solarflarecom.com/hg/incoming/v5/rawfile/$(v5_TAG)/src/driver/common/
 V5IMPORT_IMGFILE	 = ef10_image.c
 V5IMPORT_CRCFILE	 = efx_crc32.c
 V5IMPORT_EFXTYPESFILE	 = efx_types.h
@@ -222,7 +223,9 @@ V5IMPORT_EFXCHECKFILE	 = efx_check.h
 V5IMPORT_EFXPHYIDFILE	 = efx_phy_ids.h
 V5IMPORT_EF10_FIDFILE	 = ef10_firmware_ids.h
 V5IMPORT_EF10_IMPLFILE	 = ef10_impl.h
-
+else
+$(error  No v5 TAG is known)
+endif
 endif
 ##! Creates a platform-specific build directory
 platform : $(PLATFORM_BUILD)/Makefile
