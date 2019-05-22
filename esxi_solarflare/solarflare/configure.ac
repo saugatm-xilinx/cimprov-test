@@ -102,7 +102,7 @@ AC_ARG_WITH([sfcb],
    [], [with_sfcb=no])
 
 AS_IF([test "x$with_sfcb" != "xno"], 
-   [AC_PATH_PROG([SFCBREPOS], [sfcbrepos], [])]
+   [AC_PATH_PROG([SFCBREPOS], [sfcbrepos], ["/opt/vmware/"])]
    AS_IF([test x$SFCBREPOS = x],
       [AC_MSG_ERROR([Unable to locate sfcbrepos with --enable-sfcb set])]
    ))

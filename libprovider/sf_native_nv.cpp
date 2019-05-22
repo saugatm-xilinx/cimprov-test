@@ -177,7 +177,15 @@ namespace solarflare {
     nvram_partition.op = SFVMK_NVRAM_OP_READ;
     nvram_partition.offset = offset;
     nvram_partition.size = length;
+    /* This is a workaround for  Esxi 6.0 on which if the MSB of pointer
+     * has "FF" in the address and if we typecast it into 64 bit unsigned integer
+     * value then it fill rest of the upper 32 bits with all "1".
+     */
+#if VMKAPI_REVISION == VMK_REVISION_FROM_NUMBERS(2, 3, 0, 0)
     nvram_partition.data = ((vmk_uint64)(vmk_uint32)buf);
+#else
+    nvram_partition.data = ((vmk_uint64)buf);
+#endif
 
     if (DrvMgmtCall(nv->devName, SFVMK_CB_NVRAM_REQUEST, &nvram_partition) != VMK_OK)
       return -1;
@@ -206,7 +214,15 @@ namespace solarflare {
     nvram_partition.type = nv->nv_image_type;
     nvram_partition.op = SFVMK_NVRAM_OP_WRITEALL;
     nvram_partition.size = length;
+    /* This is a workaround for  Esxi 6.0 on which if the MSB of pointer
+     * has "FF" in the address and if we typecast it into 64 bit unsigned integer
+     * value then it fill rest of the upper 32 bits with all "1".
+     */
+#if VMKAPI_REVISION == VMK_REVISION_FROM_NUMBERS(2, 3, 0, 0)
     nvram_partition.data =  ((vmk_uint64)(vmk_uint32)buf);
+#else
+    nvram_partition.data =  ((vmk_uint64)buf);
+#endif
     nvram_partition.erasePart = full_erase;
 
     if (DrvMgmtCall(nv->devName, SFVMK_CB_NVRAM_REQUEST, &nvram_partition) != VMK_OK)

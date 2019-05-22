@@ -37,7 +37,11 @@ typedef vmk_uint32              uint32_t;
 typedef vmk_int64               int64_t;
 typedef vmk_uint64              uint64_t;
 
+#ifdef TARGET_CIM_64
+typedef long unsigned int       size_t;
+#else
 typedef unsigned int            size_t;
+#endif
 typedef vmk_Bool                boolean_t;
 typedef char*                   caddr_t;
 typedef vmk_uintptr_t           uintptr_t;

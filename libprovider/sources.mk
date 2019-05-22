@@ -139,6 +139,10 @@ libprovider_CPPFLAGS = $(libprovider_PROVIDE_CPPFLAGS) -Ilibprovider/v5_import -
 	-DPROVIDER_VENDOR='"$(PROVIDER_VENDOR)"' \
 	-DPROVIDER_DESCRIPTION='"$(PROVIDER_DESCRIPTION)"'
 
+ifeq ($(BITNESS),64)
+libprovider_CPPFLAGS += -DTARGET_CIM_64
+endif
+
 ifneq ($(CIM_INTERFACE),wmi)
 
 ##! A flag specifying whether the provider association classes shall be created in the root namespace too

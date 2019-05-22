@@ -72,18 +72,27 @@ else
         sed -i "s/DESC_CIMOM_RESTART=.*$/DESC_CIMOM_RESTART=false/g" Makefile
     fi
 
-
     if test $cimpdk_v1 -eq 6 ; then
         if test $cimpdk_v2 -ge 5 ; then
-        sed -i "s/BULL_VENDOR_CODE=ZZZ/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
-        sed -i "s/PROV_NAME=example-vmkmgmt/PROV_NAME=__PROVIDER_NAME__/g" Makefile
-	var1=`grep -n -m 1 sfcbmof Makefile | cut -d : -f1`
-        sed  -i "$var1"'i\	    sfcbmof -d ${STAGEDIR}/${REGROOT}/repository/ \\\
-	      -n root/cimv2 \\\
-	      -o classSchemas \\\
-	      -I ${SCHEMADIR} \\\
-	      -i CIM_Schema.mof \\\
-	      ${STAGEDIR}/${STAGEROOT}/mofs/root/cimv2/root.mof; \\'  Makefile
+            sed -i "s/BULL_VENDOR_CODE=ZZZ/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
+            sed -i "s/PROV_NAME=example-vmkmgmt/PROV_NAME=__PROVIDER_NAME__/g" Makefile
+            if test $cimpdk_v2 -ne 8 ; then
+                var1=`grep -n -m 1 sfcbmof Makefile | cut -d : -f1`
+                sed  -i "$var1"'i\              sfcbmof -d ${STAGEDIR}/${REGROOT}/repository/ \\\
+                      -n root/cimv2 \\\
+                      -o classSchemas \\\
+                      -I ${SCHEMADIR} \\\
+                      -i CIM_Schema.mof \\\
+                      ${STAGEDIR}/${STAGEROOT}/mofs/root/cimv2/root.mof; \\'  Makefile
+            else
+                var1=`grep -n -m 1 sfcmofc Makefile | cut -d : -f1`
+                sed  -i "$var1"'i\              sfcmofc -d ${STAGEDIR}/${REGROOT}/repository/ \\\
+                      -n root/cimv2 \\\
+                      -o classSchemas \\\
+                      -I ${SCHEMADIR} \\\
+                      -i CIM_Schema.mof \\\
+                      ${STAGEDIR}/${STAGEROOT}/mofs/root/cimv2/root.mof; \\'  Makefile
+            fi
         else
             sed -i "s/BULL_VENDOR_CODE=VMW/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
             sed -i "s/PROV_NAME=acme/PROV_NAME=__PROVIDER_NAME__/g" Makefile

@@ -23,9 +23,13 @@ esxi_archive_DIR = esxi_solarflare
 
 ESXI_PROJECT_NAME = solarflare
 ESXI_SRC_PATH = $(esxi_archive_DIR)/$(ESXI_PROJECT_NAME)
+ifeq ($(BITNESS),64)
+ESXI_EXTRA_LIBDIR = $(libprovider_DIR)/esxi_libs/i686
+ESXI_EXTRA_LIBS = libcurl.a libssh2.a libssl.a libcrypto.a libz.a
+else
 ESXI_EXTRA_LIBDIR = $(libprovider_DIR)/esxi_libs/i386
 ESXI_EXTRA_LIBS = libsfupdate.a libcurl.a libssh2.a libssl.a libcrypto.a libz.a
-
+endif
 esxi_archive_LIBS = $(addprefix $(ESXI_EXTRA_LIBDIR)/,$(ESXI_EXTRA_LIBS))
 
 esxi_archive_EXTRA_DISTFILES += $(libcimobjects_DIR)/repository.mof \
@@ -60,10 +64,17 @@ $(esxi_archive_TARGET) : TAR_TRANSFORM=!^!$(ESXI_PROJECT_NAME)/! !^$(ESXI_PROJEC
 
 $(eval $(call archive_component,esxi_archive))
 
+ifeq ($(BITNESS),64)
+$(ESXI_SRC_PATH)/$(libcimobjects_DIR)/namespace.mof : $(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS)) \
+        $(libcimobjects_DIR)/namespace.mof
+	mkdir -p $(dir $@)
+	cat $^ >$@
+else
 $(ESXI_SRC_PATH)/$(libcimobjects_DIR)/namespace.mof : $(libcimobjects_DIR)/namespace.mof \
 													   $(addprefix $(CIM_SCHEMA_PATCHDIR)/,$(CIM_SCHEMA_ADDON_MOFS))
 	mkdir -p $(dir $@)
 	cat $^ >$@
+endif
 
 $(ESXI_SRC_PATH)/repository.reg.in : repository.reg
 	mkdir -p $(dir $@)	

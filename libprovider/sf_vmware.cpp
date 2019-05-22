@@ -5250,7 +5250,15 @@ cleanup:
 
         sfvmk_imgUpdate_t imgUpdate;
 
+        /* This is a workaround for  Esxi 6.0 on which if the MSB of pointer
+         * has "FF" in the address and if we typecast it into 64 bit unsigned integer
+         * value then it fill rest of the upper 32 bits with all "1".
+         */
+#if VMKAPI_REVISION == VMK_REVISION_FROM_NUMBERS(2, 3, 0, 0)
         imgUpdate.pFileBuffer = (vmk_uint64)((vmk_uint32)pBuffer);
+#else
+        imgUpdate.pFileBuffer = (vmk_uint64)(pBuffer);
+#endif
         imgUpdate.size = fileSize;
 
         PROVIDER_LOG_DBG("Image Update called for  fwType:%d with image version:%d.%d.%d.%d",
