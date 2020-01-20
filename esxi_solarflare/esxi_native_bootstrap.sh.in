@@ -53,7 +53,7 @@ else
     sed -i "s/\<CFLAGS=\"\(.*\)/CFLAGS=\"-D__USE_XOPEN2K8=1 \1/g" Makefile
     sed -i "s/\${CURRENT_DIR}\/descriptor.xml/\${CURRENT_DIR}\/oem\/descriptor.xml/g" Makefile
     sed -i "s/\${CURRENT_DIR}\/bulletin.xml/\${CURRENT_DIR}\/oem\/bulletin.xml/g" Makefile
-    sed -i "s/BULL_KBURL=.*/BULL_KBURL=none/g" Makefile
+    sed -i "s/BULL_KBURL=.*/BULL_KBURL=http:\/\/www.xilinx.com/g" Makefile
     sed -i "s/VIB_BULLETIN_ID=.*$/VIB_BULLETIN_ID=\${BULL_VENDOR_CODE}-ESX-\${DESC_ESX_VERSION}-\${DESC_NAME}-\${DESC_VERSION}/g" Makefile
     sed -i "s/PROV_VIB_BASENAME=.*$/PROV_VIB_BASENAME=\$(BULL_VENDOR_CODE)-ESX-\${DESC_ESX_VERSION}-\${PROV_NAME}-\${DESC_VERSION}/g" Makefile
     sed -i "/\${RM} \$\$filename/d" Makefile
