@@ -102,10 +102,10 @@ else
     if test $cimpdk_v1 -eq 7 ; then
         sed -i "s/BULL_VENDOR_CODE=ZZZ/BULL_VENDOR_CODE=__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
         sed -i "s/PROV_NAME=example-vmkmgmt/PROV_NAME=__PROVIDER_NAME__/g" Makefile
-        sed -i "s/BULL_CNS_NAME=.*/BULL_CNS_NAME=SFC-CIMProvider/g" Makefile
-        sed -i "s/BULL_CNS_STRING=.*/BULL_CNS_STRING=Solarflare ESXi Management Utilities/g" Makefile
-        sed -i "s/BULL_CVS_VERSION=1.0-0.0.0001/BULL_CVS_VERSION=1.0-0.1/g" Makefile
-        sed -i "s/BULL_CVS_STRING=1.0 - Build 0001/BULL_CVS_STRING=1.0-0.1mutils/g" Makefile
+        sed -i "s/BULL_CNS_NAME=.*/BULL_CNS_NAME=SFC-NIC-CIMProvider/g" Makefile
+        sed -i "s/BULL_CNS_STRING=.*/BULL_CNS_STRING=Solarflare NIC CIM provider for VMware ESXi/g" Makefile
+        sed -i "s/BULL_CVS_VERSION=1.0-0.0.0001/BULL_CVS_VERSION=__PROVIDER_VERSION_MAJOR__.__PROVIDER_VERSION_MINOR__-__PROVIDER_REVISION__/g" Makefile
+        sed -i "s/BULL_CVS_STRING=1.0 - Build 0001/BULL_CVS_STRING=__PROVIDER_VERSION_MAJOR__.__PROVIDER_VERSION_MINOR__-__PROVIDER_REVISION__-__PROVIDER_VENDOR_VMWARE_CODE__/g" Makefile
                 var1=`grep -n -m 1 sfcmofc Makefile | cut -d : -f1`
                 sed  -i "$var1"'i\              sfcmofc -d ${STAGEDIR}/${REGROOT}/repository/ \\\
                       -n root/cimv2 \\\
