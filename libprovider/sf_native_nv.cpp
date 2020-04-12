@@ -181,7 +181,7 @@ namespace solarflare {
      * has "FF" in the address and if we typecast it into 64 bit unsigned integer
      * value then it fill rest of the upper 32 bits with all "1".
      */
-#if VMKAPI_REVISION == VMK_REVISION_FROM_NUMBERS(2, 3, 0, 0)
+#if VMKAPI_REVISION <= VMK_REVISION_FROM_NUMBERS(2, 5, 0, 0)
     nvram_partition.data = ((vmk_uint64)(vmk_uint32)buf);
 #else
     nvram_partition.data = ((vmk_uint64)buf);
@@ -218,7 +218,7 @@ namespace solarflare {
      * has "FF" in the address and if we typecast it into 64 bit unsigned integer
      * value then it fill rest of the upper 32 bits with all "1".
      */
-#if VMKAPI_REVISION == VMK_REVISION_FROM_NUMBERS(2, 3, 0, 0)
+#if VMKAPI_REVISION <= VMK_REVISION_FROM_NUMBERS(2, 5, 0, 0)
     nvram_partition.data =  ((vmk_uint64)(vmk_uint32)buf);
 #else
     nvram_partition.data =  ((vmk_uint64)buf);
