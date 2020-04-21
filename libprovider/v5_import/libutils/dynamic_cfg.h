@@ -13,13 +13,9 @@
 #include <errno.h>
 
 #include "firmware.h"
+#include "nv.h"
 
 #define DYNAMIC_CFG_FAMILY_MAX 0xff
-
-/* For DOS32 */
-#ifndef EOPNOTSUPP
-#define EOPNOTSUPP 95
-#endif
 
 struct dynamic_cfg_context;
 
@@ -32,7 +28,7 @@ dynamic_cfg_accessible(const struct sfu_device* dev,
 
 /* Open and close dynamic config context */
 extern struct dynamic_cfg_context*
-dynamic_cfg_open(struct sfu_device* dev);
+dynamic_cfg_open(struct sfu_device* dev, enum nv_part_type partn_type);
 
 extern void dynamic_cfg_close(struct dynamic_cfg_context* context);
 
@@ -40,6 +36,9 @@ extern void dynamic_cfg_close(struct dynamic_cfg_context* context);
 extern struct firmware_version
 dynamic_cfg_get_version(const struct dynamic_cfg_context* context,
                         image_type_t type);
+bool
+bundle_meta_get_version(const struct sfu_device *dev, image_type_t image_type,
+                        struct firmware_version *out_version);
 /* Get family version string; return the actual string length or -1
  * if not found.  The string length is at most DYNAMIC_CFG_FAMILY_MAX. */
 extern int dynamic_cfg_get_family(const struct dynamic_cfg_context* context,
@@ -48,7 +47,8 @@ extern int dynamic_cfg_get_family(const struct dynamic_cfg_context* context,
 /* Set subtype and version for given firmware type */
 extern int
 dynamic_cfg_set_version(struct dynamic_cfg_context* context, image_type_t type,
-                        uint32_t subtype, struct firmware_version version);
+                        uint32_t subtype, struct firmware_version version,
+                        bool set_subtype);
 
 extern int dynamic_cfg_get_string(const struct dynamic_cfg_context* context,
                                   char key1, char key2,
@@ -83,5 +83,10 @@ extern int dynamic_cfg_sync(struct dynamic_cfg_context* context,
 extern int
 dynamic_cfg_get_buf(struct dynamic_cfg_context* context,
                     void **buf, size_t *buf_size);
+
+extern int dynamic_cfg_set_generation(void *data, size_t len,
+                                      unsigned int generation);
+
+extern void reset_dyn_vpd(const struct dynamic_cfg_context *context);
 
 #endif /* SFUTILS_DYNAMIC_CFG_H */

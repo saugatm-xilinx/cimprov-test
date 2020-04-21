@@ -1,12 +1,66 @@
-/**************************************************************************\ 
-*//*! \file 
-** <L5_PRIVATE L5_SOURCE> 
+/*
+ * This is NOT the original source file. Do NOT edit it.
+ * To update the image layout headers, please edit the copy in
+ * the sfregistry repo and then, in that repo,
+ * "make layout_headers" or "make export" to
+ * regenerate and export all types of headers.
+ */
+/*
+ * (c) Copyright 2019 Xilinx, Inc. All rights reserved.
+ *
+ * This file contains confidential and proprietary information
+ * of Xilinx, Inc. and is protected under U.S. and
+ * international copyright and other intellectual property
+ * laws.
+ *
+ * DISCLAIMER
+ * This disclaimer is not a license and does not grant any
+ * rights to the materials distributed herewith. Except as
+ * otherwise provided in a valid license issued to you by
+ * Xilinx, and to the maximum extent permitted by applicable
+ * law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
+ * WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
+ * AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
+ * BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
+ * INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
+ * (2) Xilinx shall not be liable (whether in contract or tort,
+ * including negligence, or under any other theory of
+ * liability) for any loss or damage of any kind or nature
+ * related to, arising under or in connection with these
+ * materials, including for any direct, or any indirect,
+ * special, incidental, or consequential loss or damage
+ * (including loss of data, profits, goodwill, or any type of
+ * loss or damage suffered as a result of any action brought
+ * by a third party) even if such damage or loss was
+ * reasonably foreseeable or Xilinx had been advised of the
+ * possibility of the same.
+ *
+ * CRITICAL APPLICATIONS
+ * Xilinx products are not designed or intended to be fail-
+ * safe, or for use in any application requiring fail-safe
+ * performance, such as life-support or safety devices or
+ * systems, Class III medical devices, nuclear facilities,
+ * applications related to the deployment of airbags, or any
+ * other applications that could lead to death, personal
+ * injury, or severe property or environmental damage
+ * (individually and collectively, "Critical
+ * Applications"). Customer assumes the sole risk and
+ * liability of any use of Xilinx products in Critical
+ * Applications, subject only to applicable laws and
+ * regulations governing limitations on product liability.
+ *
+ * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
+ * PART OF THIS FILE AT ALL TIMES
+ */
+/**************************************************************************\
+*//*! \file
+** <L5_PRIVATE L5_SOURCE>
 ** \author gnb, mjs
 **  \brief Flash layout for the Siena MC.
 **   \date   2008/09/09
-**    \cop  (c) Level 5 Networks Limited. 
-** </L5_PRIVATE> 
-*//* 
+**    \cop  (c) Level 5 Networks Limited.
+** </L5_PRIVATE>
+*//*
 \**************************************************************************/
 
 #ifndef MC_FLASH_LAYOUT_H
@@ -82,12 +136,83 @@ typedef struct blob_hdr_s {
 #define BLOB_CPU_TYPE_DUMPSPEC (32)
 #define BLOB_CPU_TYPE_MC_XIP   (33)
 #define BLOB_CPU_TYPE_FW_VARINFO (34)
+#define BLOB_CPU_TYPE_DUMPSPEC_WITH_CMACS (35)
 
 #define BLOB_CPU_TYPE_INVALID (31)
 
 /* Build variant for BLOB_CPU_TYPE_MC_XIP */
 #define MC_XIP_BLOB_VARIANT_NO_CMAC     0
 #define MC_XIP_BLOB_VARIANT_64BIT_CMAC  1
+
+/* Build variant for BLOB_CPU_TYPE_MC_DUMPSPEC */
+#define MC_DUMPSPEC_BLOB_VARIANT_FULL_FEATURED  0
+#define MC_DUMPSPEC_BLOB_VARIANT_RESTRICTED     1
+/* Dumpspec that produces a dumpfile small enough
+ * to fit within whatever dump partition is available
+ * on the targeted NIC. */
+#define MC_DUMPSPEC_BLOB_VARIANT_FLASH_UNSOLICITED 2
+
+/* Build variant for BLOB_CPU_TYPE_MC_DUMPSPEC_WITH_CMACS; please
+ * keep these in sync with MC_DUMPSPEC_BLOB_VARIANT_* unless there's
+ * a ***VERY*** good reason not to. */
+#define MC_DUMPSPEC_WITH_CMACS_BLOB_VARIANT_FULL_FEATURED  0
+#define MC_DUMPSPEC_WITH_CMACS_BLOB_VARIANT_RESTRICTED     1
+#define MC_DUMPSPEC_WITH_CMACS_BLOB_VARIANT_FLASH_UNSOLICITED 2
+
+
+/* Each blob in flash has a variant associated with it, where the
+ * interpretation of that variant will depend upon when part of the
+ * datapath (TXPD, RXPD, TXDP, RXDP) that blob is used for.
+ *
+ * The configutation in flash (TLV_FIRMWARE_VARIANT_*) selects a
+ * datapath firmware variant, where a datapath firmware variant is
+ * a collection of arbitrary variants for each component of the
+ * the datapath.
+ *
+ * For historical reasons (because a datapath firmware variant
+ * specified a set of unique datapath component firmware variants),
+ * the tools that build firmware images use the TLV_FIRMWARE_VARIANT_*
+ * values when populating blob headers.  We therefore use
+ * TLV_FIRMWARE_VARIANT_* to provide values to enumerations of
+ * datapath component firmware variants.  When time permits, we
+ * should update those tools to use BLOB_*_VARIANT_* instead, and thus
+ * completely decouple datapath firmware variants and datapath
+ * component firmware variants.  At the same time, we should
+ * replace the TLV_* values here their numeric equivalents, emphasizing
+ * the distinction. */
+
+/* TX_PD variants, applies to blobs of type TXDI_* amd TXHRSL_* */
+#define BLOB_TX_PD_VARIANT_LOW_LATENCY TLV_FIRMWARE_VARIANT_LOW_LATENCY
+#define BLOB_TX_PD_VARIANT_FULL_FEATURED TLV_FIRMWARE_VARIANT_FULL_FEATURED
+#define BLOB_TX_PD_VARIANT_RULES_ENGINE  TLV_FIRMWARE_VARIANT_RULES_ENGINE
+#define BLOB_TX_PD_VARIANT_DPDK  TLV_FIRMWARE_VARIANT_DPDK
+#define BLOB_TX_PD_VARIANT_L3XUDP        TLV_FIRMWARE_VARIANT_L3XUDP
+
+/* RX_PD variants, applies to blobs of type RXDI_* and RXHRSL_* */
+#define BLOB_RX_PD_VARIANT_LOW_LATENCY TLV_FIRMWARE_VARIANT_LOW_LATENCY
+#define BLOB_RX_PD_VARIANT_FULL_FEATURED TLV_FIRMWARE_VARIANT_FULL_FEATURED
+#define BLOB_RX_PD_VARIANT_PACKED_STREAM TLV_FIRMWARE_VARIANT_PACKED_STREAM
+#define BLOB_RX_PD_VARIANT_PACKED_STREAM_HASH_MODE_1 \
+                                 TLV_FIRMWARE_VARIANT_PACKED_STREAM_HASH_MODE_1
+#define BLOB_RX_PD_VARIANT_RULES_ENGINE  TLV_FIRMWARE_VARIANT_RULES_ENGINE
+#define BLOB_RX_PD_VARIANT_DPDK  TLV_FIRMWARE_VARIANT_DPDK
+#define BLOB_RX_PD_VARIANT_L3XUDP        TLV_FIRMWARE_VARIANT_L3XUDP
+
+/* TX_DP variants, applies to blobs of type TXDP_TEXT */
+#define BLOB_TX_DP_VARIANT_LOW_LATENCY TLV_FIRMWARE_VARIANT_LOW_LATENCY
+#define BLOB_TX_DP_VARIANT_FULL_FEATURED TLV_FIRMWARE_VARIANT_FULL_FEATURED
+#define BLOB_TX_DP_VARIANT_HIGH_TX_RATE  TLV_FIRMWARE_VARIANT_HIGH_TX_RATE
+#define BLOB_TX_DP_VARIANT_RULES_ENGINE  TLV_FIRMWARE_VARIANT_RULES_ENGINE
+#define BLOB_TX_DP_VARIANT_DPDK  TLV_FIRMWARE_VARIANT_DPDK
+
+/* RX_DP variants, applies to blobs of type RXDP_TEXT */
+#define BLOB_RX_DP_VARIANT_LOW_LATENCY TLV_FIRMWARE_VARIANT_LOW_LATENCY
+#define BLOB_RX_DP_VARIANT_FULL_FEATURED TLV_FIRMWARE_VARIANT_FULL_FEATURED
+#define BLOB_RX_DP_VARIANT_PACKED_STREAM TLV_FIRMWARE_VARIANT_PACKED_STREAM
+#define BLOB_RX_DP_VARIANT_RULES_ENGINE  TLV_FIRMWARE_VARIANT_RULES_ENGINE
+#define BLOB_RX_DP_VARIANT_DPDK  TLV_FIRMWARE_VARIANT_DPDK
+#define BLOB_RX_DP_VARIANT_L3XUDP        TLV_FIRMWARE_VARIANT_L3XUDP
+
 
 /* The upper four bits of the CPU type field specify the compression
  * algorithm used for this blob. */
@@ -304,7 +429,7 @@ typedef struct siena_mc_combo_rom_infoblk_s {
  *
  * A bytes-sum-to-zero checksum applies across the whole area, so we need to
  * know how long it is (it's not necessarily the same length as the flash
- * partition allocated to it, and on medford there are several in the 
+ * partition allocated to it, and on medford there are several in the
  * same partition).
  */
 #define MC_LEGACY_EXPROM_CONFIG_LENGTH (0x1000) /* Applicable to SIENA and HUNT */
@@ -397,6 +522,40 @@ typedef struct medford_mc_status_hdr_s {
 /* The partition length must be a multiple of 512 bytes to work with the Linux
  * mtdblock driver. */
 #define MC_STATUS_PARTN_LEN 512
+
+/* Flash partition definitions */
+#define NVRAM_FLASH_HEADER_MAGIC 0xEF10F1A5
+
+typedef struct mc_nvram_flash_header_s {
+  uint32_t magic;        /**< Magic number */
+  uint32_t version;      /**< Version code for this header (this is v1) */
+  uint32_t size;         /**< Size of this header (32 bytes) */
+  uint32_t csum;         /**< Checksum over header */
+  uint32_t reserved;     /**< (reserved - write as 0) */
+  uint32_t map_offset;   /**< Absolute offset of partition map within device */
+  uint32_t boot_ptr;     /**< Absolute offset of primary MC f/w image */
+  uint32_t alt_boot_ptr; /**< Absolute offset of secondary MC f/w image */
+} mc_nvram_flash_header_t;
+
+#define NVRAM_PARTITION_HEADER_MAGIC 0xEF10B175
+
+typedef struct mc_nvram_partition_header_s {
+  uint32_t magic;        /**< Magic number */
+  uint32_t version;      /**< Version code for this header (this is v1) */
+  uint32_t size;         /**< Size of this header (24 bytes) */
+  uint32_t entry_size;   /**< Size of each partition entry (16 bytes) */
+  uint32_t n_entries;    /**< Number of partition map entries in map */
+  uint32_t csum;         /**< Checksum over this header and all entries */
+} mc_nvram_partition_header_t;
+
+typedef struct mc_nvram_partition_s {
+  uint16_t type;         /**< EF10-style 16-bit partition type code */
+  uint8_t  chip_select;  /**< SPI chip select for physical device */
+  uint8_t  flags;        /**< Partition flags */
+  uint32_t offset;       /**< Base offset of this partition */
+  uint32_t length;       /**< Length of this partition */
+  uint32_t erase_size;   /**< Erase size for this partition (0 if not needed) */
+} mc_nvram_partition_t;
 
 #endif
 

@@ -1,8 +1,8 @@
 /*
  * This is NOT the original source file. Do NOT edit it.
- * To update the tlv layout, please edit the copy in
+ * To update the image layout headers, please edit the copy in
  * the sfregistry repo and then, in that repo,
- * "make tlv_headers" or "make export" to
+ * "make layout_headers" or "make export" to
  * regenerate and export all types of headers.
  */
 /*
@@ -55,32 +55,88 @@
 /**************************************************************************\
 *//*! \file
 ** <L5_PRIVATE L5_SOURCE>
-** \author  ajr
-**  \brief  Platform specific TLV definitions
-**   \date  2013/11/14
+** \author  mchopra
+**  \brief  Reflash image header definitions
+**   \date  2019/02/04
 **    \cop  (c) Solarflare Communications Inc.
 ** </L5_PRIVATE>
 *//*
 \**************************************************************************/
 
-/* Default, min and max values for BIU_TRGT_CTL_REG fields. */
-#define DEFAULT_BIU_PF_APER_HUNT     (0x17)  /* PF BAR2 (VI window) */
-#define     MIN_BIU_PF_APER_HUNT     (0x0D)
-#define     MAX_BIU_PF_APER_HUNT     (0x17)
+#ifndef REFLASH_IMAGE_LAYOUT_H
+#define REFLASH_IMAGE_LAYOUT_H
 
-#define DEFAULT_BIU_VF_APER_HUNT     (0x14)  /* VF BAR0 (VI window) */
-#define     MIN_BIU_VF_APER_HUNT     (0x0D)
-#define     MAX_BIU_VF_APER_HUNT     (0x17)
+#ifdef _MSC_VER
+#pragma pack(push,1)
+#else
+#pragma pack(1)
+#endif
 
-#define DEFAULT_BIU_INT_APER_HUNT    (0xE)   /* PF BAR4 and VF BAR2 (MSI-X) */
-#define     MIN_BIU_INT_APER_HUNT    (0x8)
-#define     MAX_BIU_INT_APER_HUNT    (0xF)
+/*
+ * Refer to document SF-102785-PS for details of the header structure.
+ */
+#define IMAGE_HEADER_MAGIC     0x0106F1A5
+#define IMAGE_HEADER_VERSION   0x00000004
 
-/* Default values for BAR Mask sizes */
+/*
+ * Controller versions (denoted by PCI device id)
+ */
+#define IMAGE_CONTROLLER_RESERVED 0x00000000
+#define IMAGE_CONTROLLER_0703     0x00000001      /* Falcon A0/A1 */
+#define IMAGE_CONTROLLER_0710     0x00000002      /* Falcon B0 */
+#define IMAGE_CONTROLLER_0803     0x00000003      /* Siena */
+#define IMAGE_CONTROLLER_0903     0x00000004      /* Huntington */
 
-/* The core requires I/O apertures to be 256 bytes (SF-105340-TC 5.1.7.11.5)
- * so do that  */
-#define DEFAULT_PF_BAR0_APERTURE_HUNT    (0x8)
-#define DEFAULT_PF_BAR2_APERTURE_HUNT    DEFAULT_BIU_PF_APER_HUNT
+/*
+ * Format of reflash header
+ */
+typedef struct image_header_s {
+  uint32_t ih_magic;
+  uint32_t ih_version;
+  uint32_t ih_type;
+  uint32_t ih_subtype;
+  uint32_t ih_code_size;
+  uint32_t ih_size;
 
-#define DEFAULT_VF_BAR0_APERTURE_HUNT    DEFAULT_BIU_VF_APER_HUNT
+  /* The first and second parts of these unions implement Option A
+   * and Option B respectively, as defined in SF-102785-PS
+   */
+
+  union {
+    uint32_t ih_controller_version_min;
+    struct {
+      uint16_t ih_controller_version_min_short;
+      uint8_t ih_extra_version_a;
+      uint8_t ih_extra_version_b;
+    };
+  };
+  union {
+    uint32_t ih_controller_version_max;
+    struct {
+      uint16_t ih_controller_version_max_short;
+      uint8_t ih_extra_version_c;
+      uint8_t ih_extra_version_d;
+    };
+  };
+
+  uint16_t ih_code_version_a;
+  uint16_t ih_code_version_b;
+  uint16_t ih_code_version_c;
+  uint16_t ih_code_version_d;
+} image_header_t;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#else
+#pragma pack()
+#endif
+
+#define IMAGE_HEADER_SIZE 40
+/*
+ * Format of reflash trailer
+ */
+typedef struct image_trailer_s {
+  uint32_t crc32;
+} image_trailer_t;
+
+#endif /* REFLASH_IMAGE_LAYOUT_H */

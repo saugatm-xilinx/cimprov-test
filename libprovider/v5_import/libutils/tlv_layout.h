@@ -1,3 +1,57 @@
+/*
+ * This is NOT the original source file. Do NOT edit it.
+ * To update the tlv layout, please edit the copy in
+ * the sfregistry repo and then, in that repo,
+ * "make tlv_headers" or "make export" to
+ * regenerate and export all types of headers.
+ */
+/*
+ * (c) Copyright 2019 Xilinx, Inc. All rights reserved.
+ *
+ * This file contains confidential and proprietary information
+ * of Xilinx, Inc. and is protected under U.S. and
+ * international copyright and other intellectual property
+ * laws.
+ *
+ * DISCLAIMER
+ * This disclaimer is not a license and does not grant any
+ * rights to the materials distributed herewith. Except as
+ * otherwise provided in a valid license issued to you by
+ * Xilinx, and to the maximum extent permitted by applicable
+ * law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
+ * WITH ALL FAULTS, AND XILINX HEREBY DISCLAIMS ALL WARRANTIES
+ * AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
+ * BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
+ * INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
+ * (2) Xilinx shall not be liable (whether in contract or tort,
+ * including negligence, or under any other theory of
+ * liability) for any loss or damage of any kind or nature
+ * related to, arising under or in connection with these
+ * materials, including for any direct, or any indirect,
+ * special, incidental, or consequential loss or damage
+ * (including loss of data, profits, goodwill, or any type of
+ * loss or damage suffered as a result of any action brought
+ * by a third party) even if such damage or loss was
+ * reasonably foreseeable or Xilinx had been advised of the
+ * possibility of the same.
+ *
+ * CRITICAL APPLICATIONS
+ * Xilinx products are not designed or intended to be fail-
+ * safe, or for use in any application requiring fail-safe
+ * performance, such as life-support or safety devices or
+ * systems, Class III medical devices, nuclear facilities,
+ * applications related to the deployment of airbags, or any
+ * other applications that could lead to death, personal
+ * injury, or severe property or environmental damage
+ * (individually and collectively, "Critical
+ * Applications"). Customer assumes the sole risk and
+ * liability of any use of Xilinx products in Critical
+ * Applications, subject only to applicable laws and
+ * regulations governing limitations on product liability.
+ *
+ * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS
+ * PART OF THIS FILE AT ALL TIMES
+ */
 /**************************************************************************\
 *//*! \file
 ** <L5_PRIVATE L5_SOURCE>
@@ -38,6 +92,8 @@
  *        2: firmware internal use
  *        3: license partition
  *        4: tsa configuration
+ *        5: bundle update
+ *        7: suc tlv configuration
  *
  *   -  TTT is a type, which is just a unique value.  The same type value
  *      might appear in both locations, indicating a relationship between
@@ -82,6 +138,30 @@
 #define TLV_TAG_SKIP                    (0x00000000)
 #define TLV_TAG_INVALID                 (0xFFFFFFFF)
 
+
+/* TLV start.
+ *
+ * Marks the start of a TLV layout within a partition that may/may-not be
+ * a TLV partition. i.e. if a portion of data (at any offset) within a
+ * partition is expected to be in TLV format, then the first tag in this
+ * layout is expected to be TLV_TAG_START.
+ *
+ * This tag is not used in TLV layouts where the entire partition is TLV.
+ * Please continue using TLV_TAG_PARTITION_HEADER to indicate the start
+ * of TLV layout in such cases.
+ */
+
+#define TLV_TAG_START                   (0xEF10BA5E)
+
+struct tlv_start {
+  uint32_t tag;
+  uint32_t length;
+  /* Length of the TLV structure following this tag - includes length of all tags
+   * within the TLV layout starting with this TLV_TAG_START.
+   * Includes TLV_TAG_END. Does not include TLV_TAG_START
+   */
+  uint32_t tlv_layout_len;
+};
 
 /* TLV partition header.
  *
@@ -508,6 +588,16 @@ struct tlv_pcie_tx_amp_config {
   uint8_t lane_amp[16];
 };
 
+/* Enum to select an OEM and enable additional functionality related to this OEM
+ * (e.g. vendor extensions to VPD, NC-SI etc.) */
+#define TLV_TAG_OEM  (0x00230000)
+struct tlv_oem {
+  uint32_t tag;
+  uint32_t length;
+  uint8_t oem;
+};
+#define TLV_OEM_NONE 0
+#define TLV_OEM_DELL 1
 
 /* Global PCIe configuration, second revision. This represents the visible PFs
  * by a bitmap rather than having the number of the highest visible one. As such
@@ -1003,6 +1093,71 @@ struct tlv_l3xudp_ports {
   uint32_t length;
   uint16_t ports[];
 #define TLV_TAG_L3XUDP_PORTS_MAX_NUM_PORTS 16
+};
+
+/* Wake on LAN setting
+ *
+ * Enables the Wake On Lan (WoL) functionality on the given port. This will be
+ * a persistent setting for manageability firmware. Drivers have direct access
+ * to WoL using MCDI.
+ */
+#define TLV_TAG_WAKE_ON_LAN(port)       (0x102b0000 + (port))
+struct tlv_wake_on_lan {
+  uint32_t tag;
+  uint32_t length;
+  uint8_t  mode;
+  uint8_t  bytes[];
+#define TLV_WAKE_ON_LAN_MODE_DISABLED      0
+#define TLV_WAKE_ON_LAN_MODE_MAGIC_PACKET  1
+#define TLV_WAKE_ON_LAN_MAX_NUM_BYTES    255
+};
+
+/* Total Port Shutdown setting
+ *
+ * This mode ensures that any port down command from the host OS or driver
+ * will cause the network port to completely shut down and cease all operations
+ * including support of WoL and NC-SI Pass-through. It is up the host OS drivers
+ * to actually implement this mode.
+ *
+ * The tag contains a bit-mask of all PFs for which this mode is requested. If
+ * the n-th bit in the mask is set, the n-th PF is requesting that this mode
+ * be enabled for it. All PFs on the same cage have to share the setting - we
+ * rely on the MC to implement this coupling to the drivers when it translates
+ * this configuration to the host OS drivers.
+ */
+#define TLV_TAG_TOTAL_PORT_SHUTDOWN     (0x102c0000)
+struct tlv_total_port_shutdown {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t mask;
+#define TLV_TOTAL_PORT_SHUTDOWN_ENABLED 1
+};
+
+/* Bundle update disabled setting
+ *
+ * This tag is set by sfboot to allow an X2 adapter to be downgraded from having
+ * bundle support to the previous arrangement of separate firmware images.
+ * It is cleared by newer versions of sfupdate that include bundle images for these
+ * adapters. See SF-123486-AN
+ */
+#define TLV_TAG_BUNDLE_UPDATE_DISABLED  (0x102d0000)
+struct tlv_bundle_update_disabled {
+  uint32_t tag;
+  uint32_t length;
+};
+
+/* Use alternate sensor limits setting
+ *
+ * This tag is set by sfboot to allow an X2 adapter to use an alternate set of
+ * sensor limits (compiled into the firmware).  The intended use of alternate
+ * limits is for changing the thermal sensors when in a cold-aisle, rather than
+ * a hot-aisle, server installation.
+ */
+#define TLV_TAG_ALTERNATE_SENSOR_LIMITS  (0x102e0000)
+struct tlv_alternate_sensor_limits {
+  uint32_t tag;
+  uint32_t length;
+  uint32_t index; /* 0 == default, also when tag unset */
 };
 
 #endif /* CI_MGMT_TLV_LAYOUT_H */

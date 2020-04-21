@@ -34,11 +34,10 @@ typedef enum image_format_e {
   IMAGE_FORMAT_SIGNED = 3,
 } image_format_t;
 
-typedef uint32_t image_trailer_t;
-
 typedef struct sfupdate_image_s {
   image_format_t format;
   const uint8_t* raw_image;
+  size_t raw_image_len;
 
   const uint8_t* cms_header;
   size_t cms_header_len;
@@ -111,7 +110,8 @@ extern void fw_report_verify_result(unsigned rc);
   { .image_data = (data), .image_size = (size) }
 
 
-#ifdef SFUPDATE_WITH_DEFAULT_IMAGES
+/* Non-Dell images should appear in sfdupupdate but not sfupdate */
+#if defined(SFUPDATE_WITH_DEFAULT_IMAGES) && !defined(SFDUPUPDATE_BUILD)
 #define SFUPDATE_DEFINE_IMAGE(name) \
   const uint8_t name[] __attribute__((aligned(4)))
 
@@ -125,6 +125,16 @@ extern void fw_report_verify_result(unsigned rc);
 #define SFUPDATE_NO_IMAGE()      SFUPDATE_DEFAULT_IMAGE_INIT(NULL, 0)
 #endif
 
+/* Dell images should appear in both sfupdate and sfdupupdate */
+#ifdef SFUPDATE_WITH_DEFAULT_IMAGES
+#define SFUPDATE_DEFINE_DELL_IMAGE(name) \
+  const uint8_t name[] __attribute__((aligned(4)))
+#define SFUPDATE_USE_DELL_IMAGE(name) SFUPDATE_DEFAULT_IMAGE_INIT(name, sizeof(name))
+#else
+#define SFUPDATE_DEFINE_DELL_IMAGE(name) \
+  const uint8_t name[] __attribute__((unused))
+#define SFUPDATE_USE_DELL_IMAGE(name) SFUPDATE_DEFAULT_IMAGE_INIT(NULL, 0)
+#endif
 
 enum firmware_op_flags {
   /* Read or write requires interface to be down */
@@ -191,6 +201,16 @@ extern const struct firmware_ops mc_cyclops_firmware_ops;
 extern const struct firmware_ops mc_shilling_firmware_ops;
 extern const struct firmware_ops mc_florin_firmware_ops;
 extern const struct firmware_ops mc_bob_firmware_ops;
+extern const struct firmware_ops mc_hog_firmware_ops;
+extern const struct firmware_ops mc_sovereign_firmware_ops;
+extern const struct firmware_ops mc_solidus_firmware_ops;
+extern const struct firmware_ops mc_crown_firmware_ops;
+extern const struct firmware_ops mc_sixpence_firmware_ops;
+extern const struct firmware_ops mc_sol_firmware_ops;
+extern const struct firmware_ops mc_threepence_firmware_ops;
+extern const struct firmware_ops mc_joey_firmware_ops;
+extern const struct firmware_ops mc_tanner_firmware_ops;
+extern const struct firmware_ops mc_guinea_firmware_ops;
 
 /* PHY firmware */
 extern const struct firmware_ops qt2025c_firmware_ops;
@@ -230,10 +250,27 @@ extern const struct firmware_ops mum_cyclops_firmware_ops;
 extern const struct firmware_ops mum_shilling_firmware_ops;
 extern const struct firmware_ops mum_florin_firmware_ops;
 extern const struct firmware_ops mum_bob_firmware_ops;
+extern const struct firmware_ops mum_hog_firmware_ops;
+extern const struct firmware_ops mum_sovereign_firmware_ops;
+extern const struct firmware_ops mum_solidus_firmware_ops;
+extern const struct firmware_ops mum_crown_firmware_ops;
+extern const struct firmware_ops mum_sixpence_firmware_ops;
+extern const struct firmware_ops mum_sol_firmware_ops;
+extern const struct firmware_ops mum_threepence_firmware_ops;
+extern const struct firmware_ops mum_joey_firmware_ops;
+extern const struct firmware_ops mum_tanner_firmware_ops;
+extern const struct firmware_ops mum_guinea_firmware_ops;
 
 
 /* UEFI ROM */
 extern const struct firmware_ops uefi_rom_firmware_ops;
+
+/* Bundles */
+extern const struct firmware_ops bundle_dell_x2522_25g_firmware_ops;
+extern const struct firmware_ops bundle_dell_x2562_firmware_ops;
+extern const struct firmware_ops bundle_x2552_firmware_ops;
+extern const struct firmware_ops bundle_x2562_firmware_ops;
+extern const struct firmware_ops bundle_u25_firmware_ops;
 
 #define IPXE_ROM_HEADER 0xaa55
 #define IPXE_VERSION_A 9
