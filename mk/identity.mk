@@ -41,3 +41,6 @@ PROVIDER_VENDOR_VMWARE_CODE = SFC
 ##! Support email of the CIM provider vendor
 PROVIDER_VENDOR_EMAIL = support@solarflare.com
 PROVIDER_RELEASE_DATE = $(shell date +%Y-%m-%dT%H:%M:%S%:z)
+
+## Component Name
+COMPONENT_NAME = $(PROVIDER_VENDOR_VMWARE_CODE)-CIMProvider
