@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Xilinx, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**************************************************************************/
 /*!  \file  firmware.h
 ** \author  bwh
@@ -90,6 +106,8 @@ struct firmware_ops {
   int (*write_image)(void* handle, sfupdate_image_t* image, bool full_erase,
                      void (*progress)(const char* status, int pc));
   unsigned flags;
+  /* Path to the image within a directory of images. */
+  const char* image_path;
 };
 
 extern int init_image_from_buffer(const uint8_t *image_buffer,
@@ -139,14 +157,10 @@ extern void fw_report_verify_result(unsigned rc);
 enum firmware_op_flags {
   /* Read or write requires interface to be down */
   firmware_rw_req_if_down = 1,
-  /* Read or write requires phy_flash_cfg attribute to be set */
-  firmware_rw_req_phy_flash_cfg = 2,
   /* Firmware is shared between all ports of a controller */
   firmware_shared = 4,
   /* MC should be reset after writing this firmware */
   firmware_w_req_mc_reset = 8,
-  /* MC should reprogram CPLD after writing this firmware */
-  firmware_w_req_cpld_program = 16,
   /* Wait until the platform is ready before performing operations */
   firmware_w_req_wait_platform = 32,
   /* AOE should be reset after writing this firmware */
@@ -158,23 +172,10 @@ enum firmware_op_flags {
 };
 
 /* Boot ROM firmware */
-extern const struct firmware_ops gpxe_bethpage_firmware_ops;
-extern const struct firmware_ops gpxe_siena_firmware_ops;
 extern const struct firmware_ops gpxe_farmingdale_firmware_ops;
 extern const struct firmware_ops gpxe_greenport_firmware_ops;
 extern const struct firmware_ops gpxe_medford_firmware_ops;
 extern const struct firmware_ops gpxe_medford2_firmware_ops;
-
-/* MC firmware (Siena) */
-extern const struct firmware_ops mc_florence_firmware_ops;
-extern const struct firmware_ops mc_zebedee_firmware_ops;
-extern const struct firmware_ops mc_mr_rusty_firmware_ops;
-extern const struct firmware_ops mc_ermintrude_firmware_ops;
-extern const struct firmware_ops mc_buxton_firmware_ops;
-extern const struct firmware_ops mc_brian_firmware_ops;
-extern const struct firmware_ops mc_mr_mchenry_firmware_ops;
-extern const struct firmware_ops mc_uncle_hamish_firmware_ops;
-extern const struct firmware_ops mc_dylan_firmware_ops;
 
 /* MC firmware (Huntington) */
 extern const struct firmware_ops mc_unobtanium_firmware_ops;
@@ -212,28 +213,10 @@ extern const struct firmware_ops mc_joey_firmware_ops;
 extern const struct firmware_ops mc_tanner_firmware_ops;
 extern const struct firmware_ops mc_guinea_firmware_ops;
 
-/* PHY firmware */
-extern const struct firmware_ops qt2025c_firmware_ops;
-extern const struct firmware_ops qt2025_kr_firmware_ops;
-extern const struct firmware_ops calip_firmware_ops;
-extern const struct firmware_ops siena_sft9001b_firmware_ops;
-
 /* FC firmware */
-extern const struct firmware_ops fc_modena_firmware_ops;
 extern const struct firmware_ops fc_sorrento_firmware_ops;
 
-/* FPGA bitfiles */
-extern const struct firmware_ops fpga_ptp_firmware_ops;
-extern const struct firmware_ops cpld_sfa6902_firmware_ops;
-extern const struct firmware_ops fpga_mr_mchenry_firmware_ops;
-
 /* AOE FPGA bitfiles */
-extern const struct firmware_ops fpga_uncle_hamish_firmware_ops;
-extern const struct firmware_ops fpga_uncle_hamish_a7_firmware_ops;
-extern const struct firmware_ops fpga_uncle_hamish_a5_firmware_ops;
-extern const struct firmware_ops fpgadiag_uncle_hamish_firmware_ops;
-extern const struct firmware_ops fpgadiag_uncle_hamish_a7_firmware_ops;
-extern const struct firmware_ops fpgadiag_uncle_hamish_a5_firmware_ops;
 extern const struct firmware_ops fpga_shoemaker_firmware_ops;
 extern const struct firmware_ops fpga_shoemaker_a7_firmware_ops;
 extern const struct firmware_ops fpga_shoemaker_a5_firmware_ops;
@@ -260,7 +243,6 @@ extern const struct firmware_ops mum_threepence_firmware_ops;
 extern const struct firmware_ops mum_joey_firmware_ops;
 extern const struct firmware_ops mum_tanner_firmware_ops;
 extern const struct firmware_ops mum_guinea_firmware_ops;
-
 
 /* UEFI ROM */
 extern const struct firmware_ops uefi_rom_firmware_ops;

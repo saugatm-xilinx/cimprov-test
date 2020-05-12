@@ -1,4 +1,4 @@
-libsfupdate.a and libutils.a were built from a179e89cafe4 v8.1.0.1000
+libsfupdate.a and libutils.a were built from ac315f06a26b v8.1.1.1001
 revision of sfutils repository
 on 32bit SLES10 host with the following command:
 make PLATFORM=linux SFUPDATE_NO_DEFAULT_IMAGES=1 SFUPDATE_NO_NETIF_FLAGS=1

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Xilinx, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**************************************************************************/
 /*!  \file  nv.h
 ** \author  gel
@@ -24,10 +40,8 @@ enum nv_part_type {
   NV_PART_STATIC_CFG,
   NV_PART_BOOTROM,
   NV_PART_BOOTROM_CFG,
-  NV_PART_PHY,
   NV_PART_FPGA,
   NV_PART_FCFW,
-  NV_PART_CPLD,
   NV_PART_FPGA_BACKUP,
   NV_PART_LICENSE,
   NV_PART_MUMFW,
