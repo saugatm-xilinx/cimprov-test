@@ -25,12 +25,8 @@ namespace solarflare {
         return SFVMK_NVRAM_BOOTROM;
       case NV_PART_BOOTROM_CFG:
         return SFVMK_NVRAM_BOOTROM_CFG;
-      case NV_PART_PHY:
-        return SFVMK_NVRAM_PHY;
       case NV_PART_FPGA:
         return SFVMK_NVRAM_FPGA;
-      case NV_PART_CPLD:
-        return SFVMK_NVRAM_CPLD;
       case NV_PART_FPGA_BACKUP:
         return SFVMK_NVRAM_FPGA_BACKUP;
       case NV_PART_LICENSE:

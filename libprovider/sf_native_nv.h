@@ -33,10 +33,8 @@ namespace solarflare {
     NV_PART_STATIC_CFG,
     NV_PART_BOOTROM,
     NV_PART_BOOTROM_CFG,
-    NV_PART_PHY,
     NV_PART_FPGA,
     NV_PART_FCFW,
-    NV_PART_CPLD,
     NV_PART_FPGA_BACKUP,
     NV_PART_LICENSE,
     NV_PART_MUMFW,
@@ -46,7 +44,9 @@ namespace solarflare {
     NV_PART_DYNAMIC_CFG_DEFAULTS,
     NV_PART_BOOTROM_CFG_DEFAULTS,
     NV_PART_BUNDLE,
-    NV_PART_BUNDLE_METADATA
+    NV_PART_BUNDLE_METADATA,
+    /* !Insert new entries above here! */
+    MAX_NV_PART,
   };
 
   /* Initialise NVRAM access layer */
