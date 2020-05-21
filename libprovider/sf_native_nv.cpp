@@ -34,9 +34,9 @@ namespace solarflare {
       case NV_PART_MUMFW:
         return SFVMK_NVRAM_INVALID;
       case NV_PART_DYNAMIC_CFG_DEFAULTS:
-        return SFVMK_NVRAM_DYNAMIC_CFG;
+        return SFVMK_NVRAM_DYNAMIC_CFG_DEFAULTS;
       case NV_PART_BOOTROM_CFG_DEFAULTS:
-        return SFVMK_NVRAM_BOOTROM_CFG;
+        return SFVMK_NVRAM_BOOTROM_CFG_DEFAULTS;
       case NV_PART_BUNDLE:
         return SFVMK_NVRAM_BUNDLE;
       case NV_PART_BUNDLE_METADATA:
