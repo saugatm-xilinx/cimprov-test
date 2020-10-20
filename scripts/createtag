@@ -80,18 +80,6 @@ tagcimprovider() {
     hgpush
 }
 
-updatesfupdate_version() {
-    local filename=../esxi_sfupdate_client/main.c
-    if [[ -e $filename ]]; then
-        msg "Changing esxi_sfupdate version"
-        sed -i "s/\(tool_version = \).*;/\1\"$tagparam\";/" $filename
-    else
-        fail "File not found"
-    fi
-    hgcommit $filename "Updating $filename revision to $tagparam"
-    hgpush
-}
-
 if [ $# -eq 0 ]; then
     err "No arguments supplied"
     usage
@@ -110,5 +98,4 @@ sanitychecks
 checktagexists &&
      fail "Tag already exists"
 updatecimprov_version
-updatesfupdate_version
 tagcimprovider
