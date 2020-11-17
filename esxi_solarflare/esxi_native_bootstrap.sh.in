@@ -116,6 +116,8 @@ else
                       -I ${SCHEMADIR} \\\
                       -i CIM_Schema.mof \\\
                       ${STAGEDIR}/${STAGEROOT}/mofs/root/cimv2/root.mof; \\'  Makefile
+        sed -i "/uwglibc-2.5-34-1/"d oem/solarflare-vib-depends.xml
+        sed -i "/uwglibc-2.5-34-1/"d oem/descriptor.xml
     fi
 
     sed -i "s/^\(.*Packaging file for.*\)$/\1\n\t.\/fix_bulletin.pl \${VIB_BULLETIN_XML}/" Makefile
